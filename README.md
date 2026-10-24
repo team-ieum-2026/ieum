@@ -109,6 +109,7 @@ npm run dev
 | [docs/API.md](docs/API.md) | API 명세 · 공통 JSON 규칙 · 핵심 JSON 형식 |
 | [docs/ERD.md](docs/ERD.md) | 테이블 관계도 · 테이블 주인 |
 | [docs/DATA_SPEC.md](docs/DATA_SPEC.md) | 데이터 명세서 (테이블 17개 컬럼 정의 · 상태 판정 규칙) |
+| [docs/TECH_STACK.md](docs/TECH_STACK.md) | 기술 스택 · 버전 · 호출 방향 |
 | [docs/JOB_API.md](docs/JOB_API.md) | 서울 채용정보 API 필드 매핑 · IT 직종 필터 · 배치 규칙 |
 | [docs/ROLES.md](docs/ROLES.md) | 역할 분담 · 2주 일정 · 위험과 대응 |
 | [docs/CHANGES.md](docs/CHANGES.md) | 기획서 대비 변경사항 |
