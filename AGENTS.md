@@ -26,7 +26,7 @@
 3. **다음은 사용자 확인 없이 하지 않는다:** 라이브러리 추가 · 버전 변경, DB 스키마 변경, JSON 형식 변경, API 경로 · 요청 · 응답 형식 변경.
 4. **API 요청 · 응답은 `docs/API.md`의 공통 JSON 규칙을 따른다.** camelCase 키, UPPER_SNAKE 상태값, 성공 `{ "data": ... }`, 실패 `{ "error": { "code", "message" } }`, 값이 없으면 키를 빼지 않고 `null`.
 5. **`.env`와 API 키는 커밋하지 않는다.** 키를 코드 · 문서 · 로그에 쓰지 않는다. 예시는 `.env.example`에만, 값은 비워 둔다.
-6. **절대 실행하지 않는 명령:** `git push --force`(`-f` 포함), `git reset --hard`, `git clean -fd`, `main` 브랜치에 직접 커밋 · push. 사용자가 원하더라도 위험을 설명하고 PM에게 먼저 묻도록 안내한다.
+6. **절대 실행하지 않는 명령:** `git push --force`(`-f` 포함), `git reset --hard`, `git clean -fd`, `main` · `dev` 브랜치에 직접 커밋 · push. 사용자가 원하더라도 위험을 설명하고 PM에게 먼저 묻도록 안내한다. PR의 base는 항상 `dev`다. `main`은 `dev`를 병합할 때만 바뀐다.
 7. **실명 · 연락처 · 성적 등 실제 개인정보를 코드 · 시드 · 목업에 넣지 않는다.** 모든 데이터는 모의 데이터.
 8. **PR 설명에 완료한 요구사항 ID(예: `FE-A-03`)와 공용 파일 수정 여부를 적는다.**
 9. P0에 없는 기능(로그인, 배포, 실제 알림 발송, Docker 등)은 만들지 않는다. 필요해 보이면 사용자에게 제안만 한다.
@@ -88,6 +88,8 @@
 | BE-B | 유능한 | `be-b/coordinator-api` |
 | AI-A (AI 리드) | 심소민 | `ai-a/document` |
 | AI-B | 조영동 | `ai-b/recommend` |
+
+브랜치 흐름: `내 브랜치` → PR → `dev`(통합 · 테스트) → `main`(최종본만). PR 병합은 김용현(PM) · 심소민(AI-A) · 김하윤(FE-A) 세 명만 한다(`dev` · `main` 공통). 자세한 건 `docs/GIT_RULES.md`.
 
 ## 코드 작성 습관
 
