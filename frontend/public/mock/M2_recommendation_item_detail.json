@@ -1,0 +1,59 @@
+{
+  "data": {
+    "itemId": 91,
+    "rank": 1,
+    "response": "NONE",
+    "job": {
+      "jobPostingId": 501,
+      "companyName": "(주)온다랩",
+      "title": "백엔드 인턴 (AI 서비스팀)",
+      "jobCategory": "응용 소프트웨어 개발자",
+      "location": "서울 성동구",
+      "workAddress": "서울특별시 성동구 성수이로 00, 0층",
+      "employmentType": "인턴",
+      "career": "신입",
+      "education": "학력 무관",
+      "salaryText": "월 250만원",
+      "deadlineOn": "2026-10-31",
+      "untilFilled": false,
+      "dDay": 7,
+      "postedOn": "2026-10-20",
+      "description": "[주요 업무]\n- AI 상담 서비스 백엔드 API 개발\n- LLM 연동 기능 유지보수\n[자격 요건]\n- Java · Spring Boot 사용 경험\n[우대 사항]\n- LLM API 연동 경험",
+      "homepageUrl": null,
+      "source": "SEOUL_API",
+      "sourceLabel": "서울 열린데이터광장 · 서울시 일자리포털 채용정보"
+    },
+    "summary": [
+      "AI 상담 서비스의 백엔드 API를 개발하는 인턴 자리예요",
+      "Java · Spring Boot 경험이 필수, LLM 연동 경험은 우대예요"
+    ],
+    "reasons": [
+      {
+        "text": "모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 11,
+            "label": "모아요 README · 성능 개선",
+            "quote": "목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
+            "url": null,
+            "collectedAt": null
+          }
+        ]
+      },
+      {
+        "text": "LLM API 연동 경험이 우대사항에 해당해요",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 12,
+            "label": "AI 면접 코치 README",
+            "quote": "Gemini API로 질문 생성 · 답변 피드백 기능 구현",
+            "url": null,
+            "collectedAt": null
+          }
+        ]
+      }
+    ]
+  }
+}

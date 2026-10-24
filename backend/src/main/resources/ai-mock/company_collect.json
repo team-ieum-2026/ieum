@@ -1,0 +1,15 @@
+{
+  "data": {
+    "companyInfo": {
+      "companyName": "(주)온다랩",
+      "status": "PARTIAL",
+      "talentKeywords": ["끝까지 책임지는 사람", "함께 성장"],
+      "coreValues": ["책임", "협업"],
+      "recentIssue": null,
+      "sources": [
+        { "url": "https://example.com/ondalab/careers", "label": "온다랩 채용 페이지 · 인재상", "collectedAt": "2026-10-24T08:00:00+09:00" }
+      ],
+      "note": "온다랩의 최근 뉴스를 찾지 못해 인재상만 반영했어요"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "data": {
+    "applicationId": 7,
+    "status": "DRAFT",
+    "steps": [
+      {
+        "key": "COMPANY_INFO",
+        "state": "DONE",
+        "note": "인재상 확인 · 최근 뉴스는 찾지 못함"
+      },
+      {
+        "key": "COVER_LETTER",
+        "state": "DONE",
+        "note": null
+      },
+      {
+        "key": "RESUME",
+        "state": "DONE",
+        "note": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+/* 주인: FE-A — 전역 스타일. 색 · 글꼴 토큰은 src/styles/tokens.css 한 곳에만 둔다. */
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}

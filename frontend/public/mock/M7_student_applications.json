@@ -1,0 +1,30 @@
+{
+  "data": {
+    "applications": [
+      {
+        "applicationId": 7,
+        "companyName": "(주)온다랩",
+        "title": "백엔드 인턴 (AI 서비스팀)",
+        "status": "SUBMITTED",
+        "submittedAt": "2026-10-24T10:12:00+09:00",
+        "userEditedCount": 1
+      }
+    ],
+    "otherItems": [
+      {
+        "itemId": 92,
+        "companyName": "데이터웨이브(주)",
+        "title": "주니어 데이터 엔지니어",
+        "response": "PASS",
+        "passReason": "JOB_MISMATCH"
+      },
+      {
+        "itemId": 93,
+        "companyName": "(주)서울에이아이랩",
+        "title": "AI 서비스 기획 보조",
+        "response": "NONE",
+        "passReason": null
+      }
+    ]
+  }
+}

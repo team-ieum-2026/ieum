@@ -1,0 +1,43 @@
+# ---- 비밀 값 (절대 커밋 금지) ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- OS · 에디터 ----
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ---- frontend (Next.js) ----
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+frontend/*.tsbuildinfo
+npm-debug.log*
+
+# ---- backend (Spring Boot · Gradle) ----
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/out/
+!backend/gradle/wrapper/gradle-wrapper.jar
+
+# ---- ai (Python) ----
+ai/.venv/
+ai/venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+ai/.cache/
+ai/models/
+ai/eval/results/
+
+# ---- 기타 ----
+*.log

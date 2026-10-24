@@ -1,0 +1,32 @@
+/* 주인: FE-A — 디자인 토큰. 색 · 글꼴은 여기 한 곳에만 둔다. 화면 코드에 색값을 직접 쓰지 않는다 (ALL-03). */
+/* Tailwind v4: 아래 토큰이 bg-primary, text-ink-sub, border-line 같은 유틸리티로 바로 쓰인다. */
+@theme {
+  /* 글꼴: Noto Sans KR (app/layout.tsx 에서 next/font/google 로 로드) */
+  --font-sans: var(--font-noto-sans-kr), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  /* 주 색 */
+  --color-primary: #047857;
+  --color-primary-strong: #065f46;
+  --color-primary-soft: #d1fae5;
+  --color-primary-tint: #ecfdf5;
+
+  /* 글자 */
+  --color-ink: #1f2937;
+  --color-ink-sub: #5b6472;
+  --color-ink-muted: #6b7280;
+
+  /* 선 · 면 */
+  --color-line: #e5e0d8;
+  --color-surface: #ffffff;
+  --color-surface-warm: #fef7ee;
+  --color-page: #e7eae8;
+
+  /* 경고 · 위험 */
+  --color-warn-bg: #fef3c7;
+  --color-warn-ink: #78350f;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+
+  /* 코디네이터 화면 배경 */
+  --color-coord-bg: #f1f5f9;
+}

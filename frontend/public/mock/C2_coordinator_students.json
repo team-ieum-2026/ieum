@@ -1,0 +1,59 @@
+{
+  "data": {
+    "items": [
+      {
+        "studentId": 1,
+        "name": "김민준",
+        "courseLabel": "AI Agent 4기",
+        "completedOn": "2026-08-29",
+        "status": "SEEKING",
+        "subStatus": "APPLYING",
+        "lastResponseAt": "2026-10-24T10:12:00+09:00",
+        "hasNote": false
+      },
+      {
+        "studentId": 12,
+        "name": "박서연",
+        "courseLabel": "AI Agent 4기",
+        "completedOn": "2026-08-29",
+        "status": "NEED_HELP",
+        "subStatus": null,
+        "lastResponseAt": "2026-10-24T09:12:00+09:00",
+        "hasNote": false
+      },
+      {
+        "studentId": 21,
+        "name": "최유나",
+        "courseLabel": "클라우드 풀스택 3기",
+        "completedOn": "2026-07-31",
+        "status": "CHECK_REQUIRED",
+        "subStatus": null,
+        "lastResponseAt": "2026-10-14T18:00:00+09:00",
+        "hasNote": false
+      },
+      {
+        "studentId": 33,
+        "name": "서민재",
+        "courseLabel": "클라우드 풀스택 3기",
+        "completedOn": "2026-07-31",
+        "status": "SEEKING",
+        "subStatus": "OTHER",
+        "lastResponseAt": "2026-10-22T13:40:00+09:00",
+        "hasNote": true
+      },
+      {
+        "studentId": 40,
+        "name": "이도윤",
+        "courseLabel": "AI Agent 4기",
+        "completedOn": "2026-08-29",
+        "status": "EMPLOYED",
+        "subStatus": null,
+        "lastResponseAt": "2026-10-19T20:05:00+09:00",
+        "hasNote": false
+      }
+    ],
+    "total": 50,
+    "page": 1,
+    "size": 20
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "data": {
+    "student": {
+      "studentId": 1,
+      "name": "김민준",
+      "courseLabel": "AI Agent 4기",
+      "completedOn": "2026-08-29",
+      "status": "SEEKING",
+      "subStatus": "APPLYING",
+      "lastResponseAt": "2026-10-24T10:12:00+09:00",
+      "hasNote": false,
+      "email": "minjun.dev@example.com",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "reason": "SUBMITTED 지원서 있음"
+    },
+    "competencyProfile": {
+      "roles": [
+        "백엔드 API 설계 · 구현",
+        "LLM API 연동"
+      ],
+      "skills": [
+        {
+          "name": "Spring Boot",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        },
+        {
+          "name": "MySQL",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        },
+        {
+          "name": "Gemini API",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 12
+            }
+          ]
+        }
+      ],
+      "achievements": [
+        {
+          "text": "목록 조회 응답 1.8초 → 0.4초 개선",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        }
+      ],
+      "certificates": [
+        "정보처리기사",
+        "SQLD"
+      ],
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울"
+    },
+    "registered": {
+      "education": 1,
+      "certificates": 2,
+      "projects": 2,
+      "hasCoverLetter": true
+    },
+    "history": [
+      {
+        "recommendationId": 31,
+        "createdAt": "2026-10-24T09:00:00+09:00",
+        "items": [
+          {
+            "itemId": 91,
+            "companyName": "(주)온다랩",
+            "title": "백엔드 인턴 (AI 서비스팀)",
+            "response": "APPLY",
+            "passReason": null,
+            "passNote": null,
+            "respondedAt": "2026-10-24T09:40:00+09:00",
+            "applicationId": 7,
+            "applicationStatus": "SUBMITTED"
+          },
+          {
+            "itemId": 92,
+            "companyName": "데이터웨이브(주)",
+            "title": "주니어 데이터 엔지니어",
+            "response": "PASS",
+            "passReason": "JOB_MISMATCH",
+            "passNote": null,
+            "respondedAt": "2026-10-24T09:35:00+09:00",
+            "applicationId": null,
+            "applicationStatus": null
+          },
+          {
+            "itemId": 93,
+            "companyName": "(주)서울에이아이랩",
+            "title": "AI 서비스 기획 보조",
+            "response": "NONE",
+            "passReason": null,
+            "passNote": null,
+            "respondedAt": null,
+            "applicationId": null,
+            "applicationStatus": null
+          }
+        ]
+      }
+    ],
+    "contactLogs": [
+      {
+        "contactLogId": 2,
+        "contactType": "PHONE",
+        "note": "수료 후 근황 통화. 백엔드 인턴 위주로 찾는 중",
+        "createdAt": "2026-09-05T14:00:00+09:00"
+      }
+    ]
+  }
+}

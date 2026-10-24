@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 P0 흐름도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 3 swimlanes (수료생 · AI/시스템 · 코디네이터), steps run top-down, every node has an ID for edit requests */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --fg:#17212b; --muted:#5b6876; --line:#c9d2db; --edge:#55626f;
+  --stu:#e6f0fb; --stu-ink:#1f5fa8;
+  --ai:#e5f4f1; --ai-ink:#17786a;
+  --co:#fbf1e2; --co-ink:#9a5a12;
+  --help:#c8372d; --help-bg:#fdecea;
+  --flag:#7a4cc2; --flag-bg:#f1eafb;
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --surface:#1b222a; --fg:#e6ecf1; --muted:#9aa7b4; --line:#33404c; --edge:#8d9aa7;
+  --stu:#16263a; --stu-ink:#7fb4ef; --ai:#132a27; --ai-ink:#5fcab8; --co:#2b2214; --co-ink:#e3a85a;
+  --help:#ef6a5f; --help-bg:#3a1c1a; --flag:#b694ef; --flag-bg:#2a2140; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --surface:#1b222a; --fg:#e6ecf1; --muted:#9aa7b4; --line:#33404c; --edge:#8d9aa7;
+  --stu:#16263a; --stu-ink:#7fb4ef; --ai:#132a27; --ai-ink:#5fcab8; --co:#2b2214; --co-ink:#e3a85a;
+  --help:#ef6a5f; --help-bg:#3a1c1a; --flag:#b694ef; --flag-bg:#2a2140; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header h1{margin:0;font-size:1.6rem;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:6px 0 0;color:var(--muted);max-width:68ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.8rem;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:2px;background:var(--edge);display:inline-block}
+.sw.help{background:var(--help)} .sw.dash{background:none;border-top:2px dashed var(--muted)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.diagram{position:relative;min-width:860px;display:grid;grid-template-columns:96px repeat(3,minmax(0,1fr));
+  grid-template-rows:auto;grid-auto-rows:auto;column-gap:30px;row-gap:34px;padding:0 20px 28px}
+.lanebg{grid-row:1 / -1;margin:0 -15px;z-index:0}
+.lanebg.stu{grid-column:2;background:var(--stu)} .lanebg.ai{grid-column:3;background:var(--ai)} .lanebg.co{grid-column:4;background:var(--co)}
+.lanehead{grid-row:1;z-index:2;padding:14px 0 4px;font-size:.78rem;font-weight:700;letter-spacing:.06em}
+.lanehead small{display:block;font-weight:500;letter-spacing:0;color:var(--muted);font-size:.74rem}
+.lanehead.stu{grid-column:2;color:var(--stu-ink)} .lanehead.ai{grid-column:3;color:var(--ai-ink)} .lanehead.co{grid-column:4;color:var(--co-ink)}
+.phase{grid-column:1;z-index:2;border-left:3px solid var(--line);padding:2px 0 2px 10px;align-self:stretch;font-size:.8rem;font-weight:600}
+.phase small{display:block;font-family:var(--f-mono);font-weight:500;color:var(--muted);font-size:.7rem;margin-top:2px}
+svg.edges{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+svg.edges path{fill:none;stroke:var(--edge);stroke-width:1.6}
+svg.edges path.help{stroke:var(--help);stroke-width:2}
+svg.edges path.loop{stroke:var(--muted);stroke-dasharray:5 4}
+.elabel{position:absolute;z-index:3;font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface);
+  border:1px solid var(--line);color:var(--fg);white-space:nowrap;transform:translate(-50%,-50%)}
+.elabel.help{color:var(--help);border-color:var(--help)} .elabel.loop{color:var(--muted)}
+.node{position:relative;z-index:2;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;
+  display:flex;flex-direction:column;gap:5px;font-size:.84rem}
+.node.stu{border-color:var(--stu-ink)} .node.ai{border-color:var(--ai-ink)} .node.co{border-color:var(--co-ink)}
+.node.help{border-color:var(--help);background:var(--help-bg)}
+.node.choice{border-style:double;border-width:3px}
+.node .top{display:flex;align-items:baseline;gap:8px}
+.node .id{font-family:var(--f-mono);font-size:.72rem;font-weight:600;color:var(--muted)}
+.node h3{margin:0;font-size:.92rem;font-weight:700;line-height:1.35}
+.node p{margin:0;color:var(--muted);font-size:.79rem}
+.node ul{margin:0;padding-left:16px;color:var(--muted);font-size:.79rem}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.tag{font-size:.68rem;font-weight:600;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.tag.llm{color:var(--ai-ink);border-color:var(--ai-ink)} .tag.rule{color:var(--fg)}
+.tag.flag{color:var(--flag);background:var(--flag-bg);border-color:var(--flag)}
+.owner{font-size:.7rem;color:var(--muted)} .owner b{font-weight:600;color:var(--fg)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.notes section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.notes h2{margin:0 0 8px;font-size:.9rem}
+.notes ul{margin:0;padding-left:18px;font-size:.84rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.notes section.flagbox{border-color:var(--flag)} .notes section.flagbox h2{color:var(--flag)}
+.hint{font-size:.8rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>이음 P0 흐름도</h1>
+    <p>보고하지 않아도, 기회가 먼저 찾아온다. 2분 시연영상 하나로 끝까지 보여줄 P0 범위입니다. 수정 요청은 노드 ID(S1~S13)로 짚어 주세요.</p>
+  </header>
+
+  <div class="legend">
+    <span><i class="sw"></i>기본 흐름</span>
+    <span><i class="sw help"></i>도움 요청 (위기 경로)</span>
+    <span><i class="sw dash"></i>피드백 반영</span>
+    <span><span class="tag llm">LLM</span>생성형 AI 사용</span>
+    <span><span class="tag rule">규칙</span>규칙 기반 판단</span>
+    <span><span class="tag flag">결정 필요</span>팀에서 확정할 것</span>
+  </div>
+
+  <div class="scroll">
+    <div class="diagram" id="dg">
+      <div class="lanebg stu"></div><div class="lanebg ai"></div><div class="lanebg co"></div>
+      <div class="lanehead stu">수료생<small>모바일 폭 고정 화면</small></div>
+      <div class="lanehead ai">AI · 시스템<small>FastAPI · Spring Boot · MySQL</small></div>
+      <div class="lanehead co">코디네이터<small>데스크톱 화면</small></div>
+
+      <div class="phase" style="grid-row:2 / 5">① 준비<small>영상 0:15</small></div>
+      <div class="phase" style="grid-row:5 / 7">② 추천 · 응답<small>0:15–0:40</small></div>
+      <div class="phase" style="grid-row:7 / 11">③ 지원 처리<small>0:40–1:20</small></div>
+      <div class="phase" style="grid-row:11 / 13">④ 사후관리<small>1:20–1:45</small></div>
+
+      <div class="node co" id="S1" style="grid-column:4;grid-row:2">
+        <div class="top"><span class="id">S1</span><h3>교육 결과물 등록 (전제)</h3></div>
+        <p>기관이 수료와 동시에 수료생별 자료를 일괄 등록해 둔 상태</p>
+        <ul>
+          <li>개인정보 · 과정 정보 · 자격증 → 이력서 초안에 사용</li>
+          <li><b>자기소개서</b> → 공고별로 고쳐 쓸 원본 (핵심)</li>
+          <li>포트폴리오 → 보관만, 추후 기관 추천 제출 자료</li>
+        </ul>
+        <div class="tags"><span class="tag">P0는 시드 데이터</span></div>
+        <div class="owner">담당 <b>BE</b></div>
+      </div>
+
+      <div class="node ai" id="S2" style="grid-column:3;grid-row:3">
+        <div class="top"><span class="id">S2</span><h3>역량 프로필 추출</h3></div>
+        <p>등록된 교육 결과물을 바탕으로 수료생별 역량을 공통 스키마로 저장</p>
+        <div class="tags"><span class="tag llm">LLM 정보추출</span></div>
+        <div class="owner">담당 <b>AI</b></div>
+      </div>
+
+      <div class="node ai" id="S3" style="grid-column:3;grid-row:4">
+        <div class="top"><span class="id">S3</span><h3>공고 매칭 Top-3</h3></div>
+        <ul>
+          <li>서울 열린데이터광장 채용정보 API를 하루 1회 받아 DB에 저장 · 갱신</li>
+          <li>수료생이 웹사이트에 들어오면 DB 공고와 S2 프로필을 비교해 상위 3개 선정</li>
+          <li><b>실제 운영</b>: 매주 월요일 취업 확인이 안 된 수료생 전원을 미리 매칭하고 알림을 먼저 발송</li>
+        </ul>
+        <div class="tags"><span class="tag rule">일 배치</span><span class="tag llm">임베딩 + 리랭커</span></div>
+        <div class="owner">담당 <b>AI · BE</b></div>
+      </div>
+
+      <div class="node stu" id="S4" style="grid-column:2;grid-row:5">
+        <div class="top"><span class="id">S4</span><h3>맞춤 공고 카드 3장</h3></div>
+        <p>접속하면 취업 여부를 묻는 대신 맞춤 공고가 먼저 보임. 카드마다 "왜 나에게 맞는지" 근거 표시</p>
+        <div class="owner">담당 <b>FE</b></div>
+      </div>
+
+      <div class="node stu choice" id="S5" style="grid-column:2;grid-row:6">
+        <div class="top"><span class="id">S5</span><h3>카드별 응답 선택</h3></div>
+        <p>지원 · 패스 · 도움 요청 중 하나만 고름. 취업 여부는 묻지 않음</p>
+        <div class="tags"><span class="tag rule">규칙으로 기록</span></div>
+        <div class="owner">담당 <b>FE · BE</b></div>
+      </div>
+
+      <div class="node stu" id="S6" style="grid-column:2;grid-row:7">
+        <div class="top"><span class="id">S6</span><h3>패스 사유 선택</h3></div>
+        <ul>
+          <li><b>이미 취업했어요</b> → 취업 완료</li>
+          <li>직무가 맞지 않아요 · 지역/근무 조건이 안 맞아요 → 다음 추천에 반영</li>
+          <li>요구 역량이 부족한 것 같아요 → 보완 역량 안내</li>
+          <li>지금은 구직을 잠시 쉬고 있어요 → 대기</li>
+          <li>기타(직접 입력) → '비고'로 저장, 코디네이터가 확인</li>
+        </ul>
+        <div class="tags"><span class="tag rule">규칙</span></div>
+        <div class="owner">담당 <b>FE · BE</b></div>
+      </div>
+
+      <div class="node ai" id="S7" style="grid-column:3;grid-row:7">
+        <div class="top"><span class="id">S7</span><h3>공고 맞춤 서류 초안</h3></div>
+        <ul>
+          <li>기업 홈페이지의 인재상 · 채용 페이지와 최근 뉴스 1~2건(6개월 이내)을 웹 검색으로 찾아, 등록된 자기소개서를 이 공고용으로 다시 씀</li>
+          <li>P0는 시연 기업 결과를 미리 저장해 두고 재사용</li>
+          <li>찾지 못하면 지어내지 않고 '공고 외 정보 확인 불가'로 기록</li>
+          <li>이력서 초안 작성</li>
+          <li>문장마다 원본 근거 연결, 근거 없는 문장은 제외</li>
+        </ul>
+        <div class="tags"><span class="tag llm">웹 검색 RAG</span><span class="tag llm">LLM + 근거 검증</span></div>
+        <div class="owner">담당 <b>AI</b></div>
+      </div>
+
+      <div class="node co help" id="S11" style="grid-column:4;grid-row:7">
+        <div class="top"><span class="id">S11</span><h3>도움 요청 알림</h3></div>
+        <p>도움 요청이 들어왔다는 사실을 코디네이터에게 바로 알리고, 코디네이터가 직접 개입</p>
+        <div class="tags"><span class="tag rule">규칙</span></div>
+        <div class="owner">담당 <b>FE · BE</b></div>
+      </div>
+
+      <div class="node stu" id="S8" style="grid-column:2;grid-row:8">
+        <div class="top"><span class="id">S8</span><h3>초안 확인 · 최종 제출</h3></div>
+        <p>문장별 근거를 보며 확인한 뒤 바로 최종 제출. 고치고 싶은 문장은 화면에서 직접 수정하고 제출</p>
+        <div class="owner">담당 <b>FE</b></div>
+      </div>
+
+      <div class="node co" id="S9" style="grid-column:4;grid-row:9">
+        <div class="top"><span class="id">S9</span><h3>초안 검토 · 승인</h3></div>
+        <p>승인하면 기관 추천으로 전달. 반려하면 코디네이터가 수료생에게 직접 연락</p>
+        <div class="owner">담당 <b>FE</b></div>
+      </div>
+
+      <div class="node co" id="S10" style="grid-column:4;grid-row:10">
+        <div class="top"><span class="id">S10</span><h3>'추천 전달 완료' 처리</h3></div>
+        <p>코디네이터가 상태를 '전달 완료'로 변경. P0에서는 실제로 전송하지 않음</p>
+        <div class="owner">담당 <b>FE · BE</b></div>
+      </div>
+
+      <div class="node ai" id="S12" style="grid-column:3;grid-row:11">
+        <div class="top"><span class="id">S12</span><h3>상태 자동 분류</h3></div>
+        <ul>
+          <li>① 취업 완료 (패스 사유 '이미 취업')</li>
+          <li>② 구직 중 — 기관 추천 지원 중 · 패스 후 대기 중 · 기타 사유(비고)</li>
+          <li>③ 도움 필요 → 코디네이터 개입</li>
+          <li>예외: 1주 무응답 → 추가 확인 필요 → 코디네이터가 전화로 확인</li>
+        </ul>
+        <p>응답이 이미 규칙에 맞는 데이터라 LLM을 쓰지 않음. 비고 같은 예외는 코디네이터가 직접 확인</p>
+        <div class="tags"><span class="tag rule">규칙만</span></div>
+        <div class="owner">담당 <b>BE</b></div>
+      </div>
+
+      <div class="node co" id="S13" style="grid-column:4;grid-row:12">
+        <div class="top"><span class="id">S13</span><h3>상태별 집계 대시보드</h3></div>
+        <p>상태별 인원수와 목록. 서울시 관점에서 확인 불가와 미취업이 구분돼 정리된 화면으로 시연</p>
+        <div class="owner">담당 <b>FE</b></div>
+      </div>
+
+      <svg class="edges" id="edges" aria-hidden="true">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--edge);stroke:none"/></marker>
+          <marker id="ahHelp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--help);stroke:none"/></marker>
+          <marker id="ahLoop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted);stroke:none"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <p class="hint">화면이 좁으면 흐름도를 옆으로 밀어서 보세요. 담당은 파트 기준(AI · BE · FE)이며, 노드 사이의 API 연결은 BE가 맡습니다.</p>
+
+  <div class="notes">
+    <section>
+      <h2>데이터 출처</h2>
+      <ul>
+        <li>수료생: 시드 데이터 (S1 일괄 등록분, 민준 포함)</li>
+        <li>공고: 서울 열린데이터광장 채용정보 API, 하루 1회 DB 동기화</li>
+        <li>상태 시나리오 50개 (S12 ~ S13 화면용, 시드)</li>
+      </ul>
+    </section>
+    <section>
+      <h2>P0에서 제외</h2>
+      <ul>
+        <li>카톡 · 이메일 실제 알림 발송</li>
+        <li>회원가입과 복잡한 인증 (역할 전환으로 대체)</li>
+        <li>실제 기업 전달</li>
+        <li>도움 요청 · 상태 분류에서의 LLM 사용</li>
+        <li>대화형 프로필 보완, 위험 표현 감지 (P1)</li>
+        <li>반응형 대응, 배포</li>
+      </ul>
+    </section>
+    <section class="flagbox">
+      <h2>결정 필요</h2>
+      <ul>
+        <li>시연 기업 3~5곳 선정 (그중 1곳은 공고 외 정보가 없는 기업으로)</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  var dg=document.getElementById('dg'), svg=document.getElementById('edges');
+  var E=[
+    {a:'S1',b:'S2',t:'hv',from:'left'},
+    {a:'S2',b:'S3',t:'v'},
+    {a:'S3',b:'S4',t:'hv',from:'left'},
+    {a:'S4',b:'S5',t:'v'},
+    {a:'S5',b:'S6',t:'v',label:'패스'},
+    {a:'S5',b:'S7',t:'hv',from:'right',dy:10,label:'지원'},
+    {a:'S5',b:'S11',t:'hv',from:'right',dy:-10,label:'도움 요청',cls:'help'},
+    {a:'S6',b:'S3',t:'loopL',label:'다음 추천에 반영',cls:'loop'},
+    {a:'S7',b:'S8',t:'vh'},
+    {a:'S8',b:'S9',t:'vh'},
+    {a:'S9',b:'S10',t:'v',label:'승인'},
+    {a:'S10',b:'S12',t:'hv',from:'left'},
+    {a:'S12',b:'S13',t:'hv',from:'right'}
+  ];
+  function R(id){var e=document.getElementById(id).getBoundingClientRect(),d=dg.getBoundingClientRect();
+    return {l:e.left-d.left,r:e.right-d.left,t:e.top-d.top,b:e.bottom-d.top,cx:(e.left+e.right)/2-d.left,cy:(e.top+e.bottom)/2-d.top};}
+  function draw(){
+    svg.querySelectorAll('path.e').forEach(function(p){p.remove()});
+    dg.querySelectorAll('.elabel').forEach(function(l){l.remove()});
+    E.forEach(function(x){
+      var A=R(x.a),B=R(x.b),d,lx,ly,dy=x.dy||0;
+      if(x.t==='v'){d='M'+A.cx+','+A.b+' V'+(B.t-2);lx=A.cx;ly=(A.b+B.t)/2;}
+      else if(x.t==='hv'){var sx=x.from==='left'?A.l:A.r,sy=A.cy+dy;d='M'+sx+','+sy+' H'+B.cx+' V'+(B.t-2);lx=(sx+B.cx)/2;ly=sy;}
+      else if(x.t==='vh'){var ex=B.cx<A.cx?B.r:B.l;d='M'+A.cx+','+A.b+' V'+B.cy+' H'+(ex+(B.cx<A.cx?2:-2));lx=A.cx;ly=(A.b+B.cy)/2;}
+      else if(x.t==='loopL'){var gx=Math.min(A.l,B.l)-22;d='M'+A.l+','+A.cy+' H'+gx+' V'+B.cy+' H'+(B.l-2);lx=(gx+B.l)/2;ly=B.cy;}
+      var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',d);p.setAttribute('class','e '+(x.cls||''));
+      p.setAttribute('marker-end','url(#'+(x.cls==='help'?'ahHelp':x.cls==='loop'?'ahLoop':'ah')+')');
+      svg.appendChild(p);
+      if(x.label){var s=document.createElement('span');s.className='elabel '+(x.cls||'');s.textContent=x.label;
+        s.style.left=lx+'px';s.style.top=ly+'px';dg.appendChild(s);}
+    });
+  }
+  draw();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
+  window.addEventListener('resize',draw);
+  if(window.ResizeObserver)new ResizeObserver(draw).observe(dg);
+})();
+</script>
+
+</html>

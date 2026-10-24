@@ -1,0 +1,263 @@
+{
+  "data": {
+    "applicationId": 7,
+    "status": "SUBMITTED",
+    "student": {
+      "studentId": 1,
+      "name": "김민준"
+    },
+    "job": {
+      "jobPostingId": 501,
+      "companyName": "(주)온다랩",
+      "title": "백엔드 인턴 (AI 서비스팀)"
+    },
+    "document": {
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoNote": "온다랩의 최근 뉴스를 찾지 못해 인재상만 반영했어요",
+      "excludedSentenceCount": 2,
+      "sections": [
+        {
+          "section": "BASIC",
+          "source": "REGISTERED",
+          "fields": {
+            "name": "김민준",
+            "email": "minjun.dev@example.com",
+            "githubUrl": "github.com/minjun-dev",
+            "desiredJob": "백엔드 개발"
+          }
+        },
+        {
+          "section": "EDUCATION",
+          "items": [
+            {
+              "itemId": "edu-1",
+              "source": "REGISTERED",
+              "schoolName": "○○대학교",
+              "major": "경영학과",
+              "degree": "BACHELOR",
+              "status": "GRADUATED",
+              "graduatedOn": "2025-02-28"
+            }
+          ]
+        },
+        {
+          "section": "TRAINING",
+          "items": [
+            {
+              "itemId": "trn-1",
+              "source": "REGISTERED",
+              "name": "청년취업사관학교 AI Agent 과정",
+              "campus": "동대문캠퍼스",
+              "startedOn": "2026-03-02",
+              "endedOn": "2026-08-29"
+            }
+          ]
+        },
+        {
+          "section": "CAREER",
+          "items": []
+        },
+        {
+          "section": "MILITARY",
+          "value": null
+        },
+        {
+          "section": "CERTIFICATES",
+          "items": [
+            {
+              "itemId": "cert-1",
+              "source": "REGISTERED",
+              "name": "정보처리기사",
+              "issuer": "한국산업인력공단",
+              "acquiredOn": "2026-03-20"
+            },
+            {
+              "itemId": "cert-2",
+              "source": "USER",
+              "name": "SQLD",
+              "issuer": "한국데이터산업진흥원",
+              "acquiredOn": "2026-09-01"
+            }
+          ]
+        },
+        {
+          "section": "SKILLS",
+          "source": "AI",
+          "summary": [
+            {
+              "sentenceId": "sk-1",
+              "text": "Spring Boot · MySQL로 인증부터 조회 API까지 직접 설계하고 구현",
+              "source": "AI",
+              "evidence": [
+                {
+                  "refType": "PROJECT",
+                  "refId": 11,
+                  "label": "모아요 README · 성능 개선",
+                  "quote": "목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
+                  "url": null,
+                  "collectedAt": null
+                }
+              ]
+            }
+          ],
+          "tags": [
+            "Java",
+            "Spring Boot",
+            "MySQL",
+            "FastAPI",
+            "Gemini API"
+          ]
+        },
+        {
+          "section": "PROJECTS",
+          "items": [
+            {
+              "itemId": "prj-11",
+              "title": "모아요 · 스터디 모집 웹서비스",
+              "periodText": "6주",
+              "teamSize": 4,
+              "role": "백엔드",
+              "bullets": [
+                {
+                  "sentenceId": "pj-1",
+                  "text": "모집글 CRUD 등 REST API 12개 설계 · 구현",
+                  "source": "AI",
+                  "evidence": [
+                    {
+                      "refType": "PROJECT",
+                      "refId": 11,
+                      "label": "모아요 README · 성능 개선",
+                      "quote": "목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
+                      "url": null,
+                      "collectedAt": null
+                    }
+                  ]
+                },
+                {
+                  "sentenceId": "pj-2",
+                  "text": "N+1 쿼리를 fetch join으로 바꿔 목록 응답을 1.8초에서 0.4초로 단축",
+                  "source": "AI",
+                  "evidence": [
+                    {
+                      "refType": "PROJECT",
+                      "refId": 11,
+                      "label": "모아요 README · 성능 개선",
+                      "quote": "목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
+                      "url": null,
+                      "collectedAt": null
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "itemId": "prj-12",
+              "title": "AI 면접 코치",
+              "periodText": "4주",
+              "teamSize": 3,
+              "role": "백엔드 · AI 연동",
+              "bullets": [
+                {
+                  "sentenceId": "pj-3",
+                  "text": "Gemini API로 면접 질문 생성과 답변 피드백 기능 구현",
+                  "source": "AI",
+                  "evidence": [
+                    {
+                      "refType": "PROJECT",
+                      "refId": 12,
+                      "label": "AI 면접 코치 README",
+                      "quote": "Gemini API로 질문 생성 · 답변 피드백 기능 구현",
+                      "url": null,
+                      "collectedAt": null
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "section": "PORTFOLIO",
+          "items": [
+            {
+              "itemId": "pf-11",
+              "fileName": "모아요_포트폴리오.pdf",
+              "include": true
+            }
+          ]
+        },
+        {
+          "section": "COVER_LETTER",
+          "sentences": [
+            {
+              "sentenceId": "cl-1",
+              "text": "온다랩이 말하는 '끝까지 책임지는 개발자'처럼, 저는 맡은 기능을 마감까지 직접 검증해 왔습니다.",
+              "source": "AI",
+              "evidence": [
+                {
+                  "refType": "COMPANY_INFO",
+                  "refId": 3,
+                  "label": "온다랩 채용 페이지 · 인재상",
+                  "quote": "끝까지 책임지는 사람",
+                  "url": "https://example.com/ondalab/careers",
+                  "collectedAt": "2026-10-24T08:00:00+09:00"
+                },
+                {
+                  "refType": "COVER_LETTER",
+                  "refId": 1,
+                  "label": "등록 자기소개서 2문단",
+                  "quote": "마감 전날까지 직접 테스트하며 버그를 잡았습니다",
+                  "url": null,
+                  "collectedAt": null
+                }
+              ]
+            },
+            {
+              "sentenceId": "cl-2",
+              "text": "모아요 프로젝트에서 목록 조회가 느리다는 피드백을 받고 원인을 N+1 쿼리에서 찾아 응답 시간을 1.8초에서 0.4초로 줄였습니다.",
+              "source": "AI",
+              "evidence": [
+                {
+                  "refType": "PROJECT",
+                  "refId": 11,
+                  "label": "모아요 README · 성능 개선",
+                  "quote": "목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
+                  "url": null,
+                  "collectedAt": null
+                }
+              ]
+            },
+            {
+              "sentenceId": "cl-3",
+              "text": "AI 면접 코치 프로젝트에서는 Gemini API를 연동해 LLM 응답을 서비스 흐름에 맞게 다루는 경험을 쌓았습니다.",
+              "source": "AI",
+              "evidence": [
+                {
+                  "refType": "PROJECT",
+                  "refId": 12,
+                  "label": "AI 면접 코치 README",
+                  "quote": "Gemini API로 질문 생성 · 답변 피드백 기능 구현",
+                  "url": null,
+                  "collectedAt": null
+                }
+              ]
+            },
+            {
+              "sentenceId": "cl-4",
+              "text": "이 경험을 바탕으로 AI 서비스팀의 백엔드를 안정적으로 받치는 인턴이 되겠습니다.",
+              "source": "USER",
+              "evidence": []
+            }
+          ]
+        }
+      ]
+    },
+    "verification": {
+      "aiSentenceCount": 7,
+      "aiSentenceWithEvidence": 7,
+      "excludedSentenceCount": 2,
+      "userEditedCount": 2,
+      "companyInfoStatus": "PARTIAL"
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "data": {
+    "studentId": 1,
+    "profileUpdatedAt": "2026-10-24T11:20:00+09:00",
+    "basic": {
+      "name": "김민준",
+      "email": "minjun.dev@example.com",
+      "githubUrl": "github.com/minjun-dev",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "경영학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-28"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 1,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2026-03-20"
+      },
+      {
+        "itemId": 2,
+        "source": "USER",
+        "name": "SQLD",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2026-09-01"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MySQL",
+      "FastAPI"
+    ],
+    "projects": [
+      {
+        "itemId": 11,
+        "title": "모아요 · 스터디 모집 웹서비스",
+        "periodText": "6주",
+        "teamSize": 4,
+        "techStack": [
+          "Spring Boot",
+          "MySQL",
+          "React"
+        ],
+        "portfolioFileName": "모아요_포트폴리오.pdf",
+        "includeInApply": true
+      },
+      {
+        "itemId": 12,
+        "title": "AI 면접 코치",
+        "periodText": "4주",
+        "teamSize": 3,
+        "techStack": [
+          "FastAPI",
+          "Gemini API"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false
+      }
+    ],
+    "coverLetter": {
+      "content": "저는 맡은 일을 끝까지 확인하는 개발자입니다. ...",
+      "updatedAt": "2026-10-20T15:00:00+09:00"
+    },
+    "competencyProfile": {
+      "roles": [
+        "백엔드 API 설계 · 구현",
+        "LLM API 연동"
+      ],
+      "skills": [
+        {
+          "name": "Spring Boot",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        },
+        {
+          "name": "MySQL",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        },
+        {
+          "name": "Gemini API",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 12
+            }
+          ]
+        }
+      ],
+      "achievements": [
+        {
+          "text": "목록 조회 응답 1.8초 → 0.4초 개선",
+          "evidence": [
+            {
+              "refType": "PROJECT",
+              "refId": 11
+            }
+          ]
+        }
+      ],
+      "certificates": [
+        "정보처리기사",
+        "SQLD"
+      ],
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울"
+    }
+  }
+}

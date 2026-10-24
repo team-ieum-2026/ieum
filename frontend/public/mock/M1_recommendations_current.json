@@ -1,0 +1,69 @@
+{
+  "data": {
+    "recommendationId": 31,
+    "createdAt": "2026-10-24T09:00:00+09:00",
+    "basis": "PROFILE_LATEST",
+    "items": [
+      {
+        "itemId": 91,
+        "rank": 1,
+        "response": "NONE",
+        "job": {
+          "jobPostingId": 501,
+          "companyName": "(주)온다랩",
+          "title": "백엔드 인턴 (AI 서비스팀)",
+          "location": "서울 성동구",
+          "employmentType": "인턴",
+          "career": "신입",
+          "deadlineOn": "2026-10-31",
+          "untilFilled": false,
+          "dDay": 7
+        },
+        "reasonSummary": [
+          "모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요",
+          "LLM API 연동 경험이 우대사항에 해당해요"
+        ]
+      },
+      {
+        "itemId": 92,
+        "rank": 2,
+        "response": "NONE",
+        "job": {
+          "jobPostingId": 502,
+          "companyName": "데이터웨이브(주)",
+          "title": "주니어 데이터 엔지니어",
+          "location": "서울 강남구",
+          "employmentType": "정규직",
+          "career": "신입",
+          "deadlineOn": "2026-11-07",
+          "untilFilled": true,
+          "dDay": 14
+        },
+        "reasonSummary": [
+          "MySQL 쿼리 개선 경험이 데이터 파이프라인 업무와 맞아요",
+          "SQLD 자격증이 우대사항에 해당해요"
+        ]
+      },
+      {
+        "itemId": 93,
+        "rank": 3,
+        "response": "NONE",
+        "job": {
+          "jobPostingId": 503,
+          "companyName": "(주)서울에이아이랩",
+          "title": "AI 서비스 기획 보조",
+          "location": "서울 마포구",
+          "employmentType": "계약직",
+          "career": "신입",
+          "deadlineOn": "2026-11-15",
+          "untilFilled": false,
+          "dDay": 22
+        },
+        "reasonSummary": [
+          "AI 면접 코치 프로젝트로 LLM 서비스 흐름을 이해하고 있어요",
+          "희망 지역(서울)과 근무지가 맞아요"
+        ]
+      }
+    ]
+  }
+}

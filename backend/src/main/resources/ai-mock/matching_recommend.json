@@ -1,0 +1,30 @@
+{
+  "data": {
+    "items": [
+      {
+        "jobPostingId": 501,
+        "rank": 1,
+        "reasons": [
+          { "text": "모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요", "evidence": [ { "refType": "PROJECT", "refId": 11 } ] },
+          { "text": "LLM API 연동 경험이 우대사항에 해당해요", "evidence": [ { "refType": "PROJECT", "refId": 12 } ] }
+        ]
+      },
+      {
+        "jobPostingId": 502,
+        "rank": 2,
+        "reasons": [
+          { "text": "MySQL 쿼리 개선 경험이 데이터 파이프라인 업무와 맞아요", "evidence": [ { "refType": "PROJECT", "refId": 11 } ] },
+          { "text": "SQLD 자격증이 우대사항에 해당해요", "evidence": [ { "refType": "CERTIFICATE", "refId": 2 } ] }
+        ]
+      },
+      {
+        "jobPostingId": 503,
+        "rank": 3,
+        "reasons": [
+          { "text": "AI 면접 코치 프로젝트로 LLM 서비스 흐름을 이해하고 있어요", "evidence": [ { "refType": "PROJECT", "refId": 12 } ] },
+          { "text": "희망 지역(서울)과 근무지가 맞아요", "evidence": [ { "refType": "COURSE", "refId": 1 } ] }
+        ]
+      }
+    ]
+  }
+}
