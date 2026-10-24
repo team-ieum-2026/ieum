@@ -1,0 +1,12 @@
+# 줄바꿈 통일: 저장소 · 작업 폴더 모두 LF (윈도우 · 맥 공통). 개인 core.autocrlf 설정보다 우선한다.
+* text=auto eol=lf
+
+# 윈도우 배치 파일만 CRLF
+*.bat text eol=crlf
+
+# 바이너리
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
