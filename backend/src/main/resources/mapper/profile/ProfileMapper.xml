@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-03 프로필 조회 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.profile.ProfileMapper">
+
+    <resultMap id="student" type="com.ieum.profile.ProfileData$Student" autoMapping="true">
+        <id property="studentId" column="student_id"/>
+        <result property="skills" column="skills"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+        <result property="competencyProfile" column="competency_profile"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="project" type="com.ieum.profile.ProfileData$Project" autoMapping="true">
+        <id property="itemId" column="item_id"/>
+        <result property="techStack" column="tech_stack"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <select id="findStudent" resultMap="student">
+        SELECT s.id AS student_id,
+               s.name,
+               s.email,
+               s.github_url,
+               s.desired_job,
+               s.preferred_region,
+               s.military_status,
+               s.completed_on,
+               s.skills,
+               c.id AS course_id,
+               c.name AS course_name,
+               c.cohort,
+               c.campus,
+               c.started_on,
+               c.ended_on,
+               cl.content AS cover_letter_content,
+               cl.updated_at AS cover_letter_updated_at,
+               cp.extracted_at AS profile_updated_at,
+               cp.profile AS competency_profile
+        FROM student s
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN student_cover_letter cl ON cl.student_id = s.id
+        LEFT JOIN competency_profile cp ON cp.student_id = s.id
+        WHERE s.id = #{studentId}
+    </select>
+
+    <select id="findEducation" resultType="com.ieum.profile.StudentProfileResponse$Education">
+        SELECT id AS item_id, source, school_name, major, degree, status, graduated_on
+        FROM student_education
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findCareers" resultType="com.ieum.profile.StudentProfileResponse$Career">
+        SELECT id AS item_id, source, company_name, position, started_on, ended_on, description
+        FROM student_career
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findCertificates" resultType="com.ieum.profile.StudentProfileResponse$Certificate">
+        SELECT id AS item_id, source, name, issuer, acquired_on
+        FROM student_certificate
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findProjects" resultMap="project">
+        SELECT id AS item_id, title, period_text, team_size, tech_stack,
+               portfolio_file_url AS portfolio_file_name, include_in_apply
+        FROM student_project
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+</mapper>
