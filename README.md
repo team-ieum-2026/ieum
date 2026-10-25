@@ -109,6 +109,7 @@ npm run dev
 | [docs/API.md](docs/API.md) | API 명세 · 공통 JSON 규칙 · 핵심 JSON 형식 |
 | [docs/ERD.md](docs/ERD.md) | 테이블 관계도 · 테이블 주인 |
 | [docs/DATA_SPEC.md](docs/DATA_SPEC.md) | 데이터 명세서 (테이블 17개 컬럼 정의 · 상태 판정 규칙) |
+| [docs/TECH_STACK.md](docs/TECH_STACK.md) | 기술 스택 · 버전 · 호출 방향 |
 | [docs/JOB_API.md](docs/JOB_API.md) | 서울 채용정보 API 필드 매핑 · IT 직종 필터 · 배치 규칙 |
 | [docs/ROLES.md](docs/ROLES.md) | 역할 분담 · 2주 일정 · 위험과 대응 |
 | [docs/CHANGES.md](docs/CHANGES.md) | 기획서 대비 변경사항 |
@@ -119,6 +120,6 @@ npm run dev
 
 ## 일정
 
-- 10/26~11/1 병렬 개발 (매일 PR, PM 병합) · 10/29 얇은 연결 1회
+- 10/26~11/1 병렬 개발 (매일 `dev`로 PR, 병합 담당 3명이 병합 · `main`은 동작 확인된 최종본만) · 10/29 얇은 연결 1회
 - 11/2~11/4 통합 · 11/4 저녁 코드 프리즈 (`demo-1104` 태그)
 - 11/6 23:59 제출 (IR Deck + 시연영상 2분) · 11/9 본선 (DDP)

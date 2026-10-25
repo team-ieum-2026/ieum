@@ -147,26 +147,39 @@ git push origin main
 
 - Allow merge commits **켬** · Allow squash merging **끔** · Allow rebase merging **끔**
 - Always suggest updating pull request branches **끔** (Update branch 버튼 숨김)
-- Automatically delete head branches **끔** (1인 1브랜치를 계속 씀)
+- Automatically delete head branches **켬** (기능 브랜치는 병합되면 자동 삭제. `dev` · `main`은 보호돼 있어 지워지지 않음)
 
 ```bash
 gh repo edit <계정>/<레포> --enable-merge-commit=true --enable-squash-merge=false \
-  --enable-rebase-merge=false --delete-branch-on-merge=false --allow-update-branch=false
+  --enable-rebase-merge=false --delete-branch-on-merge=true --allow-update-branch=false
 ```
 
-### main 보호 (Settings → Branches → Add branch protection rule → `main`)
+### dev 브랜치 만들기
+
+첫 push 직후 `main`에서 `dev`를 만들어 올립니다. 팀원 PR은 전부 `dev`로 받고, `main`에는 PM이 `dev`를 병합할 때만 들어갑니다(`docs/GIT_RULES.md`).
+
+```bash
+git branch dev main
+git push -u origin dev
+```
+
+Settings → General → Default branch를 `dev`로 바꾸면 PR 만들 때 base가 자동으로 `dev`가 됩니다(팀원 실수 방지, 권장).
+
+### main · dev 보호 (Settings → Branches → Add branch protection rule → `main`, 같은 내용으로 `dev` 한 번 더)
 
 - Require a pull request before merging **켬** · Required approvals **0**
 - Allow force pushes **끔** · Allow deletions **끔**
 - Do not allow bypassing the above settings **켬** (PM도 PR로만 넣기)
+- Restrict who can push to matching branches **켬** → 김용현(PM) · 심소민(AI-A) · 김하윤(FE-A) 세 명. 이 세 명만 PR을 병합할 수 있다(`dev`·`main` 공통). 개인 계정 저장소에서는 이 항목이 없을 수 있으니, 그때는 GIT_RULES의 "병합 담당 3명" 규칙으로만 운영한다.
 
 ```bash
+# main, dev 두 번 실행 (아래 main 자리를 dev로 바꿔서). users 에는 세 명의 GitHub 아이디
 gh api -X PUT repos/<계정>/<레포>/branches/main/protection --input - <<'EOF'
 {
   "required_status_checks": null,
   "enforce_admins": true,
   "required_pull_request_reviews": { "required_approving_review_count": 0 },
-  "restrictions": null,
+  "restrictions": { "users": ["<PM아이디>", "<소민아이디>", "<하윤아이디>"], "teams": [] },
   "allow_force_pushes": false,
   "allow_deletions": false
 }
@@ -186,13 +199,16 @@ gh api -X PUT repos/<계정>/<레포>/collaborators/<깃허브아이디> -f perm
 ### 확인
 
 - [ ] PR 화면 병합 버튼이 "Create a merge commit" 하나만 보임
-- [ ] `main`에 직접 push하면 거절됨
+- [ ] `main`, `dev`에 직접 push하면 거절됨
+- [ ] 새 PR을 만들 때 base가 `dev`로 잡힘
+- [ ] 병합 담당 3명 외의 팀원 화면에서는 PR 병합 버튼이 비활성
+- [ ] PR 병합 후 기능 브랜치가 자동으로 삭제됨
 
 ---
 
 ## ⑥ 팀 공유 (디스코드)
 
-- 저장소 주소 + "README 실행 방법대로 띄우고, 처음 한 번 GIT_RULES의 '처음 한 번' 명령으로 내 브랜치 만들기"
+- 저장소 주소 + "README 실행 방법대로 띄우고, 기능마다 최신 dev에서 `파트/종류/기능` 브랜치를 따서 작업 (GIT_RULES '매일 쓰는 명령어')"
 - **비공개 채널**에 키 2개: `SEOUL_OPENAPI_KEY`(BE용), `GEMINI_API_KEY`(AI용)
 
 ---
