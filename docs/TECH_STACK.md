@@ -1,7 +1,7 @@
 # 이음 P0 기술 스택
 
 2026-10-24 기준. 버전은 실제 설치 · 고정된 값이며, 정확한 출처는 `frontend/package.json` · `backend/build.gradle` · `ai/requirements.txt`입니다.
-스택 변경 · 라이브러리 추가는 AGENTS.md 규칙대로 PM 확인 후 `파트/chore/…` 브랜치 PR로만 합니다.
+스택 변경 · 라이브러리 추가는 AGENTS.md 규칙대로 PM 확인 후 `파트/build/…` 브랜치 PR로만 합니다.
 
 ## 호출 방향
 
