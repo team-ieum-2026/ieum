@@ -147,11 +147,11 @@ git push origin main
 
 - Allow merge commits **켬** · Allow squash merging **끔** · Allow rebase merging **끔**
 - Always suggest updating pull request branches **끔** (Update branch 버튼 숨김)
-- Automatically delete head branches **끔** (1인 1브랜치를 계속 씀)
+- Automatically delete head branches **켬** (기능 브랜치는 병합되면 자동 삭제. `dev` · `main`은 보호돼 있어 지워지지 않음)
 
 ```bash
 gh repo edit <계정>/<레포> --enable-merge-commit=true --enable-squash-merge=false \
-  --enable-rebase-merge=false --delete-branch-on-merge=false --allow-update-branch=false
+  --enable-rebase-merge=false --delete-branch-on-merge=true --allow-update-branch=false
 ```
 
 ### dev 브랜치 만들기
@@ -202,12 +202,13 @@ gh api -X PUT repos/<계정>/<레포>/collaborators/<깃허브아이디> -f perm
 - [ ] `main`, `dev`에 직접 push하면 거절됨
 - [ ] 새 PR을 만들 때 base가 `dev`로 잡힘
 - [ ] 병합 담당 3명 외의 팀원 화면에서는 PR 병합 버튼이 비활성
+- [ ] PR 병합 후 기능 브랜치가 자동으로 삭제됨
 
 ---
 
 ## ⑥ 팀 공유 (디스코드)
 
-- 저장소 주소 + "README 실행 방법대로 띄우고, 처음 한 번 GIT_RULES의 '처음 한 번' 명령으로 내 브랜치 만들기"
+- 저장소 주소 + "README 실행 방법대로 띄우고, 기능마다 최신 dev에서 `파트/종류/기능` 브랜치를 따서 작업 (GIT_RULES '매일 쓰는 명령어')"
 - **비공개 채널**에 키 2개: `SEOUL_OPENAPI_KEY`(BE용), `GEMINI_API_KEY`(AI용)
 
 ---
