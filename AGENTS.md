@@ -75,25 +75,28 @@
 | `ai/main.py` 라우터 등록 | AI-A | 라우터는 이미 등록됨. 각자 자기 `router.py`만 수정 |
 | `ai/common/` (LLM · 임베딩 · 리랭커 · 설정) | AI-A | 모델 · 키 설정은 여기 한 곳. AI-B는 import만 하고 변경은 AI-A에 요청 |
 | AI 데이터 형식 `ai/schemas/` · `docs/API.md` 3장 | AI-A | AI-B는 형식에 맞춰 데이터만 채움 |
-| 의존성 파일 | PM | 라이브러리 추가는 디스코드에 먼저 알리고 `chore/` 브랜치 PR 하나로 따로 올림 |
+| 의존성 파일 | PM | 라이브러리 추가는 디스코드에 먼저 알리고 `파트/build/add-라이브러리명` 브랜치 PR 하나로 따로 올림 |
 | 시드 데이터 | BE-B 적재 · AI-B 생성 | AI-B는 정해진 형식의 파일만 넘기고, 적재 스크립트는 BE-B만 수정 |
 
 ## 파트 · 담당자
 
-| 파트 | 담당 | 브랜치 |
+| 파트 | 담당 | 브랜치 접두어 |
 | --- | --- | --- |
-| FE-A | 김하윤 | `fe-a/student-ui` |
-| FE-B | 유지수 | `fe-b/resume-dashboard` |
-| BE-A (PM) | 김용현 | `be-a/student-api` |
-| BE-B | 유능한 | `be-b/coordinator-api` |
-| AI-A (AI 리드) | 심소민 | `ai-a/document` |
-| AI-B | 조영동 | `ai-b/recommend` |
+| FE-A | 김하윤 | `fe-a/` |
+| FE-B | 유지수 | `fe-b/` |
+| BE-A (PM) | 김용현 | `be-a/` |
+| BE-B | 유능한 | `be-b/` |
+| AI-A (AI 리드) | 심소민 | `ai-a/` |
+| AI-B | 조영동 | `ai-b/` |
 
-브랜치 흐름: `내 브랜치` → PR → `dev`(통합 · 테스트) → `main`(최종본만). PR 병합은 김용현(PM) · 심소민(AI-A) · 김하윤(FE-A) 세 명만 한다(`dev` · `main` 공통). 자세한 건 `docs/GIT_RULES.md`.
+브랜치 흐름: 기능 브랜치 `파트/종류/기능`(예: `be-a/feat/job-sync`, 최신 `dev`에서 새로 따고 병합되면 삭제) → PR → `dev`(통합 · 테스트) → `main`(최종본만). PR 병합은 김용현(PM) · 심소민(AI-A) · 김하윤(FE-A) 세 명만 한다(`dev` · `main` 공통). PR을 올리면 디스코드 `깃허브-pr-리뷰` 채널에 알린다. 자세한 건 `docs/GIT_RULES.md`.
+
+AI 도구는 작업을 시작할 때 현재 브랜치를 확인하고, `dev` · `main`이거나 이미 병합된 브랜치면 최신 `dev`에서 `파트/종류/기능` 브랜치를 새로 만든 뒤 작업한다.
 
 ## 코드 작성 습관
 
-- 커밋 메시지: `종류(화면번호): 한 일` · 종류는 `feat` `fix` `style` `chore` · 예: `feat(M1): 공고 카드 3장 표시`
+- 커밋 메시지: `종류(화면번호): 한 일` · 종류는 주로 `feat` `fix` `docs` `refactor` `build` `chore` (뜻은 `docs/GIT_RULES.md`) · 예: `feat(M1): 공고 카드 3장 표시`
+- PR 제목: `종류(화면번호): 한 일 [요구사항ID]` · 예: `feat(S3): 공고 배치 동기화 [BE-A-02]`
 - 수료생 화면은 폭 390px 고정, 코디네이터 화면은 데스크톱 고정. 반응형은 만들지 않는다.
 - 수료생 화면 문구에 "취업 여부", "보고"를 묻는 표현을 쓰지 않는다.
 - 색은 디자인 토큰(Tailwind 테마)만 쓰고 색값을 화면 코드에 직접 쓰지 않는다.
