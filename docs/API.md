@@ -79,7 +79,18 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M6 · M6-1 · M6-2 | `PATCH /api/applications/{applicationId}/document` | 문장 수정 · 섹션 항목 추가 · 수정 · 삭제 | S8 |
 | M6 | `POST /api/applications/{applicationId}/submit` | 최종 제출 | S8 |
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
-| - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음). 필드 매핑은 `docs/JOB_API.md` | S3 |
+| - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
+
+#### `POST /api/admin/jobs/sync` (공고 배치)
+
+요청 본문 없음. API 호출이 실패하면 오류가 아니라 `status: "SKIPPED"`로 응답하고 기존 공고를 그대로 씁니다.
+
+```json
+{ "data": { "status": "DONE", "message": "공고 동기화를 마쳤어요.", "fetchedCount": 41191, "itCount": 105,
+  "insertedCount": 105, "updatedCount": 0, "unchangedCount": 0, "deactivatedCount": 3,
+  "indexRequestedCount": 105, "indexResult": { "indexedCount": 105, "skippedCount": 0 },
+  "syncedAt": "2026-10-25T23:43:20+09:00" } }
+```
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 
