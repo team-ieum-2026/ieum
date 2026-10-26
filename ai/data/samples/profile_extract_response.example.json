@@ -1,0 +1,24 @@
+{
+  "data" : {
+    "profile" : {
+      "roles" : [ "백엔드 API 구현" ],
+      "skills" : [ {
+        "name" : "Spring Boot",
+        "evidence" : [ {
+          "refType" : "PROJECT",
+          "refId" : 9401
+        } ]
+      } ],
+      "achievements" : [ {
+        "text" : "모의 프로젝트에서 REST API 5개 구현",
+        "evidence" : [ {
+          "refType" : "PROJECT",
+          "refId" : 9401
+        } ]
+      } ],
+      "certificates" : [ "모의 자격증" ],
+      "desiredJob" : "백엔드 개발",
+      "preferredRegion" : "서울"
+    }
+  }
+}

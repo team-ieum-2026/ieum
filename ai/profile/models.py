@@ -1,53 +1,100 @@
 # 주인: AI-B
-"""POST /ai/profile/extract 요청 (등록 자료).
+"""POST /ai/profile/extract 요청 (등록 자료 전체).
 
-가정한 형식, BE와 확정 전. docs/API.md 4장에 요청 형식이 없어서 db/schema.sql 의
-student · course · student_education · student_certificate · student_project · student_cover_letter 를 보고 정했다.
+BE 잠정 형식(DRAFT, 2026-10-26 BE 전달 자료 기준), 최종 합의 전.
+샘플: ai/data/samples/profile_extract_request.json · profile_extract_response.example.json
+날짜(YYYY-MM-DD) · 시각(ISO 8601 +09:00)은 문자열 그대로 받는다.
 """
+
+from pydantic import ConfigDict
 
 from schemas.base import CamelModel
 
+# REGISTERED | USER | AI. BE 쪽 값이 늘어도 깨지지 않게 문자열로 받는다.
+Source = str
 
-class StudentInfo(CamelModel):
+
+class _Input(CamelModel):
+    """이 파일의 요청 모델 공통 부모. BE가 필드를 추가해도 깨지지 않게 모르는 필드는 무시한다."""
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class BasicInfo(_Input):
+    # name · email · githubUrl 은 받기만 하고 프로필에도 LLM 입력에도 쓰지 않는다 (개인정보)
+    name: str
+    email: str | None = None
+    github_url: str | None = None
     desired_job: str | None = None
     preferred_region: str | None = None
+    military_status: str | None = None
+    completed_on: str
 
 
-class CourseInfo(CamelModel):
-    id: int
+class CourseInfo(_Input):
+    course_id: int
     name: str
+    cohort: str
+    campus: str
+    started_on: str
+    ended_on: str
 
 
-class EducationInfo(CamelModel):
-    id: int
+class EducationItem(_Input):
+    item_id: int
+    source: Source
     school_name: str
     major: str | None = None
+    degree: str | None = None
+    status: str | None = None
+    graduated_on: str | None = None
 
 
-class CertificateInfo(CamelModel):
-    id: int
+class CareerItem(_Input):
+    item_id: int
+    source: Source
+    company_name: str
+    position: str | None = None
+    started_on: str | None = None
+    ended_on: str | None = None
+    description: str | None = None
+
+
+class CertificateItem(_Input):
+    item_id: int
+    source: Source
     name: str
+    issuer: str | None = None
+    acquired_on: str | None = None
 
 
-class ProjectInfo(CamelModel):
-    id: int
+class ProjectItem(_Input):
+    item_id: int
     title: str
+    period_text: str | None = None
+    team_size: int | None = None
+    tech_stack: list[str] | None = None  # 원문 값 그대로라 null 가능
+    portfolio_file_name: str | None = None
+    include_in_apply: bool
     role_note: str | None = None
     readme: str | None = None
-    tech_stack: list[str] = []
+    source: Source
 
 
-class CoverLetterInfo(CamelModel):
+class CoverLetter(_Input):
     content: str
+    updated_at: str
 
 
-class ExtractRequest(CamelModel):
-    """{ studentId, student, course, educations, certificates, projects, coverLetter }"""
+class ExtractRequest(_Input):
+    """{ studentId, basic, course, education, careers, certificates, skills, projects, coverLetter }"""
 
     student_id: int
-    student: StudentInfo
+    basic: BasicInfo
     course: CourseInfo
-    educations: list[EducationInfo] = []
-    certificates: list[CertificateInfo] = []
-    projects: list[ProjectInfo] = []
-    cover_letter: CoverLetterInfo | None = None
+    education: list[EducationItem] = []
+    careers: list[CareerItem] = []
+    certificates: list[CertificateItem] = []
+    skills: list[str] = []  # 수료생이 직접 입력 · 확인한 기술
+    projects: list[ProjectItem] = []
+    cover_letter: CoverLetter | None = None

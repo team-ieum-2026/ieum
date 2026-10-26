@@ -1,31 +1,62 @@
 {
-  "studentId": 1,
-  "student": { "desiredJob": "백엔드 개발", "preferredRegion": "서울" },
-  "course": { "id": 1, "name": "AI Agent 실무 프로젝트 기반 풀스택 개발자 양성과정" },
-  "educations": [
-    { "id": 21, "schoolName": "○○대학교", "major": "경영학과" }
-  ],
-  "certificates": [
-    { "id": 31, "name": "정보처리기사" },
-    { "id": 32, "name": "SQLD" }
-  ],
-  "projects": [
-    {
-      "id": 11,
-      "title": "모아요 · 스터디 모집 웹서비스",
-      "roleNote": "백엔드 담당. 모집글 · 댓글 REST API 설계와 구현, 목록 조회 성능 개선",
-      "readme": "Spring Boot와 MySQL로 만든 스터디 모집 서비스. 목록 API에서 N+1 쿼리 발생 → fetch join 적용. 평균 응답 1.8s → 0.4s",
-      "techStack": ["Java", "Spring Boot", "MySQL", "Redis"]
-    },
-    {
-      "id": 12,
-      "title": "이음봇 · 면접 질문 생성 챗봇",
-      "roleNote": "Gemini API 연동과 질문 생성 API 담당",
-      "readme": "FastAPI 서버에서 Gemini API로 직무별 예상 면접 질문을 만든다. 질문 기록은 MySQL에 저장",
-      "techStack": ["Python", "FastAPI", "Gemini API", "mysql", "spring boot"]
-    }
-  ],
-  "coverLetter": {
-    "content": "팀 프로젝트에서 느린 목록 조회를 끝까지 추적해 고친 경험이 있습니다. 문제를 맡으면 원인을 찾을 때까지 놓지 않는 개발자가 되고 싶습니다."
+  "studentId" : 9001,
+  "basic" : {
+    "name" : "모의 수료생",
+    "email" : null,
+    "githubUrl" : null,
+    "desiredJob" : "백엔드 개발",
+    "preferredRegion" : "서울",
+    "militaryStatus" : null,
+    "completedOn" : "2026-08-29"
+  },
+  "course" : {
+    "courseId" : 9002,
+    "name" : "모의 백엔드 과정",
+    "cohort" : "모의 1기",
+    "campus" : "모의 캠퍼스",
+    "startedOn" : "2026-03-02",
+    "endedOn" : "2026-08-29"
+  },
+  "education" : [ {
+    "itemId" : 9101,
+    "source" : "REGISTERED",
+    "schoolName" : "모의대학교",
+    "major" : "컴퓨터공학",
+    "degree" : "BACHELOR",
+    "status" : "GRADUATED",
+    "graduatedOn" : "2026-02-28"
+  } ],
+  "careers" : [ {
+    "itemId" : 9201,
+    "source" : "USER",
+    "companyName" : "모의 회사",
+    "position" : "모의 백엔드 인턴",
+    "startedOn" : "2026-01-01",
+    "endedOn" : "2026-02-28",
+    "description" : "모의 REST API 유지보수 경험"
+  } ],
+  "certificates" : [ {
+    "itemId" : 9301,
+    "source" : "USER",
+    "name" : "모의 자격증",
+    "issuer" : "모의 발급 기관",
+    "acquiredOn" : "2026-09-01"
+  } ],
+  "skills" : [ "Java", "Spring Boot", "MySQL" ],
+  "projects" : [ {
+    "itemId" : 9401,
+    "title" : "모의 프로젝트",
+    "periodText" : "6주",
+    "teamSize" : 3,
+    "techStack" : [ "Spring Boot", "MySQL" ],
+    "portfolioFileName" : "mock-portfolio.pdf",
+    "includeInApply" : true,
+    "roleNote" : "백엔드 API 구현",
+    "readme" : "# 모의 프로젝트\nSpring Boot와 MySQL로 REST API 5개를 구현했습니다.",
+    "source" : "REGISTERED"
+  } ],
+  "coverLetter" : {
+    "content" : "모의 자기소개서입니다.\n모의 프로젝트에서 REST API 5개를 구현했습니다.",
+    "updatedAt" : "2026-10-26T12:00:00+09:00"
   }
 }

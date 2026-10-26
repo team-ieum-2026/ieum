@@ -12,10 +12,10 @@ AllowedRefs = set[tuple[str, int]]
 def allowed_refs(req: ExtractRequest) -> AllowedRefs:
     """입력에 실제로 있는 (refType, refId) 목록"""
     refs: AllowedRefs = set()
-    refs.update(("PROJECT", p.id) for p in req.projects)
-    refs.update(("CERTIFICATE", c.id) for c in req.certificates)
-    refs.update(("EDUCATION", e.id) for e in req.educations)
-    refs.add(("COURSE", req.course.id))
+    refs.update(("PROJECT", p.item_id) for p in req.projects)
+    refs.update(("CERTIFICATE", c.item_id) for c in req.certificates)
+    refs.update(("EDUCATION", e.item_id) for e in req.education)
+    refs.add(("COURSE", req.course.course_id))
     # 임시 규칙(AI-A 확인 전): 자기소개서는 student_cover_letter 의 PK 가 student_id 라서 refId = studentId
     if req.cover_letter is not None:
         refs.add(("COVER_LETTER", req.student_id))
