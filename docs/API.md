@@ -192,6 +192,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - `section`: `BASIC` · `EDUCATION` · `TRAINING` · `CAREER` · `MILITARY` · `CERTIFICATES` · `SKILLS` · `PROJECTS` · `PORTFOLIO` · `COVER_LETTER`
 - 섹션과 저장 위치: `BASIC` → `student` · `EDUCATION` → `student_education` · `TRAINING` → `course` (읽기 전용) · `CAREER` → `student_career` · `MILITARY` → `student.military_status` · `CERTIFICATES` → `student_certificate` · `SKILLS` → `student.skills` · `PROJECTS` · `PORTFOLIO` → `student_project` · `COVER_LETTER` → `student_cover_letter`
 - `saveToProfile: true`면 BE-A가 BE-B의 프로필 서비스를 호출해 수료생 프로필에도 저장 → 다음 추천에 반영
+- `PROJECTS`를 프로필에 저장할 때는 `title` · `periodText` · `teamSize` · `techStack`만 반영합니다(`PORTFOLIO`의 `include`는 `include_in_apply`). `bullets`는 공고마다 다르게 쓴 서류 전용 문장이라 프로필에 저장하지 않고, `student_project.readme`(README 원문)와 `role_note`(역할 기록)는 덮어쓰지 않습니다. AI 문장의 근거(`evidence.quote`)가 README 원문을 인용하기 때문입니다. README · 역할 기록은 M8 프로필에서만 고칩니다.
 - 응답: 바뀐 서류 JSON 전체 `{ "data": { "document": { … } } }`
 
 #### `POST /api/applications/{applicationId}/submit` (M6)
