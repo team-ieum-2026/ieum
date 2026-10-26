@@ -12,7 +12,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 등록 자료와 이미 저장된 역량 프로필을 읽는다. 조회 중 AI 추출이나 DB 수정을 하지 않는다. */
+/**
+ * M8 프로필 조회와 BE-A가 호출할 프로필 변경 서비스 계약.
+ * 조회 중 AI 추출이나 DB 수정을 하지 않는다. 변경 메서드는 아직 계약만 제공한다.
+ */
 @Service
 public class ProfileService {
 
@@ -22,6 +25,46 @@ public class ProfileService {
 
     public ProfileService(ProfileMapper profileMapper) {
         this.profileMapper = profileMapper;
+    }
+
+    /**
+     * M8·서류 편집에서 공통으로 사용할 프로필 항목 추가 계약(BE-B-04).
+     *
+     * @param studentId 수료생 번호
+     * @param section API.md의 프로필 섹션 값. TRAINING은 읽기 전용이다.
+     * @param item 서류 PATCH와 같은 camelCase 항목 JSON
+     * @return 새로 생성한 프로필 항목의 숫자 ID. 서류 ID 접두어 처리는 호출자가 맡는다.
+     * @throws BusinessException 실패 시 호출자의 트랜잭션으로 전파한다.
+     * @implNote 본문 구현 전이다. 현재는 INTERNAL_ERROR로 실패하며 저장·AI 호출을 하지 않는다.
+     * 구현 시 항목 저장과 AI 프로필 재추출·저장을 이 서비스에서 함께 처리한다.
+     */
+    @Transactional
+    public Long addItem(Long studentId, String section, JsonNode item) {
+        throw new BusinessException(ErrorCode.INTERNAL_ERROR, "프로필 항목 추가 서비스는 아직 구현되지 않았어요.");
+    }
+
+    /**
+     * M8·서류 편집에서 공통으로 사용할 프로필 항목 수정 계약(BE-B-04).
+     *
+     * @param itemId 프로필 DB의 숫자 ID. 서류의 cert-2 등을 숫자로 바꾸는 것은 호출자 책임이다.
+     * @throws BusinessException 수료생 없음·읽기 전용 섹션 등 실패 시 호출자에게 전파한다.
+     * @implNote 아직 계약만 제공한다. 현재는 INTERNAL_ERROR로 실패하며 기존 M8 구현은 유지한다.
+     */
+    @Transactional
+    public void updateItem(Long studentId, String section, Long itemId, JsonNode item) {
+        throw new BusinessException(ErrorCode.INTERNAL_ERROR, "프로필 항목 수정 서비스는 아직 구현되지 않았어요.");
+    }
+
+    /**
+     * M8·서류 편집에서 공통으로 사용할 프로필 항목 삭제 계약(BE-B-04).
+     *
+     * @param itemId 프로필 DB의 숫자 ID
+     * @throws BusinessException 수료생 없음·읽기 전용 섹션 등 실패 시 호출자에게 전파한다.
+     * @implNote 아직 계약만 제공한다. 현재는 INTERNAL_ERROR로 실패하며 기존 M8 구현은 유지한다.
+     */
+    @Transactional
+    public void deleteItem(Long studentId, String section, Long itemId) {
+        throw new BusinessException(ErrorCode.INTERNAL_ERROR, "프로필 항목 삭제 서비스는 아직 구현되지 않았어요.");
     }
 
     @Transactional(readOnly = true)
