@@ -1,0 +1,224 @@
+"use client";
+// 주인: FE-B — M6 이력서 초안 화면 본체 (FE-B-02). 섹션 카드 9개 + 자기소개서 미리보기 + 검토 요청 버튼
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import BottomSheet from "@/components/resume/BottomSheet";
+import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
+import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
+import SourceTag from "@/components/resume/SourceTag";
+import {
+  OPTIONAL_SECTIONS,
+  summarizeSection,
+  type CardSection,
+  type SectionSummary,
+} from "@/components/resume/sectionSummary";
+import { ApiError } from "@/lib/api/client";
+import { getApplication } from "@/lib/api/resume";
+import type { ApplicationDetail, CoverLetterSection } from "@/types/resume";
+
+const primaryButton =
+  "flex min-h-[52px] flex-[2] items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const secondaryButton =
+  "flex min-h-[52px] flex-1 items-center justify-center rounded-xl border border-line bg-surface text-[15px] font-bold text-ink";
+
+export default function ResumeDraft({ applicationId }: { applicationId: number }) {
+  const router = useRouter();
+  const [detail, setDetail] = useState<ApplicationDetail | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  // TODO(FE-B-05): 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR 로 바꾼다
+  const [saveState] = useState<SaveState>("SAVED");
+  const [editing, setEditing] = useState<SectionSummary | null>(null);
+  const [confirmingSubmit, setConfirmingSubmit] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    getApplication(applicationId)
+      .then((data) => {
+        if (!ignore) setDetail(data);
+      })
+      .catch((e: unknown) => {
+        if (!ignore) setLoadError(e instanceof ApiError ? e.message : "서류를 불러오지 못했어요.");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [applicationId, reloadKey]);
+
+  const retry = () => {
+    setLoadError(null);
+    setReloadKey((k) => k + 1);
+  };
+
+  if (!detail) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-sm text-ink-sub">
+        {loadError ? (
+          <>
+            <p>{loadError}</p>
+            <button type="button" onClick={retry} className="font-bold text-primary">
+              다시 시도
+            </button>
+          </>
+        ) : (
+          <p>서류를 불러오는 중이에요…</p>
+        )}
+      </div>
+    );
+  }
+
+  const { job, document } = detail;
+  const cards = document.sections
+    .filter((s): s is CardSection => s.section !== "COVER_LETTER")
+    .map(summarizeSection);
+  const requiredCards = cards.filter((c) => !OPTIONAL_SECTIONS.includes(c.section));
+  const optionalCards = cards.filter((c) => OPTIONAL_SECTIONS.includes(c.section));
+  const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
+
+  return (
+    <div className="min-h-screen bg-surface-warm">
+      <header className="fixed left-1/2 top-0 z-20 flex h-[68px] w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
+        <div className="flex min-w-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="뒤로"
+            className="flex size-11 shrink-0 items-center justify-center text-ink"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="flex min-w-0 flex-col">
+            <h1 className="text-[15px] font-bold">이력서 초안</h1>
+            <span className="truncate text-xs text-ink-sub">
+              {job.companyName} · {job.title}
+            </span>
+          </div>
+        </div>
+        <SaveStatus state={saveState} />
+      </header>
+
+      <div className="flex flex-col px-4 pb-44 pt-[84px]">
+        <section className="rounded-2xl border border-primary-soft bg-primary-tint p-4">
+          <span className="text-[11px] font-bold text-primary">AI 서류 초안</span>
+          <h2 className="mt-1 text-lg font-bold">지원 서류를 준비했어요</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-sub">
+            내용이 맞는지 살펴보고 필요한 부분만 고쳐 주세요. 고친 내용은 자동으로 저장돼요.
+          </p>
+        </section>
+
+        <h2 className="mx-1 mb-2.5 mt-6 text-base font-bold">이력서</h2>
+        <SectionCardGroup>
+          {requiredCards.map((card) => (
+            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
+          ))}
+        </SectionCardGroup>
+
+        <div className="mx-1 mb-2.5 mt-6 flex items-baseline justify-between">
+          <h2 className="text-base font-bold">선택 정보</h2>
+          <span className="text-[11px] text-ink-muted">입력하지 않아도 제출할 수 있어요</span>
+        </div>
+        <SectionCardGroup>
+          {optionalCards.map((card) => (
+            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
+          ))}
+        </SectionCardGroup>
+
+        <div className="mx-1 mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-sub">
+          <span className="flex items-center gap-1">
+            <SourceTag source="AI" /> AI가 근거로 정리
+          </span>
+          <span className="flex items-center gap-1">
+            <SourceTag source="REGISTERED" /> 수료 시 등록
+          </span>
+          <span className="flex items-center gap-1">
+            <SourceTag source="USER" /> 내가 쓰거나 고침
+          </span>
+        </div>
+
+        {coverLetter && <CoverLetterCard applicationId={applicationId} section={coverLetter} />}
+      </div>
+
+      <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1.5 border-t border-line bg-surface px-5 pb-5 pt-3">
+        <button type="button" onClick={() => setConfirmingSubmit(true)} className={primaryButton}>
+          담당자에게 검토 요청
+        </button>
+        <p className="text-center text-xs leading-relaxed text-ink-muted">
+          담당자가 확인한 뒤 기관 추천으로 전달해요. 기업에 바로 보내지지 않아요.
+        </p>
+      </footer>
+
+      <BottomSheet
+        open={editing !== null}
+        title={editing?.label ?? ""}
+        description={
+          editing?.readOnly
+            ? "수료한 교육 과정 정보라 여기서 고칠 수 없어요."
+            : "내용을 확인하고 필요하면 고쳐 주세요."
+        }
+        onClose={() => setEditing(null)}
+        actions={
+          <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
+            닫기
+          </button>
+        }
+      >
+        {/* TODO(FE-B-05): 섹션별 입력칸 + "내 프로필에도 저장" 체크박스 */}
+        <p className="mt-4 rounded-xl border border-line px-3 py-3 text-sm">{editing?.text}</p>
+      </BottomSheet>
+
+      <BottomSheet
+        open={confirmingSubmit}
+        title="담당자에게 서류를 보낼까요?"
+        description={`${job.companyName} · ${job.title} 지원 서류가 담당 코디네이터 검토 단계로 넘어가요. 기업에 바로 보내지는 않아요.`}
+        onClose={() => setConfirmingSubmit(false)}
+        actions={
+          <>
+            <button type="button" onClick={() => setConfirmingSubmit(false)} className={secondaryButton}>
+              취소
+            </button>
+            {/* TODO(FE-B-03): submitApplication 호출 후 M7(/student/applications)로 이동 */}
+            <button type="button" onClick={() => setConfirmingSubmit(false)} className={primaryButton}>
+              검토 요청
+            </button>
+          </>
+        }
+      />
+    </div>
+  );
+}
+
+function CoverLetterCard({ applicationId, section }: { applicationId: number; section: CoverLetterSection }) {
+  const [first, ...rest] = section.sentences;
+  const aiCount = section.sentences.filter((s) => s.source === "AI").length;
+  const userCount = section.sentences.length - aiCount;
+
+  return (
+    <>
+      <h2 className="mx-1 mb-2.5 mt-6 text-base font-bold">자기소개서</h2>
+      <Link
+        href={`/student/applications/${applicationId}/cover-letter`}
+        className="flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <span className="flex flex-wrap items-center gap-1.5">
+          <b className="mr-auto text-sm">자기소개서</b>
+          {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장 · 근거 연결`} />}
+          {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
+        </span>
+        {first ? (
+          <span className="line-clamp-3 text-[13px] leading-[1.7] text-ink-sub">
+            <span className={first.source === "AI" ? "border-b-2 border-primary bg-primary-tint" : undefined}>
+              {first.text}
+            </span>
+            {rest.length > 0 && " …"}
+          </span>
+        ) : (
+          <span className="text-[13px] text-ink-muted">아직 작성된 문장이 없어요</span>
+        )}
+        <span className="text-xs font-bold text-primary">전체 보기 · 근거 확인 · 수정 ›</span>
+      </Link>
+    </>
+  );
+}
