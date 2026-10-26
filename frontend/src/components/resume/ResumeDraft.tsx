@@ -77,8 +77,9 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
 
   return (
-    <div className="min-h-screen bg-surface-warm">
-      <header className="fixed left-1/2 top-0 z-20 flex h-[68px] w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
+    // 레이아웃 main 의 하단 메뉴 여백(pb-16)만큼 빼야 한 화면(844px)에서 스크롤이 생기지 않는다
+    <div className="min-h-[calc(100dvh-4rem)] bg-surface-warm">
+      <header className="fixed left-1/2 top-0 z-20 flex h-14 w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
         <div className="flex min-w-0 items-center gap-1">
           <button
             type="button"
@@ -100,24 +101,16 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         <SaveStatus state={saveState} />
       </header>
 
-      <div className="flex flex-col px-4 pb-44 pt-[84px]">
-        <section className="rounded-2xl border border-primary-soft bg-primary-tint p-4">
-          <span className="text-[11px] font-bold text-primary">AI 서류 초안</span>
-          <h2 className="mt-1 text-lg font-bold">지원 서류를 준비했어요</h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-sub">
-            내용이 맞는지 살펴보고 필요한 부분만 고쳐 주세요. 고친 내용은 자동으로 저장돼요.
-          </p>
-        </section>
-
-        <h2 className="mx-1 mb-2.5 mt-6 text-base font-bold">이력서</h2>
+      <div className="flex flex-col px-4 pb-[98px] pt-16">
+        <h2 className="mx-1 mb-1.5 text-sm font-bold">이력서</h2>
         <SectionCardGroup>
           {requiredCards.map((card) => (
             <SectionCard key={card.section} summary={card} onOpen={setEditing} />
           ))}
         </SectionCardGroup>
 
-        <div className="mx-1 mb-2.5 mt-6 flex items-baseline justify-between">
-          <h2 className="text-base font-bold">선택 정보</h2>
+        <div className="mx-1 mb-1.5 mt-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-bold">선택 정보</h2>
           <span className="text-[11px] text-ink-muted">입력하지 않아도 제출할 수 있어요</span>
         </div>
         <SectionCardGroup>
@@ -126,7 +119,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
           ))}
         </SectionCardGroup>
 
-        <div className="mx-1 mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-sub">
+        <div className="mx-1 mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-sub">
           <span className="flex items-center gap-1">
             <SourceTag source="AI" /> AI가 근거로 정리
           </span>
@@ -141,12 +134,16 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         {coverLetter && <CoverLetterCard applicationId={applicationId} section={coverLetter} />}
       </div>
 
-      <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1.5 border-t border-line bg-surface px-5 pb-5 pt-3">
-        <button type="button" onClick={() => setConfirmingSubmit(true)} className={primaryButton}>
+      <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1 border-t border-line bg-surface px-5 pb-3 pt-2.5">
+        <button
+          type="button"
+          onClick={() => setConfirmingSubmit(true)}
+          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
           담당자에게 검토 요청
         </button>
-        <p className="text-center text-xs leading-relaxed text-ink-muted">
-          담당자가 확인한 뒤 기관 추천으로 전달해요. 기업에 바로 보내지지 않아요.
+        <p className="text-center text-[11px] leading-4 text-ink-muted">
+          검토 후 기관 추천으로 전달돼요 · 기업에 바로 가지 않아요
         </p>
       </footer>
 
@@ -197,10 +194,10 @@ function CoverLetterCard({ applicationId, section }: { applicationId: number; se
 
   return (
     <>
-      <h2 className="mx-1 mb-2.5 mt-6 text-base font-bold">자기소개서</h2>
+      {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 (한 화면에 맞추기) */}
       <Link
         href={`/student/applications/${applicationId}/cover-letter`}
-        className="flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="mt-3 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="flex flex-wrap items-center gap-1.5">
           <b className="mr-auto text-sm">자기소개서</b>
@@ -208,7 +205,7 @@ function CoverLetterCard({ applicationId, section }: { applicationId: number; se
           {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
         </span>
         {first ? (
-          <span className="line-clamp-3 text-[13px] leading-[1.7] text-ink-sub">
+          <span className="line-clamp-2 text-[13px] leading-[1.6] text-ink-sub">
             <span className={first.source === "AI" ? "border-b-2 border-primary bg-primary-tint" : undefined}>
               {first.text}
             </span>
