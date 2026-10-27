@@ -287,5 +287,8 @@
 | --- | --- | --- |
 | 1 | `EMPLOYED` 취업 완료 | 패스 사유가 `ALREADY_EMPLOYED`인 응답이 있음 |
 | 2 | `NEED_HELP` 도움 필요 | `status = 'OPEN'`인 `help_request`가 있음 |
-| 3 | `CHECK_REQUIRED` 추가 확인 필요 | `last_response_at`이 7일 이상 지남 |
+| 3 | `CHECK_REQUIRED` 추가 확인 필요 | `last_response_at`이 7일 이상 지남. 한 번도 응답하지 않아 `null`이면 수료일 `completed_on`부터 계산 |
 | 4 | `SEEKING` 구직 중 | 그 외. 세부: `APPLYING`(제출 · 승인 · 전달된 지원서 있음) → `OTHER`(최근 패스 사유가 기타) → `WAITING`(나머지) |
+
+- 무응답 기준 시각은 `COALESCE(last_response_at, completed_on)`입니다. 첫 추천일은 쓰지 않습니다. 공고 배치 뒤 추천을 미리 만들어서 첫 추천일이 시연 준비일이 되기 때문입니다.
+- 시연에서 `CHECK_REQUIRED`로 보일 수료생은 시드에서 `last_response_at`을 `null`로, `completed_on`을 7일 넘게 지난 날짜로 둡니다.
