@@ -1,5 +1,6 @@
 # 주인: AI-B
 """공고 색인 테스트. 임베딩은 가짜 함수로 바꿔 실제 모델 · API 를 부르지 않는다. 저장 파일은 임시 폴더에 쓴다.
+안전장치: 모듈 전체에서 실제 Gemini 클라이언트(common.embedding._client)를 부르면 바로 실패한다 (setUpModule).
 
 실행: cd ai && .venv/Scripts/python -m unittest matching.test_index -v
 """
@@ -12,6 +13,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from common import embedding
 from main import app
 from matching import indexer, router
 from matching.indexer import run_index
@@ -21,6 +23,27 @@ from matching.store import IndexStore
 
 SAMPLE = Path(__file__).parent.parent / "data" / "samples" / "matching_index_request.json"
 MODEL = "fake-embedding"
+
+
+class RealApiCalled(BaseException):
+    """실제 Gemini 클라이언트를 부르면 던진다. indexer 는 Exception 만 잡으므로 실패로 삼켜지지 않고 테스트가 깨진다."""
+
+
+def _no_real_client(*args, **kwargs):
+    raise RealApiCalled("테스트에서 실제 Gemini 클라이언트를 불렀어요. 가짜 임베딩을 넘기거나 default_embedder 를 바꾸세요.")
+
+
+_guards = [patch.object(embedding, "_client", side_effect=_no_real_client), patch("common.llm._client", side_effect=_no_real_client)]
+
+
+def setUpModule():
+    for guard in _guards:
+        guard.start()
+
+
+def tearDownModule():
+    for guard in _guards:
+        guard.stop()
 
 JOB = {
     "jobPostingId": 1,
@@ -168,10 +191,21 @@ class EmbeddingTest(TempStoreCase):
         self.assertEqual((result.indexed_count, result.skipped_count, result.embedding_status), (1, 0, "OK"))
         self.assertIsNotNone(self.store.load()["1"]["vector"])
 
-    def test_real_common_embedding_is_not_ready(self):
-        """지금 common.embedding.embed_texts 는 NotImplementedError → 서버가 멈추지 않고 NOT_READY"""
-        result = run_index(IndexRequest.model_validate({"jobs": [JOB]}), self.store)
-        self.assertEqual((result.indexed_count, result.embedding_status), (1, "NOT_READY"))
+    def test_default_embedder_is_common_embed_texts(self):
+        """공용 embed_texts(#36)가 구현돼 색인의 기본 임베딩으로 연결된다. 빈 목록은 API 를 부르지 않고 [] 다."""
+        self.assertIs(indexer.default_embedder(), embedding.embed_texts)
+        self.assertEqual(embedding.embed_texts([]), [])
+
+    def test_default_embedder_errors_fail_only_that_job(self):
+        """공용 embed_texts 가 EmbeddingError(키 · 모델 없음, API 실패)를 던지면 그 공고만 failed, vector null 로 저장"""
+        def broken_client():
+            raise embedding.EmbeddingError("API 실패 흉내")
+
+        with patch.object(embedding, "_client", side_effect=broken_client), \
+             patch.object(embedding, "_model", return_value=MODEL):
+            result = run_index(IndexRequest.model_validate({"jobs": [JOB]}), self.store, model_name=MODEL)
+        self.assertEqual((result.indexed_count, result.failed_job_posting_ids, result.embedding_status), (0, [1], "OK"))
+        self.assertIsNone(self.store.load()["1"]["vector"])
 
 
 class RetryTest(TempStoreCase):
