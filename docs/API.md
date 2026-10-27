@@ -77,7 +77,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M5 | `GET /api/applications/{applicationId}/progress` | 서류 생성 진행 상태 (FE가 2초마다 조회) | S7 |
 | M6 · M6-1 | `GET /api/applications/{applicationId}` | 서류 전체 (이력서 + 자기소개서 + 근거) | S8 |
 | M6 · M6-1 · M6-2 | `PATCH /api/applications/{applicationId}/document` | 문장 수정 · 섹션 항목 추가 · 수정 · 삭제 | S8 |
-| M6 | `POST /api/applications/{applicationId}/submit` | 최종 제출 | S8 |
+| M6 | `POST /api/applications/{applicationId}/submit` | 담당자에게 검토 요청 (상태값은 `SUBMITTED`) | S8 |
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
 | - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
 
@@ -187,6 +187,9 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 }
 ```
 
+- `status`가 `GENERATING` · `FAILED`이면 200으로 응답하고 `document`만 `null`입니다(다른 키는 그대로).
+- 없는 지원서면 404 `APPLICATION_NOT_FOUND`
+
 #### `PATCH /api/applications/{applicationId}/document` (M6 · M6-1 · M6-2)
 
 한 번에 하나의 변경만 보냅니다. 수정된 항목의 `source`는 서버가 `USER`로 바꿉니다.
@@ -211,9 +214,39 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - `PROJECTS`를 프로필에 저장할 때는 `title` · `periodText` · `teamSize` · `techStack`만 반영합니다(`PORTFOLIO`의 `include`는 `include_in_apply`). `bullets`는 공고마다 다르게 쓴 서류 전용 문장이라 프로필에 저장하지 않고, `student_project.readme`(README 원문)와 `role_note`(역할 기록)는 덮어쓰지 않습니다. AI 문장의 근거(`evidence.quote`)가 README 원문을 인용하기 때문입니다. README · 역할 기록은 M8 프로필에서만 고칩니다.
 - 응답: 바뀐 서류 JSON 전체 `{ "data": { "document": { … } } }`
 
+섹션별 예시:
+
+```json
+// 문장 수정: 자기소개서 · 기술 요약 · 프로젝트 문장 모두 UPDATE_SENTENCE
+{ "op": "UPDATE_SENTENCE", "sentenceId": "sk-1", "text": "고친 기술 요약" }
+{ "op": "UPDATE_SENTENCE", "sentenceId": "pj-1", "text": "고친 프로젝트 문장" }
+
+// BASIC: 항목이 하나뿐이라 itemId는 null
+{ "op": "UPDATE_ITEM", "section": "BASIC", "itemId": null, "item": { "email": "new@example.com" }, "saveToProfile": true }
+
+// MILITARY: itemId null, 값은 value 하나
+{ "op": "UPDATE_ITEM", "section": "MILITARY", "itemId": null, "item": { "value": "SERVED" }, "saveToProfile": true }
+
+// SKILLS 태그: itemId null, 태그 전체 목록을 보냄
+{ "op": "UPDATE_ITEM", "section": "SKILLS", "itemId": null, "item": { "tags": ["Java", "Spring Boot", "Redis"] }, "saveToProfile": true }
+
+// PROJECTS: title · periodText · teamSize · role만 (bullets는 UPDATE_SENTENCE로)
+{ "op": "UPDATE_ITEM", "section": "PROJECTS", "itemId": "prj-11", "item": { "role": "백엔드 · 배포" }, "saveToProfile": false }
+
+// PORTFOLIO: include만 (fileName은 바꿀 수 없음)
+{ "op": "UPDATE_ITEM", "section": "PORTFOLIO", "itemId": "pf-11", "item": { "include": false }, "saveToProfile": true }
+
+// EDUCATION · CAREER · CERTIFICATES: 바뀐 필드만
+{ "op": "UPDATE_ITEM", "section": "CAREER", "itemId": "car-1", "item": { "endedOn": null }, "saveToProfile": true }
+```
+
+- `UPDATE_ITEM`의 `item`에는 바뀐 필드만 보냅니다. 키가 없으면 그대로 두고, `null`이면 비웁니다.
+- `BASIC` · `MILITARY` · `SKILLS`는 `itemId: null`이고 `ADD_ITEM` · `DELETE_ITEM`을 쓰지 않습니다.
+- 오류: `DRAFT`가 아니면 409 `INVALID_STATUS` · 섹션에 맞지 않는 op나 필드면 400 `INVALID_REQUEST` · 없는 지원서면 404 `APPLICATION_NOT_FOUND`
+
 #### `POST /api/applications/{applicationId}/submit` (M6)
 
-요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`.
+화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`.
 
 #### `GET /api/students/{studentId}/applications` (M7)
 
@@ -357,7 +390,9 @@ DB의 JSON 컬럼과 API가 같은 형식을 씁니다. 형식 주인은 AI-A이
 }
 ```
 
-`refType`: `PROJECT`(README · 역할 기록) · `COVER_LETTER` · `CERTIFICATE` · `EDUCATION` · `COURSE` · `COMPANY_INFO`
+`refType`: `PROJECT`(README · 역할 기록) · `COVER_LETTER` · `CERTIFICATE` · `EDUCATION` · `CAREER`(경력) · `COURSE` · `COMPANY_INFO` · `JOB_POSTING`(공고 원문)
+
+- `CAREER`의 `refId`는 `student_career.id`, `JOB_POSTING`의 `refId`는 `job_posting.id`입니다.
 
 ### 3-2. 근거 (`evidence`)
 
