@@ -9,7 +9,7 @@ import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
 import SectionDetailSheet, { type DetailSection } from "@/components/resume/SectionDetailSheet";
 import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
-import { isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
+import { SECTION_FIELDS, isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
@@ -246,7 +246,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
 
       {listTarget ? (
         <SectionEditSheet
-          section={listTarget}
+          config={SECTION_FIELDS[listTarget]}
           items={listItems}
           editable={canSubmit}
           onChange={saveItem}
