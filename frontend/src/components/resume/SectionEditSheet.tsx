@@ -7,6 +7,8 @@ import BottomSheet from "@/components/resume/BottomSheet";
 import SourceTag from "@/components/resume/SourceTag";
 import {
   SECTION_FIELDS,
+  changedItemInput,
+  hasChanges,
   isFormValid,
   toFormValues,
   toItemInput,
@@ -101,6 +103,8 @@ export default function SectionEditSheet({
               const sub = config.sub(item);
 
               if (mode.kind === "edit" && mode.itemId === item.itemId) {
+                // 수정은 바뀐 필드만 보낸다 (docs/API.md 2-1)
+                const original = toFormValues(config.fields, item);
                 return (
                   <li key={item.itemId} className="flex flex-col gap-2 rounded-[10px] border-[1.5px] border-primary p-3">
                     <Fields fields={config.fields} values={editValues} onChange={setEditValues} idPrefix={item.itemId} />
@@ -114,11 +118,19 @@ export default function SectionEditSheet({
                         onClick={() =>
                           save(
                             item.itemId,
-                            { op: "UPDATE_ITEM", itemId: item.itemId, item: toItemInput(config.fields, editValues) },
+                            {
+                              op: "UPDATE_ITEM",
+                              itemId: item.itemId,
+                              item: changedItemInput(config.fields, original, editValues),
+                            },
                             backToIdle,
                           )
                         }
-                        disabled={saving || !isFormValid(config.fields, editValues)}
+                        disabled={
+                          saving ||
+                          !isFormValid(config.fields, editValues) ||
+                          !hasChanges(config.fields, original, editValues)
+                        }
                         aria-busy={saving}
                         className={applyButton}
                       >

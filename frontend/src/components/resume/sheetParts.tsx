@@ -9,7 +9,7 @@ import type { SectionItemInput } from "@/types/resume";
 /** 시트가 부모에게 넘기는 저장 한 건. section · saveToProfile 은 부모가 붙인다 (docs/API.md 2-1 PATCH) */
 export type ItemChange =
   | { op: "ADD_ITEM"; item: SectionItemInput }
-  | { op: "UPDATE_ITEM"; itemId: string; item: SectionItemInput }
+  | { op: "UPDATE_ITEM"; itemId: string | null; item: SectionItemInput }
   | { op: "DELETE_ITEM"; itemId: string }
   | { op: "UPDATE_SENTENCE"; sentenceId: string; text: string };
 
@@ -56,11 +56,6 @@ export function ErrorText({ error, target }: { error: { target: string; message:
       {error.message}
     </p>
   );
-}
-
-/** 저장 요청 형식이 아직 정해지지 않은 입력 영역 아래에 붙이는 안내 */
-export function NotSavedNotice({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-lg bg-warn-bg px-3 py-2 text-xs leading-relaxed text-warn-ink">{children}</p>;
 }
 
 /** 시트 맨 아래 "완료" (저장 중에는 닫지 않음) */

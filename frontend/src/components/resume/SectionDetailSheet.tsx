@@ -1,9 +1,10 @@
 "use client";
 // 주인: FE-B — M6-2 섹션 편집 바텀시트 (FE-B-05). 목록 섹션이 아닌 기본정보 · 병역 · 기술 · 경험 · 포트폴리오
-// 실제 저장은 docs/API.md 2-1 에 요청 형식이 있는 것만 연결한다.
-//   - 기술 요약 문장 · 프로젝트 문장: UPDATE_SENTENCE (sentenceId + text)
-//   - 포트폴리오 첨부 여부: UPDATE_ITEM item { fileName, include } (include → include_in_apply)
-// 기본정보 · 병역 · 기술 태그 · 프로젝트 정보는 요청 형식이 정해지지 않아 입력 화면만 두고 저장하지 않는다 (BE-A 확인 후 연결).
+// 저장 요청은 docs/API.md 2-1 (BE-A 확정). UPDATE_ITEM 의 item 에는 바뀐 필드만 보낸다.
+//   - 기본정보 · 병역 · 기술 태그: itemId null. 병역은 { value }, 태그는 { tags: 전체 목록 }
+//   - 프로젝트 정보: 프로젝트 itemId, title · periodText · teamSize · role 중 바뀐 것만 (bullets 제외)
+//   - 기술 요약 문장 · 프로젝트 문장: UPDATE_SENTENCE
+//   - 포트폴리오: { include } 만. 파일 추가 · 교체는 M8
 import { useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SourceTag from "@/components/resume/SourceTag";
@@ -11,6 +12,9 @@ import {
   BASIC_FIELDS,
   MILITARY_FIELDS,
   PROJECT_FIELDS,
+  changedItemInput,
+  hasChanges,
+  isFormValid,
   toFormValues,
   type FieldDef,
   type FormValues,
@@ -20,7 +24,6 @@ import {
   ErrorText,
   Fields,
   IconButton,
-  NotSavedNotice,
   PencilIcon,
   SaveToProfileCheckbox,
   applyButton,
@@ -44,12 +47,15 @@ interface SectionDetailSheetProps {
   section: DetailSection;
   /** false 면 내용만 보여 준다 (예: 이미 검토를 요청한 서류) */
   editable: boolean;
-  /** "내 프로필에도 저장" 체크박스 (프로필에 저장되는 포트폴리오에만). M8 은 숨김 */
+  /** "내 프로필에도 저장" 체크박스. M6 은 표시(기본 선택), M8 은 숨김. 문장 수정(UPDATE_SENTENCE)에는 쓰이지 않는다 */
   showSaveToProfile?: boolean;
   /** 저장 한 건. 실패하면 throw → 시트가 입력값을 유지하고 오류를 보여 준다 */
   onChange: (change: ItemChange, saveToProfile: boolean) => Promise<void>;
   onClose: () => void;
 }
+
+type Save = (target: string, change: ItemChange, onSuccess?: () => void) => Promise<void>;
+type Runner = ReturnType<typeof useSaveRunner>;
 
 const TITLE: Record<DetailSection["section"], string> = {
   BASIC: "기본정보",
@@ -60,10 +66,10 @@ const TITLE: Record<DetailSection["section"], string> = {
 };
 
 const DESCRIPTION: Record<DetailSection["section"], string> = {
-  BASIC: "지원서에 들어갈 기본정보예요.",
-  MILITARY: "선택 입력이에요. 비워 둬도 제출할 수 있어요.",
-  SKILLS: "요약 문장은 적용을 누르면 바로 저장돼요.",
-  PROJECTS: "문장은 적용을 누르면 바로 저장되고, 이 서류에만 반영돼요.",
+  BASIC: "적용을 누르면 바로 저장돼요.",
+  MILITARY: "선택 입력이에요. 적용을 누르면 바로 저장돼요.",
+  SKILLS: "문장 · 태그는 적용을 누르면 바로 저장돼요.",
+  PROJECTS: "프로젝트 정보 · 문장은 적용을 누르면 바로 저장돼요. 문장은 이 서류에만 반영돼요.",
   PORTFOLIO: "지원서에 첨부할 파일을 고르면 바로 저장돼요.",
 };
 
@@ -76,7 +82,7 @@ export default function SectionDetailSheet({
 }: SectionDetailSheetProps) {
   const runner = useSaveRunner();
   const [saveToProfile, setSaveToProfile] = useState(true);
-  const save = (target: string, change: ItemChange, onSuccess?: () => void) =>
+  const save: Save = (target, change, onSuccess) =>
     runner.run(target, () => onChange(change, showSaveToProfile ? saveToProfile : false), onSuccess);
 
   return (
@@ -91,21 +97,16 @@ export default function SectionDetailSheet({
     >
       <div className="mt-4 flex flex-col gap-3">
         {section.section === "BASIC" && (
-          <UnsavedForm
-            fields={BASIC_FIELDS}
-            data={section.fields}
-            editable={editable}
-            idPrefix="basic"
-            notice="기본정보 저장은 준비 중이에요. 고친 내용은 시트를 닫으면 사라져요."
-          />
+          <SingleForm fields={BASIC_FIELDS} data={section.fields} editable={editable} target="basic" runner={runner} save={save} />
         )}
         {section.section === "MILITARY" && (
-          <UnsavedForm
+          <SingleForm
             fields={MILITARY_FIELDS}
             data={{ value: section.value }}
             editable={editable}
-            idPrefix="military"
-            notice="병역 저장은 준비 중이에요. 고친 내용은 시트를 닫으면 사라져요."
+            target="military"
+            runner={runner}
+            save={save}
           />
         )}
         {section.section === "SKILLS" && (
@@ -113,7 +114,7 @@ export default function SectionDetailSheet({
             <SubTitle>요약 문장</SubTitle>
             <SentenceList sentences={section.summary} editable={editable} runner={runner} save={save} />
             <SubTitle>기술 태그</SubTitle>
-            <TagEditor tags={section.tags} editable={editable} />
+            <TagEditor tags={section.tags} editable={editable} runner={runner} save={save} />
           </>
         )}
         {section.section === "PROJECTS" &&
@@ -122,7 +123,7 @@ export default function SectionDetailSheet({
           ) : (
             section.items.map((project) => (
               <div key={project.itemId} className="flex flex-col gap-2 rounded-xl border-[1.5px] border-line p-3">
-                <ProjectInfo project={project} editable={editable} />
+                <ProjectInfo project={project} editable={editable} runner={runner} save={save} />
                 <SentenceList sentences={project.bullets} editable={editable} runner={runner} save={save} />
               </div>
             ))
@@ -146,7 +147,7 @@ export default function SectionDetailSheet({
                           save(item.itemId, {
                             op: "UPDATE_ITEM",
                             itemId: item.itemId,
-                            item: { fileName: item.fileName, include: e.target.checked },
+                            item: { include: e.target.checked },
                           })
                         }
                         aria-label={`${item.fileName} 첨부`}
@@ -158,11 +159,11 @@ export default function SectionDetailSheet({
                 ))}
               </ul>
             )}
-            {editable && <p className="text-[11px] text-ink-muted">새 파일 추가는 아직 지원하지 않아요.</p>}
-            {editable && showSaveToProfile && (
-              <SaveToProfileCheckbox checked={saveToProfile} onChange={setSaveToProfile} disabled={runner.saving} />
-            )}
+            {editable && <p className="text-[11px] text-ink-muted">파일 추가 · 교체는 내 프로필에서 할 수 있어요.</p>}
           </>
+        )}
+        {editable && showSaveToProfile && (
+          <SaveToProfileCheckbox checked={saveToProfile} onChange={setSaveToProfile} disabled={runner.saving} />
         )}
       </div>
     </BottomSheet>
@@ -173,37 +174,62 @@ function SubTitle({ children }: { children: React.ReactNode }) {
   return <h3 className="text-[13px] font-bold text-ink">{children}</h3>;
 }
 
-/** 저장 형식이 정해지지 않은 입력 화면. 값은 시트 안에서만 바뀌고 PATCH 를 보내지 않는다 */
-function UnsavedForm({
+/** 항목이 하나뿐인 섹션(기본정보 · 병역). 바뀐 필드만 itemId null 로 저장 */
+function SingleForm({
   fields,
   data,
   editable,
-  idPrefix,
-  notice,
+  target,
+  runner,
+  save,
 }: {
   fields: FieldDef[];
   data: object;
   editable: boolean;
-  idPrefix: string;
-  notice: string;
+  target: string;
+  runner: Runner;
+  save: Save;
 }) {
-  const [values, setValues] = useState<FormValues>(() => toFormValues(fields, data));
+  // original 은 저장 성공 뒤 서버 응답으로 바뀐 최신 값
+  const original = toFormValues(fields, data);
+  const [values, setValues] = useState<FormValues>(original);
+  const changed = hasChanges(fields, original, values);
+
   return (
     <div className="flex flex-col gap-2">
-      <Fields fields={fields} values={values} onChange={setValues} idPrefix={idPrefix} disabled={!editable} />
+      <Fields fields={fields} values={values} onChange={setValues} idPrefix={target} disabled={!editable} />
       {editable && (
         <>
-          <NotSavedNotice>{notice}</NotSavedNotice>
-          <button type="button" disabled className={applyButton}>
-            적용 (준비 중)
-          </button>
+          <ErrorText error={runner.error} target={target} />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setValues(original);
+                runner.clearError();
+              }}
+              disabled={runner.saving || !changed}
+              className={cancelButton}
+            >
+              되돌리기
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                save(target, { op: "UPDATE_ITEM", itemId: null, item: changedItemInput(fields, original, values) })
+              }
+              disabled={runner.saving || !changed || !isFormValid(fields, values)}
+              aria-busy={runner.saving}
+              className={applyButton}
+            >
+              {runner.saving ? "저장 중…" : "적용"}
+            </button>
+          </div>
         </>
       )}
     </div>
   );
 }
-
-type Runner = ReturnType<typeof useSaveRunner>;
 
 /** 문장 목록. 수정 → UPDATE_SENTENCE 한 건. 한 번에 한 문장만 고친다 */
 function SentenceList({
@@ -215,7 +241,7 @@ function SentenceList({
   sentences: Sentence[];
   editable: boolean;
   runner: Runner;
-  save: (target: string, change: ItemChange, onSuccess?: () => void) => Promise<void>;
+  save: Save;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -291,32 +317,55 @@ function SentenceList({
   );
 }
 
-/** 프로젝트 이름 · 기간 · 인원 · 역할. 저장 형식 확인 전이라 입력 화면만 */
-function ProjectInfo({ project, editable }: { project: ProjectsSection["items"][number]; editable: boolean }) {
+/** 프로젝트 이름 · 기간 · 인원 · 역할. 바뀐 필드만 프로젝트 itemId 로 저장 (bullets 는 문장 수정으로) */
+function ProjectInfo({
+  project,
+  editable,
+  runner,
+  save,
+}: {
+  project: ProjectsSection["items"][number];
+  editable: boolean;
+  runner: Runner;
+  save: Save;
+}) {
   const [open, setOpen] = useState(false);
-  const [values, setValues] = useState<FormValues>(() => toFormValues(PROJECT_FIELDS, project));
+  const [values, setValues] = useState<FormValues>({});
+  const original = toFormValues(PROJECT_FIELDS, project);
+  const target = `${project.itemId}-info`;
   const meta = [project.periodText, project.teamSize !== null ? `${project.teamSize}명` : null, project.role]
     .filter(Boolean)
     .join(" · ");
+  const close = () => {
+    setOpen(false);
+    runner.clearError();
+  };
 
   if (open) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 rounded-[10px] border-[1.5px] border-primary p-3">
         <Fields fields={PROJECT_FIELDS} values={values} onChange={setValues} idPrefix={project.itemId} />
-        <NotSavedNotice>프로젝트 정보 저장은 준비 중이에요. 문장은 아래에서 고칠 수 있어요.</NotSavedNotice>
+        <ErrorText error={runner.error} target={target} />
         <div className="flex gap-2">
+          <button type="button" onClick={close} disabled={runner.saving} className={cancelButton}>
+            취소
+          </button>
           <button
             type="button"
-            onClick={() => {
-              setOpen(false);
-              setValues(toFormValues(PROJECT_FIELDS, project));
-            }}
-            className={cancelButton}
+            onClick={() =>
+              save(
+                target,
+                { op: "UPDATE_ITEM", itemId: project.itemId, item: changedItemInput(PROJECT_FIELDS, original, values) },
+                close,
+              )
+            }
+            disabled={
+              runner.saving || !isFormValid(PROJECT_FIELDS, values) || !hasChanges(PROJECT_FIELDS, original, values)
+            }
+            aria-busy={runner.saving}
+            className={applyButton}
           >
-            닫기
-          </button>
-          <button type="button" disabled className={applyButton}>
-            적용 (준비 중)
+            {runner.saving ? "저장 중…" : "적용"}
           </button>
         </div>
       </div>
@@ -330,7 +379,15 @@ function ProjectInfo({ project, editable }: { project: ProjectsSection["items"][
         {meta && <small className="text-xs text-ink-sub">{meta}</small>}
       </span>
       {editable && (
-        <IconButton label={`${project.title} 정보 수정`} onClick={() => setOpen(true)} disabled={false}>
+        <IconButton
+          label={`${project.title} 정보 수정`}
+          onClick={() => {
+            setValues(original);
+            setOpen(true);
+            runner.clearError();
+          }}
+          disabled={runner.saving}
+        >
           <PencilIcon />
         </IconButton>
       )}
@@ -338,10 +395,11 @@ function ProjectInfo({ project, editable }: { project: ProjectsSection["items"][
   );
 }
 
-/** 기술 태그. 저장 형식 확인 전이라 시트 안에서만 추가 · 삭제된다 */
-function TagEditor({ tags: initial, editable }: { tags: string[]; editable: boolean }) {
-  const [tags, setTags] = useState(initial);
+/** 기술 태그. 추가 · 빼기를 모아 두었다가 "태그 적용"을 누르면 전체 목록을 itemId null 로 저장 */
+function TagEditor({ tags: saved, editable, runner, save }: { tags: string[]; editable: boolean; runner: Runner; save: Save }) {
+  const [tags, setTags] = useState(saved);
   const [draft, setDraft] = useState("");
+  const changed = tags.length !== saved.length || tags.some((t, i) => t !== saved[i]);
   const add = () => {
     const tag = draft.trim();
     if (tag && !tags.includes(tag)) setTags([...tags, tag]);
@@ -362,6 +420,7 @@ function TagEditor({ tags: initial, editable }: { tags: string[]; editable: bool
                   type="button"
                   aria-label={`${tag} 태그 빼기`}
                   onClick={() => setTags(tags.filter((t) => t !== tag))}
+                  disabled={runner.saving}
                   className="flex size-6 items-center justify-center text-ink-muted"
                 >
                   ×
@@ -390,13 +449,35 @@ function TagEditor({ tags: initial, editable }: { tags: string[]; editable: bool
             <button
               type="button"
               onClick={add}
-              disabled={draft.trim() === ""}
+              disabled={draft.trim() === "" || runner.saving}
               className="min-h-11 shrink-0 rounded-[10px] border-[1.5px] border-primary bg-surface px-4 text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
             >
               + 추가
             </button>
           </div>
-          <NotSavedNotice>기술 태그 저장은 준비 중이에요. 바꾼 태그는 시트를 닫으면 사라져요.</NotSavedNotice>
+          <ErrorText error={runner.error} target="tags" />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setTags(saved);
+                runner.clearError();
+              }}
+              disabled={runner.saving || !changed}
+              className={cancelButton}
+            >
+              되돌리기
+            </button>
+            <button
+              type="button"
+              onClick={() => save("tags", { op: "UPDATE_ITEM", itemId: null, item: { tags } })}
+              disabled={runner.saving || !changed}
+              aria-busy={runner.saving}
+              className={applyButton}
+            >
+              {runner.saving ? "저장 중…" : "태그 적용"}
+            </button>
+          </div>
         </>
       )}
     </div>

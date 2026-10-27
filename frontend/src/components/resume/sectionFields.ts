@@ -153,16 +153,33 @@ export function toFormValues(fields: FieldDef[], data: object | null): FormValue
   );
 }
 
-/** 입력칸 값 → 요청 item. 빈 칸은 키를 빼지 않고 null (docs/API.md 공통 JSON 규칙), 숫자 칸은 숫자로 */
+/** 입력칸 값 하나 → 요청 값. 빈 칸은 null, 숫자 칸은 숫자로 */
+const toValue = (f: FieldDef, raw: string | undefined) => {
+  const v = (raw ?? "").trim();
+  if (v === "") return null;
+  return f.kind === "number" ? Number(v) : v;
+};
+
+/** ADD_ITEM 용 item: 모든 필드. 빈 칸은 키를 빼지 않고 null (docs/API.md 공통 JSON 규칙) */
 export function toItemInput(fields: FieldDef[], values: FormValues): Record<string, string | number | null> {
+  return Object.fromEntries(fields.map((f) => [f.key, toValue(f, values[f.key])]));
+}
+
+/** UPDATE_ITEM 용 item: 바뀐 필드만 (생략 = 그대로, null = 비우기. docs/API.md 2-1). 바뀐 게 없으면 빈 객체 */
+export function changedItemInput(
+  fields: FieldDef[],
+  original: FormValues,
+  values: FormValues,
+): Record<string, string | number | null> {
   return Object.fromEntries(
-    fields.map((f) => {
-      const v = (values[f.key] ?? "").trim();
-      if (v === "") return [f.key, null];
-      return [f.key, f.kind === "number" ? Number(v) : v];
-    }),
+    fields
+      .filter((f) => toValue(f, original[f.key]) !== toValue(f, values[f.key]))
+      .map((f) => [f.key, toValue(f, values[f.key])]),
   );
 }
+
+export const hasChanges = (fields: FieldDef[], original: FormValues, values: FormValues) =>
+  Object.keys(changedItemInput(fields, original, values)).length > 0;
 
 export const isFormValid = (fields: FieldDef[], values: FormValues) =>
   fields.every((f) => {

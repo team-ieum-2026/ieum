@@ -150,6 +150,8 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
       setSaveState("SAVED");
     } catch (e: unknown) {
       setSaveState("ERROR");
+      // 그사이 검토 요청이 된 서류(409 INVALID_STATUS)면 최신 상태를 다시 불러와 시트를 읽기 전용으로
+      if (e instanceof ApiError && e.code === "INVALID_STATUS") setReloadKey((k) => k + 1);
       throw e;
     }
   };
