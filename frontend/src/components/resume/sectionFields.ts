@@ -1,6 +1,7 @@
 // 주인: FE-B — M6-2 섹션 편집 시트(FE-B-05)의 섹션별 입력칸 정의. M6 · M8 공용
 // 필드 이름 · 값은 docs/API.md 3-3 서류 JSON 과 db/schema.sql 주석을 따른다. itemId · source 는 서버가 채운다.
-// 요청 형식이 정해진 목록 섹션(학력 · 경력 · 자격증)만 둔다. 나머지는 BE-A 확인 뒤 같은 틀로 추가.
+// SECTION_FIELDS 는 추가 · 수정 · 삭제 요청 형식이 정해진 목록 섹션(학력 · 경력 · 자격증).
+// BASIC_FIELDS · MILITARY_FIELDS · PROJECT_FIELDS 는 입력 화면용 (저장 형식은 BE-A 확인 전, SectionDetailSheet).
 import type { CareerItem, CertificateItem, EducationItem } from "@/types/resume";
 
 export type EditableSectionName = "EDUCATION" | "CAREER" | "CERTIFICATES";
@@ -9,7 +10,7 @@ export type EditableItem = EducationItem | CareerItem | CertificateItem;
 export interface FieldDef {
   key: string;
   label: string;
-  kind: "text" | "date" | "select" | "textarea";
+  kind: "text" | "date" | "select" | "textarea" | "number";
   required?: boolean;
   placeholder?: string;
   /** 입력칸 아래 작은 안내 */
@@ -107,25 +108,65 @@ export const SECTION_FIELDS: Record<EditableSectionName, SectionFieldConfig> = {
 
 export const isEditableSection = (section: string): section is EditableSectionName => section in SECTION_FIELDS;
 
+/** BASIC.fields (docs/API.md 3-3) */
+export const BASIC_FIELDS: FieldDef[] = [
+  { key: "name", label: "이름", kind: "text", required: true },
+  { key: "email", label: "이메일", kind: "text", placeholder: "example@email.com" },
+  { key: "githubUrl", label: "GitHub", kind: "text", placeholder: "github.com/아이디" },
+  { key: "desiredJob", label: "희망 직무", kind: "text", placeholder: "예: 백엔드 개발" },
+];
+
+/** MILITARY.value — db/schema.sql student.military_status. 빈 칸(선택 안 함)은 null */
+export const MILITARY_FIELDS: FieldDef[] = [
+  {
+    key: "value",
+    label: "병역",
+    kind: "select",
+    options: [
+      { value: "SERVED", label: "군필" },
+      { value: "NOT_SERVED", label: "미필" },
+      { value: "EXEMPT", label: "면제" },
+      { value: "NOT_APPLICABLE", label: "해당 없음" },
+    ],
+    hint: "선택 입력 · 비워 둬도 제출할 수 있어요",
+  },
+];
+
+/** PROJECTS 항목의 문장(bullets) 밖 정보 (docs/API.md 3-3) */
+export const PROJECT_FIELDS: FieldDef[] = [
+  { key: "title", label: "프로젝트 이름", kind: "text", required: true },
+  { key: "periodText", label: "기간", kind: "text", placeholder: "예: 6주", half: true },
+  { key: "teamSize", label: "인원", kind: "number", placeholder: "예: 4", half: true },
+  { key: "role", label: "역할", kind: "text", placeholder: "예: 백엔드" },
+];
+
 export type FormValues = Record<string, string>;
 
-/** 항목 → 입력칸 값 (null 은 빈 칸) */
-export function toFormValues(name: EditableSectionName, item: EditableItem | null): FormValues {
-  const record = (item ?? {}) as unknown as Record<string, unknown>;
+/** 데이터 → 입력칸 값 (null 은 빈 칸, 숫자는 글자로) */
+export function toFormValues(fields: FieldDef[], data: object | null): FormValues {
+  const record = (data ?? {}) as Record<string, unknown>;
   return Object.fromEntries(
-    SECTION_FIELDS[name].fields.map((f) => [f.key, typeof record[f.key] === "string" ? (record[f.key] as string) : ""]),
-  );
-}
-
-/** 입력칸 값 → 요청 item. 빈 칸은 키를 빼지 않고 null (docs/API.md 공통 JSON 규칙) */
-export function toItemInput(name: EditableSectionName, values: FormValues): Record<string, string | null> {
-  return Object.fromEntries(
-    SECTION_FIELDS[name].fields.map((f) => {
-      const v = (values[f.key] ?? "").trim();
-      return [f.key, v === "" ? null : v];
+    fields.map((f) => {
+      const v = record[f.key];
+      return [f.key, typeof v === "string" ? v : typeof v === "number" ? String(v) : ""];
     }),
   );
 }
 
-export const isFormValid = (name: EditableSectionName, values: FormValues) =>
-  SECTION_FIELDS[name].fields.every((f) => !f.required || (values[f.key] ?? "").trim() !== "");
+/** 입력칸 값 → 요청 item. 빈 칸은 키를 빼지 않고 null (docs/API.md 공통 JSON 규칙), 숫자 칸은 숫자로 */
+export function toItemInput(fields: FieldDef[], values: FormValues): Record<string, string | number | null> {
+  return Object.fromEntries(
+    fields.map((f) => {
+      const v = (values[f.key] ?? "").trim();
+      if (v === "") return [f.key, null];
+      return [f.key, f.kind === "number" ? Number(v) : v];
+    }),
+  );
+}
+
+export const isFormValid = (fields: FieldDef[], values: FormValues) =>
+  fields.every((f) => {
+    const v = (values[f.key] ?? "").trim();
+    if (f.required && v === "") return false;
+    return f.kind !== "number" || v === "" || Number.isInteger(Number(v));
+  });

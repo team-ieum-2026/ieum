@@ -6,13 +6,17 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
+import SectionDetailSheet, { type DetailSection } from "@/components/resume/SectionDetailSheet";
 import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
 import { isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
-import type { ApplicationDetail, CoverLetterSection } from "@/types/resume";
+import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
+
+const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
+const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
 
 const primaryButton =
   "flex min-h-[52px] flex-[2] items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -109,17 +113,22 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
     setSubmitError(null);
   };
 
-  // FE-B-05: 요청 형식이 정해진 목록 섹션(학력 · 경력 · 자격증)만 편집 시트. 나머지는 내용만 보여 준다
-  const editTarget = editing && isEditableSection(editing.section) ? editing.section : null;
-  const editSection = editTarget ? document.sections.find((s) => s.section === editTarget) : undefined;
-  const editItems: EditableItem[] = editSection && "items" in editSection ? (editSection.items as EditableItem[]) : [];
+  // FE-B-05: 학력 · 경력 · 자격증은 목록 편집 시트, 기본정보 · 병역 · 기술 · 경험 · 포트폴리오는 섹션 시트,
+  // 교육(TRAINING)은 읽기 전용 안내 시트. 시트에는 응답으로 갱신된 최신 섹션을 넘긴다
+  const editSection = editing ? document.sections.find((s) => s.section === editing.section) : undefined;
+  const listTarget = editing && isEditableSection(editing.section) ? editing.section : null;
+  const listItems: EditableItem[] = editSection && "items" in editSection ? (editSection.items as EditableItem[]) : [];
+  const detailSection = editSection && isDetailSection(editSection) ? editSection : null;
 
   // 한 건 저장 → 응답의 서류 전체로 바꿔 카드 요약 · 출처 태그도 함께 갱신. 실패는 시트가 받아 입력값을 유지한다
   const saveItem = async (change: ItemChange, saveToProfile: boolean) => {
-    if (!editTarget) return;
+    if (!editing) return;
+    // UPDATE_SENTENCE 는 sentenceId · text 만 보낸다 (docs/API.md 2-1)
+    const body: DocumentPatchRequest =
+      change.op === "UPDATE_SENTENCE" ? change : { ...change, section: editing.section, saveToProfile };
     setSaveState("SAVING");
     try {
-      const result = await patchDocument(applicationId, { ...change, section: editTarget, saveToProfile });
+      const result = await patchDocument(applicationId, body);
       setDetail((prev) => (prev ? { ...prev, document: result.document } : prev));
       setSaveState("SAVED");
     } catch (e: unknown) {
@@ -216,24 +225,21 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         </p>
       </footer>
 
-      {editTarget ? (
+      {listTarget ? (
         <SectionEditSheet
-          section={editTarget}
-          items={editItems}
+          section={listTarget}
+          items={listItems}
           editable={canSubmit}
           onChange={saveItem}
           onClose={closeEditing}
         />
+      ) : detailSection ? (
+        <SectionDetailSheet section={detailSection} editable={canSubmit} onChange={saveItem} onClose={closeEditing} />
       ) : (
         <BottomSheet
           open={editing !== null}
           title={editing?.label ?? ""}
-          description={
-            editing?.readOnly
-              ? "수료한 교육 과정 정보라 여기서 고칠 수 없어요."
-              : // TODO(FE-B-05): 기본정보 · 병역 · 기술 · 경험 · 포트폴리오는 요청 형식을 BE-A 와 정한 뒤 편집 추가
-                "지금은 내용만 확인할 수 있어요. 수정 기능은 준비 중이에요."
-          }
+          description="수료한 교육 과정 정보라 여기서 고칠 수 없어요."
           onClose={() => setEditing(null)}
           actions={
             <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
