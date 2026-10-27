@@ -46,5 +46,43 @@ public final class ProfileData {
         private JsonNode techStack;
         private String portfolioFileName;
         private boolean includeInApply;
+        // AI 재추출 입력에만 포함한다. M8 조회 응답에는 노출하지 않는다.
+        private String roleNote;
+        private String readme;
+        private String source;
+    }
+
+    @Getter
+    @Setter
+    public static class Career {
+        private Long itemId;
+        private Long studentId;
+        private String companyName;
+        private String position;
+        private LocalDate startedOn;
+        private LocalDate endedOn;
+        private String description;
+    }
+
+    @Getter
+    @Setter
+    public static class Education {
+        private Long itemId;
+        private Long studentId;
+        private String schoolName;
+        private String major;
+        private String degree;
+        private String status;
+        private LocalDate graduatedOn;
+    }
+
+    @Getter
+    @Setter
+    public static class Certificate {
+        private Long itemId;
+        private Long studentId;
+        private String name;
+        private String issuer;
+        private LocalDate acquiredOn;
     }
 }
