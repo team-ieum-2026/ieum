@@ -6,7 +6,8 @@
     <select id="selectLatest" resultType="com.ieum.recommendation.RecommendationRows$Header">
         SELECT r.id, r.student_id, r.trigger_type, r.created_at,
                (SELECT COUNT(*) FROM recommendation_item i JOIN job_posting j ON j.id = i.job_posting_id
-                 WHERE i.recommendation_id = r.id AND j.is_active = 1) AS item_count
+                 WHERE i.recommendation_id = r.id AND j.is_active = 1) AS item_count,
+               (SELECT COUNT(*) FROM recommendation_item i WHERE i.recommendation_id = r.id) AS total_count
         FROM recommendation r
         WHERE r.student_id = #{studentId}
         ORDER BY r.created_at DESC, r.id DESC
@@ -47,6 +48,10 @@
         </if>
         ORDER BY posted_on DESC, id DESC
         LIMIT #{limit}
+    </select>
+
+    <select id="selectStudentIds" resultType="long">
+        SELECT id FROM student ORDER BY id
     </select>
 
     <insert id="insertRecommendation" parameterType="com.ieum.recommendation.RecommendationRows$NewRecommendation"

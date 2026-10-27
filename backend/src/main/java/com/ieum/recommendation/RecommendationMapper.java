@@ -24,6 +24,9 @@ public interface RecommendationMapper {
     /** AI 고정 응답용: 제외 목록 밖의 활성 공고를 최근 등록 순으로 limit 개 */
     List<Long> selectRecentActiveJobIds(@Param("excludeIds") List<Long> excludeIds, @Param("limit") int limit);
 
+    /** 전체 수료생 id. 공고 배치 뒤 추천 미리 만들기용 */
+    List<Long> selectStudentIds();
+
     int insertRecommendation(RecommendationRows.NewRecommendation recommendation);
 
     int insertItems(@Param("items") List<RecommendationRows.NewItem> items);

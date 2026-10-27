@@ -9,6 +9,10 @@
         WHERE source = #{source}
     </select>
 
+    <select id="selectActiveIds" resultType="long">
+        SELECT id FROM job_posting WHERE is_active = 1
+    </select>
+
     <insert id="upsert" parameterType="com.ieum.job.JobPosting">
         INSERT INTO job_posting (
             source, external_id, company_name, title, job_code, job_category, location, work_address,
