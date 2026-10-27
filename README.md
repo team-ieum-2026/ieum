@@ -77,6 +77,8 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
+- `ai/.env.example`을 `ai/.env`로 복사하고 `GEMINI_API_KEY` · 모델 이름을 채웁니다(키는 디스코드 비공개 채널).
+- `requirements.txt`에 리랭커용 torch가 포함돼 처음 설치는 수 GB · 수 분 걸립니다.
 - 상태 확인: http://localhost:8000/ai/health
 - API 문서: http://localhost:8000/docs
 
@@ -99,6 +101,8 @@ npm run dev
 | BE-A · BE-B | DB + BE (`AI_MOCK=true`) |
 | AI-A · AI-B | AI만 (Swagger `/docs`에서 단독 테스트) |
 | 통합 (11/2~) | DB + AI + BE + FE, `USE_MOCK=false`, `AI_MOCK=false` |
+
+진짜 AI를 처음 붙일 때(`AI_MOCK=false`)는 AI 서버를 켠 뒤 Swagger에서 `POST /api/admin/jobs/reindex`를 한 번 실행합니다. AI 색인이 각자 PC에 따로 쌓여서, 이걸 해야 AI가 공고를 알고 추천합니다. 공고 배치(`sync`)는 매일 06:00에 BE 서버가 켜져 있을 때만 돌고, 꺼져 있었으면 `POST /api/admin/jobs/sync`를 직접 실행합니다.
 
 ## 문서
 

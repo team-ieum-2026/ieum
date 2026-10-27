@@ -92,3 +92,4 @@ IT 직종 필터 뒤에 `application.yml`의 `app.seoul.allowed-regions`(`서울
 5. 첫 배치가 성공하면 시드의 개발용 임시 공고를 끕니다: `UPDATE job_posting SET is_active = 0 WHERE source = 'DEV_SEED';`
 6. API가 실패하면(`ERROR-500`, 시간 초과) 그날은 건너뛰고 기존 데이터로 추천합니다.
 7. 배치가 끝나면 추천이 없거나 0건이거나 공고가 모두 꺼진 수료생의 추천을 백그라운드로 미리 만듭니다(`trigger_type = BATCH`). 이미 볼 수 있는 추천이 있는 수료생은 건드리지 않습니다.
+8. 배치는 바뀐 공고만 AI에 보내므로, AI 색인이 비어 있을 때(AI 서버를 처음 연결 · 색인 파일 삭제 · 색인 실패)는 `POST /api/admin/jobs/reindex`로 활성 공고 전체를 다시 보냅니다.

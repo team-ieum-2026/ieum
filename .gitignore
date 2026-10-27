@@ -38,6 +38,8 @@ __pycache__/
 ai/.cache/
 ai/models/
 ai/eval/results/
+# 공고 색인 (각자 PC에서 POST /api/admin/jobs/reindex 로 만들어짐)
+ai/data/index/
 
 # ---- 기타 ----
 *.log

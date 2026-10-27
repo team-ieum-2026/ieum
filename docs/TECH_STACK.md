@@ -52,9 +52,11 @@
 | google-genai | 2.33.0 | LLM은 Gemini. 호출은 `ai/common/llm.py`에서만 |
 | httpx | 0.28.1 | 기업 정보 수집 등 |
 | python-dotenv | 1.2.4 | |
-| 임베딩 · 리랭커 | 미정 | AI-A가 모델 확정 후 `requirements.txt`에 추가 |
+| 임베딩 | `gemini-embedding-001` | google-genai로 호출 (`ai/common/embedding.py`). 라이브러리 추가 없음 |
+| sentence-transformers | 6.2.0 | 리랭커 `BAAI/bge-reranker-v2-m3` (`ai/common/reranker.py`). torch가 함께 설치돼 수 GB · 첫 실행 때 모델 내려받음 |
 
-- 설정은 `ai/.env` (`GEMINI_API_KEY`, `LLM_MODEL`, `EMBEDDING_MODEL`, `RERANKER_MODEL`).
+- 설정은 `ai/.env` (`GEMINI_API_KEY`, `LLM_MODEL`, `EMBEDDING_MODEL`, `RERANKER_MODEL`). `RERANKER_MODEL`을 비우면 bge 리랭커를 씁니다.
+- 공고 색인은 각자 PC의 `ai/data/index/`에 쌓입니다(깃 제외). 처음 연결할 때 BE `POST /api/admin/jobs/reindex`로 채웁니다.
 
 ## DB
 
