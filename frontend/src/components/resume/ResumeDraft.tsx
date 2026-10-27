@@ -101,7 +101,23 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         <SaveStatus state={saveState} />
       </header>
 
-      <div className="flex flex-col px-4 pb-[98px] pt-16">
+      <div className="flex flex-col px-4 pb-[98px] pt-[68px]">
+        <section className="mb-4 flex items-center gap-3 rounded-2xl border border-primary-soft bg-primary-tint px-3.5 py-2.5">
+          <span
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface text-primary"
+            aria-hidden="true"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6M8 13h8M8 17h5" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold">AI가 이력서 초안을 준비했어요</p>
+            <p className="mt-0.5 text-xs text-ink-sub">각 항목을 확인하고 필요한 내용만 고쳐 주세요.</p>
+          </div>
+        </section>
+
         <h2 className="mx-1 mb-1.5 text-sm font-bold">이력서</h2>
         <SectionCardGroup>
           {requiredCards.map((card) => (
