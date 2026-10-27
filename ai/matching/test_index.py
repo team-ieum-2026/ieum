@@ -130,7 +130,11 @@ class EmbeddingTest(TempStoreCase):
 
         result = self.index([JOB], embed=one_vector_for_everything)
         self.assertEqual((result.indexed_count, result.failed_count, result.failed_job_posting_ids), (0, 1, [1]))
-        self.assertEqual(self.store.load(), {})
+        # 실패해도 전처리는 vector null 로 저장해 두고 다음 /index 때 다시 시도한다
+        saved = self.store.load()["1"]
+        self.assertIsNone(saved["vector"])
+        self.assertIsNotNone(saved["embedAttemptedAt"])
+        self.assertIn("[공고] 백엔드 개발자", saved["matchText"])
 
     def test_empty_result_fails_that_job(self):
         result = self.index([JOB], embed=lambda texts: [])
@@ -168,6 +172,94 @@ class EmbeddingTest(TempStoreCase):
         """지금 common.embedding.embed_texts 는 NotImplementedError → 서버가 멈추지 않고 NOT_READY"""
         result = run_index(IndexRequest.model_validate({"jobs": [JOB]}), self.store)
         self.assertEqual((result.indexed_count, result.embedding_status), (1, "NOT_READY"))
+
+
+class RetryTest(TempStoreCase):
+    """BE 가 다시 보내지 않는 공고(vector null · 다른 모델)를 /index 가 불릴 때마다 최대 20건씩 다시 임베딩한다."""
+
+    def save_without_vectors(self, ids):
+        self.index([{**JOB, "jobPostingId": i} for i in ids], embed=not_ready_embed)
+        self.assertTrue(all(self.store.load()[str(i)]["vector"] is None for i in ids))
+
+    def test_null_vectors_filled_on_next_empty_index_call(self):
+        self.save_without_vectors([1, 2, 3])
+        client = TestClient(app)
+        with patch.object(router, "store", self.store), \
+             patch.object(indexer, "default_embedder", return_value=fake_embed), \
+             patch.object(indexer, "default_model_name", return_value=MODEL):
+            res = client.post("/ai/matching/index", json={"removedJobPostingIds": [], "jobs": []})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()["data"]
+        self.assertEqual((data["indexedCount"], data["skippedCount"], data["removedCount"], data["retriedCount"]), (0, 0, 0, 3))
+        saved = self.store.load()
+        for i in ("1", "2", "3"):
+            self.assertIsNotNone(saved[i]["vector"])
+            self.assertEqual(saved[i]["embeddingModel"], MODEL)
+
+    def test_retry_runs_after_request_jobs(self):
+        self.save_without_vectors([1, 2, 3])
+        result = self.index([{**JOB, "jobPostingId": 9}])
+        self.assertEqual((result.indexed_count, result.retried_count), (1, 3))
+
+    def test_failed_new_job_is_retried_next_time(self):
+        """BE 는 실패한 공고를 다시 보내지 않는다. 저장해 둔 전처리로 다음 호출 때 채운다."""
+        first = self.index([JOB], embed=lambda texts: [])
+        self.assertEqual(first.failed_job_posting_ids, [1])
+        second = self.index([])
+        self.assertEqual(second.retried_count, 1)
+        self.assertIsNotNone(self.store.load()["1"]["vector"])
+
+    def test_at_most_20_per_call(self):
+        self.save_without_vectors(range(1, 26))
+        calls = []
+
+        def counting_embed(texts):
+            calls.append(texts)
+            return fake_embed(texts)
+
+        first = self.index([], embed=counting_embed)
+        self.assertEqual((first.retried_count, len(calls)), (indexer.RETRY_LIMIT, 20))
+        missing = [k for k, v in self.store.load().items() if v["vector"] is None]
+        self.assertEqual(sorted(missing, key=int), ["21", "22", "23", "24", "25"])
+
+        second = self.index([], embed=counting_embed)
+        self.assertEqual(second.retried_count, 5)
+        self.assertEqual(self.index([], embed=counting_embed).retried_count, 0)
+
+    def test_failing_jobs_do_not_block_others(self):
+        """계속 실패하는 공고가 있어도 시도한 적 없는 공고가 먼저 차례를 받는다."""
+        self.save_without_vectors(range(1, 26))
+        self.assertEqual(self.index([], embed=lambda texts: []).retried_count, 0)  # 1~20 시도했지만 실패
+        result = self.index([], embed=fake_embed)
+        saved = self.store.load()
+        self.assertEqual(result.retried_count, 20)
+        for i in ("21", "22", "23", "24", "25"):
+            self.assertIsNotNone(saved[i]["vector"])
+
+    def test_other_model_is_reembedded(self):
+        self.index([JOB], model="old-model")
+        result = self.index([], model=MODEL)
+        self.assertEqual(result.retried_count, 1)
+        self.assertEqual(self.store.load()["1"]["embeddingModel"], MODEL)
+
+    def test_skipped_when_module_missing(self):
+        self.save_without_vectors([1, 2, 3])
+        result = self.index([], embed=None)
+        self.assertEqual((result.retried_count, result.failed_count, result.embedding_status), (0, 0, "NOT_READY"))
+        self.assertTrue(all(v["vector"] is None for v in self.store.load().values()))
+
+    def test_skipped_when_not_implemented(self):
+        self.save_without_vectors([1, 2, 3])
+        calls = []
+
+        def not_ready(texts):
+            calls.append(texts)
+            raise NotImplementedError
+
+        result = self.index([], embed=not_ready)
+        self.assertEqual((result.retried_count, result.failed_count, result.embedding_status), (0, 0, "NOT_READY"))
+        self.assertEqual(len(calls), 1)  # 한 번 확인하고 멈춘다
+        self.assertTrue(all(v["embedAttemptedAt"] is None for v in self.store.load().values()))
 
 
 class PreprocessTest(unittest.TestCase):
@@ -231,7 +323,7 @@ class RouterTest(TempStoreCase):
         self.assertEqual(first.status_code, 200)
         self.assertEqual(first.json(), {"data": {
             "indexedCount": 3, "skippedCount": 0, "removedCount": 0, "failedCount": 0,
-            "failedJobPostingIds": [], "embeddingStatus": "OK",
+            "failedJobPostingIds": [], "retriedCount": 0, "embeddingStatus": "OK",
         }})
         self.assertEqual(again.json()["data"]["skippedCount"], 3)
 

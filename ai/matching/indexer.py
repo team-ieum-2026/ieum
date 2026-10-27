@@ -4,8 +4,13 @@
 - contentHash · preprocessVersion · embeddingModel 이 저장된 값과 모두 같고 벡터가 있으면 건너뛴다(skipped).
   벡터가 null 인 공고(임베딩 준비 전에 색인된 것)는 건너뛰지 않고 다시 계산한다.
 - 임베딩은 공고마다 [텍스트 1개]로 따로 부르고, 결과가 벡터 1개가 아니면 그 공고만 실패(failed)로 둔다.
+  실패한 공고도 전처리 결과는 vector null 로 저장해 두고, 아래 "다시 시도"에서 채운다.
 - common.embedding 이 없거나 NotImplementedError 면 전처리 결과만 저장하고 vector 는 null (embeddingStatus: NOT_READY).
-- 공고 하나가 실패해도 나머지는 계속한다. 실패한 공고는 기존 저장 값을 그대로 둔다.
+- 공고 하나가 실패해도 나머지는 계속한다. 형식 · 전처리 실패는 저장하지 않고 기존 값을 그대로 둔다.
+- 다시 시도: BE 는 한 번 보낸 공고를 다시 보내지 않으므로(contentHash 가 같으면), /index 가 불릴 때마다
+  이번 요청의 공고를 처리한 뒤 저장소에서 vector 가 null 이거나 embeddingModel 이 현재 모델과 다른 공고를
+  최대 RETRY_LIMIT 건 골라 저장된 matchText 로 임베딩을 다시 한다. 마지막 시도가 오래된 공고부터 고른다
+  (계속 실패하는 공고가 다른 공고의 차례를 막지 않게). 임베딩 모듈이 준비 전이면 건너뛴다.
 """
 
 import logging
@@ -23,6 +28,9 @@ from matching.store import Entry, IndexStore
 logger = logging.getLogger("ieum.matching")
 
 KST = timezone(timedelta(hours=9))
+
+# /index 한 번에 다시 시도하는 최대 공고 수 (임베딩 API 한도 보호, BE 묶음 크기와 같게)
+RETRY_LIMIT = 20
 
 Embedder = Callable[[Sequence[str]], list[list[float]]]
 _DEFAULT: Any = object()
@@ -74,10 +82,28 @@ def run_index(
     if model_name is _DEFAULT:
         model_name = default_model_name()
     embed_ready = embed is not None
-    indexed = skipped = removed = 0
+    indexed = skipped = removed = retried = 0
     failed_ids: list[int] = []
     failed_unknown = 0  # jobPostingId 조차 읽을 수 없는 공고
+    attempted: set[str] = set()  # 이번 요청에서 이미 임베딩을 시도한 공고 (다시 시도 대상에서 뺀다)
+    dirty = False
     now = datetime.now(KST).isoformat(timespec="seconds")
+
+    def try_embed(job_id: int, text: str) -> list[float] | None:
+        """벡터 1개 또는 None(실패). 모듈 준비 전(NotImplementedError)이면 embed_ready 를 끈다."""
+        nonlocal embed_ready
+        try:
+            vector = _one_vector(embed([text]))
+        except NotImplementedError:
+            logger.warning("embedding not implemented yet, saving preprocess only (vector=null)")
+            embed_ready = False
+            return None
+        except Exception as e:
+            logger.warning("index embedding failed id=%d error=%s", job_id, type(e).__name__)
+            return None
+        if vector is None:
+            logger.warning("index embedding count mismatch id=%d (expected 1 vector)", job_id)
+        return vector
 
     with store.lock:
         entries = store.load()
@@ -106,21 +132,11 @@ def run_index(
                 continue
 
             vector = None
+            tried = embed_ready
             if embed_ready:
-                try:
-                    vector = _one_vector(embed([pre.match_text]))
-                except NotImplementedError:
-                    logger.warning("embedding not implemented yet, saving preprocess only (vector=null)")
-                    embed_ready = False
-                except Exception as e:
-                    logger.warning("index embedding failed id=%d error=%s", job.job_posting_id, type(e).__name__)
-                    failed_ids.append(job.job_posting_id)
-                    continue
-                else:
-                    if vector is None:
-                        logger.warning("index embedding count mismatch id=%d (expected 1 vector)", job.job_posting_id)
-                        failed_ids.append(job.job_posting_id)
-                        continue
+                vector = try_embed(job.job_posting_id, pre.match_text)
+                tried = embed_ready  # NotImplementedError 면 시도한 것으로 치지 않는다
+                attempted.add(key)
 
             entries[key] = {
                 "contentHash": job.content_hash,
@@ -132,14 +148,24 @@ def run_index(
                 "education": job.education,
                 "vector": vector,
                 "indexedAt": now,
+                "embedAttemptedAt": now if tried else None,
             }
-            indexed += 1
+            dirty = True
+            if tried and vector is None:
+                failed_ids.append(job.job_posting_id)  # 전처리는 저장됨 → 다음 /index 때 다시 시도
+            else:
+                indexed += 1
 
         for job_id in dict.fromkeys(req.removed_job_posting_ids):
             if entries.pop(str(job_id), None) is not None:
                 removed += 1
+                dirty = True
 
-        if indexed or removed:
+        if embed_ready:
+            retried, retry_dirty = _retry_missing(entries, attempted, model_name, now, try_embed, lambda: embed_ready)
+            dirty = dirty or retry_dirty
+
+        if dirty:
             store.save(entries)
 
     data = IndexData(
@@ -148,10 +174,50 @@ def run_index(
         removed_count=removed,
         failed_count=len(failed_ids) + failed_unknown,
         failed_job_posting_ids=failed_ids,
+        retried_count=retried,
         embedding_status="OK" if embed_ready else "NOT_READY",
     )
     logger.info(
-        "index done indexed=%d skipped=%d removed=%d failed=%d embedding=%s total=%d",
-        indexed, skipped, removed, data.failed_count, data.embedding_status, len(entries),
+        "index done indexed=%d skipped=%d removed=%d failed=%d retried=%d embedding=%s total=%d",
+        indexed, skipped, removed, data.failed_count, retried, data.embedding_status, len(entries),
     )
     return data
+
+
+def _needs_embedding(entry: Entry, model_name: str | None) -> bool:
+    return entry.get("vector") is None or entry.get("embeddingModel") != model_name
+
+
+def _retry_missing(
+    entries: dict[str, Entry],
+    attempted: set[str],
+    model_name: str | None,
+    now: str,
+    try_embed: Callable[[int, str], list[float] | None],
+    still_ready: Callable[[], bool],
+) -> tuple[int, bool]:
+    """vector 가 없거나 모델이 다른 공고를 최대 RETRY_LIMIT 건 다시 임베딩한다. (채운 수, 저장 필요 여부)
+
+    마지막 시도 시각(embedAttemptedAt)이 없거나 오래된 공고부터, 같으면 jobPostingId 순.
+    matchText 는 저장된 것을 그대로 쓴다 (원문이 없어 다시 전처리하지 않는다).
+    """
+    targets = sorted(
+        (key for key, entry in entries.items() if key not in attempted and _needs_embedding(entry, model_name)),
+        key=lambda key: (entries[key].get("embedAttemptedAt") or "", int(key)),
+    )[:RETRY_LIMIT]
+    filled = 0
+    dirty = False
+    for key in targets:
+        entry = entries[key]
+        vector = try_embed(int(key), entry.get("matchText") or "")
+        if not still_ready():  # 모듈 준비 전이면 시도 기록도 남기지 않고 멈춘다
+            break
+        entry["embedAttemptedAt"] = now
+        dirty = True
+        if vector is not None:
+            entry["vector"] = vector
+            entry["embeddingModel"] = model_name
+            filled += 1
+    if targets:
+        logger.info("index retry targets=%d filled=%d", len(targets), filled)
+    return filled, dirty

@@ -50,7 +50,7 @@ class IndexData(CamelModel):
     """응답의 data.
 
     BE(JobSyncService.indexInBatches)는 묶음마다 indexedCount · skippedCount · removedCount 만 읽어 더한다 (없으면 0).
-    failedCount · failedJobPostingIds · embeddingStatus 는 BE 가 읽지 않는 추가 정보다 (로그 · 디버깅용).
+    failedCount · failedJobPostingIds · retriedCount · embeddingStatus 는 BE 가 읽지 않는 추가 정보다 (로그 · 디버깅용).
     """
 
     indexed_count: int
@@ -58,6 +58,8 @@ class IndexData(CamelModel):
     removed_count: int
     failed_count: int
     failed_job_posting_ids: list[int]
+    # 이번 요청과 별개로, 저장소에서 vector 가 없거나 모델이 다른 공고를 다시 임베딩해 채운 수
+    retried_count: int = 0
     # OK: 벡터까지 저장 · NOT_READY: common.embedding 구현 전이라 전처리만 저장하고 vector 는 null
     embedding_status: Literal["OK", "NOT_READY"]
 
