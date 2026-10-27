@@ -1,9 +1,11 @@
-// 주인: FE-A — M2 공고 상세 · 응답 (FE-A-06 ~ 08)
-export default async function JobDetailPage({ params }: PageProps<"/student/jobs/[itemId]">) {
+// 주인: FE-A — JobDetailScreen
+import { notFound } from "next/navigation";
+import JobDetailScreen from "@/components/student/JobDetailScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function Page({ params, searchParams }: PageProps<"/student/jobs/[itemId]">) {
   const { itemId } = await params;
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M2 공고 상세 · 응답 · itemId {itemId}</h1>
-    </section>
-  );
+  if (!/^\d+$/.test(itemId) || !Number.isSafeInteger(Number(itemId)) || Number(itemId) < 1) notFound();
+  const studentId = studentIdFrom(await searchParams);
+  return <JobDetailScreen key={`${itemId}-${studentId}`} itemId={Number(itemId)} studentId={studentId} />;
 }

@@ -77,7 +77,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M5 | `GET /api/applications/{applicationId}/progress` | 서류 생성 진행 상태 (FE가 2초마다 조회) | S7 |
 | M6 · M6-1 | `GET /api/applications/{applicationId}` | 서류 전체 (이력서 + 자기소개서 + 근거) | S8 |
 | M6 · M6-1 · M6-2 | `PATCH /api/applications/{applicationId}/document` | 문장 수정 · 섹션 항목 추가 · 수정 · 삭제 | S8 |
-| M6 | `POST /api/applications/{applicationId}/submit` | 최종 제출 | S8 |
+| M6 | `POST /api/applications/{applicationId}/submit` | 담당자에게 검토 요청 (상태값은 `SUBMITTED`) | S8 |
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
 | - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
 
@@ -88,9 +88,13 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 ```json
 { "data": { "status": "DONE", "message": "공고 동기화를 마쳤어요.", "fetchedCount": 41191, "itCount": 105,
   "insertedCount": 105, "updatedCount": 0, "unchangedCount": 0, "deactivatedCount": 3,
-  "indexRequestedCount": 105, "indexResult": { "indexedCount": 105, "skippedCount": 0 },
+  "indexRequestedCount": 105,
+  "indexResult": { "indexedCount": 105, "skippedCount": 0, "removedCount": 3, "failedBatchCount": 0 },
   "syncedAt": "2026-10-25T23:43:20+09:00" } }
 ```
+
+- `indexResult`는 AI 색인 요청을 20건씩 나눠 보낸 응답을 더한 값입니다. 보낼 공고도 지울 공고도 없으면 `null`입니다. `failedBatchCount`는 실패한 묶음 수이고, 실패한 묶음은 다음 배치에서 다시 보내지 않으니 수동 실행으로 재시도합니다.
+- 배치가 끝나면 추천이 없거나 0건이거나 공고가 모두 꺼진 수료생의 추천을 백그라운드로 미리 만듭니다(`trigger_type = BATCH`). 응답은 이 작업을 기다리지 않습니다.
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 
@@ -126,6 +130,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 }
 ```
 
+- 맞는 공고가 없으면 `items: []`입니다. 이 결과도 0건 추천으로 저장되어 `recommendationId`가 있습니다. 프로필이 아직 없을 때만 저장하지 않고 `recommendationId: null`로 응답합니다. 0건은 프로필이 바뀌거나 다음 공고 배치가 돌 때까지 그대로 씁니다.
 - `untilFilled: true`면 "채용 시 마감"이라 표시된 날짜 전에도 마감될 수 있습니다. 카드에는 `D-7 · 채용 시 마감`처럼 함께 표시합니다.
 - M2 공고 상세(`GET /api/recommendation-items/{itemId}`)의 전체 응답 형식은 `frontend/public/mock/M2_recommendation_item_detail.json`을 따릅니다. 공고 원문 링크는 API에 없어 `homepageUrl`은 `null`이고, 출처 문구 `sourceLabel`을 표시합니다.
 
@@ -182,6 +187,9 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 }
 ```
 
+- `status`가 `GENERATING` · `FAILED`이면 200으로 응답하고 `document`만 `null`입니다(다른 키는 그대로).
+- 없는 지원서면 404 `APPLICATION_NOT_FOUND`
+
 #### `PATCH /api/applications/{applicationId}/document` (M6 · M6-1 · M6-2)
 
 한 번에 하나의 변경만 보냅니다. 수정된 항목의 `source`는 서버가 `USER`로 바꿉니다.
@@ -206,9 +214,39 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - `PROJECTS`를 프로필에 저장할 때는 `title` · `periodText` · `teamSize` · `techStack`만 반영합니다(`PORTFOLIO`의 `include`는 `include_in_apply`). `bullets`는 공고마다 다르게 쓴 서류 전용 문장이라 프로필에 저장하지 않고, `student_project.readme`(README 원문)와 `role_note`(역할 기록)는 덮어쓰지 않습니다. AI 문장의 근거(`evidence.quote`)가 README 원문을 인용하기 때문입니다. README · 역할 기록은 M8 프로필에서만 고칩니다.
 - 응답: 바뀐 서류 JSON 전체 `{ "data": { "document": { … } } }`
 
+섹션별 예시:
+
+```json
+// 문장 수정: 자기소개서 · 기술 요약 · 프로젝트 문장 모두 UPDATE_SENTENCE
+{ "op": "UPDATE_SENTENCE", "sentenceId": "sk-1", "text": "고친 기술 요약" }
+{ "op": "UPDATE_SENTENCE", "sentenceId": "pj-1", "text": "고친 프로젝트 문장" }
+
+// BASIC: 항목이 하나뿐이라 itemId는 null
+{ "op": "UPDATE_ITEM", "section": "BASIC", "itemId": null, "item": { "email": "new@example.com" }, "saveToProfile": true }
+
+// MILITARY: itemId null, 값은 value 하나
+{ "op": "UPDATE_ITEM", "section": "MILITARY", "itemId": null, "item": { "value": "SERVED" }, "saveToProfile": true }
+
+// SKILLS 태그: itemId null, 태그 전체 목록을 보냄
+{ "op": "UPDATE_ITEM", "section": "SKILLS", "itemId": null, "item": { "tags": ["Java", "Spring Boot", "Redis"] }, "saveToProfile": true }
+
+// PROJECTS: title · periodText · teamSize · role만 (bullets는 UPDATE_SENTENCE로)
+{ "op": "UPDATE_ITEM", "section": "PROJECTS", "itemId": "prj-11", "item": { "role": "백엔드 · 배포" }, "saveToProfile": false }
+
+// PORTFOLIO: include만 (fileName은 바꿀 수 없음)
+{ "op": "UPDATE_ITEM", "section": "PORTFOLIO", "itemId": "pf-11", "item": { "include": false }, "saveToProfile": true }
+
+// EDUCATION · CAREER · CERTIFICATES: 바뀐 필드만
+{ "op": "UPDATE_ITEM", "section": "CAREER", "itemId": "car-1", "item": { "endedOn": null }, "saveToProfile": true }
+```
+
+- `UPDATE_ITEM`의 `item`에는 바뀐 필드만 보냅니다. 키가 없으면 그대로 두고, `null`이면 비웁니다.
+- `BASIC` · `MILITARY` · `SKILLS`는 `itemId: null`이고 `ADD_ITEM` · `DELETE_ITEM`을 쓰지 않습니다.
+- 오류: `DRAFT`가 아니면 409 `INVALID_STATUS` · 섹션에 맞지 않는 op나 필드면 400 `INVALID_REQUEST` · 없는 지원서면 404 `APPLICATION_NOT_FOUND`
+
 #### `POST /api/applications/{applicationId}/submit` (M6)
 
-요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`.
+화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`.
 
 #### `GET /api/students/{studentId}/applications` (M7)
 
@@ -352,7 +390,9 @@ DB의 JSON 컬럼과 API가 같은 형식을 씁니다. 형식 주인은 AI-A이
 }
 ```
 
-`refType`: `PROJECT`(README · 역할 기록) · `COVER_LETTER` · `CERTIFICATE` · `EDUCATION` · `COURSE` · `COMPANY_INFO`
+`refType`: `PROJECT`(README · 역할 기록) · `COVER_LETTER` · `CERTIFICATE` · `EDUCATION` · `CAREER`(경력) · `COURSE` · `COMPANY_INFO` · `JOB_POSTING`(공고 원문)
+
+- `CAREER`의 `refId`는 `student_career.id`, `JOB_POSTING`의 `refId`는 `job_posting.id`입니다.
 
 ### 3-2. 근거 (`evidence`)
 
@@ -434,6 +474,21 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
 | `POST /ai/document/draft` | AI-A | BE-A | 등록 자료 + 프로필 + 공고 + 기업 정보 → 서류 JSON | S7 |
 | `GET /ai/health` | AI-A | 누구나 | 서버 상태 확인 `{ "data": { "status": "OK" } }` | - |
 
+#### `POST /ai/matching/index`
+
+```json
+// 요청 (20건씩 나눠 보냄. removedJobPostingIds는 첫 요청에만 싣고 나머지는 [])
+{ "jobs": [ { "jobPostingId": 613, "contentHash": "…64자", "companyName": "…", "title": "…",
+              "jobCategory": "응용 소프트웨어 개발자", "location": "서울 구로구", "career": "신입",
+              "education": "…MIN_EDUBG 원문", "description": "[직무] …" } ],
+  "removedJobPostingIds": [501, 502] }
+// 응답
+{ "data": { "indexedCount": 20, "skippedCount": 0, "removedCount": 2 } }
+```
+
+- `jobs`: 새로 들어오거나 `contentHash`가 바뀌거나 다시 켜진 활성 공고. `contentHash`는 BE가 계산한 값을 그대로 씁니다. `education`은 공고 API `MIN_EDUBG` 원문이고 없으면 `null`입니다.
+- `removedJobPostingIds`: 이번 배치에서 꺼진 공고(마감 · 목록에서 사라짐 · 개발용 임시 공고). AI 색인에서 지워 추천되지 않게 합니다.
+
 #### `POST /ai/matching/recommend`
 
 ```json
@@ -445,6 +500,9 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
       { "text": "모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요", "evidence": [ { "refType": "PROJECT", "refId": 11 } ] } ] }
 ] } }
 ```
+
+- 리랭커 때문에 1명당 30~60초 걸릴 수 있습니다. BE의 AI 호출 응답 대기 시간은 120초입니다.
+- 맞는 공고가 없으면 `items: []`로 응답합니다. BE는 이것도 0건 추천으로 저장합니다.
 
 #### `POST /ai/document/draft`
 

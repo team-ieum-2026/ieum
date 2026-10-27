@@ -4,9 +4,12 @@ package com.ieum.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
+import java.net.http.HttpClient;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -19,7 +22,16 @@ public class RestAiClient implements AiClient {
     private final RestClient restClient;
 
     public RestAiClient(@Value("${app.ai.server-url}") String serverUrl) {
-        this.restClient = RestClient.builder().baseUrl(serverUrl).build();
+        // JDK HttpClient 기본값(HTTP/2)은 평문 http 에 h2c 업그레이드 헤더를 붙이고,
+        // uvicorn 은 그 요청의 본문을 버려 422(본문 없음)가 난다. HTTP/1.1 로 고정.
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        // 추천(리랭커)이 1명당 30~60초 걸릴 수 있어 여유를 둔다
+        factory.setReadTimeout(Duration.ofSeconds(120));
+        this.restClient = RestClient.builder().baseUrl(serverUrl).requestFactory(factory).build();
     }
 
     @Override
