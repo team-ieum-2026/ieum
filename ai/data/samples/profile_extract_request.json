@@ -1,0 +1,62 @@
+{
+  "studentId" : 9001,
+  "basic" : {
+    "name" : "모의 수료생",
+    "email" : null,
+    "githubUrl" : null,
+    "desiredJob" : "백엔드 개발",
+    "preferredRegion" : "서울",
+    "militaryStatus" : null,
+    "completedOn" : "2026-08-29"
+  },
+  "course" : {
+    "courseId" : 9002,
+    "name" : "모의 백엔드 과정",
+    "cohort" : "모의 1기",
+    "campus" : "모의 캠퍼스",
+    "startedOn" : "2026-03-02",
+    "endedOn" : "2026-08-29"
+  },
+  "education" : [ {
+    "itemId" : 9101,
+    "source" : "REGISTERED",
+    "schoolName" : "모의대학교",
+    "major" : "컴퓨터공학",
+    "degree" : "BACHELOR",
+    "status" : "GRADUATED",
+    "graduatedOn" : "2026-02-28"
+  } ],
+  "careers" : [ {
+    "itemId" : 9201,
+    "source" : "USER",
+    "companyName" : "모의 회사",
+    "position" : "모의 백엔드 인턴",
+    "startedOn" : "2026-01-01",
+    "endedOn" : "2026-02-28",
+    "description" : "모의 REST API 유지보수 경험"
+  } ],
+  "certificates" : [ {
+    "itemId" : 9301,
+    "source" : "USER",
+    "name" : "모의 자격증",
+    "issuer" : "모의 발급 기관",
+    "acquiredOn" : "2026-09-01"
+  } ],
+  "skills" : [ "Java", "Spring Boot", "MySQL" ],
+  "projects" : [ {
+    "itemId" : 9401,
+    "title" : "모의 프로젝트",
+    "periodText" : "6주",
+    "teamSize" : 3,
+    "techStack" : [ "Spring Boot", "MySQL" ],
+    "portfolioFileName" : "mock-portfolio.pdf",
+    "includeInApply" : true,
+    "roleNote" : "백엔드 API 구현",
+    "readme" : "# 모의 프로젝트\nSpring Boot와 MySQL로 REST API 5개를 구현했습니다.",
+    "source" : "REGISTERED"
+  } ],
+  "coverLetter" : {
+    "content" : "모의 자기소개서입니다.\n모의 프로젝트에서 REST API 5개를 구현했습니다.",
+    "updatedAt" : "2026-10-26T12:00:00+09:00"
+  }
+}
