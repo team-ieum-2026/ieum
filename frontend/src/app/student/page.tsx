@@ -1,8 +1,8 @@
-// 주인: FE-A — M1 맞춤 공고 홈 (FE-A-03 ~ 05)
-export default function RecommendationsHomePage() {
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M1 맞춤 공고 홈</h1>
-    </section>
-  );
+// 주인: FE-A — RecommendationsScreen
+import RecommendationsScreen from "@/components/student/RecommendationsScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function Page({ searchParams }: PageProps<"/student">) {
+  const studentId = studentIdFrom(await searchParams);
+  return <RecommendationsScreen key={studentId} studentId={studentId} />;
 }

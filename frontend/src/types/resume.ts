@@ -163,7 +163,8 @@ export interface ApplicationDetail {
   applicationId: number;
   status: ApplicationStatus;
   job: JobBrief;
-  document: ApplicationDocument;
+  /** GENERATING · FAILED 에서는 null (BE-A 확정) */
+  document: ApplicationDocument | null;
 }
 
 // ---- PATCH /api/applications/{id}/document — 한 번에 하나의 변경만 ----

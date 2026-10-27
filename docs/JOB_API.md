@@ -72,20 +72,16 @@ AI-B가 임베딩 · 리랭커에 쓰는 글입니다. 값이 빈 줄은 뺍니�
 
 **웹 디자이너 추가 (2026-10-27):** 평가용 수료생 중 프론트엔드 지망 4명에게 맞는 공고가 부족해(웹 개발 공고 중 신입 가능 1건) 웹 디자이너(415501)를 넣었습니다. 코드 24개 기준 전체 40,852건 → 활성 143건 (웹 디자이너 39 · 서울 59 · 신입 17 · 신입 또는 경력 무관 77). 웹 디자이너 공고는 서울 근무지가 5건뿐이라, 서울 지망 프론트엔드에게 맞는 공고가 실제로 늘었는지는 AI-B 평가에서 확인합니다.
 
-## AI 색인 요청 (BE-A-03, AI-B와 확정 필요)
+## AI 색인 요청 (BE-A-03)
 
-배치 뒤 새로 들어오거나 `content_hash`가 바뀐 활성 공고만 AI `POST /ai/matching/index`에 보냅니다. 본문은 BE-A 초안입니다.
-
-```json
-{ "jobs": [ { "jobPostingId": 613, "contentHash": "…64자", "companyName": "…", "title": "…",
-              "jobCategory": "응용 소프트웨어 개발자", "location": "서울 구로구", "career": "신입", "description": "[직무] …" } ] }
-```
+배치 뒤 새로 들어오거나 `content_hash`가 바뀌거나 다시 켜진 활성 공고와, 이번 배치에서 꺼진 공고 ID를 AI `POST /ai/matching/index`에 보냅니다. 임베딩 API 분당 한도 때문에 20건씩 나눠 보냅니다. 요청 · 응답 형식은 `docs/API.md` 4장에 있습니다.
 
 ## 배치 규칙
 
 1. 하루 1회 실행합니다. 시연용으로는 수동 실행 엔드포인트 `POST /api/admin/jobs/sync`도 둡니다(P0, 인증 없음).
 2. 전체 페이지를 받아 IT 필터를 적용한 뒤, `(source, external_id)` 기준으로 upsert합니다.
 3. 이번에 받은 목록에 없거나 `deadline_on`이 지난 공고는 `is_active = 0`으로 바꿉니다. 지원 기록이 깨지지 않게 삭제는 하지 않습니다.
-4. `content_hash`가 바뀌거나 새로 들어온 공고 ID만 모아 AI `POST /ai/matching/index`에 보냅니다.
+4. `content_hash`가 바뀌거나 새로 들어오거나 다시 켜진 공고는 AI 색인에 넣고, 꺼진 공고는 AI 색인에서 지우도록 `POST /ai/matching/index`에 20건씩 보냅니다.
 5. 첫 배치가 성공하면 시드의 개발용 임시 공고를 끕니다: `UPDATE job_posting SET is_active = 0 WHERE source = 'DEV_SEED';`
 6. API가 실패하면(`ERROR-500`, 시간 초과) 그날은 건너뛰고 기존 데이터로 추천합니다.
+7. 배치가 끝나면 추천이 없거나 0건이거나 공고가 모두 꺼진 수료생의 추천을 백그라운드로 미리 만듭니다(`trigger_type = BATCH`). 이미 볼 수 있는 추천이 있는 수료생은 건드리지 않습니다.
