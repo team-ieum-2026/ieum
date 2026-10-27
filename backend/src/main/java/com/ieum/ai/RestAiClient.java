@@ -29,7 +29,8 @@ public class RestAiClient implements AiClient {
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(Duration.ofSeconds(60));
+        // 추천(리랭커)이 1명당 30~60초 걸릴 수 있어 여유를 둔다
+        factory.setReadTimeout(Duration.ofSeconds(120));
         this.restClient = RestClient.builder().baseUrl(serverUrl).requestFactory(factory).build();
     }
 

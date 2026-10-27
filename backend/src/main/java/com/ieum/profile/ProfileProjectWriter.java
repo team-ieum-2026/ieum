@@ -52,6 +52,12 @@ final class ProfileProjectWriter {
         mapper.updatePortfolio(studentId, itemId, null, false);
     }
 
+    void excludePortfolio(Long studentId, Long itemId) {
+        requireProject(studentId, itemId);
+        // 서류에서 제외해도 M8에 등록한 첨부 파일명과 프로젝트 원문은 유지한다.
+        mapper.updateProjectInclude(studentId, itemId, false);
+    }
+
     void delete(Long studentId, Long itemId) {
         requireProject(studentId, itemId);
         mapper.deleteProject(studentId, itemId);

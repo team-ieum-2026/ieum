@@ -9,8 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -176,6 +178,27 @@ class ProfileBasicServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateBasic(any());
         verifyNoInteractions(profiles, ai);
+    }
+
+    @Test
+    void documentBasicUpdateUsesSharedWriterAndCurrentSnapshotForAi() {
+        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        prepareExisting();
+        doReturn(profile()).when(documentService).getCurrentProfile(7L);
+        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
+        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
+                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
+
+        documentService.updateItem(7L, "BASIC", 7L,
+                JSON.createObjectNode().put("desiredJob", "Mock Backend"));
+
+        verify(mapper).findCurrentStudent(7L);
+        verify(mapper).updateBasic(any(ProfileData.Student.class));
+        verify(documentService).getCurrentProfile(7L);
+        verify(mapper).findCurrentProjects(7L);
+        verify(documentService, never()).getProfile(any());
+        verify(mapper, never()).findProjects(any());
+        verify(ai).extractProfile(any());
     }
 
     private void prepareExisting() {

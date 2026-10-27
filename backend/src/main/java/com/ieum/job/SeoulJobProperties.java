@@ -12,11 +12,13 @@ public record SeoulJobProperties(
         String jobService,
         int pageSize,
         String syncCron,
-        List<String> itJobCodes
+        List<String> itJobCodes,
+        List<String> allowedRegions
 ) {
 
     public SeoulJobProperties {
         itJobCodes = itJobCodes == null ? List.of() : List.copyOf(itJobCodes);
+        allowedRegions = allowedRegions == null ? List.of() : List.copyOf(allowedRegions);
         if (pageSize <= 0) {
             pageSize = 1000;
         }

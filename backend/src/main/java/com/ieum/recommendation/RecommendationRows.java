@@ -13,7 +13,10 @@ public final class RecommendationRows {
     private RecommendationRows() {
     }
 
-    /** recommendation 한 줄 + 아직 활성인 공고 항목 수 (0이면 현재 추천으로 쓰지 않고 새로 만든다) */
+    /**
+     * recommendation 한 줄 + 아직 활성인 공고 항목 수 · 전체 항목 수.
+     * itemCount 0 이면 현재 추천으로 쓰지 않고 새로 만든다. 단 totalCount 도 0 이면 "맞는 공고 0건"으로 저장된 묶음.
+     */
     @Getter
     @Setter
     @NoArgsConstructor
@@ -23,6 +26,7 @@ public final class RecommendationRows {
         private String triggerType;
         private LocalDateTime createdAt;
         private int itemCount;
+        private int totalCount;
     }
 
     /** recommendation_item 한 줄 + job_posting 요약 */

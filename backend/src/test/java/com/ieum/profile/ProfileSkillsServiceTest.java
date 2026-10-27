@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +28,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -143,6 +147,52 @@ class ProfileSkillsServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateSkills(any(), any());
         verifyNoInteractions(profiles, ai);
+    }
+
+    @Test
+    void documentSkillsUpdateIgnoresSummaryAndUsesCurrentSnapshotForAi() {
+        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        List<String> tags = List.of("Java", "Spring Boot");
+        doReturn(profile(tags)).when(documentService).getCurrentProfile(7L);
+        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
+        prepareAiResult();
+        var item = tagsItem(tags).put("source", "AI");
+        item.putArray("summary").add("Generated document sentence");
+
+        documentService.updateItem(7L, "SKILLS", 7L, item);
+
+        InOrder order = inOrder(mapper, documentService, ai);
+        order.verify(mapper).lockStudent(7L);
+        order.verify(mapper).updateSkills(7L, JSON.valueToTree(tags));
+        order.verify(documentService).getCurrentProfile(7L);
+        order.verify(mapper).findCurrentProjects(7L);
+        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
+        order.verify(ai).extractProfile(sources.capture());
+        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
+        assertEquals(JSON.valueToTree(tags), sources.getValue().path("skills"));
+        verify(documentService, never()).getProfile(any());
+        verify(mapper, never()).findProjects(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"summary", "source"})
+    void documentOnlySummaryOrSourceKeepsProfileAndCompetencyUntouched(String field) {
+        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        var item = JSON.createObjectNode();
+        if ("summary".equals(field)) item.putArray("summary").add("Generated document sentence");
+        else item.put("source", "AI");
+
+        documentService.updateItem(7L, "SKILLS", 7L, item);
+
+        verify(mapper).lockStudent(7L);
+        verify(mapper, never()).updateSkills(any(), any());
+        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(mapper, never()).findCurrentProjects(any());
+        verify(documentService, never()).getCurrentProfile(any());
+        verify(documentService, never()).getProfile(any());
+        verifyNoInteractions(ai);
     }
 
     private void prepareM8Extraction(StudentProfileResponse result) {
