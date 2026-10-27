@@ -1,5 +1,5 @@
 # 주인: PM (라이브러리 추가는 chore/ 브랜치 PR로 따로)
-# 임베딩 · 리랭커 라이브러리는 AI-A가 월요일에 모델을 정한 뒤 추가한다.
+# 임베딩은 google-genai(Gemini) 사용. 리랭커는 sentence-transformers(torch 포함) — 모델 bge-reranker-v2-m3
 fastapi==0.162.0
 uvicorn[standard]==0.54.0
 pydantic==2.14.1
@@ -7,3 +7,4 @@ pydantic-settings==2.16.1
 python-dotenv==1.2.4
 httpx==0.28.1
 google-genai==2.33.0
+sentence-transformers==6.2.0
