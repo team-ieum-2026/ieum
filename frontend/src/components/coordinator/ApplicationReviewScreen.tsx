@@ -1,0 +1,375 @@
+"use client";
+// 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08). 서류 전체 + 선택 문장 근거 + 검증 요약 + 반려 · 승인 · 전달 완료
+// API: docs/API.md 2-3. 승인 SUBMITTED → APPROVED, 반려 { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
+// 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다. 서류 부품은 FE-B-01 (ResumeDocument · EvidencePanel).
+import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
+import EvidencePanel from "@/components/resume/EvidencePanel";
+import ResumeDocument from "@/components/resume/ResumeDocument";
+import { applicationLabels } from "@/components/student/labels";
+import StatusChip from "@/components/ui/StatusChip";
+import { ApiError } from "@/lib/api/client";
+import {
+  approveApplication,
+  deliverApplication,
+  getCoordinatorApplication,
+  rejectApplication,
+} from "@/lib/api/coordinatorReview";
+import type { CoordinatorApplication } from "@/types/coordinator";
+import type { Sentence } from "@/types/resume";
+import type { ApplicationStatus, CompanyInfoStatus } from "@/types/student";
+
+type Action = "APPROVE" | "REJECT" | "DELIVER";
+
+const ACTION: Record<Action, { title: string; description: string; confirm: string; done: string }> = {
+  APPROVE: {
+    title: "이 서류를 승인할까요?",
+    description: "승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 전달은 \"전달 완료로 변경\"으로 따로 기록해요.",
+    confirm: "승인",
+    done: "승인했어요. 기업에 전달한 뒤 \"전달 완료로 변경\"을 눌러 주세요.",
+  },
+  REJECT: {
+    title: "이 서류를 반려할까요?",
+    description: "반려하면 수료생에게 직접 연락해 보완할 점을 알려 주세요. 아래 메모는 기록으로 남아요.",
+    confirm: "반려",
+    done: "반려했어요. 수료생에게 연락해 보완할 점을 알려 주세요.",
+  },
+  DELIVER: {
+    title: "전달 완료로 바꿀까요?",
+    description: "기관 추천으로 기업에 전달했을 때 눌러 주세요. 이음에서 실제로 보내지는 않아요.",
+    confirm: "전달 완료",
+    done: "전달 완료로 바꿨어요. 수료생 지원 현황에도 반영돼요.",
+  },
+};
+
+/** 버튼이 켜지는 상태 (docs/API.md 2-3 상태 전이) */
+const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
+
+const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
+  FOUND: "기업 정보 확인",
+  PARTIAL: "기업 정보 일부만 확인",
+  NOT_FOUND: "공고 외 정보 확인 불가",
+};
+
+export default function ApplicationReviewScreen({ applicationId }: { applicationId: number }) {
+  const [detail, setDetail] = useState<CoordinatorApplication | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [selected, setSelected] = useState<Sentence | null>(null);
+  const [confirming, setConfirming] = useState<Action | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [doneMessage, setDoneMessage] = useState<string | null>(null);
+  // 화면이 다시 그려지기 전 두 번 눌러도 요청이 한 번만 가도록
+  const busyRef = useRef(false);
+
+  useEffect(() => {
+    let ignore = false;
+    getCoordinatorApplication(applicationId)
+      .then((data) => {
+        if (!ignore) setDetail(data);
+      })
+      .catch((e: unknown) => {
+        if (!ignore) setLoadError(e instanceof ApiError ? e.message : "서류를 불러오지 못했어요.");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [applicationId, reloadKey]);
+
+  if (!detail) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-sm text-ink-sub">
+        <p>{loadError ?? "서류를 불러오는 중이에요…"}</p>
+        {loadError && (
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="font-bold text-primary"
+            >
+              다시 시도
+            </button>
+            <Link href="/coordinator" className="font-bold text-ink-sub">
+              대시보드로
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const { status, student, job, document, verification } = detail;
+
+  const closeConfirm = () => {
+    if (busy) return;
+    setConfirming(null);
+    setActionError(null);
+  };
+
+  const run = async (action: Action) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const result =
+        action === "APPROVE"
+          ? await approveApplication(applicationId)
+          : action === "REJECT"
+            ? await rejectApplication(applicationId, { note: note.trim() })
+            : await deliverApplication(applicationId);
+      setDetail((prev) => (prev ? { ...prev, status: result.status } : prev));
+      setDoneMessage(ACTION[action].done);
+      setConfirming(null);
+      setNote("");
+    } catch (e: unknown) {
+      // 서버 message 는 화면에 그대로 띄워도 되는 문장 (docs/API.md 1장)
+      setActionError(e instanceof ApiError ? e.message : "처리하지 못했어요. 다시 시도해 주세요.");
+      // 그사이 다른 처리로 상태가 바뀌었으면(409) 최신 상태로 버튼을 맞춘다
+      if (e instanceof ApiError && e.status === 409) setReloadKey((k) => k + 1);
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  };
+
+  const allAiLinked = verification.aiSentenceWithEvidence === verification.aiSentenceCount;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <header className="flex flex-col gap-1">
+        <Link href="/coordinator" className="w-fit text-xs font-bold text-ink-sub hover:text-ink">
+          ← 대시보드
+        </Link>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">
+            <Link href={`/coordinator/students/${student.studentId}`} className="underline-offset-4 hover:underline">
+              {student.name}
+            </Link>{" "}
+            → {job.companyName} {job.title}
+          </h1>
+          <StatusChip tone={status === "REJECTED" ? "warning" : status === "SUBMITTED" ? "neutral" : "success"}>
+            {applicationLabels[status]}
+          </StatusChip>
+        </div>
+      </header>
+
+      {doneMessage && (
+        <p
+          role="status"
+          className="flex items-center justify-between gap-3 rounded-xl bg-primary-tint px-4 py-3 text-sm font-bold text-primary-strong"
+        >
+          {doneMessage}
+          <Link href="/coordinator" className="shrink-0 text-xs underline underline-offset-2">
+            대시보드로 돌아가기
+          </Link>
+        </p>
+      )}
+
+      <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-5">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-ink-sub">AI 작성 문장(초록 밑줄)을 누르면 오른쪽에 근거가 보여요.</p>
+          <ResumeDocument
+            document={document}
+            selectedSentenceId={selected?.sentenceId ?? null}
+            onSelectSentence={setSelected}
+          />
+        </div>
+
+        <aside className="sticky top-8 flex flex-col gap-4">
+          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+            <h2 className="text-[15px] font-bold">선택한 문장의 근거</h2>
+            {selected && <p className="rounded-lg bg-coord-bg px-3 py-2 text-[13px] leading-relaxed">{selected.text}</p>}
+            <EvidencePanel sentence={selected} bare />
+          </section>
+
+          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+            <h2 className="text-[15px] font-bold">검증 요약</h2>
+            <dl className="flex flex-col gap-1.5 text-[13px]">
+              <SummaryRow
+                label="AI 문장"
+                value={`${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`}
+                warn={!allAiLinked}
+              />
+              <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
+              <SummaryRow label="수료생 직접 수정" value={`${verification.userEditedCount}개`} />
+              <SummaryRow
+                label="기업 정보"
+                value={COMPANY_INFO_LABEL[verification.companyInfoStatus]}
+                note={verification.companyInfoStatus !== "FOUND" ? document.companyInfoNote : null}
+                warn={verification.companyInfoStatus === "NOT_FOUND"}
+              />
+            </dl>
+          </section>
+
+          <section className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
+            <p className="text-xs leading-relaxed text-ink-sub">
+              승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요.
+            </p>
+            <button
+              type="button"
+              disabled={status !== ALLOWED.APPROVE}
+              onClick={() => setConfirming("APPROVE")}
+              className="min-h-11 rounded-xl bg-primary text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted"
+            >
+              승인 · 기관 추천으로 전달
+            </button>
+            <button
+              type="button"
+              disabled={status !== ALLOWED.REJECT}
+              onClick={() => setConfirming("REJECT")}
+              className="min-h-11 rounded-xl border-[1.5px] border-danger bg-surface text-sm font-bold text-danger disabled:border-line disabled:text-ink-muted"
+            >
+              반려 · 수료생에게 연락
+            </button>
+            <button
+              type="button"
+              disabled={status !== ALLOWED.DELIVER}
+              onClick={() => setConfirming("DELIVER")}
+              className="min-h-11 rounded-xl border-[1.5px] border-primary bg-surface text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
+            >
+              전달 완료로 변경 (승인 후)
+            </button>
+          </section>
+        </aside>
+      </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title={ACTION[confirming].title}
+          description={ACTION[confirming].description}
+          confirmLabel={busy ? "처리 중…" : ACTION[confirming].confirm}
+          danger={confirming === "REJECT"}
+          busy={busy}
+          confirmDisabled={confirming === "REJECT" && note.trim() === ""}
+          error={actionError}
+          onConfirm={() => run(confirming)}
+          onClose={closeConfirm}
+        >
+          {confirming === "REJECT" && (
+            <label className="flex flex-col gap-1 text-xs text-ink-sub">
+              보완할 점 (필수)
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={4}
+                placeholder="예: 자기소개서 2문단의 수치 근거를 README와 맞춰 주세요"
+                className="resize-none rounded-[10px] border-[1.5px] border-line p-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-primary"
+              />
+            </label>
+          )}
+        </ConfirmDialog>
+      )}
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  note = null,
+  warn = false,
+}: {
+  label: string;
+  value: string;
+  note?: string | null;
+  warn?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 border-b border-line pb-1.5 last:border-b-0 last:pb-0">
+      <div className="flex justify-between gap-2">
+        <dt className="text-ink-sub">{label}</dt>
+        <dd className={`text-right font-bold ${warn ? "text-warn-ink" : "text-ink"}`}>{value}</dd>
+      </div>
+      {note && <dd className="text-xs text-ink-muted">{note}</dd>}
+    </div>
+  );
+}
+
+/** 가운데 확인 창 (데스크톱). 배경 · Esc 로 닫힌다 */
+function ConfirmDialog({
+  title,
+  description,
+  confirmLabel,
+  danger,
+  busy,
+  confirmDisabled,
+  error,
+  onConfirm,
+  onClose,
+  children,
+}: {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  danger: boolean;
+  busy: boolean;
+  confirmDisabled: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onClose: () => void;
+  children?: React.ReactNode;
+}) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  // 처음 열릴 때만 창으로 포커스 (입력 중에 다시 옮기지 않도록 onClose 와 분리)
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-ink/50" onClick={onClose}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        className="flex w-[440px] flex-col gap-3 rounded-2xl bg-surface p-6 outline-none"
+      >
+        <h2 id={titleId} className="text-lg font-bold">
+          {title}
+        </h2>
+        <p className="text-[13px] leading-relaxed text-ink-sub">{description}</p>
+        {children}
+        {error && (
+          <p role="alert" className="text-[13px] text-danger">
+            {error}
+          </p>
+        )}
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="min-h-11 flex-1 rounded-xl border border-line bg-surface text-sm font-bold text-ink"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy || confirmDisabled}
+            aria-busy={busy}
+            className={`min-h-11 flex-1 rounded-xl text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted ${danger ? "bg-danger" : "bg-primary"}`}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
