@@ -6,14 +6,20 @@ import type { Sentence } from "@/types/resume";
 interface EvidencePanelProps {
   /** null 이면 "문장을 선택하면…" 안내 */
   sentence: Sentence | null;
+  /** true 면 테두리 · 배경 · 안쪽 여백 없이 (다른 카드 안에 넣을 때). 기본은 초록 테두리 카드 */
+  bare?: boolean;
+  /** 본문에 붙인 문장 번호 (예: "AI 2") → 제목 "AI 2의 근거 · 출처". 없으면 "근거 1 · 출처" */
+  marker?: string;
 }
 
-export default function EvidencePanel({ sentence }: EvidencePanelProps) {
+export default function EvidencePanel({ sentence, bare = false, marker }: EvidencePanelProps) {
+  const title = (index: number, total: number) =>
+    marker ? `${marker}의 근거${total > 1 ? ` ${index + 1}` : ""}` : `근거 ${index + 1}`;
   return (
     <section
       aria-live="polite"
       aria-label="선택한 문장의 근거"
-      className="flex flex-col gap-2 rounded-xl border-[1.5px] border-primary bg-surface p-3"
+      className={`flex flex-col gap-2 ${bare ? "" : "rounded-xl border-[1.5px] border-primary bg-surface p-3"}`}
     >
       {!sentence ? (
         <p className="text-[13px] text-ink-muted">문장을 선택하면 근거가 보여요.</p>
@@ -27,7 +33,7 @@ export default function EvidencePanel({ sentence }: EvidencePanelProps) {
           {sentence.evidence.map((ev, i) => (
             <li key={`${ev.refType}-${ev.refId}-${i}`} className="flex flex-col gap-1">
               <span className="text-[11px] font-bold text-primary">
-                근거 {i + 1} · {ev.label}
+                {title(i, sentence.evidence.length)} · {ev.label}
               </span>
               <blockquote className="text-[13px] leading-relaxed text-ink-sub">{ev.quote}</blockquote>
               {(ev.url || ev.collectedAt) && (
