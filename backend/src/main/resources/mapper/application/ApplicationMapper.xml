@@ -30,4 +30,45 @@
               LIMIT 1)
         ORDER BY i.rank_no
     </select>
+
+    <select id="selectDraftTarget" resultType="com.ieum.application.ApplicationRows$DraftTarget">
+        SELECT a.id AS application_id, a.student_id, a.status,
+               j.id AS job_posting_id, j.company_name, j.title, j.job_category, j.location,
+               j.employment_type, j.career, j.education, j.description
+        FROM application a
+        JOIN job_posting j ON j.id = a.job_posting_id
+        WHERE a.id = #{applicationId}
+    </select>
+
+    <select id="selectDraftProjects" resultType="com.ieum.application.ApplicationRows$DraftProject">
+        SELECT id AS item_id, title, period_text, team_size, CAST(tech_stack AS CHAR) AS tech_stack,
+               portfolio_file_url AS portfolio_file_name, include_in_apply, role_note, readme, source
+        FROM student_project
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="selectCompanyInfo" resultType="com.ieum.application.ApplicationRows$CompanyInfo">
+        SELECT id, company_name, status, CAST(info AS CHAR) AS info, collected_at
+        FROM company_info
+        WHERE company_name = #{companyName}
+    </select>
+
+    <select id="selectProgress" resultType="com.ieum.application.ApplicationRows$Progress">
+        SELECT a.id AS application_id, a.status, j.company_name
+        FROM application a
+        JOIN job_posting j ON j.id = a.job_posting_id
+        WHERE a.id = #{applicationId}
+    </select>
+
+    <insert id="upsertDocument">
+        INSERT INTO application_document (application_id, document)
+        VALUES (#{applicationId}, CAST(#{document} AS JSON))
+        ON DUPLICATE KEY UPDATE document = CAST(#{document} AS JSON)
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE application SET status = #{to}
+        WHERE id = #{applicationId} AND status = #{from}
+    </update>
 </mapper>
