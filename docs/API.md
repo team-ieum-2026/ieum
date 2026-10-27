@@ -81,6 +81,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
 | - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
 | - | `POST /api/admin/jobs/reindex` | AI 전체 재색인 (개발용, 인증 없음). AI 서버를 처음 연결할 때 한 번 실행. 응답은 아래 | S3 |
+| - | `POST /api/admin/companies/collect` | 시연 기업 정보 수집 → `company_info` 저장 (시연 전 1회, 인증 없음). 응답은 아래 | S7 |
 
 #### `POST /api/admin/jobs/sync` (공고 배치)
 
@@ -110,6 +111,24 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - 배치나 재색인이 실행 중이거나 활성 공고가 없으면 `status: "SKIPPED"`, 나머지 값은 0 · `null`
 - 끝나면 배치와 같이 0건 · 빈 추천을 백그라운드로 다시 만듭니다.
 - `AI_MOCK=false`로 바꿀 때 순서: AI 서버 실행 → `POST /api/admin/jobs/reindex` → M1 확인
+
+#### `POST /api/admin/companies/collect` (시연 기업 정보 수집)
+
+기업마다 AI `POST /ai/company/collect`를 불러 `company_info`에 저장합니다. 기업명은 공고(`job_posting.company_name`)와 같은 표기로 적습니다. 이 이름이 그대로 `company_name`이 되고, 서류 생성 때 공고와 이름 일치로 찾습니다.
+
+```json
+// 요청
+{ "companyNames": ["(주)온다랩", "데이터웨이브(주)"] }
+// 응답
+{ "data": { "requestedCount": 2, "savedCount": 1, "failedCount": 1,
+  "items": [
+    { "companyName": "(주)온다랩", "result": "SAVED", "companyInfoId": 3, "status": "PARTIAL", "message": null },
+    { "companyName": "데이터웨이브(주)", "result": "FAILED", "companyInfoId": null, "status": null, "message": "AI 서버 응답에 실패했어요. 잠시 후 다시 시도해 주세요." } ],
+  "collectedAt": "2026-10-27T10:00:00+09:00" } }
+```
+
+- 같은 기업을 다시 수집하면 덮어쓰고 `collected_at`을 갱신합니다. `NOT_FOUND`도 저장합니다(서류에 "공고 외 정보 확인 불가").
+- 한 기업이 실패하면(`result: "FAILED"`) 그 기업의 기존 데이터는 그대로 두고 나머지를 계속합니다. 중복 · 빈 이름은 빼고, 남는 이름이 없으면 400 `INVALID_REQUEST`.
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 

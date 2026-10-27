@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-A -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.job.CompanyInfoMapper">
+
+    <resultMap id="companyInfo" type="com.ieum.job.CompanyInfo">
+        <id property="id" column="id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="status" column="status"/>
+        <result property="info" column="info" typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+        <result property="collectedAt" column="collected_at"/>
+    </resultMap>
+
+    <insert id="upsert" parameterType="com.ieum.job.CompanyInfo">
+        INSERT INTO company_info (company_name, status, info, collected_at)
+        VALUES (#{companyName}, #{status}, #{info, typeHandler=com.ieum.common.mybatis.JsonTypeHandler}, NOW()) AS new
+        ON DUPLICATE KEY UPDATE
+            status       = new.status,
+            info         = new.info,
+            collected_at = NOW()
+    </insert>
+
+    <select id="selectByCompanyName" resultMap="companyInfo">
+        SELECT id, company_name, status, info, collected_at
+        FROM company_info
+        WHERE company_name = #{companyName}
+    </select>
+</mapper>
