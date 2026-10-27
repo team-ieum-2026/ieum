@@ -6,9 +6,10 @@ LLMError 가 나면 빈 결과를 돌려준다. 호출하는 쪽(router)은 규�
 
 import logging
 from dataclasses import dataclass, field
+from typing import Literal
 
 from common.llm import LLMError, generate_json
-from profile.evidence_check import Excluded, check_llm_items
+from profile.evidence_check import CheckMetrics, Excluded, check_llm_items
 from profile.llm_models import LlmProfile
 from profile.models import ExtractRequest
 from profile.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
@@ -20,9 +21,13 @@ logger = logging.getLogger("ieum.profile")
 
 @dataclass
 class LlmResult:
+    # OK: LLM 호출 · 검증 완료 · SKIPPED: 원문이 없어 호출 안 함 · FAILED: LLMError → 규칙 결과만
+    status: Literal["OK", "SKIPPED", "FAILED"] = "OK"
     roles: list[str] = field(default_factory=list)
     achievements: list[ProfileAchievement] = field(default_factory=list)
     excluded: list[Excluded] = field(default_factory=list)
+    # 자동 지표 (roles + achievements 합). LLM 을 부르지 않았거나 실패하면 None
+    metrics: CheckMetrics | None = None
 
 
 def has_llm_material(req: ExtractRequest) -> bool:
@@ -36,20 +41,25 @@ def extract_by_llm(req: ExtractRequest) -> LlmResult:
     # 원문이 없으면 LLM 을 부르지 않는다. 자격증 · 학력 · 과정 이름만으로는 근거 있는 성과를 만들 수 없다.
     if not has_llm_material(req):
         logger.info("profile llm skipped: no project readme/roleNote or cover letter")
-        return LlmResult()
+        return LlmResult(status="SKIPPED")
 
     candidates = build_candidates(req)
     try:
+        # temperature 0: 같은 입력이면 최대한 같은 결과 (재추출 때 프로필이 흔들리지 않게)
         generated = generate_json(
-            build_prompt(candidates), LlmProfile, system_instruction=SYSTEM_INSTRUCTION, prompt_version=PROMPT_VERSION
+            build_prompt(candidates),
+            LlmProfile,
+            temperature=0.0,
+            system_instruction=SYSTEM_INSTRUCTION,
+            prompt_version=PROMPT_VERSION,
         )
     except LLMError as e:
         logger.warning("profile llm failed, rules only: %s", e)
-        return LlmResult()
+        return LlmResult(status="FAILED")
 
     by_eid = {c.eid: c for c in candidates}
-    roles, role_out = check_llm_items("roles", generated.roles, by_eid)
-    achievements, ach_out = check_llm_items("achievements", generated.achievements, by_eid)
+    roles, role_out, role_metrics = check_llm_items("roles", generated.roles, by_eid)
+    achievements, ach_out, ach_metrics = check_llm_items("achievements", generated.achievements, by_eid)
     excluded = role_out + ach_out
     logger.info(
         "profile llm checked candidates=%d roles=%d achievements=%d excludedCount=%d reasons=%s",
@@ -59,4 +69,5 @@ def extract_by_llm(req: ExtractRequest) -> LlmResult:
         roles=list(dict.fromkeys(r.text for r in roles)),
         achievements=achievements,
         excluded=excluded,
+        metrics=role_metrics + ach_metrics,
     )

@@ -16,6 +16,8 @@ from profile.evidence_check import check_llm_items
 from profile.llm_models import LlmItem, LlmProfile
 from profile.models import ExtractRequest
 from profile.router import extract_profile
+from profile.rules import merge_skills
+from profile.skill_aliases import SKILL_ALIASES, canonical_skill
 from profile.sources import MAX_CANDIDATES, MAX_CHARS, MAX_CHUNK_CHARS, build_candidates, render_candidates, split_chunks
 from schemas import EvidenceRef
 
@@ -110,28 +112,119 @@ class CheckItemsTest(unittest.TestCase):
 
     def test_same_project_eids_are_merged(self):
         title, role, readme = eid("모의 프로젝트"), eid(ROLE_NOTE), eid(README_SENTENCE)
-        kept, excluded = check_llm_items("achievements", [item("REST API 5개 구현", title, role, readme)], self.by_eid)
+        kept, excluded, _ = check_llm_items("achievements", [item("REST API 5개 구현", title, role, readme)], self.by_eid)
         self.assertEqual(excluded, [])
         self.assertEqual(kept[0].evidence, [EvidenceRef(ref_type="PROJECT", ref_id=9401)])
 
     def test_different_sources_are_kept_in_order(self):
         letter = eid("모의 프로젝트에서 REST API 5개를 구현했습니다.")
-        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(README_SENTENCE), letter)], self.by_eid)
+        kept, _, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(README_SENTENCE), letter)], self.by_eid)
         self.assertEqual([(e.ref_type, e.ref_id) for e in kept[0].evidence], [("PROJECT", 9401), ("COVER_LETTER", 9001)])
 
     def test_unknown_eid_is_dropped_but_valid_one_keeps_item(self):
-        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", "E99", eid(README_SENTENCE).lower())], self.by_eid)
+        kept, _, _ = check_llm_items("achievements", [item("REST API 5개 구현", "E99", eid(README_SENTENCE).lower())], self.by_eid)
         self.assertEqual(kept[0].evidence, [EvidenceRef(ref_type="PROJECT", ref_id=9401)])
 
     def test_number_in_any_chosen_quote_is_enough(self):
-        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(ROLE_NOTE), eid(README_SENTENCE))], self.by_eid)
+        kept, _, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(ROLE_NOTE), eid(README_SENTENCE))], self.by_eid)
         self.assertEqual(len(kept), 1)
 
     def test_thousands_comma_is_ignored(self):
         req = request(coverLetter={"content": "회원 1000명이 쓰는 서비스를 운영했습니다.", "updatedAt": LETTER})
         by_eid = {c.eid: c for c in build_candidates(req)}
-        kept, _ = check_llm_items("achievements", [item("회원 1,000명 서비스 운영", eid("회원 1000명이 쓰는 서비스를 운영했습니다.", req))], by_eid)
+        kept, _, _ = check_llm_items("achievements", [item("회원 1,000명 서비스 운영", eid("회원 1000명이 쓰는 서비스를 운영했습니다.", req))], by_eid)
         self.assertEqual(len(kept), 1)
+
+
+class MetricsTest(unittest.TestCase):
+    def setUp(self):
+        self.by_eid = {c.eid: c for c in build_candidates(request())}
+
+    def test_counts(self):
+        readme, role = eid(README_SENTENCE), eid(ROLE_NOTE)
+        items = [
+            item("REST API 5개 구현", readme, readme.lower()),  # 통과 · 숫자 있음 · 같은 번호는 1개로 셈
+            item("백엔드 API 구현", "E99", role),                # 통과 · 숫자 없음 · 번호 2개 중 1개 유효
+            item("데이터 분석", "E98"),                          # 제외: 번호가 후보에 없음
+            item("REST API 50개 구현", readme),                 # 제외: 숫자 50 없음
+        ]
+        kept, excluded, m = check_llm_items("achievements", items, self.by_eid)
+        self.assertEqual((len(kept), len(excluded)), (2, 2))
+        self.assertEqual(
+            (m.generated, m.evidence_ids, m.valid_evidence_ids, m.with_numbers, m.numbers_passed, m.excluded),
+            (4, 5, 3, 2, 1, 2),
+        )
+        self.assertEqual((m.valid_evidence_ratio, m.number_pass_ratio), (0.6, 0.5))
+
+    def test_empty_items_have_no_ratio(self):
+        _, _, m = check_llm_items("roles", [], self.by_eid)
+        self.assertEqual((m.generated, m.valid_evidence_ratio, m.number_pass_ratio), (0, None, None))
+
+    def test_roles_and_achievements_are_summed(self):
+        with fake([item("백엔드 API 구현", eid(ROLE_NOTE))], [item("REST API 5개 구현", eid(README_SENTENCE)), item("x", "E99")]):
+            result = llm_extract.extract_by_llm(request())
+        m = result.metrics
+        self.assertEqual((result.status, m.generated, m.evidence_ids, m.valid_evidence_ids, m.excluded), ("OK", 3, 3, 2, 1))
+
+    def test_router_logs_metrics_but_response_has_none(self):
+        with fake([item("백엔드 API 구현", eid(ROLE_NOTE))], [item("REST API 5개 구현", eid(README_SENTENCE))]), \
+             self.assertLogs("ieum.profile", level="INFO") as logs:
+            body = asyncio.run(extract_profile(request()))
+        line = next(line for line in logs.output if "profile metrics" in line)
+        for part in ["studentId=9001", "llm=OK", "generated=2", "validEvidenceRatio=1.0", "numberPassRatio=1.0", "excluded=0"]:
+            self.assertIn(part, line)
+        self.assertNotIn("REST API 5개 구현", line)
+        self.assertEqual(set(body["data"]), {"profile"})
+        dumped = json.dumps(body)
+        for key in ["generated", "validEvidence", "numberPass", "metrics"]:
+            self.assertNotIn(key, dumped)
+
+    def test_router_logs_status_when_llm_not_used(self):
+        cases = [
+            (patch.object(llm_extract, "generate_json", side_effect=LLMError("fail")), request(), "llm=FAILED"),
+            (patch.object(llm_extract, "generate_json"),
+             request(projects=[], coverLetter=None), "llm=SKIPPED"),
+        ]
+        for mock, req, expected in cases:
+            with self.subTest(expected=expected), mock, self.assertLogs("ieum.profile", level="INFO") as logs:
+                asyncio.run(extract_profile(req))
+            self.assertTrue(any("profile metrics" in line and expected in line for line in logs.output))
+
+
+class SkillAliasTest(unittest.TestCase):
+    def test_aliases_map_to_canonical(self):
+        cases = {
+            "JAVA": "Java", "자바": "Java", "java": "Java", "파이썬": "Python", "mysql": "MySQL", "MSSQL": "MS SQL",
+            "ms sql": "MS SQL", ".net": ".NET", "리눅스": "Linux", "포토샵": "Photoshop", "일러스트": "Illustrator",
+            "일러스트레이터": "Illustrator", "피그마": "Figma", "JS": "JavaScript", "자바스크립트": "JavaScript",
+            "TS": "TypeScript", "리액트": "React", "스프링부트": "Spring Boot", "springboot": "Spring Boot",
+            "스프링 부트": "Spring Boot", " spring boot ": "Spring Boot",
+        }
+        for raw, expected in cases.items():
+            with self.subTest(raw=raw):
+                self.assertEqual(canonical_skill(raw), expected)
+
+    def test_every_canonical_name_maps_to_itself(self):
+        for name in SKILL_ALIASES:
+            self.assertEqual(canonical_skill(name), name)
+
+    def test_unknown_name_keeps_original(self):
+        self.assertEqual(canonical_skill("  Kafka "), "Kafka")
+        self.assertEqual(canonical_skill("자바스크립트 엔진"), "자바스크립트 엔진")
+
+    def test_merge_uses_canonical_names(self):
+        data = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        base = data["projects"][0]
+        data["projects"] = [
+            {**base, "itemId": 1, "techStack": ["자바", "springboot", "mysql", "Kafka"]},
+            {**base, "itemId": 2, "techStack": ["JAVA", "스프링 부트", "MySQL", "kafka", "JS"]},
+            {**base, "itemId": 3, "techStack": None},
+        ]
+        skills = merge_skills(ExtractRequest.model_validate(data))
+        self.assertEqual(
+            [(s.name, [e.ref_id for e in s.evidence]) for s in skills],
+            [("Java", [1, 2]), ("Spring Boot", [1, 2]), ("MySQL", [1, 2]), ("Kafka", [1, 2]), ("JavaScript", [2])],
+        )
 
 
 class ExtractByLlmTest(unittest.TestCase):
@@ -187,6 +280,11 @@ class ExtractByLlmTest(unittest.TestCase):
         prompt = llm.call_args.args[0]
         self.assertIn(f"{eid(README_SENTENCE)} | 프로젝트 '모의 프로젝트' README | {README_SENTENCE}", prompt)
         self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v2")
+
+    def test_temperature_is_zero(self):
+        with fake() as llm:
+            llm_extract.extract_by_llm(request())
+        self.assertEqual(llm.call_args.kwargs["temperature"], 0.0)
 
 
 class RouterTest(unittest.TestCase):
