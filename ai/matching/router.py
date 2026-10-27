@@ -3,13 +3,20 @@
 POST /ai/matching/recommend — 프로필 → Top-3 공고 + 추천 근거 (AI-B-03, S3 · S4). 호출: BE-A
 """
 
-from fastapi import APIRouter, Request
+import asyncio
 
-from common.response import not_implemented, ok
-from matching.models import RecommendData, RecommendItem, RecommendReason, RecommendRequest
+from fastapi import APIRouter
+
+from common.response import ok
+from matching.indexer import run_index
+from matching.models import IndexRequest, RecommendData, RecommendItem, RecommendReason, RecommendRequest
+from matching.store import IndexStore
 from schemas.evidence import EvidenceRef
 
 router = APIRouter(prefix="/ai/matching", tags=["matching"])
+
+# 공고 색인 저장소 (ai/data/index/jobs_index.json). 테스트에서는 임시 경로로 바꾼다
+store = IndexStore()
 
 # 고정 응답용 공고 3건 (모의 데이터). 임베딩 · 리랭커가 붙으면 지운다.
 FIXED_ITEMS: list[RecommendItem] = [
@@ -59,9 +66,13 @@ FIXED_ITEMS: list[RecommendItem] = [
 
 
 @router.post("/index")
-async def index_jobs(request: Request):
-    # TODO(AI-B-02): contentHash 가 바뀐 공고만 common.embedding.embed_texts 로 다시 계산
-    return not_implemented()
+async def index_jobs(body: IndexRequest) -> dict:
+    # 요청: { jobs: [{ jobPostingId, contentHash, companyName, title, jobCategory, location, career, description }], removedJobPostingIds? }
+    # 응답: { indexedCount, skippedCount, removedCount, failedCount, failedJobPostingIds, embeddingStatus }
+    # BE(RestAiClient.indexJobs)는 data 의 키를 읽지 않고 JobSyncResult.indexResult 에 그대로 담는다
+    # 임베딩 · 파일 쓰기가 동기라 스레드에서 돌려 서버가 멈추지 않게 한다
+    data = await asyncio.to_thread(run_index, body, store)
+    return ok(data.model_dump(by_alias=True))
 
 
 @router.post("/recommend")
