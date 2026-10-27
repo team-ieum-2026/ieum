@@ -148,6 +148,9 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - 맞는 공고가 없으면 `items: []`입니다. 이 결과도 0건 추천으로 저장되어 `recommendationId`가 있습니다. 프로필이 아직 없을 때만 저장하지 않고 `recommendationId: null`로 응답합니다. 0건은 프로필이 바뀌거나 다음 공고 배치가 돌 때까지 그대로 씁니다.
 - `untilFilled: true`면 "채용 시 마감"이라 표시된 날짜 전에도 마감될 수 있습니다. 카드에는 `D-7 · 채용 시 마감`처럼 함께 표시합니다.
 - M2 공고 상세(`GET /api/recommendation-items/{itemId}`)의 전체 응답 형식은 `frontend/public/mock/M2_recommendation_item_detail.json`을 따릅니다. 공고 원문 링크는 API에 없어 `homepageUrl`은 `null`이고, 출처 문구 `sourceLabel`을 표시합니다.
+  - `summary`: LLM 없이 공고 본문 `[내용]`의 앞 2줄(제목 · 링크 줄 제외, 60자에서 자름). 없으면 `[]`
+  - `reasons[].evidence`: AI는 `{ refType, refId }`만 주므로 BE가 수료생 등록 자료에서 `label` · `quote`를 채웁니다(예: `PROJECT` → "모아요 · 프로젝트" / "Java, Spring Boot · 6주 · 4명"). 찾을 수 없는 근거는 빼고, 근거가 없으면 `evidence: []`
+  - 없는 항목이면 404 `RECOMMENDATION_ITEM_NOT_FOUND`
 
 #### `POST /api/recommendation-items/{itemId}/response` (M2 지원 · M3 패스)
 

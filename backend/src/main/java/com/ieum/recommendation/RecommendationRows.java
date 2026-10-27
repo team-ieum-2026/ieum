@@ -48,6 +48,34 @@ public final class RecommendationRows {
         private boolean untilFilled;
     }
 
+    /** M2 상세: recommendation_item 한 줄 + 수료생 id + job_posting 전체 표시 필드 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class ItemDetail {
+        private Long itemId;
+        private Long studentId;
+        private int rankNo;
+        private String response;
+        private String reasons;
+        private Long jobPostingId;
+        private String companyName;
+        private String title;
+        private String jobCategory;
+        private String location;
+        private String workAddress;
+        private String employmentType;
+        private String career;
+        private String education;
+        private String salaryText;
+        private LocalDate deadlineOn;
+        private boolean untilFilled;
+        private LocalDate postedOn;
+        private String description;
+        private String homepageUrl;
+        private String source;
+    }
+
     @Getter
     @Setter
     @NoArgsConstructor

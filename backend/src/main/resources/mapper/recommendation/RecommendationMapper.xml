@@ -24,6 +24,17 @@
         ORDER BY i.rank_no
     </select>
 
+    <select id="selectItemDetail" resultType="com.ieum.recommendation.RecommendationRows$ItemDetail">
+        SELECT i.id AS item_id, r.student_id, i.rank_no, i.response, CAST(i.reasons AS CHAR) AS reasons,
+               j.id AS job_posting_id, j.company_name, j.title, j.job_category, j.location, j.work_address,
+               j.employment_type, j.career, j.education, j.salary_text, j.deadline_on, j.until_filled,
+               j.posted_on, j.description, j.homepage_url, j.source
+        FROM recommendation_item i
+        JOIN recommendation r ON r.id = i.recommendation_id
+        JOIN job_posting j ON j.id = i.job_posting_id
+        WHERE i.id = #{itemId}
+    </select>
+
     <select id="selectRespondedJobIds" resultType="long">
         SELECT DISTINCT i.job_posting_id
         FROM recommendation_item i
