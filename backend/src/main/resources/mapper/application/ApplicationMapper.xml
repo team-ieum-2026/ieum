@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-A -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.application.ApplicationMapper">
+
+    <select id="countStudent" resultType="int">
+        SELECT COUNT(*) FROM student WHERE id = #{studentId}
+    </select>
+
+    <select id="selectByStudent" resultType="com.ieum.application.ApplicationRows$ListItem">
+        SELECT a.id AS application_id, j.company_name, j.title, a.status, a.submitted_at,
+               CAST(d.document AS CHAR) AS document
+        FROM application a
+        JOIN job_posting j ON j.id = a.job_posting_id
+        LEFT JOIN application_document d ON d.application_id = a.id
+        WHERE a.student_id = #{studentId}
+        ORDER BY a.created_at DESC, a.id DESC
+    </select>
+
+    <select id="selectLatestOtherItems" resultType="com.ieum.application.ApplicationRows$OtherItem">
+        SELECT i.id AS item_id, j.company_name, j.title, i.response, i.pass_reason
+        FROM recommendation_item i
+        JOIN job_posting j ON j.id = i.job_posting_id
+        LEFT JOIN application a ON a.recommendation_item_id = i.id
+        WHERE a.id IS NULL
+          AND i.recommendation_id = (
+              SELECT r.id FROM recommendation r
+              WHERE r.student_id = #{studentId}
+              ORDER BY r.created_at DESC, r.id DESC
+              LIMIT 1)
+        ORDER BY i.rank_no
+    </select>
+</mapper>
