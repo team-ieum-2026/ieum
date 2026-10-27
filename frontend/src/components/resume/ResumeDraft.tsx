@@ -112,8 +112,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
 
   return (
-    // 레이아웃 main 의 하단 메뉴 여백(pb-16)만큼 빼야 한 화면(844px)에서 스크롤이 생기지 않는다
-    <div className="min-h-[calc(100dvh-4rem)] bg-surface-warm">
+    <div className="min-h-screen bg-surface-warm">
       <header className="fixed left-1/2 top-0 z-20 flex h-14 w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
         <div className="flex min-w-0 items-center gap-1">
           <button
