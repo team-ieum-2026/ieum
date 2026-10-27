@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-03 프로필 조회·변경 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.profile.ProfileMapper">
+
+    <resultMap id="student" type="com.ieum.profile.ProfileData$Student" autoMapping="true">
+        <id property="studentId" column="student_id"/>
+        <result property="skills" column="skills"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+        <result property="competencyProfile" column="competency_profile"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="project" type="com.ieum.profile.ProfileData$Project" autoMapping="true">
+        <id property="itemId" column="item_id"/>
+        <result property="techStack" column="tech_stack"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <select id="findStudent" resultMap="student">
+        SELECT s.id AS student_id,
+               s.name,
+               s.email,
+               s.github_url,
+               s.desired_job,
+               s.preferred_region,
+               s.military_status,
+               s.completed_on,
+               s.skills,
+               c.id AS course_id,
+               c.name AS course_name,
+               c.cohort,
+               c.campus,
+               c.started_on,
+               c.ended_on,
+               cl.content AS cover_letter_content,
+               cl.updated_at AS cover_letter_updated_at,
+               cp.extracted_at AS profile_updated_at,
+               cp.profile AS competency_profile
+        FROM student s
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN student_cover_letter cl ON cl.student_id = s.id
+        LEFT JOIN competency_profile cp ON cp.student_id = s.id
+        WHERE s.id = #{studentId}
+    </select>
+
+    <!-- 저장 중에는 호출자 트랜잭션의 이전 스냅샷 대신 최신 커밋 행을 읽는다. -->
+    <select id="findCurrentStudent" resultMap="student" useCache="false" flushCache="true">
+        SELECT s.id AS student_id,
+               s.name,
+               s.email,
+               s.github_url,
+               s.desired_job,
+               s.preferred_region,
+               s.military_status,
+               s.completed_on,
+               s.skills,
+               c.id AS course_id,
+               c.name AS course_name,
+               c.cohort,
+               c.campus,
+               c.started_on,
+               c.ended_on,
+               cl.content AS cover_letter_content,
+               cl.updated_at AS cover_letter_updated_at,
+               cp.extracted_at AS profile_updated_at,
+               cp.profile AS competency_profile
+        FROM student s
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN student_cover_letter cl ON cl.student_id = s.id
+        LEFT JOIN competency_profile cp ON cp.student_id = s.id
+        WHERE s.id = #{studentId}
+        FOR UPDATE
+    </select>
+
+    <update id="updateBasic">
+        UPDATE student
+        SET name = #{name}, email = #{email,jdbcType=VARCHAR}, github_url = #{githubUrl,jdbcType=VARCHAR},
+            desired_job = #{desiredJob,jdbcType=VARCHAR}, preferred_region = #{preferredRegion,jdbcType=VARCHAR}
+        WHERE id = #{studentId}
+    </update>
+
+    <update id="updateMilitary">
+        UPDATE student SET military_status = #{militaryStatus,jdbcType=VARCHAR}
+        WHERE id = #{studentId}
+    </update>
+
+    <update id="updateSkills">
+        UPDATE student
+        SET skills = #{skills,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler}
+        WHERE id = #{studentId}
+    </update>
+
+    <select id="findEducation" resultType="com.ieum.profile.StudentProfileResponse$Education">
+        SELECT id AS item_id, source, school_name, major, degree, status, graduated_on
+        FROM student_education
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findCurrentEducation" resultType="com.ieum.profile.StudentProfileResponse$Education"
+            useCache="false" flushCache="true">
+        SELECT id AS item_id, source, school_name, major, degree, status, graduated_on
+        FROM student_education
+        WHERE student_id = #{studentId}
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <select id="findEducationItem" resultType="com.ieum.profile.StudentProfileResponse$Education">
+        SELECT id AS item_id, source, school_name, major, degree, status, graduated_on
+        FROM student_education
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </select>
+
+    <insert id="insertEducation" useGeneratedKeys="true" keyProperty="itemId">
+        INSERT INTO student_education (student_id, school_name, major, degree, status, graduated_on, source)
+        VALUES (#{studentId}, #{schoolName}, #{major,jdbcType=VARCHAR}, #{degree,jdbcType=VARCHAR},
+                #{status,jdbcType=VARCHAR}, #{graduatedOn,jdbcType=DATE}, 'USER')
+    </insert>
+
+    <update id="updateEducation">
+        UPDATE student_education
+        SET school_name = #{schoolName}, major = #{major,jdbcType=VARCHAR},
+            degree = #{degree,jdbcType=VARCHAR}, status = #{status,jdbcType=VARCHAR},
+            graduated_on = #{graduatedOn,jdbcType=DATE}, source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </update>
+
+    <delete id="deleteEducation">
+        DELETE FROM student_education
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </delete>
+
+    <select id="findCareers" resultType="com.ieum.profile.StudentProfileResponse$Career">
+        SELECT id AS item_id, source, company_name, position, started_on, ended_on, description
+        FROM student_career
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findCareerItem" resultType="com.ieum.profile.StudentProfileResponse$Career">
+        SELECT id AS item_id, source, company_name, position, started_on, ended_on, description
+        FROM student_career
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </select>
+
+    <select id="findCurrentCareers" resultType="com.ieum.profile.StudentProfileResponse$Career"
+            useCache="false" flushCache="true">
+        SELECT id AS item_id, source, company_name, position, started_on, ended_on, description
+        FROM student_career
+        WHERE student_id = #{studentId}
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <insert id="insertCareer" useGeneratedKeys="true" keyProperty="itemId">
+        INSERT INTO student_career (student_id, company_name, position, started_on, ended_on, description, source)
+        VALUES (#{studentId}, #{companyName}, #{position,jdbcType=VARCHAR}, #{startedOn,jdbcType=DATE},
+                #{endedOn,jdbcType=DATE}, #{description,jdbcType=LONGVARCHAR}, 'USER')
+    </insert>
+
+    <update id="updateCareer">
+        UPDATE student_career
+        SET company_name = #{companyName}, position = #{position,jdbcType=VARCHAR},
+            started_on = #{startedOn,jdbcType=DATE}, ended_on = #{endedOn,jdbcType=DATE},
+            description = #{description,jdbcType=LONGVARCHAR}, source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </update>
+
+    <delete id="deleteCareer">
+        DELETE FROM student_career
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </delete>
+
+    <select id="findCertificates" resultType="com.ieum.profile.StudentProfileResponse$Certificate">
+        SELECT id AS item_id, source, name, issuer, acquired_on
+        FROM student_certificate
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findProjects" resultMap="project">
+        SELECT id AS item_id, title, period_text, team_size, tech_stack, role_note, readme, source,
+               portfolio_file_url AS portfolio_file_name, include_in_apply
+        FROM student_project
+        WHERE student_id = #{studentId}
+        ORDER BY id
+    </select>
+
+    <select id="findCurrentCertificates" resultType="com.ieum.profile.StudentProfileResponse$Certificate"
+            useCache="false" flushCache="true">
+        SELECT id AS item_id, source, name, issuer, acquired_on
+        FROM student_certificate
+        WHERE student_id = #{studentId}
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <select id="findCurrentProjects" resultMap="project" useCache="false" flushCache="true">
+        SELECT id AS item_id, title, period_text, team_size, tech_stack, role_note, readme, source,
+               portfolio_file_url AS portfolio_file_name, include_in_apply
+        FROM student_project
+        WHERE student_id = #{studentId}
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <select id="findProjectItem" resultMap="project" useCache="false" flushCache="true">
+        SELECT id AS item_id, title, period_text, team_size, tech_stack, role_note, readme, source,
+               portfolio_file_url AS portfolio_file_name, include_in_apply
+        FROM student_project
+        WHERE student_id = #{studentId} AND id = #{itemId}
+        FOR UPDATE
+    </select>
+
+    <insert id="insertProject" useGeneratedKeys="true" keyProperty="project.itemId">
+        INSERT INTO student_project (student_id, title, period_text, team_size, tech_stack,
+                                     role_note, readme, include_in_apply, source)
+        VALUES (#{studentId}, #{project.title}, #{project.periodText,jdbcType=VARCHAR},
+                #{project.teamSize,jdbcType=INTEGER},
+                #{project.techStack,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler},
+                #{project.roleNote,jdbcType=LONGVARCHAR}, #{project.readme,jdbcType=LONGVARCHAR}, 1, 'USER')
+    </insert>
+
+    <!-- 서류 저장은 원문 컬럼을 UPDATE 대상에 포함하지 않는다. -->
+    <update id="updateProjectMetadata">
+        UPDATE student_project
+        SET title = #{project.title}, period_text = #{project.periodText,jdbcType=VARCHAR},
+            team_size = #{project.teamSize,jdbcType=INTEGER},
+            tech_stack = #{project.techStack,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler},
+            source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{project.itemId}
+    </update>
+
+    <update id="updateProjectOriginal">
+        UPDATE student_project
+        SET title = #{project.title}, period_text = #{project.periodText,jdbcType=VARCHAR},
+            team_size = #{project.teamSize,jdbcType=INTEGER},
+            tech_stack = #{project.techStack,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler},
+            role_note = #{project.roleNote,jdbcType=LONGVARCHAR}, readme = #{project.readme,jdbcType=LONGVARCHAR},
+            source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{project.itemId}
+    </update>
+
+    <update id="updateProjectInclude">
+        UPDATE student_project SET include_in_apply = #{include}, source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </update>
+
+    <update id="updatePortfolio">
+        UPDATE student_project
+        SET portfolio_file_url = #{fileName,jdbcType=VARCHAR}, include_in_apply = #{include}, source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </update>
+
+    <delete id="deleteProject">
+        DELETE FROM student_project WHERE student_id = #{studentId} AND id = #{itemId}
+    </delete>
+
+    <!-- 같은 수료생의 프로필 쓰기가 겹치지 않도록 트랜잭션 동안 잠근다. -->
+    <select id="lockStudent" resultType="java.lang.Long">
+        SELECT id FROM student WHERE id = #{studentId} FOR UPDATE
+    </select>
+
+    <insert id="insertCertificate" useGeneratedKeys="true" keyProperty="itemId">
+        INSERT INTO student_certificate (student_id, name, issuer, acquired_on, source)
+        VALUES (#{studentId}, #{name}, #{issuer,jdbcType=VARCHAR}, #{acquiredOn,jdbcType=DATE}, 'USER')
+    </insert>
+
+    <select id="findCertificate" resultType="com.ieum.profile.StudentProfileResponse$Certificate">
+        SELECT id AS item_id, source, name, issuer, acquired_on
+        FROM student_certificate
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </select>
+
+    <update id="updateCertificate">
+        UPDATE student_certificate
+        SET name = #{name}, issuer = #{issuer,jdbcType=VARCHAR},
+            acquired_on = #{acquiredOn,jdbcType=DATE}, source = 'USER'
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </update>
+
+    <delete id="deleteCertificate">
+        DELETE FROM student_certificate
+        WHERE student_id = #{studentId} AND id = #{itemId}
+    </delete>
+
+    <insert id="upsertCoverLetter">
+        INSERT INTO student_cover_letter (student_id, content, updated_at)
+        VALUES (#{studentId}, #{content,jdbcType=LONGVARCHAR}, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE
+            content = #{content,jdbcType=LONGVARCHAR}, updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <insert id="upsertCompetencyProfile">
+        INSERT INTO competency_profile (student_id, profile, source_hash, extracted_at)
+        VALUES (#{studentId},
+                #{profile,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler},
+                #{sourceHash}, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE
+            profile = #{profile,jdbcType=VARCHAR,typeHandler=com.ieum.common.mybatis.JsonTypeHandler},
+            source_hash = #{sourceHash},
+            extracted_at = CURRENT_TIMESTAMP
+    </insert>
+</mapper>

@@ -1,0 +1,27 @@
+// 주인: BE-A
+package com.ieum.job;
+
+import java.time.LocalDate;
+import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/** job_posting 매퍼. SQL은 resources/mapper/job/JobPostingMapper.xml */
+@Mapper
+public interface JobPostingMapper {
+
+    /** 출처별 현재 공고의 (id, externalId, contentHash). upsert 전후 비교용 */
+    List<JobPosting> selectKeysBySource(@Param("source") String source);
+
+    /** (source, external_id) 기준 insert 또는 update */
+    int upsert(JobPosting posting);
+
+    /** 이번 수집에 없는 공고를 끈다 */
+    int deactivateMissing(@Param("source") String source, @Param("externalIds") List<String> externalIds);
+
+    /** 마감일이 지난 공고를 끈다 */
+    int deactivateExpired(@Param("source") String source, @Param("today") LocalDate today);
+
+    /** 첫 배치 성공 뒤 개발용 임시 공고(DEV_SEED)를 끈다 */
+    int deactivateDevSeed();
+}

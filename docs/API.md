@@ -79,7 +79,18 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M6 · M6-1 · M6-2 | `PATCH /api/applications/{applicationId}/document` | 문장 수정 · 섹션 항목 추가 · 수정 · 삭제 | S8 |
 | M6 | `POST /api/applications/{applicationId}/submit` | 최종 제출 | S8 |
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
-| - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음). 필드 매핑은 `docs/JOB_API.md` | S3 |
+| - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
+
+#### `POST /api/admin/jobs/sync` (공고 배치)
+
+요청 본문 없음. API 호출이 실패하면 오류가 아니라 `status: "SKIPPED"`로 응답하고 기존 공고를 그대로 씁니다.
+
+```json
+{ "data": { "status": "DONE", "message": "공고 동기화를 마쳤어요.", "fetchedCount": 41191, "itCount": 105,
+  "insertedCount": 105, "updatedCount": 0, "unchangedCount": 0, "deactivatedCount": 3,
+  "indexRequestedCount": 105, "indexResult": { "indexedCount": 105, "skippedCount": 0 },
+  "syncedAt": "2026-10-25T23:43:20+09:00" } }
+```
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 
@@ -192,6 +203,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - `section`: `BASIC` · `EDUCATION` · `TRAINING` · `CAREER` · `MILITARY` · `CERTIFICATES` · `SKILLS` · `PROJECTS` · `PORTFOLIO` · `COVER_LETTER`
 - 섹션과 저장 위치: `BASIC` → `student` · `EDUCATION` → `student_education` · `TRAINING` → `course` (읽기 전용) · `CAREER` → `student_career` · `MILITARY` → `student.military_status` · `CERTIFICATES` → `student_certificate` · `SKILLS` → `student.skills` · `PROJECTS` · `PORTFOLIO` → `student_project` · `COVER_LETTER` → `student_cover_letter`
 - `saveToProfile: true`면 BE-A가 BE-B의 프로필 서비스를 호출해 수료생 프로필에도 저장 → 다음 추천에 반영
+- `PROJECTS`를 프로필에 저장할 때는 `title` · `periodText` · `teamSize` · `techStack`만 반영합니다(`PORTFOLIO`의 `include`는 `include_in_apply`). `bullets`는 공고마다 다르게 쓴 서류 전용 문장이라 프로필에 저장하지 않고, `student_project.readme`(README 원문)와 `role_note`(역할 기록)는 덮어쓰지 않습니다. AI 문장의 근거(`evidence.quote`)가 README 원문을 인용하기 때문입니다. README · 역할 기록은 M8 프로필에서만 고칩니다.
 - 응답: 바뀐 서류 JSON 전체 `{ "data": { "document": { … } } }`
 
 #### `POST /api/applications/{applicationId}/submit` (M6)
