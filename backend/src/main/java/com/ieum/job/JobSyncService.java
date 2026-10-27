@@ -89,17 +89,24 @@ public class JobSyncService {
             return JobSyncResult.skipped("공고 API가 0건을 돌려줘 기존 공고를 그대로 써요.", now);
         }
 
-        // 2) IT 필터 + 변환. 같은 external_id 가 두 번 오면 마지막 것만
+        // 2) IT 필터 + 변환 + 지역 필터(서울 · 경기 · 인천). 같은 external_id 가 두 번 오면 마지막 것만
         LocalDate today = LocalDate.now(KST);
         Map<String, JobPosting> parsed = new LinkedHashMap<>();
+        int outOfRegion = 0;
         for (JsonNode row : rows) {
-            if (SeoulJobParser.isItJob(row, props.itJobCodes())) {
-                JobPosting p = SeoulJobParser.parse(row, today);
-                parsed.put(p.getExternalId(), p);
+            if (!SeoulJobParser.isItJob(row, props.itJobCodes())) {
+                continue;
             }
+            JobPosting p = SeoulJobParser.parse(row, today);
+            if (!SeoulJobParser.isAllowedRegion(p.getLocation(), props.allowedRegions())) {
+                outOfRegion++;
+                continue;
+            }
+            parsed.put(p.getExternalId(), p);
         }
         if (parsed.isEmpty()) {
-            return JobSyncResult.skipped("IT 직종 공고가 0건이라 기존 공고를 그대로 써요. it-job-codes를 확인해 주세요.", now);
+            return JobSyncResult.skipped("IT 직종 · 수도권 공고가 0건이라 기존 공고를 그대로 써요. "
+                    + "it-job-codes · allowed-regions를 확인해 주세요.", now);
         }
 
         // 3) DB 반영 (한 트랜잭션)
@@ -110,8 +117,8 @@ public class JobSyncService {
         JsonNode indexResult = toIndex.isEmpty() && counts.removedIds().isEmpty()
                 ? null : indexInBatches(toIndex, counts.removedIds());
 
-        log.info("공고 동기화 완료: 수집 {} · IT {} · 신규 {} · 변경 {} · 동일 {} · 비활성 {} · 색인 요청 {} · 색인 제거 {}",
-                rows.size(), parsed.size(), counts.inserted(), counts.updated(), counts.unchanged(),
+        log.info("공고 동기화 완료: 수집 {} · IT · 수도권 {} (지역 제외 {}) · 신규 {} · 변경 {} · 동일 {} · 비활성 {} · 색인 요청 {} · 색인 제거 {}",
+                rows.size(), parsed.size(), outOfRegion, counts.inserted(), counts.updated(), counts.unchanged(),
                 counts.deactivated(), toIndex.size(), counts.removedIds().size());
         recommendationPrefetcher.prefetchAllAsync();
         return new JobSyncResult("DONE", "공고 동기화를 마쳤어요.", rows.size(), parsed.size(),
