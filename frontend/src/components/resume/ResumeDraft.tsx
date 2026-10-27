@@ -6,10 +6,12 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
+import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
+import { isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
-import { getApplication, submitApplication } from "@/lib/api/resume";
+import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
 import type { ApplicationDetail, CoverLetterSection } from "@/types/resume";
 
 const primaryButton =
@@ -22,8 +24,8 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  // TODO(FE-B-05): 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR 로 바꾼다
-  const [saveState] = useState<SaveState>("SAVED");
+  // 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR
+  const [saveState, setSaveState] = useState<SaveState>("SAVED");
   const [editing, setEditing] = useState<SectionSummary | null>(null);
   const [confirmingSubmit, setConfirmingSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -105,6 +107,31 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
     if (submitting) return;
     setConfirmingSubmit(false);
     setSubmitError(null);
+  };
+
+  // FE-B-05: 요청 형식이 정해진 목록 섹션(학력 · 경력 · 자격증)만 편집 시트. 나머지는 내용만 보여 준다
+  const editTarget = editing && isEditableSection(editing.section) ? editing.section : null;
+  const editSection = editTarget ? document.sections.find((s) => s.section === editTarget) : undefined;
+  const editItems: EditableItem[] = editSection && "items" in editSection ? (editSection.items as EditableItem[]) : [];
+
+  // 한 건 저장 → 응답의 서류 전체로 바꿔 카드 요약 · 출처 태그도 함께 갱신. 실패는 시트가 받아 입력값을 유지한다
+  const saveItem = async (change: ItemChange, saveToProfile: boolean) => {
+    if (!editTarget) return;
+    setSaveState("SAVING");
+    try {
+      const result = await patchDocument(applicationId, { ...change, section: editTarget, saveToProfile });
+      setDetail((prev) => (prev ? { ...prev, document: result.document } : prev));
+      setSaveState("SAVED");
+    } catch (e: unknown) {
+      setSaveState("ERROR");
+      throw e;
+    }
+  };
+
+  // 실패한 변경은 시트를 닫으면 버려지므로, 화면에 남은 내용은 저장된 상태와 같다
+  const closeEditing = () => {
+    setEditing(null);
+    setSaveState((s) => (s === "ERROR" ? "SAVED" : s));
   };
   const cards = document.sections
     .filter((s): s is CardSection => s.section !== "COVER_LETTER")
@@ -189,24 +216,34 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         </p>
       </footer>
 
-      <BottomSheet
-        open={editing !== null}
-        title={editing?.label ?? ""}
-        description={
-          editing?.readOnly
-            ? "수료한 교육 과정 정보라 여기서 고칠 수 없어요."
-            : "내용을 확인하고 필요하면 고쳐 주세요."
-        }
-        onClose={() => setEditing(null)}
-        actions={
-          <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
-            닫기
-          </button>
-        }
-      >
-        {/* TODO(FE-B-05): 섹션별 입력칸 + "내 프로필에도 저장" 체크박스 */}
-        <p className="mt-4 rounded-xl border border-line px-3 py-3 text-sm">{editing?.text}</p>
-      </BottomSheet>
+      {editTarget ? (
+        <SectionEditSheet
+          section={editTarget}
+          items={editItems}
+          editable={canSubmit}
+          onChange={saveItem}
+          onClose={closeEditing}
+        />
+      ) : (
+        <BottomSheet
+          open={editing !== null}
+          title={editing?.label ?? ""}
+          description={
+            editing?.readOnly
+              ? "수료한 교육 과정 정보라 여기서 고칠 수 없어요."
+              : // TODO(FE-B-05): 기본정보 · 병역 · 기술 · 경험 · 포트폴리오는 요청 형식을 BE-A 와 정한 뒤 편집 추가
+                "지금은 내용만 확인할 수 있어요. 수정 기능은 준비 중이에요."
+          }
+          onClose={() => setEditing(null)}
+          actions={
+            <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
+              닫기
+            </button>
+          }
+        >
+          <p className="mt-4 rounded-xl border border-line px-3 py-3 text-sm">{editing?.text}</p>
+        </BottomSheet>
+      )}
 
       <BottomSheet
         open={confirmingSubmit && canSubmit}
