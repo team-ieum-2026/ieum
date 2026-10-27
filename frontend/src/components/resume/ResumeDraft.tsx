@@ -26,7 +26,8 @@ const secondaryButton =
 export default function ResumeDraft({ applicationId }: { applicationId: number }) {
   const router = useRouter();
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // notFound: 404 APPLICATION_NOT_FOUND — 다시 불러와도 같으므로 "다시 시도" 대신 지원 현황으로 보낸다
+  const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   // 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR
   const [saveState, setSaveState] = useState<SaveState>("SAVED");
@@ -44,7 +45,12 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         if (!ignore) setDetail(data);
       })
       .catch((e: unknown) => {
-        if (!ignore) setLoadError(e instanceof ApiError ? e.message : "서류를 불러오지 못했어요.");
+        if (ignore) return;
+        setLoadError(
+          e instanceof ApiError
+            ? { message: e.message, notFound: e.code === "APPLICATION_NOT_FOUND" }
+            : { message: "서류를 불러오지 못했어요.", notFound: false },
+        );
       });
     return () => {
       ignore = true;
@@ -64,7 +70,18 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
 
   if (!detail) {
     return loadError ? (
-      <CenterNotice message={loadError} action={retryButton} />
+      <CenterNotice
+        message={loadError.message}
+        action={
+          loadError.notFound ? (
+            <Link href="/student/applications" className="font-bold text-primary">
+              지원 현황으로 가기
+            </Link>
+          ) : (
+            retryButton
+          )
+        }
+      />
     ) : (
       <CenterNotice message="서류를 불러오는 중이에요…" />
     );
@@ -80,7 +97,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   // 서류가 아직 없거나 만들지 못한 상태 — M5(진행 화면)에서 진행 · 다시 시도 (FE-A-11)
   if (status === "GENERATING") return <CenterNotice message="서류를 만들고 있어요." action={progressLink} />;
   if (status === "FAILED") return <CenterNotice message="서류를 만들지 못했어요." action={progressLink} />;
-  // API 명세상 document 는 항상 오지만, 비어 오면 화면이 멈추지 않도록 막는다
+  // document 는 GENERATING · FAILED 에서만 null (위에서 처리). 그 밖의 상태에서 비어 와도 화면이 멈추지 않도록 막는다
   if (!document || !Array.isArray(document.sections)) {
     return <CenterNotice message="서류 내용을 불러오지 못했어요." action={retryButton} />;
   }
