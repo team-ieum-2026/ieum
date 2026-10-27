@@ -18,6 +18,19 @@ public interface RecommendationMapper {
     /** M2 상세용 추천 항목 하나 (없으면 null) */
     RecommendationRows.ItemDetail selectItemDetail(@Param("itemId") Long itemId);
 
+    /** 응답 저장 전 확인용 (없으면 null) */
+    RecommendationRows.ItemOwner selectItemOwner(@Param("itemId") Long itemId);
+
+    /** 아직 NONE 인 항목만 응답으로 바꾼다. 0 이면 이미 응답한 항목 */
+    int updateItemResponse(@Param("itemId") Long itemId, @Param("response") String response,
+                           @Param("passReason") String passReason, @Param("passNote") String passNote);
+
+    /** student.last_response_at = 지금 (1주 무응답 판정 기준) */
+    int touchLastResponse(@Param("studentId") Long studentId);
+
+    /** 지원 시 application 생성 (GENERATING). AI 서류 생성은 BE-A-07 이 이어서 한다 */
+    int insertApplication(RecommendationRows.NewApplication application);
+
     /** 수료생이 이미 응답(APPLY · PASS · HELP)한 공고 id. 새로 추천받기에서 제외 */
     List<Long> selectRespondedJobIds(@Param("studentId") Long studentId);
 

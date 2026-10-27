@@ -76,6 +76,34 @@ public final class RecommendationRows {
         private String source;
     }
 
+    /** 응답 저장 전 확인용: 항목 주인 · 공고 · 현재 응답 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class ItemOwner {
+        private Long itemId;
+        private Long studentId;
+        private Long jobPostingId;
+        private String response;
+    }
+
+    /** 지원 시 만드는 application 한 줄 (status 기본값 GENERATING) */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class NewApplication {
+        private Long id;
+        private Long studentId;
+        private Long recommendationItemId;
+        private Long jobPostingId;
+
+        public NewApplication(Long studentId, Long recommendationItemId, Long jobPostingId) {
+            this.studentId = studentId;
+            this.recommendationItemId = recommendationItemId;
+            this.jobPostingId = jobPostingId;
+        }
+    }
+
     @Getter
     @Setter
     @NoArgsConstructor
