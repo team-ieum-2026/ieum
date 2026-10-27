@@ -1,7 +1,8 @@
 # 주인: AI-B
-"""LLM에 보낼 원문 번호표. 근거 검증(evidence_check)도 같은 텍스트로 quote 를 확인한다.
+"""LLM 근거 후보 만들기. 원문을 문장 · 줄 단위로 잘게 나눠 번호(E1, E2 …)를 붙인다.
 
-번호는 [refType#refId]. 기본 정보의 이름 · 이메일 · githubUrl 은 넣지 않고, 본문 속 이메일 · 전화번호는 [연락처]로 가린다.
+LLM 은 번호만 고르고, 인용(quote)은 코드가 이 후보에서 가져온다. 그래서 가짜 인용이 생길 수 없다.
+기본 정보의 이름 · 이메일 · githubUrl 은 넣지 않고, 본문 속 이메일 · 전화번호는 [연락처]로 가린다.
 careers 는 RefType 에 CAREER 가 없어(AI-A 확인 필요) 아직 넣지 않는다.
 """
 
@@ -13,64 +14,92 @@ from profile.models import ExtractRequest
 
 logger = logging.getLogger("ieum.profile")
 
-# readme · 자기소개서 한 개당 LLM 에 보내는 최대 글자 수
+# readme · 자기소개서 · roleNote 한 개당 나누기 전에 쓰는 최대 글자 수
 MAX_CHARS = 2000
+# 근거 후보 한 조각 최대 글자 수. 더 길면 이 길이로 끊는다
+MAX_CHUNK_CHARS = 300
+# 글자 · 숫자가 이보다 적은 조각은 버린다 (제목 기호만 있는 줄, "-", "1." 등)
+MIN_CHUNK_WORD_CHARS = 4
+# 후보가 이보다 많으면 뒤를 자른다 (프롬프트가 너무 길어지지 않게)
+MAX_CANDIDATES = 80
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _PHONE = re.compile(r"(?<!\d)(?:\+82[-.\s]?)?0?\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}(?!\d)")
+# 줄 앞의 마크다운 제목 · 불릿 · 번호 기호
+_LINE_MARK = re.compile(r"^\s*(?:#{1,6}\s*|[-*•·▪>]+\s*|\d{1,2}[.)]\s+)+")
+# 문장 끝(. ! ? 。) 뒤 공백에서 나눈다. "1.8s" 처럼 뒤에 공백이 없는 점은 나누지 않는다
+_SENTENCE_END = re.compile(r"(?<=[.!?。])\s+")
+_WORD_CHAR = re.compile(r"\w")
 
 
 @dataclass(frozen=True)
-class Source:
+class Candidate:
+    eid: str
     ref_type: str
     ref_id: int
-    text: str
-
-    @property
-    def tag(self) -> str:
-        return f"[{self.ref_type}#{self.ref_id}]"
+    label: str
+    quote: str
 
 
 def mask_contacts(text: str) -> str:
     return _PHONE.sub("[연락처]", _EMAIL.sub("[연락처]", text))
 
 
-def _clean(text: str | None, ref_type: str, ref_id: int, field: str, limit: int | None = None) -> str:
+def _clean(text: str | None, ref_type: str, ref_id: int, field: str) -> str:
     text = mask_contacts((text or "").strip())
-    if limit is not None and len(text) > limit:
-        logger.info("profile source truncated ref=%s#%d field=%s chars=%d limit=%d", ref_type, ref_id, field, len(text), limit)
-        text = text[:limit]
+    if len(text) > MAX_CHARS:
+        logger.info("profile source truncated ref=%s#%d field=%s chars=%d limit=%d", ref_type, ref_id, field, len(text), MAX_CHARS)
+        text = text[:MAX_CHARS]
     return text
 
 
-def _join(*lines: tuple[str, str]) -> str:
-    return "\n".join(f"{label}: {value}" for label, value in lines if value)
+def split_chunks(text: str) -> list[str]:
+    """줄 → 줄 앞 기호 제거 → 문장 단위 → 300자 상한. 짧은 조각과 같은 조각은 버린다."""
+    chunks: list[str] = []
+    for line in text.splitlines():
+        line = _LINE_MARK.sub("", line).strip()
+        for sentence in _SENTENCE_END.split(line):
+            sentence = sentence.strip()
+            for start in range(0, len(sentence), MAX_CHUNK_CHARS):
+                piece = sentence[start:start + MAX_CHUNK_CHARS].strip()
+                if len(_WORD_CHAR.findall(piece)) >= MIN_CHUNK_WORD_CHARS and piece not in chunks:
+                    chunks.append(piece)
+    return chunks
 
 
-def build_sources(req: ExtractRequest) -> list[Source]:
-    sources: list[Source] = []
+def build_candidates(req: ExtractRequest) -> list[Candidate]:
+    raw: list[tuple[str, int, str, str]] = []  # (refType, refId, label, quote)
+
+    def add_text(ref_type: str, ref_id: int, label: str, text: str | None, field: str) -> None:
+        seen = {(t, rid, q) for t, rid, _, q in raw}
+        for chunk in split_chunks(_clean(text, ref_type, ref_id, field)):
+            # 같은 출처의 같은 문장은 한 번만 (예: README 첫 줄 제목이 프로젝트 제목과 같을 때)
+            if (ref_type, ref_id, chunk) not in seen:
+                raw.append((ref_type, ref_id, label, chunk))
+
     for p in req.projects:
-        text = _join(
-            ("제목", _clean(p.title, "PROJECT", p.item_id, "title")),
-            ("역할", _clean(p.role_note, "PROJECT", p.item_id, "roleNote")),
-            ("README", _clean(p.readme, "PROJECT", p.item_id, "readme", MAX_CHARS)),
-        )
-        sources.append(Source("PROJECT", p.item_id, text))
+        title = mask_contacts(p.title.strip())
+        name = f"프로젝트 '{title}'"
+        if title:
+            raw.append(("PROJECT", p.item_id, f"{name} 제목", title))
+        add_text("PROJECT", p.item_id, f"{name} 역할", p.role_note, "roleNote")
+        add_text("PROJECT", p.item_id, f"{name} README", p.readme, "readme")
     if req.cover_letter is not None:
-        text = _clean(req.cover_letter.content, "COVER_LETTER", req.student_id, "content", MAX_CHARS)
-        sources.append(Source("COVER_LETTER", req.student_id, text))
+        # 임시 규칙(AI-A 확인 전): COVER_LETTER 의 refId 는 studentId
+        add_text("COVER_LETTER", req.student_id, "자기소개서", req.cover_letter.content, "content")
     for c in req.certificates:
-        text = _join(("자격증", _clean(c.name, "CERTIFICATE", c.item_id, "name")),
-                     ("발급 기관", _clean(c.issuer, "CERTIFICATE", c.item_id, "issuer")))
-        sources.append(Source("CERTIFICATE", c.item_id, text))
+        quote = " / ".join(x for x in [c.name.strip(), (c.issuer or "").strip()] if x)
+        raw.append(("CERTIFICATE", c.item_id, "자격증", mask_contacts(quote)))
     for e in req.education:
-        text = _join(("학교", _clean(e.school_name, "EDUCATION", e.item_id, "schoolName")),
-                     ("전공", _clean(e.major, "EDUCATION", e.item_id, "major")))
-        sources.append(Source("EDUCATION", e.item_id, text))
-    course = req.course
-    sources.append(Source("COURSE", course.course_id, _join(("과정", _clean(course.name, "COURSE", course.course_id, "name")))))
-    return sources
+        quote = " ".join(x for x in [e.school_name.strip(), (e.major or "").strip()] if x)
+        raw.append(("EDUCATION", e.item_id, "학력", mask_contacts(quote)))
+    raw.append(("COURSE", req.course.course_id, "교육 과정", mask_contacts(req.course.name.strip())))
+
+    if len(raw) > MAX_CANDIDATES:
+        logger.info("profile candidates truncated count=%d limit=%d", len(raw), MAX_CANDIDATES)
+        raw = raw[:MAX_CANDIDATES]
+    return [Candidate(f"E{i}", t, rid, label, quote) for i, (t, rid, label, quote) in enumerate(raw, start=1)]
 
 
-def render_sources(sources: list[Source]) -> str:
-    return "\n\n".join(f"{s.tag}\n{s.text}" for s in sources)
+def render_candidates(candidates: list[Candidate]) -> str:
+    return "\n".join(f"{c.eid} | {c.label} | {c.quote}" for c in candidates)

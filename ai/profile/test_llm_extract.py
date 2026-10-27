@@ -12,15 +12,23 @@ from unittest.mock import patch
 
 from common.llm import LLMError
 from profile import llm_extract
+from profile.evidence_check import check_llm_items
 from profile.llm_models import LlmItem, LlmProfile
 from profile.models import ExtractRequest
 from profile.router import extract_profile
-from profile.sources import MAX_CHARS, build_sources, render_sources
+from profile.sources import MAX_CANDIDATES, MAX_CHARS, MAX_CHUNK_CHARS, build_candidates, render_candidates, split_chunks
 from schemas import EvidenceRef
 
 SAMPLE = Path(__file__).parent.parent / "data" / "samples" / "profile_extract_request.json"
 PROJECT = {"refType": "PROJECT", "refId": 9401}
-QUOTE = "Spring Boot와 MySQL로 REST API 5개를 구현했습니다."
+README_SENTENCE = "Spring Boot와 MySQL로 REST API 5개를 구현했습니다."
+ROLE_NOTE = "백엔드 API 구현"
+LETTER = "2026-10-26T12:00:00+09:00"
+
+
+def unique_text(n: int) -> str:
+    """서로 다른 한글 n 글자 (같은 조각이 합쳐지지 않게)"""
+    return "".join(chr(0xAC00 + i) for i in range(n))
 
 
 def request(**overrides) -> ExtractRequest:
@@ -29,69 +37,168 @@ def request(**overrides) -> ExtractRequest:
     return ExtractRequest.model_validate(data)
 
 
-def item(text, quote=QUOTE, evidence=(PROJECT,)) -> LlmItem:
-    return LlmItem.model_validate({"text": text, "quote": quote, "evidence": list(evidence)})
+def eid(quote: str, req: ExtractRequest | None = None) -> str:
+    """샘플 요청의 근거 후보 중 quote 가 같은 후보의 번호"""
+    return next(c.eid for c in build_candidates(req or request()) if c.quote == quote)
+
+
+def item(text, *eids) -> LlmItem:
+    return LlmItem.model_validate({"text": text, "evidenceIds": list(eids)})
 
 
 def fake(roles=(), achievements=()):
     return patch.object(llm_extract, "generate_json", return_value=LlmProfile(roles=list(roles), achievements=list(achievements)))
 
 
+class CandidatesTest(unittest.TestCase):
+    def test_sample_candidates(self):
+        cands = build_candidates(request())
+        self.assertEqual([c.eid for c in cands], [f"E{i}" for i in range(1, len(cands) + 1)])
+        rows = [(c.ref_type, c.ref_id, c.label, c.quote) for c in cands]
+        self.assertEqual(rows, [
+            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 제목", "모의 프로젝트"),
+            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 역할", ROLE_NOTE),
+            # README 첫 줄 "# 모의 프로젝트" 는 제목과 같아서 한 번만
+            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' README", README_SENTENCE),
+            ("COVER_LETTER", 9001, "자기소개서", "모의 자기소개서입니다."),
+            ("COVER_LETTER", 9001, "자기소개서", "모의 프로젝트에서 REST API 5개를 구현했습니다."),
+            ("CERTIFICATE", 9301, "자격증", "모의 자격증 / 모의 발급 기관"),
+            ("EDUCATION", 9101, "학력", "모의대학교 컴퓨터공학"),
+            ("COURSE", 9002, "교육 과정", "모의 백엔드 과정"),
+        ])
+        self.assertIn(f"E3 | 프로젝트 '모의 프로젝트' README | {README_SENTENCE}", render_candidates(cands))
+
+    def test_split_by_sentence_line_and_bullet(self):
+        text = "## 주요 기능\n- 로그인 API 구현. 목록 조회 1.8s → 0.4s 개선!\n* 배포 자동화\n1. 테스트 작성"
+        self.assertEqual(split_chunks(text), ["주요 기능", "로그인 API 구현.", "목록 조회 1.8s → 0.4s 개선!", "배포 자동화", "테스트 작성"])
+
+    def test_short_chunks_are_dropped(self):
+        self.assertEqual(split_chunks("#\n---\n- \n1.\nOK.\n가나\n성능 개선"), ["성능 개선"])
+
+    def test_chunk_max_length(self):
+        chunks = split_chunks(unique_text(MAX_CHUNK_CHARS * 2 + 10))
+        self.assertEqual([len(c) for c in chunks], [MAX_CHUNK_CHARS, MAX_CHUNK_CHARS, 10])
+
+    def test_personal_info_excluded_and_contacts_masked(self):
+        req = request(coverLetter={"content": "연락은 a.b@test.co.kr 또는 010-1234-5678 로 주세요. API 5개 구현", "updatedAt": LETTER})
+        req.basic.name, req.basic.email, req.basic.github_url = "홍길동", "hong@example.com", "github.com/hong"
+        text = render_candidates(build_candidates(req))
+        for secret in ["홍길동", "hong@example.com", "github.com/hong", "a.b@test.co.kr", "5678"]:
+            self.assertNotIn(secret, text)
+        self.assertIn("[연락처]", text)
+        self.assertIn("API 5개 구현", text)
+
+    def test_long_source_is_truncated_and_logged(self):
+        letter = {"content": unique_text(MAX_CHARS + 500), "updatedAt": LETTER}
+        with self.assertLogs("ieum.profile", level="INFO") as logs:
+            cands = build_candidates(request(coverLetter=letter))
+        cover = [c for c in cands if c.ref_type == "COVER_LETTER"]
+        self.assertEqual(sum(len(c.quote) for c in cover), MAX_CHARS)
+        self.assertTrue(any("truncated" in line and "COVER_LETTER" in line for line in logs.output))
+
+    def test_too_many_candidates_are_cut(self):
+        letter = {"content": "\n".join(f"문장 번호 {i} 입니다" for i in range(200)), "updatedAt": LETTER}
+        with self.assertLogs("ieum.profile", level="INFO") as logs:
+            cands = build_candidates(request(coverLetter=letter))
+        self.assertEqual(len(cands), MAX_CANDIDATES)
+        self.assertTrue(any("candidates truncated" in line for line in logs.output))
+
+
+class CheckItemsTest(unittest.TestCase):
+    def setUp(self):
+        self.by_eid = {c.eid: c for c in build_candidates(request())}
+
+    def test_same_project_eids_are_merged(self):
+        title, role, readme = eid("모의 프로젝트"), eid(ROLE_NOTE), eid(README_SENTENCE)
+        kept, excluded = check_llm_items("achievements", [item("REST API 5개 구현", title, role, readme)], self.by_eid)
+        self.assertEqual(excluded, [])
+        self.assertEqual(kept[0].evidence, [EvidenceRef(ref_type="PROJECT", ref_id=9401)])
+
+    def test_different_sources_are_kept_in_order(self):
+        letter = eid("모의 프로젝트에서 REST API 5개를 구현했습니다.")
+        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(README_SENTENCE), letter)], self.by_eid)
+        self.assertEqual([(e.ref_type, e.ref_id) for e in kept[0].evidence], [("PROJECT", 9401), ("COVER_LETTER", 9001)])
+
+    def test_unknown_eid_is_dropped_but_valid_one_keeps_item(self):
+        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", "E99", eid(README_SENTENCE).lower())], self.by_eid)
+        self.assertEqual(kept[0].evidence, [EvidenceRef(ref_type="PROJECT", ref_id=9401)])
+
+    def test_number_in_any_chosen_quote_is_enough(self):
+        kept, _ = check_llm_items("achievements", [item("REST API 5개 구현", eid(ROLE_NOTE), eid(README_SENTENCE))], self.by_eid)
+        self.assertEqual(len(kept), 1)
+
+    def test_thousands_comma_is_ignored(self):
+        req = request(coverLetter={"content": "회원 1000명이 쓰는 서비스를 운영했습니다.", "updatedAt": LETTER})
+        by_eid = {c.eid: c for c in build_candidates(req)}
+        kept, _ = check_llm_items("achievements", [item("회원 1,000명 서비스 운영", eid("회원 1000명이 쓰는 서비스를 운영했습니다.", req))], by_eid)
+        self.assertEqual(len(kept), 1)
+
+
 class ExtractByLlmTest(unittest.TestCase):
-    def test_valid_response_is_kept(self):
-        with fake([item("백엔드 API 구현", "백엔드 API 구현")], [item("REST API 5개 구현")]):
+    def test_valid_response_maps_eids_to_refs(self):
+        with fake([item("백엔드 API 구현", eid(ROLE_NOTE))], [item("REST API 5개 구현", eid(README_SENTENCE))]):
             result = llm_extract.extract_by_llm(request())
         self.assertEqual(result.roles, ["백엔드 API 구현"])
         self.assertEqual([a.text for a in result.achievements], ["REST API 5개 구현"])
         self.assertEqual(result.achievements[0].evidence, [EvidenceRef(ref_type="PROJECT", ref_id=9401)])
         self.assertEqual(result.excluded, [])
 
-    def test_unknown_ref_id_is_excluded(self):
-        bad = item("REST API 5개 구현", evidence=[{"refType": "PROJECT", "refId": 1}])
-        with fake(achievements=[bad]):
+    def test_unknown_eid_only_is_excluded(self):
+        with fake(achievements=[item("REST API 5개 구현", "E99")]):
             result = llm_extract.extract_by_llm(request())
         self.assertEqual(result.achievements, [])
-        self.assertEqual(result.excluded[0].reason, "근거 refId 가 입력에 없음")
+        self.assertEqual(result.excluded[0].reason, "근거 번호가 후보에 없음")
 
-    def test_unknown_ref_is_dropped_but_valid_one_keeps_item(self):
-        mixed = item("REST API 5개 구현", evidence=[{"refType": "PROJECT", "refId": 1}, PROJECT])
-        with fake(achievements=[mixed]):
+    def test_no_evidence_is_excluded(self):
+        with fake(roles=[item("데이터 분석")]):
             result = llm_extract.extract_by_llm(request())
-        self.assertEqual([ev.ref_id for ev in result.achievements[0].evidence], [9401])
+        self.assertEqual(result.roles, [])
+        self.assertEqual(result.excluded[0].reason, "근거 없음")
 
-    def test_quote_not_in_source_is_excluded(self):
-        with fake(achievements=[item("REST API 5개 구현", quote="Redis로 캐시를 5개 붙였습니다.")]):
-            result = llm_extract.extract_by_llm(request())
-        self.assertEqual(result.achievements, [])
-        self.assertEqual(result.excluded[0].reason, "quote 가 근거 원문에 없음")
-
-    def test_quote_matches_after_whitespace_normalization(self):
-        spaced = QUOTE.replace(" ", "  \n")
-        with fake(achievements=[item("REST API 5개 구현", quote=spaced)]):
-            result = llm_extract.extract_by_llm(request())
-        self.assertEqual(len(result.achievements), 1)
-
-    def test_number_missing_in_quote_is_excluded(self):
-        with fake(achievements=[item("REST API 50개 구현")]):
+    def test_number_not_in_chosen_evidence_is_excluded(self):
+        # 50 은 어느 원문에도 없고, 5 가 있는 README 를 골라도 50 은 없다
+        with fake(achievements=[item("REST API 50개 구현", eid(README_SENTENCE))]):
             result = llm_extract.extract_by_llm(request())
         self.assertEqual(result.achievements, [])
         self.assertIn("50", result.excluded[0].reason)
+
+    def test_number_only_in_unchosen_evidence_is_excluded(self):
+        # 5 는 README 에 있지만 고른 근거(역할 기록)에는 없다
+        with fake(achievements=[item("REST API 5개 구현", eid(ROLE_NOTE))]):
+            result = llm_extract.extract_by_llm(request())
+        self.assertEqual(result.achievements, [])
+        self.assertEqual(result.excluded[0].reason, "text 의 숫자 5 가 고른 근거에 없음")
+
+    def test_excluded_text_is_not_logged(self):
+        with fake(achievements=[item("비밀 성과 문장 50개", eid(README_SENTENCE))]), \
+             self.assertLogs("ieum.profile", level="INFO") as logs:
+            llm_extract.extract_by_llm(request())
+        self.assertTrue(any("excludedCount=1" in line for line in logs.output))
+        self.assertFalse(any("비밀 성과" in line for line in logs.output))
 
     def test_llm_error_returns_empty(self):
         with patch.object(llm_extract, "generate_json", side_effect=LLMError("fail")):
             result = llm_extract.extract_by_llm(request())
         self.assertEqual((result.roles, result.achievements, result.excluded), ([], [], []))
 
+    def test_prompt_shows_numbered_candidates(self):
+        with fake() as llm:
+            llm_extract.extract_by_llm(request())
+        prompt = llm.call_args.args[0]
+        self.assertIn(f"{eid(README_SENTENCE)} | 프로젝트 '모의 프로젝트' README | {README_SENTENCE}", prompt)
+        self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v2")
+
 
 class RouterTest(unittest.TestCase):
     def test_merges_llm_result_with_rules(self):
-        with fake([item("백엔드 API 구현", "백엔드 API 구현")], [item("REST API 5개 구현")]):
+        with fake([item("백엔드 API 구현", eid(ROLE_NOTE))], [item("REST API 5개 구현", eid(README_SENTENCE))]):
             profile = asyncio.run(extract_profile(request()))["data"]["profile"]
         self.assertEqual(profile["roles"], ["백엔드 API 구현"])
         self.assertEqual(profile["achievements"], [{"text": "REST API 5개 구현", "evidence": [PROJECT]}])
         self.assertEqual(profile["certificates"], ["모의 자격증"])
         self.assertEqual([s["name"] for s in profile["skills"]], ["Spring Boot", "MySQL"])
         self.assertNotIn("quote", json.dumps(profile))
+        self.assertNotIn("evidenceIds", json.dumps(profile))
 
     def test_no_material_skips_llm(self):
         data = json.loads(SAMPLE.read_text(encoding="utf-8"))
@@ -112,33 +219,6 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(profile["achievements"], [])
         self.assertEqual(profile["certificates"], ["모의 자격증"])
         self.assertEqual(len(profile["skills"]), 2)
-
-
-class SourcesTest(unittest.TestCase):
-    def test_tags_and_personal_info(self):
-        req = request()
-        req.basic.name, req.basic.email = "홍길동", "hong@example.com"
-        text = render_sources(build_sources(req))
-        for tag in ["[PROJECT#9401]", "[COVER_LETTER#9001]", "[CERTIFICATE#9301]", "[EDUCATION#9101]", "[COURSE#9002]"]:
-            self.assertIn(tag, text)
-        self.assertNotIn("홍길동", text)
-        self.assertNotIn("hong@example.com", text)
-
-    def test_contacts_are_masked(self):
-        letter = {"content": "연락은 a.b@test.co.kr 또는 010-1234-5678 로 주세요. API 5개 구현", "updatedAt": "2026-10-26T12:00:00+09:00"}
-        text = render_sources(build_sources(request(coverLetter=letter)))
-        self.assertIn("[연락처]", text)
-        self.assertNotIn("a.b@test.co.kr", text)
-        self.assertNotIn("5678", text)
-        self.assertIn("API 5개 구현", text)
-
-    def test_long_text_is_truncated_and_logged(self):
-        letter = {"content": "가" * (MAX_CHARS + 500), "updatedAt": "2026-10-26T12:00:00+09:00"}
-        with self.assertLogs("ieum.profile", level="INFO") as logs:
-            sources = build_sources(request(coverLetter=letter))
-        cover = next(s for s in sources if s.ref_type == "COVER_LETTER")
-        self.assertEqual(len(cover.text), MAX_CHARS)
-        self.assertTrue(any("truncated" in line and "COVER_LETTER" in line for line in logs.output))
 
 
 if __name__ == "__main__":

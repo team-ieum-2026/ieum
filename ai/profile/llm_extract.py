@@ -8,11 +8,11 @@ import logging
 from dataclasses import dataclass, field
 
 from common.llm import LLMError, generate_json
-from profile.evidence_check import Excluded, allowed_refs, check_llm_items
+from profile.evidence_check import Excluded, check_llm_items
 from profile.llm_models import LlmProfile
 from profile.models import ExtractRequest
 from profile.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
-from profile.sources import build_sources
+from profile.sources import build_candidates
 from schemas.profile import ProfileAchievement
 
 logger = logging.getLogger("ieum.profile")
@@ -38,26 +38,25 @@ def extract_by_llm(req: ExtractRequest) -> LlmResult:
         logger.info("profile llm skipped: no project readme/roleNote or cover letter")
         return LlmResult()
 
-    sources = build_sources(req)
+    candidates = build_candidates(req)
     try:
         generated = generate_json(
-            build_prompt(sources), LlmProfile, system_instruction=SYSTEM_INSTRUCTION, prompt_version=PROMPT_VERSION
+            build_prompt(candidates), LlmProfile, system_instruction=SYSTEM_INSTRUCTION, prompt_version=PROMPT_VERSION
         )
     except LLMError as e:
         logger.warning("profile llm failed, rules only: %s", e)
         return LlmResult()
 
-    allowed = allowed_refs(req)
-    texts = {(s.ref_type, s.ref_id): s.text for s in sources}
-    roles, role_out = check_llm_items("roles", generated.roles, allowed, texts)
-    achievements, ach_out = check_llm_items("achievements", generated.achievements, allowed, texts)
+    by_eid = {c.eid: c for c in candidates}
+    roles, role_out = check_llm_items("roles", generated.roles, by_eid)
+    achievements, ach_out = check_llm_items("achievements", generated.achievements, by_eid)
     excluded = role_out + ach_out
     logger.info(
-        "profile llm checked roles=%d achievements=%d excludedCount=%d reasons=%s",
-        len(roles), len(achievements), len(excluded), [f"{x.kind}: {x.reason}" for x in excluded],
+        "profile llm checked candidates=%d roles=%d achievements=%d excludedCount=%d reasons=%s",
+        len(candidates), len(roles), len(achievements), len(excluded), [f"{x.kind}: {x.reason}" for x in excluded],
     )
     return LlmResult(
         roles=list(dict.fromkeys(r.text for r in roles)),
-        achievements=[ProfileAchievement(text=a.text, evidence=a.evidence) for a in achievements],
+        achievements=achievements,
         excluded=excluded,
     )
