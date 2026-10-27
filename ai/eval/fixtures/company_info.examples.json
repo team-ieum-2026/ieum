@@ -1,0 +1,39 @@
+{
+  "_note": "가상 기업 정보 3종 (모의 데이터, 시드 공고 501~503의 가상 회사). URL은 example.com 가짜 주소. 실제 회사 정보 아님",
+  "FOUND": {
+    "companyInfoId": 3,
+    "companyName": "(주)온다랩",
+    "status": "FOUND",
+    "talentKeywords": ["끝까지 책임지는 사람", "사용자 관점"],
+    "coreValues": ["책임감", "빠른 실행"],
+    "recentIssue": "AI 상담 서비스 정식 출시 (모의 기사)",
+    "sources": [
+      { "item": "talentKeywords", "url": "https://onda-lab.example.com/careers", "collectedAt": "2026-10-24T08:00:00+09:00" },
+      { "item": "coreValues", "url": "https://onda-lab.example.com/about", "collectedAt": "2026-10-24T08:00:00+09:00" },
+      { "item": "recentIssue", "url": "https://news.example.com/onda-lab-ai-launch", "collectedAt": "2026-10-24T08:00:00+09:00" }
+    ],
+    "collectedAt": "2026-10-24T08:00:00+09:00"
+  },
+  "PARTIAL": {
+    "companyInfoId": 4,
+    "companyName": "데이터웨이브(주)",
+    "status": "PARTIAL",
+    "talentKeywords": ["데이터로 말하는 사람"],
+    "coreValues": [],
+    "recentIssue": null,
+    "sources": [
+      { "item": "talentKeywords", "url": "https://datawave.example.com/recruit", "collectedAt": "2026-10-24T08:00:00+09:00" }
+    ],
+    "collectedAt": "2026-10-24T08:00:00+09:00"
+  },
+  "NOT_FOUND": {
+    "companyInfoId": 5,
+    "companyName": "(주)서울에이아이랩",
+    "status": "NOT_FOUND",
+    "talentKeywords": [],
+    "coreValues": [],
+    "recentIssue": null,
+    "sources": [],
+    "collectedAt": "2026-10-24T08:00:00+09:00"
+  }
+}
