@@ -109,6 +109,9 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   const cards = document.sections
     .filter((s): s is CardSection => s.section !== "COVER_LETTER")
     .map(summarizeSection);
+  // 포트폴리오는 같은 카드 · 데이터를 쓰되 화면에서만 따로 묶어 보여 준다
+  const resumeCards = cards.filter((c) => c.section !== "PORTFOLIO");
+  const portfolioCard = cards.find((c) => c.section === "PORTFOLIO");
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
 
   return (
@@ -137,9 +140,8 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
 
       <div className="flex flex-col px-4 pb-[104px] pt-[68px]">
         <p className="mx-1 text-xs text-ink-sub">AI가 준비한 초안이에요. 필요한 내용만 수정해 주세요.</p>
-
-        <h2 className="mx-1 mt-3 text-sm font-bold">이력서</h2>
-        <div className="mx-0.5 mb-2 mt-1.5 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
+        {/* 출처 태그 설명: 이력서 · 포트폴리오 · 자기소개서 모두에 적용되는 화면 공통 설명 */}
+        <div className="mx-0.5 mt-1.5 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
           <span className="flex items-center gap-1">
             <SourceTag source="AI" /> AI가 근거로 정리
           </span>
@@ -150,12 +152,23 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
             <SourceTag source="USER" /> 내가 쓰거나 고침
           </span>
         </div>
-        {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험 → 포트폴리오) */}
+
+        <h2 className="mx-1 mb-2 mt-4 text-sm font-bold">이력서</h2>
+        {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험) */}
         <SectionCardGroup>
-          {cards.map((card) => (
+          {resumeCards.map((card) => (
             <SectionCard key={card.section} summary={card} onOpen={setEditing} />
           ))}
         </SectionCardGroup>
+
+        {portfolioCard && (
+          <>
+            <h2 className="mx-1 mb-2 mt-4 text-sm font-bold">포트폴리오</h2>
+            <SectionCardGroup>
+              <SectionCard summary={portfolioCard} onOpen={setEditing} />
+            </SectionCardGroup>
+          </>
+        )}
 
         {coverLetter && <CoverLetterCard applicationId={applicationId} section={coverLetter} />}
       </div>
@@ -247,6 +260,7 @@ function CoverLetterCard({ applicationId, section }: { applicationId: number; se
           {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장`} />}
           {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
         </span>
+        <span className="-mt-1 text-[11px] text-ink-muted">공고에 맞춰 AI가 추천 작성한 내용이에요.</span>
         {section.sentences.length > 0 ? (
           // 문장을 이어 붙여 최대 3줄, 넘치면 말줄임표. AI 문장은 밑줄 강조
           <span className="line-clamp-3 text-[13px] leading-[1.6] text-ink-sub">
