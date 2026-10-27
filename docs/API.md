@@ -170,9 +170,10 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 { "data": { "itemId": 92, "response": "PASS", "applicationId": null } }
 ```
 
-- `PASS`인데 `passReason`이 없으면 400 `PASS_REASON_REQUIRED`
-- 이미 응답한 항목이면 409 `ALREADY_RESPONDED`
-- 응답이 생기면 `student.last_response_at` 갱신 + 상태 재계산(BE-B 서비스 호출)
+- `PASS`인데 `passReason`이 없으면 400 `PASS_REASON_REQUIRED`. 목록에 없는 사유, `APPLY` · `PASS` 외의 `response`, 1,000자 넘는 `passNote`는 400 `INVALID_REQUEST`
+- 이미 응답한 항목이면 409 `ALREADY_RESPONDED`. 없는 항목이면 404 `RECOMMENDATION_ITEM_NOT_FOUND`
+- `APPLY`면 `application`을 `GENERATING`으로 만들고 그 번호를 돌려줍니다. 서류 생성은 BE-A-07이 이어서 합니다.
+- 응답이 생기면 `student.last_response_at` 갱신 + `RecommendationRespondedEvent` 발행. 상태 재계산(BE-B-06)과 서류 생성(BE-A-07)은 이 이벤트를 저장 확정 뒤(`AFTER_COMMIT`) 받아 처리합니다.
 
 #### `GET /api/applications/{applicationId}/progress` (M5)
 

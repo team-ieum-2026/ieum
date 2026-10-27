@@ -35,6 +35,29 @@
         WHERE i.id = #{itemId}
     </select>
 
+    <select id="selectItemOwner" resultType="com.ieum.recommendation.RecommendationRows$ItemOwner">
+        SELECT i.id AS item_id, r.student_id, i.job_posting_id, i.response
+        FROM recommendation_item i
+        JOIN recommendation r ON r.id = i.recommendation_id
+        WHERE i.id = #{itemId}
+    </select>
+
+    <update id="updateItemResponse">
+        UPDATE recommendation_item
+        SET response = #{response}, pass_reason = #{passReason}, pass_note = #{passNote}, responded_at = NOW()
+        WHERE id = #{itemId} AND response = 'NONE'
+    </update>
+
+    <update id="touchLastResponse">
+        UPDATE student SET last_response_at = NOW() WHERE id = #{studentId}
+    </update>
+
+    <insert id="insertApplication" parameterType="com.ieum.recommendation.RecommendationRows$NewApplication"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO application (student_id, recommendation_item_id, job_posting_id)
+        VALUES (#{studentId}, #{recommendationItemId}, #{jobPostingId})
+    </insert>
+
     <select id="selectRespondedJobIds" resultType="long">
         SELECT DISTINCT i.job_posting_id
         FROM recommendation_item i
