@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-A -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.application.ApplicationDocumentMapper">
+
+    <sql id="detailColumns">
+        SELECT a.id AS application_id, a.student_id, a.status,
+               j.id AS job_posting_id, j.company_name, j.title,
+               CAST(d.document AS CHAR) AS document
+        FROM application a
+        JOIN job_posting j ON j.id = a.job_posting_id
+        LEFT JOIN application_document d ON d.application_id = a.id
+        WHERE a.id = #{applicationId}
+    </sql>
+
+    <select id="selectDetail" resultType="com.ieum.application.ApplicationDocumentMapper$Row">
+        <include refid="detailColumns"/>
+    </select>
+
+    <select id="selectDetailForUpdate" resultType="com.ieum.application.ApplicationDocumentMapper$Row">
+        <include refid="detailColumns"/>
+        FOR UPDATE
+    </select>
+
+    <update id="updateDocument">
+        UPDATE application_document SET document = #{document} WHERE application_id = #{applicationId}
+    </update>
+
+    <update id="submit">
+        UPDATE application SET status = 'SUBMITTED', submitted_at = NOW()
+        WHERE id = #{applicationId} AND status = 'DRAFT'
+    </update>
+
+    <update id="touchLastResponse">
+        UPDATE student SET last_response_at = NOW() WHERE id = #{studentId}
+    </update>
+</mapper>

@@ -281,10 +281,13 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - `UPDATE_ITEM`의 `item`에는 바뀐 필드만 보냅니다. 키가 없으면 그대로 두고, `null`이면 비웁니다.
 - `BASIC` · `MILITARY` · `SKILLS`는 `itemId: null`이고 `ADD_ITEM` · `DELETE_ITEM`을 쓰지 않습니다.
 - 오류: `DRAFT`가 아니면 409 `INVALID_STATUS` · 섹션에 맞지 않는 op나 필드면 400 `INVALID_REQUEST` · 없는 지원서면 404 `APPLICATION_NOT_FOUND`
+- 고친 문장은 `source: "USER"`가 되고 `evidence`는 비웁니다(원래 AI 근거와 맞지 않을 수 있어서).
+- 서류 항목 id는 `접두어-프로필 번호`(`edu-1`, `prj-11`)입니다. `saveToProfile: false`로 추가한 서류 전용 항목은 `cert-u1`처럼 `u`가 붙고, 나중에 `saveToProfile: true`로 수정하면 프로필에 새로 만들어지며 id가 `cert-35`처럼 바뀝니다. 응답의 서류 전체를 그대로 쓰면 됩니다.
+- 프로필 저장이 실패하면(값 검증 등) 서류 수정도 함께 취소됩니다.
 
 #### `POST /api/applications/{applicationId}/submit` (M6)
 
-화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`.
+화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`. 제출하면 `student.last_response_at`을 갱신하고 `ApplicationSubmittedEvent(studentId, applicationId)`를 발행합니다(BE-B-06 상태 재계산용, `AFTER_COMMIT`으로 받기).
 
 #### `GET /api/students/{studentId}/applications` (M7)
 
