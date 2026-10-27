@@ -107,10 +107,12 @@
         FOR UPDATE
     </select>
 
-    <select id="findEducationItem" resultType="com.ieum.profile.StudentProfileResponse$Education">
+    <select id="findEducationItem" resultType="com.ieum.profile.StudentProfileResponse$Education"
+            useCache="false" flushCache="true">
         SELECT id AS item_id, source, school_name, major, degree, status, graduated_on
         FROM student_education
         WHERE student_id = #{studentId} AND id = #{itemId}
+        FOR UPDATE
     </select>
 
     <insert id="insertEducation" useGeneratedKeys="true" keyProperty="itemId">
@@ -139,10 +141,12 @@
         ORDER BY id
     </select>
 
-    <select id="findCareerItem" resultType="com.ieum.profile.StudentProfileResponse$Career">
+    <select id="findCareerItem" resultType="com.ieum.profile.StudentProfileResponse$Career"
+            useCache="false" flushCache="true">
         SELECT id AS item_id, source, company_name, position, started_on, ended_on, description
         FROM student_career
         WHERE student_id = #{studentId} AND id = #{itemId}
+        FOR UPDATE
     </select>
 
     <select id="findCurrentCareers" resultType="com.ieum.profile.StudentProfileResponse$Career"
@@ -268,10 +272,12 @@
         VALUES (#{studentId}, #{name}, #{issuer,jdbcType=VARCHAR}, #{acquiredOn,jdbcType=DATE}, 'USER')
     </insert>
 
-    <select id="findCertificate" resultType="com.ieum.profile.StudentProfileResponse$Certificate">
+    <select id="findCertificate" resultType="com.ieum.profile.StudentProfileResponse$Certificate"
+            useCache="false" flushCache="true">
         SELECT id AS item_id, source, name, issuer, acquired_on
         FROM student_certificate
         WHERE student_id = #{studentId} AND id = #{itemId}
+        FOR UPDATE
     </select>
 
     <update id="updateCertificate">
