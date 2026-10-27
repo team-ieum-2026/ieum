@@ -10,9 +10,14 @@
 - 의미가 얼마나 맞는지만 본다. 신입 가능 · 지역 같은 조건은 호출 전에 코드로 거른다 (AI-B matching).
 """
 
+import importlib.util
 import logging
+import os
+import sys
+import sysconfig
 import time
 from collections.abc import Sequence
+from contextlib import contextmanager
 from functools import lru_cache
 
 from common.config import get_settings
@@ -47,12 +52,38 @@ def _device() -> str:
     return "cpu"
 
 
+@contextmanager
+def _stdlib_profile():
+    """torch import 동안만 sys.modules["profile"] 을 표준 라이브러리 profile 로 바꿔 둔다.
+
+    서버는 ai/ 에서 실행해서 `import profile` 이 AI-B 의 ai/profile/ 패키지를 가리킨다.
+    torch 는 import 중에 cProfile → profile.run 을 쓰므로 그대로 두면 AttributeError 가 난다.
+    끝나면 원래 모듈(AI-B 패키지)로 되돌린다. ai/profile/ 이름이 바뀌면 이 함수는 지워도 된다.
+    """
+    current = sys.modules.get("profile")
+    if current is not None and not hasattr(current, "run"):
+        path = os.path.join(sysconfig.get_paths()["stdlib"], "profile.py")
+        spec = importlib.util.spec_from_file_location("profile", path)
+        assert spec is not None and spec.loader is not None
+        stdlib = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(stdlib)
+        sys.modules["profile"] = stdlib
+    try:
+        yield
+    finally:
+        if current is None:
+            sys.modules.pop("profile", None)
+        else:
+            sys.modules["profile"] = current
+
+
 @lru_cache
 def _load_model():
     # sentence-transformers(torch 포함)는 무거워서 실제로 쓸 때만 불러온다
     try:
-        import torch
-        from sentence_transformers import CrossEncoder
+        with _stdlib_profile():
+            import torch
+            from sentence_transformers import CrossEncoder
     except ImportError as e:
         raise RerankerError("sentence-transformers 가 없어요. pip install -r requirements.txt 를 실행하세요.") from e
 

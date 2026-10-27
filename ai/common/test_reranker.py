@@ -63,5 +63,26 @@ class RerankTest(unittest.TestCase):
                 reranker._load_model()
 
 
+class StdlibProfileTest(unittest.TestCase):
+    """ai/profile/ (AI-B) 이 표준 profile 을 가려도 torch import 동안만 표준 모듈로 바뀌고 다시 돌아오는지"""
+
+    def test_swaps_only_inside_and_restores(self):
+        import sys
+        import types
+
+        fake_ai_b = types.ModuleType("profile")  # run 이 없는 AI-B 패키지 흉내
+        original = sys.modules.get("profile")
+        sys.modules["profile"] = fake_ai_b
+        try:
+            with reranker._stdlib_profile():
+                self.assertTrue(hasattr(sys.modules["profile"], "run"))
+            self.assertIs(sys.modules["profile"], fake_ai_b)
+        finally:
+            if original is None:
+                sys.modules.pop("profile", None)
+            else:
+                sys.modules["profile"] = original
+
+
 if __name__ == "__main__":
     unittest.main()
