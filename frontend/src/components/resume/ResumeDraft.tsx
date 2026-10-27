@@ -6,11 +6,17 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
+import SectionDetailSheet, { type DetailSection } from "@/components/resume/SectionDetailSheet";
+import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
+import { isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
-import { getApplication, submitApplication } from "@/lib/api/resume";
-import type { ApplicationDetail, CoverLetterSection } from "@/types/resume";
+import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
+import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
+
+const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
+const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
 
 const primaryButton =
   "flex min-h-[52px] flex-[2] items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -23,8 +29,8 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   // notFound: 404 APPLICATION_NOT_FOUND — 다시 불러와도 같으므로 "다시 시도" 대신 지원 현황으로 보낸다
   const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  // TODO(FE-B-05): 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR 로 바꾼다
-  const [saveState] = useState<SaveState>("SAVED");
+  // 섹션 편집 저장(PATCH) 중에는 SAVING, 실패하면 ERROR
+  const [saveState, setSaveState] = useState<SaveState>("SAVED");
   const [editing, setEditing] = useState<SectionSummary | null>(null);
   const [confirmingSubmit, setConfirmingSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -123,6 +129,38 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
     setConfirmingSubmit(false);
     setSubmitError(null);
   };
+
+  // FE-B-05: 학력 · 경력 · 자격증은 목록 편집 시트, 기본정보 · 병역 · 기술 · 경험 · 포트폴리오는 섹션 시트,
+  // 교육(TRAINING)은 읽기 전용 안내 시트. 시트에는 응답으로 갱신된 최신 섹션을 넘긴다
+  const editSection = editing ? document.sections.find((s) => s.section === editing.section) : undefined;
+  const listTarget = editing && isEditableSection(editing.section) ? editing.section : null;
+  const listItems: EditableItem[] = editSection && "items" in editSection ? (editSection.items as EditableItem[]) : [];
+  const detailSection = editSection && isDetailSection(editSection) ? editSection : null;
+
+  // 한 건 저장 → 응답의 서류 전체로 바꿔 카드 요약 · 출처 태그도 함께 갱신. 실패는 시트가 받아 입력값을 유지한다
+  const saveItem = async (change: ItemChange, saveToProfile: boolean) => {
+    if (!editing) return;
+    // UPDATE_SENTENCE 는 sentenceId · text 만 보낸다 (docs/API.md 2-1)
+    const body: DocumentPatchRequest =
+      change.op === "UPDATE_SENTENCE" ? change : { ...change, section: editing.section, saveToProfile };
+    setSaveState("SAVING");
+    try {
+      const result = await patchDocument(applicationId, body);
+      setDetail((prev) => (prev ? { ...prev, document: result.document } : prev));
+      setSaveState("SAVED");
+    } catch (e: unknown) {
+      setSaveState("ERROR");
+      // 그사이 검토 요청이 된 서류(409 INVALID_STATUS)면 최신 상태를 다시 불러와 시트를 읽기 전용으로
+      if (e instanceof ApiError && e.code === "INVALID_STATUS") setReloadKey((k) => k + 1);
+      throw e;
+    }
+  };
+
+  // 실패한 변경은 시트를 닫으면 버려지므로, 화면에 남은 내용은 저장된 상태와 같다
+  const closeEditing = () => {
+    setEditing(null);
+    setSaveState((s) => (s === "ERROR" ? "SAVED" : s));
+  };
   const cards = document.sections
     .filter((s): s is CardSection => s.section !== "COVER_LETTER")
     .map(summarizeSection);
@@ -206,24 +244,31 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         </p>
       </footer>
 
-      <BottomSheet
-        open={editing !== null}
-        title={editing?.label ?? ""}
-        description={
-          editing?.readOnly
-            ? "수료한 교육 과정 정보라 여기서 고칠 수 없어요."
-            : "내용을 확인하고 필요하면 고쳐 주세요."
-        }
-        onClose={() => setEditing(null)}
-        actions={
-          <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
-            닫기
-          </button>
-        }
-      >
-        {/* TODO(FE-B-05): 섹션별 입력칸 + "내 프로필에도 저장" 체크박스 */}
-        <p className="mt-4 rounded-xl border border-line px-3 py-3 text-sm">{editing?.text}</p>
-      </BottomSheet>
+      {listTarget ? (
+        <SectionEditSheet
+          section={listTarget}
+          items={listItems}
+          editable={canSubmit}
+          onChange={saveItem}
+          onClose={closeEditing}
+        />
+      ) : detailSection ? (
+        <SectionDetailSheet section={detailSection} editable={canSubmit} onChange={saveItem} onClose={closeEditing} />
+      ) : (
+        <BottomSheet
+          open={editing !== null}
+          title={editing?.label ?? ""}
+          description="수료한 교육 과정 정보라 여기서 고칠 수 없어요."
+          onClose={() => setEditing(null)}
+          actions={
+            <button type="button" onClick={() => setEditing(null)} className={secondaryButton}>
+              닫기
+            </button>
+          }
+        >
+          <p className="mt-4 rounded-xl border border-line px-3 py-3 text-sm">{editing?.text}</p>
+        </BottomSheet>
+      )}
 
       <BottomSheet
         open={confirmingSubmit && canSubmit}

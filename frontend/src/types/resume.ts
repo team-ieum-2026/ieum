@@ -173,7 +173,8 @@ export type SectionItemInput = Record<string, unknown>;
 export type DocumentPatchRequest =
   | { op: "UPDATE_SENTENCE"; sentenceId: string; text: string }
   | { op: "ADD_ITEM"; section: SectionName; item: SectionItemInput; saveToProfile: boolean }
-  | { op: "UPDATE_ITEM"; section: SectionName; itemId: string; item: SectionItemInput; saveToProfile: boolean }
+  // BASIC · MILITARY · SKILLS 는 항목이 하나뿐이라 itemId null. item 에는 바뀐 필드만 (생략 = 그대로, null = 비우기)
+  | { op: "UPDATE_ITEM"; section: SectionName; itemId: string | null; item: SectionItemInput; saveToProfile: boolean }
   | { op: "DELETE_ITEM"; section: SectionName; itemId: string; saveToProfile: boolean };
 
 export interface DocumentPatchResult {
