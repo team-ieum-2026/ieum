@@ -88,9 +88,13 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 ```json
 { "data": { "status": "DONE", "message": "공고 동기화를 마쳤어요.", "fetchedCount": 41191, "itCount": 105,
   "insertedCount": 105, "updatedCount": 0, "unchangedCount": 0, "deactivatedCount": 3,
-  "indexRequestedCount": 105, "indexResult": { "indexedCount": 105, "skippedCount": 0 },
+  "indexRequestedCount": 105,
+  "indexResult": { "indexedCount": 105, "skippedCount": 0, "removedCount": 3, "failedBatchCount": 0 },
   "syncedAt": "2026-10-25T23:43:20+09:00" } }
 ```
+
+- `indexResult`는 AI 색인 요청을 20건씩 나눠 보낸 응답을 더한 값입니다. 보낼 공고도 지울 공고도 없으면 `null`입니다. `failedBatchCount`는 실패한 묶음 수이고, 실패한 묶음은 다음 배치에서 다시 보내지 않으니 수동 실행으로 재시도합니다.
+- 배치가 끝나면 추천이 없거나 0건이거나 공고가 모두 꺼진 수료생의 추천을 백그라운드로 미리 만듭니다(`trigger_type = BATCH`). 응답은 이 작업을 기다리지 않습니다.
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 
@@ -126,6 +130,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 }
 ```
 
+- 맞는 공고가 없으면 `items: []`입니다. 이 결과도 0건 추천으로 저장되어 `recommendationId`가 있습니다. 프로필이 아직 없을 때만 저장하지 않고 `recommendationId: null`로 응답합니다. 0건은 프로필이 바뀌거나 다음 공고 배치가 돌 때까지 그대로 씁니다.
 - `untilFilled: true`면 "채용 시 마감"이라 표시된 날짜 전에도 마감될 수 있습니다. 카드에는 `D-7 · 채용 시 마감`처럼 함께 표시합니다.
 - M2 공고 상세(`GET /api/recommendation-items/{itemId}`)의 전체 응답 형식은 `frontend/public/mock/M2_recommendation_item_detail.json`을 따릅니다. 공고 원문 링크는 API에 없어 `homepageUrl`은 `null`이고, 출처 문구 `sourceLabel`을 표시합니다.
 
@@ -434,6 +439,21 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
 | `POST /ai/document/draft` | AI-A | BE-A | 등록 자료 + 프로필 + 공고 + 기업 정보 → 서류 JSON | S7 |
 | `GET /ai/health` | AI-A | 누구나 | 서버 상태 확인 `{ "data": { "status": "OK" } }` | - |
 
+#### `POST /ai/matching/index`
+
+```json
+// 요청 (20건씩 나눠 보냄. removedJobPostingIds는 첫 요청에만 싣고 나머지는 [])
+{ "jobs": [ { "jobPostingId": 613, "contentHash": "…64자", "companyName": "…", "title": "…",
+              "jobCategory": "응용 소프트웨어 개발자", "location": "서울 구로구", "career": "신입",
+              "education": "…MIN_EDUBG 원문", "description": "[직무] …" } ],
+  "removedJobPostingIds": [501, 502] }
+// 응답
+{ "data": { "indexedCount": 20, "skippedCount": 0, "removedCount": 2 } }
+```
+
+- `jobs`: 새로 들어오거나 `contentHash`가 바뀌거나 다시 켜진 활성 공고. `contentHash`는 BE가 계산한 값을 그대로 씁니다. `education`은 공고 API `MIN_EDUBG` 원문이고 없으면 `null`입니다.
+- `removedJobPostingIds`: 이번 배치에서 꺼진 공고(마감 · 목록에서 사라짐 · 개발용 임시 공고). AI 색인에서 지워 추천되지 않게 합니다.
+
 #### `POST /ai/matching/recommend`
 
 ```json
@@ -445,6 +465,9 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
       { "text": "모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요", "evidence": [ { "refType": "PROJECT", "refId": 11 } ] } ] }
 ] } }
 ```
+
+- 리랭커 때문에 1명당 30~60초 걸릴 수 있습니다. BE의 AI 호출 응답 대기 시간은 120초입니다.
+- 맞는 공고가 없으면 `items: []`로 응답합니다. BE는 이것도 0건 추천으로 저장합니다.
 
 #### `POST /ai/document/draft`
 
