@@ -2,19 +2,14 @@
 // 주인: FE-B — M6 이력서 초안 화면 본체 (FE-B-02). 섹션 카드 9개 + 자기소개서 미리보기 + 검토 요청 버튼
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
 import SourceTag from "@/components/resume/SourceTag";
-import {
-  OPTIONAL_SECTIONS,
-  summarizeSection,
-  type CardSection,
-  type SectionSummary,
-} from "@/components/resume/sectionSummary";
+import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
-import { getApplication } from "@/lib/api/resume";
+import { getApplication, submitApplication } from "@/lib/api/resume";
 import type { ApplicationDetail, CoverLetterSection } from "@/types/resume";
 
 const primaryButton =
@@ -31,6 +26,10 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
   const [saveState] = useState<SaveState>("SAVED");
   const [editing, setEditing] = useState<SectionSummary | null>(null);
   const [confirmingSubmit, setConfirmingSubmit] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // 화면이 다시 그려지기 전 두 번 눌러도 요청이 한 번만 가도록
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     let ignore = false;
@@ -51,29 +50,65 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
     setReloadKey((k) => k + 1);
   };
 
+  const retryButton = (
+    <button type="button" onClick={retry} className="font-bold text-primary">
+      다시 시도
+    </button>
+  );
+
   if (!detail) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-sm text-ink-sub">
-        {loadError ? (
-          <>
-            <p>{loadError}</p>
-            <button type="button" onClick={retry} className="font-bold text-primary">
-              다시 시도
-            </button>
-          </>
-        ) : (
-          <p>서류를 불러오는 중이에요…</p>
-        )}
-      </div>
+    return loadError ? (
+      <CenterNotice message={loadError} action={retryButton} />
+    ) : (
+      <CenterNotice message="서류를 불러오는 중이에요…" />
     );
   }
 
-  const { job, document } = detail;
+  const { status, job, document } = detail;
+  const progressLink = (
+    <Link href={`/student/applications/${applicationId}/progress`} className="font-bold text-primary">
+      진행 화면으로 가기
+    </Link>
+  );
+
+  // 서류가 아직 없거나 만들지 못한 상태 — M5(진행 화면)에서 진행 · 다시 시도 (FE-A-11)
+  if (status === "GENERATING") return <CenterNotice message="서류를 만들고 있어요." action={progressLink} />;
+  if (status === "FAILED") return <CenterNotice message="서류를 만들지 못했어요." action={progressLink} />;
+  // API 명세상 document 는 항상 오지만, 비어 오면 화면이 멈추지 않도록 막는다
+  if (!document || !Array.isArray(document.sections)) {
+    return <CenterNotice message="서류 내용을 불러오지 못했어요." action={retryButton} />;
+  }
+
+  // DRAFT 일 때만 제출 가능. 그 밖의 상태에서 제출하면 409 INVALID_STATUS (docs/API.md 2-1)
+  const canSubmit = status === "DRAFT";
+
+  // FE-B-03: POST /api/applications/{id}/submit → 성공하면 M7(지원 현황)로 이동
+  const submit = async () => {
+    if (!canSubmit || submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await submitApplication(applicationId);
+      router.push("/student/applications");
+    } catch (e: unknown) {
+      // 서버 message 는 화면에 그대로 띄워도 되는 문장 (docs/API.md 1장)
+      setSubmitError(e instanceof ApiError ? e.message : "검토 요청을 보내지 못했어요.");
+      // 이미 제출된 서류(409 INVALID_STATUS)면 최신 상태를 다시 불러와 버튼을 비활성화
+      if (e instanceof ApiError && e.code === "INVALID_STATUS") setReloadKey((k) => k + 1);
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const closeSubmitSheet = () => {
+    if (submitting) return;
+    setConfirmingSubmit(false);
+    setSubmitError(null);
+  };
   const cards = document.sections
     .filter((s): s is CardSection => s.section !== "COVER_LETTER")
     .map(summarizeSection);
-  const requiredCards = cards.filter((c) => !OPTIONAL_SECTIONS.includes(c.section));
-  const optionalCards = cards.filter((c) => OPTIONAL_SECTIONS.includes(c.section));
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
 
   return (
@@ -101,41 +136,11 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         <SaveStatus state={saveState} />
       </header>
 
-      <div className="flex flex-col px-4 pb-[94px] pt-16">
-        <section className="mb-2.5 flex items-center gap-3 rounded-2xl border border-primary-soft bg-primary-tint px-3.5 py-2">
-          <span
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface text-primary"
-            aria-hidden="true"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <path d="M14 2v6h6M8 13h8M8 17h5" />
-            </svg>
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-bold">AI가 이력서 초안을 준비했어요</p>
-            <p className="mt-0.5 text-xs text-ink-sub">각 항목을 확인하고 필요한 내용만 고쳐 주세요.</p>
-          </div>
-        </section>
+      <div className="flex flex-col px-4 pb-[104px] pt-[68px]">
+        <p className="mx-1 text-xs text-ink-sub">AI가 준비한 초안이에요. 필요한 내용만 수정해 주세요.</p>
 
-        <h2 className="mx-1 mb-1.5 text-sm font-bold">이력서</h2>
-        <SectionCardGroup>
-          {requiredCards.map((card) => (
-            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
-          ))}
-        </SectionCardGroup>
-
-        <div className="mx-1 mb-1.5 mt-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-bold">선택 정보</h2>
-          <span className="text-[11px] text-ink-muted">입력하지 않아도 제출할 수 있어요</span>
-        </div>
-        <SectionCardGroup>
-          {optionalCards.map((card) => (
-            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
-          ))}
-        </SectionCardGroup>
-
-        <div className="mx-0.5 mt-2 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
+        <h2 className="mx-1 mt-3 text-sm font-bold">이력서</h2>
+        <div className="mx-0.5 mb-2 mt-1.5 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
           <span className="flex items-center gap-1">
             <SourceTag source="AI" /> AI가 근거로 정리
           </span>
@@ -146,6 +151,12 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
             <SourceTag source="USER" /> 내가 쓰거나 고침
           </span>
         </div>
+        {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험 → 포트폴리오) */}
+        <SectionCardGroup>
+          {cards.map((card) => (
+            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
+          ))}
+        </SectionCardGroup>
 
         {coverLetter && <CoverLetterCard applicationId={applicationId} section={coverLetter} />}
       </div>
@@ -153,13 +164,16 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
       <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1 border-t border-line bg-surface px-5 pb-3 pt-2.5">
         <button
           type="button"
+          disabled={!canSubmit}
           onClick={() => setConfirmingSubmit(true)}
-          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:bg-line disabled:text-ink-muted"
         >
           담당자에게 검토 요청
         </button>
         <p className="text-center text-[11px] leading-4 text-ink-muted">
-          검토 후 기관 추천으로 전달돼요 · 기업에 바로 가지 않아요
+          {canSubmit
+            ? "검토 후 기관 추천으로 전달돼요 · 기업에 바로 가지 않아요"
+            : "이미 검토를 요청한 서류예요 · 지원 현황에서 확인할 수 있어요"}
         </p>
       </footer>
 
@@ -183,49 +197,68 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
       </BottomSheet>
 
       <BottomSheet
-        open={confirmingSubmit}
+        open={confirmingSubmit && canSubmit}
         title="담당자에게 서류를 보낼까요?"
         description={`${job.companyName} · ${job.title} 지원 서류가 담당 코디네이터 검토 단계로 넘어가요. 기업에 바로 보내지는 않아요.`}
-        onClose={() => setConfirmingSubmit(false)}
+        onClose={closeSubmitSheet}
         actions={
           <>
-            <button type="button" onClick={() => setConfirmingSubmit(false)} className={secondaryButton}>
+            <button type="button" onClick={closeSubmitSheet} disabled={submitting} className={secondaryButton}>
               취소
             </button>
-            {/* TODO(FE-B-03): submitApplication 호출 후 M7(/student/applications)로 이동 */}
-            <button type="button" onClick={() => setConfirmingSubmit(false)} className={primaryButton}>
-              검토 요청
+            <button type="button" onClick={submit} disabled={submitting} aria-busy={submitting} className={primaryButton}>
+              {submitting ? "보내는 중…" : "검토 요청"}
             </button>
           </>
         }
-      />
+      >
+        {submitError && (
+          <p role="alert" className="mt-3 text-[13px] text-danger">
+            {submitError}
+          </p>
+        )}
+      </BottomSheet>
+    </div>
+  );
+}
+
+/** 불러오는 중 · 오류 · 서류 없음 안내 (화면 가운데) */
+function CenterNotice({ message, action }: { message: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-sm text-ink-sub">
+      <p>{message}</p>
+      {action}
     </div>
   );
 }
 
 function CoverLetterCard({ applicationId, section }: { applicationId: number; section: CoverLetterSection }) {
-  const [first, ...rest] = section.sentences;
   const aiCount = section.sentences.filter((s) => s.source === "AI").length;
   const userCount = section.sentences.length - aiCount;
 
   return (
     <>
-      {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 (한 화면에 맞추기) */}
+      {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 */}
       <Link
         href={`/student/applications/${applicationId}/cover-letter`}
-        className="mt-2 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="mt-4 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="flex flex-wrap items-center gap-1.5">
           <b className="mr-auto text-sm">자기소개서</b>
-          {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장 · 근거 연결`} />}
+          {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장`} />}
           {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
         </span>
-        {first ? (
-          <span className="line-clamp-2 text-[13px] leading-[1.6] text-ink-sub">
-            <span className={first.source === "AI" ? "border-b-2 border-primary bg-primary-tint" : undefined}>
-              {first.text}
-            </span>
-            {rest.length > 0 && " …"}
+        {section.sentences.length > 0 ? (
+          // 문장을 이어 붙여 최대 3줄, 넘치면 말줄임표. AI 문장은 밑줄 강조
+          <span className="line-clamp-3 text-[13px] leading-[1.6] text-ink-sub">
+            {section.sentences.map((s, i) => (
+              <span key={s.sentenceId}>
+                {i > 0 && " "}
+                <span className={s.source === "AI" ? "border-b-2 border-primary bg-primary-tint" : undefined}>
+                  {s.text}
+                </span>
+              </span>
+            ))}
           </span>
         ) : (
           <span className="text-[13px] text-ink-muted">아직 작성된 문장이 없어요</span>

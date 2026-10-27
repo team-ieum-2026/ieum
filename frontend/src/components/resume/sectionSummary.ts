@@ -16,9 +16,6 @@ export interface SectionSummary {
   readOnly: boolean;
 }
 
-/** 경력 · 병역은 비워 둬도 제출 가능 → M6 에서 "선택 정보" 묶음으로 따로 보여 줌 */
-export const OPTIONAL_SECTIONS: SectionName[] = ["CAREER", "MILITARY"];
-
 const STATUS_LABEL: Record<string, string> = {
   GRADUATED: "졸업",
   EXPECTED: "졸업 예정",
