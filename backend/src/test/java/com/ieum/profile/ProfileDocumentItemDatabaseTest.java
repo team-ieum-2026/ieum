@@ -333,7 +333,7 @@ class ProfileDocumentItemDatabaseTest {
     }
 
     private JsonNode useMockAi() {
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
         return fixture.extractProfile(json.createObjectNode()).get("profile");

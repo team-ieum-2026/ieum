@@ -195,7 +195,7 @@ class ProfileItemDatabaseTest {
         String originalName = marker();
         String changedName = marker();
         LocalDate acquiredOn = LocalDate.of(2026, 9, 1);
-        MockAiClient mockFixture = new MockAiClient(json);
+        MockAiClient mockFixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = mockFixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> mockFixture.extractProfile(invocation.getArgument(0)));
@@ -339,7 +339,7 @@ class ProfileItemDatabaseTest {
         String addedSchoolName = marker();
         String changedSchoolName = marker();
         LocalDate graduatedOn = LocalDate.of(2026, 2, 1);
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -545,7 +545,7 @@ class ProfileItemDatabaseTest {
         String changedCompanyName = marker();
         LocalDate startedOn = LocalDate.of(2025, 3, 1);
         LocalDate endedOn = LocalDate.of(2026, 2, 28);
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -767,7 +767,7 @@ class ProfileItemDatabaseTest {
         StudentProfileResponse otherBaseline = profiles.getProfile(2L);
         String firstContent = marker() + "\n모의 프로젝트에서 API를 구현했습니다.";
         String secondContent = marker() + "\n\"문제 해결\"과 \\기술 경험을 보완했습니다.";
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -845,7 +845,7 @@ class ProfileItemDatabaseTest {
         String originalRole = "모의 프로젝트의 API 설계와 검증을 담당했습니다.";
         String changedReadme = "# 모의 수정 README\n트랜잭션 처리 근거 원문";
         String changedRole = "모의 트랜잭션 설계와 오류 처리 구현을 담당했습니다.";
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -944,7 +944,7 @@ class ProfileItemDatabaseTest {
     @Test
     void documentProjectAddReturnsGeneratedIdAndUpdatePreservesReadmeRoleAndPortfolio() {
         Baseline baseline = baseline();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
 
@@ -1031,7 +1031,7 @@ class ProfileItemDatabaseTest {
     @Test
     void portfolioIncludeUsesSameProjectIdAndPreservesFilenameAndOriginalsFromBothEntryPoints() {
         Baseline baseline = baseline();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1185,7 +1185,7 @@ class ProfileItemDatabaseTest {
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedStudentValues(STUDENT_ID);
         String name = marker();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1260,7 +1260,7 @@ class ProfileItemDatabaseTest {
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedStudentValues(STUDENT_ID);
         String name = marker();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1373,7 +1373,7 @@ class ProfileItemDatabaseTest {
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedMilitaryStudentValues(STUDENT_ID);
         List<Map<String, Object>> statusesBefore = militaryStudentStatusRows();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1530,7 +1530,7 @@ class ProfileItemDatabaseTest {
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedSkillsStudentValues(STUDENT_ID);
         List<Map<String, Object>> statusesBefore = skillsStudentStatusRows();
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1728,7 +1728,7 @@ class ProfileItemDatabaseTest {
         List<Map<String, Object>> otherStudent = studentRows(2L);
         List<ProjectRow> otherProjects = projectRows(2L);
         Long[] createdId = {null};
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
@@ -1825,7 +1825,7 @@ class ProfileItemDatabaseTest {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         List<ProjectRow> otherProjects = projectRows(2L);
-        MockAiClient fixture = new MockAiClient(json);
+        MockAiClient fixture = new MockAiClient(json, null);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
         when(aiClient.extractProfile(any(JsonNode.class)))
                 .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
