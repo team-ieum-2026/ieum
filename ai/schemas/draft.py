@@ -14,7 +14,7 @@ from schemas.student import StudentMaterial
 class JobPostingInput(CamelModel):
     """지원한 공고 한 건 (DB job_posting 중 서류 생성에 쓰는 컬럼).
 
-    공고를 근거로 다는 refType JOB_POSTING 은 아직 RefType 에 없음. 생기면 refId 는 jobPostingId
+    공고 근거는 { refType: JOB_POSTING, refId: jobPostingId }
     """
 
     job_posting_id: int

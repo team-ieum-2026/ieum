@@ -5,7 +5,11 @@ from typing import Literal
 
 from schemas.base import CamelModel
 
-RefType = Literal["PROJECT", "COVER_LETTER", "CERTIFICATE", "EDUCATION", "COURSE", "COMPANY_INFO"]
+# refId: PROJECT · CERTIFICATE · EDUCATION · CAREER → itemId, COURSE → courseId, COVER_LETTER → studentId,
+#        COMPANY_INFO → companyInfoId, JOB_POSTING → jobPostingId
+RefType = Literal[
+    "PROJECT", "COVER_LETTER", "CERTIFICATE", "EDUCATION", "CAREER", "COURSE", "COMPANY_INFO", "JOB_POSTING"
+]
 
 
 class EvidenceRef(CamelModel):

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from schemas import CompanyInfo, DraftRequest, StudentMaterial
+from schemas import CompanyInfo, DraftRequest, Evidence, EvidenceRef, StudentMaterial
 
 AI_DIR = Path(__file__).resolve().parent.parent
 FIXTURES = AI_DIR / "eval" / "fixtures"
@@ -87,6 +87,19 @@ class CompanyInfoTest(unittest.TestCase):
         data = dict(self.examples["FOUND"], status="MAYBE")
         with self.assertRaises(ValidationError):
             CompanyInfo.model_validate(data)
+
+
+class RefTypeTest(unittest.TestCase):
+    def test_career_and_job_posting(self):
+        self.assertEqual(EvidenceRef.model_validate({"refType": "CAREER", "refId": 3}).ref_type, "CAREER")
+        ev = Evidence.model_validate(
+            {"refType": "JOB_POSTING", "refId": 501, "label": "공고 주요 업무", "quote": "REST API 개발"}
+        )
+        self.assertEqual(ev.model_dump(by_alias=True)["refType"], "JOB_POSTING")
+
+    def test_unknown_ref_type_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            EvidenceRef.model_validate({"refType": "SKILL", "refId": 1})
 
 
 if __name__ == "__main__":

@@ -5,8 +5,7 @@ BE 전달 자료(2026-10-26, DRAFT) 형식. AI-B `profile/models.py` 의 Extract
 BE-A는 프로필 추출 때 보내는 객체를 서류 생성 요청의 `student` 로 그대로 보내면 된다.
 날짜(YYYY-MM-DD) · 시각(ISO 8601 +09:00)은 문자열 그대로 받는다.
 
-근거 refId 규칙: 학력 · 자격증 · 프로젝트는 각 itemId, 과정은 courseId, 자기소개서는 studentId
-(경력은 refType CAREER 가 생기면 itemId. 아직 RefType 에 없음)
+근거 refId 규칙: 학력 · 경력 · 자격증 · 프로젝트는 각 itemId, 과정은 courseId, 자기소개서는 studentId
 """
 
 from schemas.base import CamelModel
