@@ -83,6 +83,23 @@ class CompanyInfoTest(unittest.TestCase):
         del data["companyInfoId"]
         self.assertIsNone(CompanyInfo.model_validate(data).company_info_id)
 
+    def test_db_row_shape_is_flattened(self):
+        """BE-A가 company_info 행을 그대로 보내도 (id + 중첩 info) 같은 결과"""
+        flat = dict(self.examples["FOUND"])
+        row = {
+            "id": flat.pop("companyInfoId"),
+            "companyName": flat.pop("companyName"),
+            "status": flat.pop("status"),
+            "collectedAt": flat.pop("collectedAt"),
+        }
+        expected = CompanyInfo.model_validate(self.examples["FOUND"])
+        self.assertEqual(CompanyInfo.model_validate(dict(row, info=flat)), expected)
+        self.assertEqual(CompanyInfo.model_validate(dict(row, info=json.dumps(flat))), expected)
+
+    def test_db_row_with_null_info(self):
+        info = CompanyInfo.model_validate({"id": 5, "companyName": "가상회사", "status": "NOT_FOUND", "info": None})
+        self.assertEqual((info.company_info_id, info.talent_keywords, info.sources), (5, [], []))
+
     def test_unknown_status_is_rejected(self):
         data = dict(self.examples["FOUND"], status="MAYBE")
         with self.assertRaises(ValidationError):
