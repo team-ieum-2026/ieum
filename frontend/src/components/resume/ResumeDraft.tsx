@@ -101,8 +101,8 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         <SaveStatus state={saveState} />
       </header>
 
-      <div className="flex flex-col px-4 pb-[98px] pt-[68px]">
-        <section className="mb-4 flex items-center gap-3 rounded-2xl border border-primary-soft bg-primary-tint px-3.5 py-2.5">
+      <div className="flex flex-col px-4 pb-[94px] pt-16">
+        <section className="mb-2.5 flex items-center gap-3 rounded-2xl border border-primary-soft bg-primary-tint px-3.5 py-2">
           <span
             className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface text-primary"
             aria-hidden="true"
@@ -135,7 +135,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
           ))}
         </SectionCardGroup>
 
-        <div className="mx-1 mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-sub">
+        <div className="mx-0.5 mt-2 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
           <span className="flex items-center gap-1">
             <SourceTag source="AI" /> AI가 근거로 정리
           </span>
@@ -213,7 +213,7 @@ function CoverLetterCard({ applicationId, section }: { applicationId: number; se
       {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 (한 화면에 맞추기) */}
       <Link
         href={`/student/applications/${applicationId}/cover-letter`}
-        className="mt-3 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="mt-2 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="flex flex-wrap items-center gap-1.5">
           <b className="mr-auto text-sm">자기소개서</b>

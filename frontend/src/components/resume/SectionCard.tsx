@@ -12,7 +12,7 @@ export function SectionCard({ summary, onOpen }: SectionCardProps) {
     <button
       type="button"
       onClick={() => onOpen(summary)}
-      className="flex min-h-10 w-full items-center gap-2.5 border-b border-line bg-surface py-1.5 pl-3.5 pr-1.5 text-left last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+      className="flex min-h-9 w-full items-center gap-2.5 border-b border-line bg-surface py-1 pl-3.5 pr-1.5 text-left last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
     >
       <span className="w-16 shrink-0 text-[13px] font-bold">{summary.label}</span>
       <span
