@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-06 상태 판정. 사용자 원문은 변경하지 않는다. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.status.StatusMapper">
+
+    <select id="lockStudent" resultType="com.ieum.status.StatusData$Student"
+            useCache="false" flushCache="true">
+        SELECT id AS student_id, last_response_at,
+               COALESCE(last_response_at, completed_on) AS inactivity_since
+        FROM student
+        WHERE id = #{studentId}
+        FOR UPDATE
+    </select>
+
+    <update id="updateLastResponseAt">
+        UPDATE student
+        SET last_response_at = CASE
+            WHEN last_response_at IS NULL OR last_response_at &lt; #{respondedAt}
+                THEN #{respondedAt}
+            ELSE last_response_at
+        END
+        WHERE id = #{studentId}
+    </update>
+
+    <!-- 이전 트랜잭션 스냅샷이 아닌 현재 값으로 가장 최근 PASS를 결정한다. -->
+    <sql id="responsesQuery">
+        SELECT ri.id AS item_id, ri.response, ri.pass_reason, ri.responded_at
+        FROM recommendation_item ri
+        JOIN recommendation r ON r.id = ri.recommendation_id
+        WHERE r.student_id = #{studentId}
+        ORDER BY ri.responded_at DESC, ri.id DESC
+    </sql>
+
+    <select id="findResponses" resultType="com.ieum.status.StatusData$Response"
+            useCache="false" flushCache="true">
+        <include refid="responsesQuery"/>
+        FOR UPDATE
+    </select>
+
+    <select id="findResponsesUnlocked" resultType="com.ieum.status.StatusData$Response"
+            useCache="false" flushCache="true">
+        <include refid="responsesQuery"/>
+    </select>
+
+    <sql id="openHelpQuery">
+        SELECT id
+        FROM help_request
+        WHERE student_id = #{studentId} AND status = 'OPEN'
+        ORDER BY id
+    </sql>
+
+    <select id="findOpenHelpRequestIds" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="openHelpQuery"/>
+        FOR UPDATE
+    </select>
+
+    <select id="findOpenHelpRequestIdsUnlocked" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="openHelpQuery"/>
+    </select>
+
+    <sql id="activeApplicationsQuery">
+        SELECT id
+        FROM application
+        WHERE student_id = #{studentId} AND status IN ('SUBMITTED', 'APPROVED', 'DELIVERED')
+        ORDER BY id
+    </sql>
+
+    <select id="findActiveApplicationIds" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="activeApplicationsQuery"/>
+        FOR UPDATE
+    </select>
+
+    <select id="findActiveApplicationIdsUnlocked" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="activeApplicationsQuery"/>
+    </select>
+
+    <sql id="latestRecommendationQuery">
+        SELECT id
+        FROM recommendation
+        WHERE student_id = #{studentId}
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    </sql>
+
+    <select id="findLatestRecommendationId" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="latestRecommendationQuery"/>
+        FOR UPDATE
+    </select>
+
+    <select id="findLatestRecommendationIdUnlocked" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="latestRecommendationQuery"/>
+    </select>
+
+    <sql id="recommendationItemsQuery">
+        SELECT id
+        FROM recommendation_item
+        WHERE recommendation_id = #{recommendationId}
+        ORDER BY id
+    </sql>
+
+    <select id="findRecommendationItemIds" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="recommendationItemsQuery"/>
+        FOR UPDATE
+    </select>
+
+    <select id="findRecommendationItemIdsUnlocked" resultType="java.lang.Long"
+            useCache="false" flushCache="true">
+        <include refid="recommendationItemsQuery"/>
+    </select>
+
+    <select id="findStudentIds" resultType="java.lang.Long" useCache="false" flushCache="true">
+        SELECT id FROM student ORDER BY id
+    </select>
+
+    <insert id="upsertStatus">
+        INSERT INTO student_status (student_id, status, sub_status, reason)
+        VALUES (#{studentId}, #{decision.status}, #{decision.subStatus,jdbcType=VARCHAR},
+                #{decision.reason,jdbcType=VARCHAR})
+        ON DUPLICATE KEY UPDATE
+            status = #{decision.status},
+            sub_status = #{decision.subStatus,jdbcType=VARCHAR},
+            reason = #{decision.reason,jdbcType=VARCHAR}
+    </insert>
+</mapper>

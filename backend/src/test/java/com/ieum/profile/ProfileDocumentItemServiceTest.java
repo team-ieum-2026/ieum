@@ -4,13 +4,10 @@ package com.ieum.profile;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -43,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileDocumentItemServiceTest {
@@ -55,11 +53,14 @@ class ProfileDocumentItemServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileService service;
 
     @BeforeEach
     void setUp() {
-        service = spy(new ProfileService(mapper, ai, JSON));
+        service = spy(new ProfileService(mapper, events));
     }
 
     @ParameterizedTest
@@ -67,12 +68,11 @@ class ProfileDocumentItemServiceTest {
     void documentAddReturnsDatabaseIdAndIgnoresClientOwnershipFields(String section) {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         prepareInsert(section);
-        JsonNode competency = prepareExtraction(profile(null));
         ObjectNode item = validItem(section).put("studentId", 999L).put("itemId", 999L).put("source", "AI");
 
         assertEquals(77L, service.addItem(7L, section, item));
 
-        InOrder order = inOrder(mapper, service, ai);
+        InOrder order = inOrder(mapper, service, events);
         order.verify(mapper).lockStudent(7L);
         JsonNode saved = captureSaved(section, true, order);
         assertAll(
@@ -80,7 +80,7 @@ class ProfileDocumentItemServiceTest {
                 () -> assertEquals(77L, saved.get("itemId").longValue()),
                 () -> assertFalse(saved.has("source")));
         for (String field : fields(section)) assertEquals(item.get(field), saved.get(field));
-        verifyExtraction(order, competency);
+        verifyRefreshEvent(order);
     }
 
     @ParameterizedTest
@@ -102,7 +102,6 @@ class ProfileDocumentItemServiceTest {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         prepareExisting(section, 77L);
         prepareUpdate(section);
-        JsonNode competency = prepareExtraction(profile(null));
         ObjectNode item = switch (section) {
             case "EDUCATION" -> JSON.createObjectNode().putNull("major").put("status", "EXPECTED");
             case "CAREER" -> JSON.createObjectNode().putNull("endedOn").put("position", "Updated Mock Position");
@@ -113,7 +112,7 @@ class ProfileDocumentItemServiceTest {
 
         service.updateItem(7L, section, 77L, item);
 
-        InOrder order = inOrder(mapper, service, ai);
+        InOrder order = inOrder(mapper, service, events);
         order.verify(mapper).lockStudent(7L);
         verifyLookup(section, 77L, order);
         JsonNode saved = captureSaved(section, false, order);
@@ -126,7 +125,7 @@ class ProfileDocumentItemServiceTest {
                 () -> assertEquals(77L, saved.get("itemId").longValue()),
                 () -> assertFalse(saved.has("source")));
         for (String field : fields(section)) assertEquals(expected.get(field), saved.get(field));
-        verifyExtraction(order, competency);
+        verifyRefreshEvent(order);
     }
 
     @ParameterizedTest
@@ -161,24 +160,18 @@ class ProfileDocumentItemServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"EDUCATION", "CAREER", "CERTIFICATES"})
-    void documentDeleteChecksOwnershipAndExtractsProfileWithoutDeletedRecord(String section) {
+    void documentDeleteChecksOwnershipAndQueuesRefreshAfterDeletingRecord(String section) {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         prepareExisting(section, 77L);
         prepareDelete(section);
-        JsonNode competency = prepareExtraction(profile(section));
 
         service.deleteItem(7L, section, 77L);
 
-        InOrder order = inOrder(mapper, service, ai);
+        InOrder order = inOrder(mapper, service, events);
         order.verify(mapper).lockStudent(7L);
         verifyLookup(section, 77L, order);
         verifyDelete(section, order);
-        order.verify(service).getCurrentProfile(7L);
-        order.verify(mapper).findCurrentProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
-        assertEquals(0, sources.getValue().get(profileField(section)).size());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(service, never()).getProfile(any());
         verify(mapper, never()).findProjects(any());
     }
@@ -276,7 +269,7 @@ class ProfileDocumentItemServiceTest {
             "CAREER, ADD", "CAREER, UPDATE", "CAREER, DELETE",
             "CERTIFICATES, ADD", "CERTIFICATES, UPDATE", "CERTIFICATES, DELETE"
     })
-    void aiFailurePropagatesAfterMutationWithoutSavingCompetency(String section, String operation) {
+    void documentMutationPublishesRefreshWithoutCallingAi(String section, String operation) {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         if ("ADD".equals(operation)) prepareInsert(section);
         else {
@@ -284,21 +277,15 @@ class ProfileDocumentItemServiceTest {
             if ("UPDATE".equals(operation)) prepareUpdate(section);
             else prepareDelete(section);
         }
-        doReturn(profile(null)).when(service).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        BusinessException expected = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(ai.extractProfile(any(JsonNode.class))).thenThrow(expected);
 
-        BusinessException failure = assertThrows(BusinessException.class, () -> {
-            if ("ADD".equals(operation)) service.addItem(7L, section, validItem(section));
-            else if ("UPDATE".equals(operation)) service.updateItem(7L, section, 77L, validItem(section));
-            else service.deleteItem(7L, section, 77L);
-        });
+        if ("ADD".equals(operation)) service.addItem(7L, section, validItem(section));
+        else if ("UPDATE".equals(operation)) service.updateItem(7L, section, 77L, validItem(section));
+        else service.deleteItem(7L, section, 77L);
 
-        assertSame(expected, failure);
-        verify(ai).extractProfile(any(JsonNode.class));
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
         verify(service, never()).getProfile(any());
+        verifyNoInteractions(ai);
     }
 
     private void prepareInsert(String section) {
@@ -383,19 +370,8 @@ class ProfileDocumentItemServiceTest {
         }
     }
 
-    private JsonNode prepareExtraction(StudentProfileResponse current) {
-        doReturn(current).when(service).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        JsonNode competency = JSON.createObjectNode().put("mockCompetency", true);
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
-    }
-
-    private void verifyExtraction(InOrder order, JsonNode competency) {
-        order.verify(service).getCurrentProfile(7L);
-        order.verify(mapper).findCurrentProjects(7L);
-        order.verify(ai).extractProfile(any(JsonNode.class));
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+    private void verifyRefreshEvent(InOrder order) {
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(service, never()).getProfile(any());
         verify(mapper, never()).findProjects(any());
     }
