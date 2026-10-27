@@ -24,6 +24,9 @@ T = TypeVar("T", bound=BaseModel)
 # JSON 검증 실패 시 다시 부르는 횟수
 MAX_RETRIES = 1
 
+# 함수 호출(tool)을 쓰지 않으므로 SDK 자동 함수 호출(AFC)을 끈다. 켜 두면 호출마다 안내 로그가 찍힌다.
+_NO_AFC = types.AutomaticFunctionCallingConfig(disable=True)
+
 
 class LLMError(RuntimeError):
     """LLM 호출 또는 응답 검증 실패. 라우터에서 잡아 error("LLM_ERROR", ...) 로 돌려준다."""
@@ -87,6 +90,7 @@ def generate_json(
         system_instruction=system_instruction,
         response_mime_type="application/json",
         response_json_schema=schema.model_json_schema(by_alias=True),
+        automatic_function_calling=_NO_AFC,
     )
     for attempt in range(MAX_RETRIES + 1):
         text = _call(prompt, config, prompt_version)
@@ -107,5 +111,9 @@ def generate_text(
     prompt_version: str = "unversioned",
 ) -> str:
     """자유 텍스트 응답."""
-    config = types.GenerateContentConfig(temperature=temperature, system_instruction=system_instruction)
+    config = types.GenerateContentConfig(
+        temperature=temperature,
+        system_instruction=system_instruction,
+        automatic_function_calling=_NO_AFC,
+    )
     return _call(prompt, config, prompt_version)
