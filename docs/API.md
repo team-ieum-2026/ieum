@@ -80,6 +80,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M6 | `POST /api/applications/{applicationId}/submit` | 담당자에게 검토 요청 (상태값은 `SUBMITTED`) | S8 |
 | M7 | `GET /api/students/{studentId}/applications` | 지원 현황 목록 + 이번 추천의 다른 공고 응답 | S9 · S10 |
 | - | `POST /api/admin/jobs/sync` | 공고 배치 수동 실행 (시연 · 개발용, 인증 없음, 15초~2분). 필드 매핑은 `docs/JOB_API.md`. 응답은 아래 | S3 |
+| - | `POST /api/admin/jobs/reindex` | AI 전체 재색인 (개발용, 인증 없음). AI 서버를 처음 연결할 때 한 번 실행. 응답은 아래 | S3 |
 
 #### `POST /api/admin/jobs/sync` (공고 배치)
 
@@ -93,8 +94,22 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
   "syncedAt": "2026-10-25T23:43:20+09:00" } }
 ```
 
-- `indexResult`는 AI 색인 요청을 20건씩 나눠 보낸 응답을 더한 값입니다. 보낼 공고도 지울 공고도 없으면 `null`입니다. `failedBatchCount`는 실패한 묶음 수이고, 실패한 묶음은 다음 배치에서 다시 보내지 않으니 수동 실행으로 재시도합니다.
+- `indexResult`는 AI 색인 요청을 20건씩 나눠 보낸 응답을 더한 값입니다. 보낼 공고도 지울 공고도 없으면 `null`입니다. `failedBatchCount`는 실패한 묶음 수이고, 실패한 묶음은 다음 배치에서 다시 보내지 않으니 `POST /api/admin/jobs/reindex`로 재시도합니다.
 - 배치가 끝나면 추천이 없거나 0건이거나 공고가 모두 꺼진 수료생의 추천을 백그라운드로 미리 만듭니다(`trigger_type = BATCH`). 응답은 이 작업을 기다리지 않습니다.
+
+#### `POST /api/admin/jobs/reindex` (AI 전체 재색인)
+
+배치는 새로 들어오거나 바뀐 공고만 AI에 보내므로, AI 색인이 비어 있으면(AI 서버를 처음 연결 · 색인 파일 삭제) 배치를 돌려도 채워지지 않습니다. 이때 한 번 실행합니다. 활성 공고 전체를 20건씩 나눠 보내고, 꺼진 공고 id는 첫 요청의 `removedJobPostingIds`에 싣습니다. AI는 `contentHash`가 같으면 건너뛰므로 여러 번 불러도 됩니다.
+
+```json
+{ "data": { "status": "DONE", "message": "AI 색인을 다시 만들었어요.", "indexRequestedCount": 143, "removeRequestedCount": 18,
+  "indexResult": { "indexedCount": 143, "skippedCount": 0, "removedCount": 0, "failedBatchCount": 0 },
+  "reindexedAt": "2026-10-28T09:00:00+09:00" } }
+```
+
+- 배치나 재색인이 실행 중이거나 활성 공고가 없으면 `status: "SKIPPED"`, 나머지 값은 0 · `null`
+- 끝나면 배치와 같이 0건 · 빈 추천을 백그라운드로 다시 만듭니다.
+- `AI_MOCK=false`로 바꿀 때 순서: AI 서버 실행 → `POST /api/admin/jobs/reindex` → M1 확인
 
 #### `GET /api/students/{studentId}/recommendations/current` (M1)
 

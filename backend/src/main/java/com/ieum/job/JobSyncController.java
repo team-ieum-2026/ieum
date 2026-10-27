@@ -25,4 +25,10 @@ public class JobSyncController {
     public ApiResponse<JobSyncResult> sync() {
         return ApiResponse.of(jobSyncService.sync());
     }
+
+    @Operation(summary = "AI 전체 재색인", description = "활성 공고 전체와 꺼진 공고 id를 AI 색인에 다시 보내고, 0건 추천을 다시 만든다. AI 서버를 처음 연결할 때 한 번 실행한다.")
+    @PostMapping("/reindex")
+    public ApiResponse<JobReindexResult> reindex() {
+        return ApiResponse.of(jobSyncService.reindex());
+    }
 }

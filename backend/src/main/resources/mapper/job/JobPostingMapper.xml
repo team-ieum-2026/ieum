@@ -13,6 +13,17 @@
         SELECT id FROM job_posting WHERE is_active = 1
     </select>
 
+    <select id="selectInactiveIds" resultType="long">
+        SELECT id FROM job_posting WHERE is_active = 0 ORDER BY id
+    </select>
+
+    <select id="selectActiveForIndex" resultType="com.ieum.job.JobPosting">
+        SELECT id, content_hash, company_name, title, job_category, location, career, education, description
+        FROM job_posting
+        WHERE is_active = 1
+        ORDER BY id
+    </select>
+
     <insert id="upsert" parameterType="com.ieum.job.JobPosting">
         INSERT INTO job_posting (
             source, external_id, company_name, title, job_code, job_category, location, work_address,

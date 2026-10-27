@@ -35,6 +35,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  *  4) 첫 성공 시 DEV_SEED 공고를 끔
  *  5) API 실패면 그날은 건너뛰고 기존 데이터 유지
  *  6) 끝나면 추천이 없거나 비어 있는 수료생의 추천을 백그라운드로 미리 만든다
+ * 전체 재색인(reindex): 배치는 바뀐 공고만 보내므로, AI 색인이 비었을 때(AI 서버 처음 연결 · 색인 파일 삭제)
+ * 활성 공고 전체 + 꺼진 공고 id 를 다시 보낸다.
  */
 @Service
 public class JobSyncService {
@@ -71,6 +73,28 @@ public class JobSyncService {
         }
         try {
             return doSync(now);
+        } finally {
+            running.set(false);
+        }
+    }
+
+    /** 활성 공고 전체를 AI 색인에 다시 보낸다. AI는 contentHash 가 같으면 건너뛰므로 여러 번 불러도 된다 */
+    public JobReindexResult reindex() {
+        String now = OffsetDateTime.now(KST).truncatedTo(ChronoUnit.SECONDS).toString();
+        if (!running.compareAndSet(false, true)) {
+            return JobReindexResult.skipped("공고 동기화나 재색인이 실행 중이에요.", now);
+        }
+        try {
+            List<JobPosting> active = jobPostingMapper.selectActiveForIndex();
+            List<Long> inactiveIds = jobPostingMapper.selectInactiveIds();
+            if (active.isEmpty()) {
+                return JobReindexResult.skipped("활성 공고가 없어요. 공고 배치(sync)를 먼저 실행해 주세요.", now);
+            }
+            JsonNode indexResult = indexInBatches(active, inactiveIds);
+            log.info("AI 전체 재색인 완료: 요청 {} · 제거 요청 {} · 결과 {}", active.size(), inactiveIds.size(), indexResult);
+            recommendationPrefetcher.prefetchAllAsync();
+            return new JobReindexResult("DONE", "AI 색인을 다시 만들었어요.", active.size(), inactiveIds.size(),
+                    indexResult, now);
         } finally {
             running.set(false);
         }
@@ -145,7 +169,7 @@ public class JobSyncService {
                 skipped += res.path("skippedCount").asInt(0);
                 removed += res.path("removedCount").asInt(0);
             } catch (RuntimeException e) {
-                // 다음 배치에서 다시 보내지 않으니 수동 sync로 재시도
+                // 다음 배치에서 다시 보내지 않으니 POST /api/admin/jobs/reindex 로 재시도
                 log.warn("AI 색인 호출 실패 ({}/{}번째 묶음): {}", b + 1, batches, e.getMessage());
                 failed++;
             }
