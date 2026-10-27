@@ -13,6 +13,7 @@
   (계속 실패하는 공고가 다른 공고의 차례를 막지 않게). 임베딩 모듈이 준비 전이면 건너뛴다.
 """
 
+import html
 import logging
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta, timezone
@@ -146,6 +147,9 @@ def run_index(
                 "careerRequired": pre.career_required,
                 "region": pre.region,
                 "education": job.education,
+                # 추천에서 회사명 · 제목이 같은 공고(근무지만 다름)를 하나로 합칠 때 쓴다
+                "companyName": html.unescape(job.company_name or "").strip() or None,
+                "title": html.unescape(job.title or "").strip() or None,
                 "vector": vector,
                 "indexedAt": now,
                 "embedAttemptedAt": now if tried else None,

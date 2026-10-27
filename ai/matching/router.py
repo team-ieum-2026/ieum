@@ -8,68 +8,23 @@ import asyncio
 from fastapi import APIRouter
 
 from common.response import ok
+from matching.fallback import recommend_from_index
 from matching.indexer import run_index
-from matching.models import IndexRequest, RecommendData, RecommendItem, RecommendReason, RecommendRequest
+from matching.models import IndexRequest, RecommendRequest
 from matching.store import IndexStore
-from schemas.evidence import EvidenceRef
 
 router = APIRouter(prefix="/ai/matching", tags=["matching"])
 
 # 공고 색인 저장소 (ai/data/index/jobs_index.json). 테스트에서는 임시 경로로 바꾼다
 store = IndexStore()
 
-# 고정 응답용 공고 3건 (모의 데이터). 임베딩 · 리랭커가 붙으면 지운다.
-FIXED_ITEMS: list[RecommendItem] = [
-    RecommendItem(
-        job_posting_id=501,
-        rank=1,
-        reasons=[
-            RecommendReason(
-                text="모아요 프로젝트의 Spring Boot API 경험이 주요 업무와 맞아요",
-                evidence=[EvidenceRef(ref_type="PROJECT", ref_id=11)],
-            ),
-            RecommendReason(
-                text="목록 조회 응답을 1.8초에서 0.4초로 줄인 경험이 성능 개선 우대 조건과 이어져요",
-                evidence=[EvidenceRef(ref_type="PROJECT", ref_id=11)],
-            ),
-        ],
-    ),
-    RecommendItem(
-        job_posting_id=502,
-        rank=2,
-        reasons=[
-            RecommendReason(
-                text="Gemini API를 연동한 프로젝트 경험이 LLM 서비스 개발 업무와 맞아요",
-                evidence=[EvidenceRef(ref_type="PROJECT", ref_id=12)],
-            ),
-            RecommendReason(
-                text="AI Agent 과정에서 배운 내용이 공고의 필수 기술과 겹쳐요",
-                evidence=[EvidenceRef(ref_type="COURSE", ref_id=1)],
-            ),
-        ],
-    ),
-    RecommendItem(
-        job_posting_id=503,
-        rank=3,
-        reasons=[
-            RecommendReason(
-                text="SQLD 자격증이 데이터베이스 설계 우대 조건과 맞아요",
-                evidence=[EvidenceRef(ref_type="CERTIFICATE", ref_id=2)],
-            ),
-            RecommendReason(
-                text="자기소개서에 적은 협업 경험이 회사가 찾는 인재상과 맞아요",
-                evidence=[EvidenceRef(ref_type="COVER_LETTER", ref_id=1)],
-            ),
-        ],
-    ),
-]
-
 
 @router.post("/index")
 async def index_jobs(body: IndexRequest) -> dict:
-    # 요청: { jobs: [{ jobPostingId, contentHash, companyName, title, jobCategory, location, career, description }], removedJobPostingIds? }
-    # 응답: { indexedCount, skippedCount, removedCount, failedCount, failedJobPostingIds, embeddingStatus }
-    # BE(RestAiClient.indexJobs)는 data 의 키를 읽지 않고 JobSyncResult.indexResult 에 그대로 담는다
+    # 요청: { jobs: [{ jobPostingId, contentHash, companyName, title, jobCategory, location, career, education, description }],
+    #        removedJobPostingIds }  (BE 가 20건씩 나눠 보내고 removedJobPostingIds 는 첫 묶음에만)
+    # 응답: { indexedCount, skippedCount, removedCount, failedCount, failedJobPostingIds, retriedCount, embeddingStatus }
+    # BE(JobSyncService.indexInBatches)는 indexedCount · skippedCount · removedCount 만 읽어 더한다
     # 임베딩 · 파일 쓰기가 동기라 스레드에서 돌려 서버가 멈추지 않게 한다
     data = await asyncio.to_thread(run_index, body, store)
     return ok(data.model_dump(by_alias=True))
@@ -77,12 +32,8 @@ async def index_jobs(body: IndexRequest) -> dict:
 
 @router.post("/recommend")
 async def recommend(body: RecommendRequest) -> dict:
-    # TODO(AI-B-03): 지금은 고정 응답. 임베딩으로 후보 → common.reranker.rerank 로 Top-3 → 회사명 · 제목 같은 공고는 하나로 합침
-    # 맞는 공고가 없으면 억지로 추천하지 않고 items: [] (팀 결정). 고정 응답에서는 profile 이 {} 일 때로 흉내 낸다.
-    if not body.profile:
-        return ok(RecommendData(items=[]).model_dump(by_alias=True))
-
-    excluded = set(body.exclude_job_posting_ids)
-    candidates = [item for item in FIXED_ITEMS if item.job_posting_id not in excluded][: max(body.top_k, 0)]
-    items = [item.model_copy(update={"rank": rank}) for rank, item in enumerate(candidates, start=1)]
-    return ok(RecommendData(items=items).model_dump(by_alias=True))
+    # TODO(AI-B-03): 지금은 색인 저장소 공고 + 규칙 필터 + 단어 겹침 점수의 임시 추천 (matching/fallback.py).
+    # 임베딩 · 리랭커가 들어오면 임베딩으로 후보 → common.reranker.rerank 로 Top-3 으로 교체한다.
+    # 맞는 공고가 없으면 억지로 추천하지 않고 items: [] (팀 결정)
+    data = await asyncio.to_thread(recommend_from_index, body, store)
+    return ok(data.model_dump(by_alias=True))

@@ -340,6 +340,8 @@ class RouterTest(TempStoreCase):
         self.assertEqual((saved["9602"]["region"], saved["9602"]["careerRequired"]), ("경기 성남시", True))
         self.assertTrue(saved["9603"]["careerRequired"])
         self.assertEqual([saved[k]["education"] for k in ["9601", "9602", "9603"]], ["대졸(4년)", "학력무관", None])
+        # 추천에서 같은 공고를 합칠 때 쓰는 회사명 · 제목 (HTML 문자만 되돌림)
+        self.assertEqual((backend["companyName"], backend["title"]), ("모의소프트 & 랩", "자바 백엔드 개발자 (신입) <정규직>"))
 
 
 # BE JobSyncService 와 같은 값
