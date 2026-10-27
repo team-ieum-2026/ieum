@@ -15,6 +15,9 @@ public interface RecommendationMapper {
     /** 추천 묶음의 항목 + 공고 요약, rank 순 */
     List<RecommendationRows.Item> selectItems(@Param("recommendationId") Long recommendationId);
 
+    /** M2 상세용 추천 항목 하나 (없으면 null) */
+    RecommendationRows.ItemDetail selectItemDetail(@Param("itemId") Long itemId);
+
     /** 수료생이 이미 응답(APPLY · PASS · HELP)한 공고 id. 새로 추천받기에서 제외 */
     List<Long> selectRespondedJobIds(@Param("studentId") Long studentId);
 
