@@ -8,8 +8,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -153,6 +155,30 @@ class ProfilePortfolioServiceTest {
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, delete.getErrorCode());
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
         verifyNoInteractions(profiles, ai);
+    }
+
+    @Test
+    void documentPortfolioUpdatesOnlyIncludeAndKeepsRegisteredFilenameAndOriginals() {
+        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        prepareExisting(true);
+        doReturn(profile("mock-original.pdf", false)).when(documentService).getCurrentProfile(7L);
+        when(mapper.findCurrentProjects(7L)).thenReturn(List.of(project("mock-original.pdf", false)));
+        prepareAiResult();
+
+        documentService.updateItem(7L, "PORTFOLIO", 77L, JSON.createObjectNode()
+                .put("fileName", "ignored-document.pdf").put("include", false)
+                .put("readme", "Ignored README").put("roleNote", "Ignored Role"));
+
+        verify(mapper).updateProjectInclude(7L, 77L, false);
+        verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
+        verify(mapper, never()).updateProjectOriginal(any(), any());
+        verify(mapper, never()).updateProjectMetadata(any(), any());
+        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
+        verify(ai).extractProfile(sources.capture());
+        assertEquals("mock-original.pdf", sources.getValue().path("projects").get(0)
+                .path("portfolioFileName").asText());
+        assertEquals("Original README", sources.getValue().path("projects").get(0).path("readme").asText());
+        verify(documentService, never()).getProfile(any());
     }
 
     @Test

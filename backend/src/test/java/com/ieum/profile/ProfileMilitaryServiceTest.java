@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -138,6 +140,29 @@ class ProfileMilitaryServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateMilitary(any(), any());
         verifyNoInteractions(profiles, ai);
+    }
+
+    @Test
+    void documentMilitaryUpdateUsesSharedWriterAndCurrentSnapshotForAi() {
+        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        doReturn(profile("EXEMPT")).when(documentService).getCurrentProfile(7L);
+        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
+        prepareAiResult();
+
+        documentService.updateItem(7L, "MILITARY", 7L, JSON.createObjectNode().put("value", "EXEMPT"));
+
+        InOrder order = inOrder(mapper, documentService, ai);
+        order.verify(mapper).lockStudent(7L);
+        order.verify(mapper).updateMilitary(7L, "EXEMPT");
+        order.verify(documentService).getCurrentProfile(7L);
+        order.verify(mapper).findCurrentProjects(7L);
+        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
+        order.verify(ai).extractProfile(sources.capture());
+        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
+        assertEquals("EXEMPT", sources.getValue().path("basic").path("militaryStatus").asText());
+        verify(documentService, never()).getProfile(any());
+        verify(mapper, never()).findProjects(any());
     }
 
     private void prepareM8Extraction(StudentProfileResponse result) {

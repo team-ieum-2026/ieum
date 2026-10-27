@@ -942,7 +942,94 @@ class ProfileItemDatabaseTest {
     }
 
     @Test
-    void portfolioIncludeUsesSameProjectIdAndPreservesFilenameAndOriginals() {
+    void documentProjectAddReturnsGeneratedIdAndUpdatePreservesReadmeRoleAndPortfolio() {
+        Baseline baseline = baseline();
+        MockAiClient fixture = new MockAiClient(json);
+        when(aiClient.extractProfile(any(JsonNode.class)))
+                .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
+
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                var add = json.createObjectNode().put("title", marker()).put("periodText", "모의 6주")
+                        .put("teamSize", 4).put("role", "백엔드")
+                        .put("roleNote", "서류가 보내도 저장하지 않는 역할 기록")
+                        .put("readme", "서류가 보내도 저장하지 않는 README");
+                add.putArray("techStack").add("Java");
+                add.putArray("bullets").addObject().put("text", "모의 공고용 AI 문장");
+                Long addedId = profiles.addItem(STUDENT_ID, "PROJECTS", add);
+                assertNotNull(addedId);
+                assertTrue(addedId > 0);
+                ProfileData.Project added = mapper.findProjectItem(STUDENT_ID, addedId);
+                assertNotNull(added, "반환 ID로 같은 프로필 행을 다시 찾아야 한다");
+                assertEquals(add.path("title").asText(), added.getTitle());
+                assertNull(added.getRoleNote(), "짧은 서류 역할을 원문 역할 기록으로 저장하면 안 된다");
+                assertNull(added.getReadme(), "서류 문장을 README 원문으로 저장하면 안 된다");
+
+                ProfileData.Project original = projectFixture(STUDENT_ID);
+                String changedTitle = marker();
+                var patch = json.createObjectNode().put("title", changedTitle).put("periodText", "모의 8주")
+                        .put("teamSize", 5).put("role", "백엔드").put("roleNote", "덮어쓰기 금지")
+                        .put("readme", "덮어쓰기 금지").put("portfolioFileName", "변경금지.pdf")
+                        .put("includeInApply", false);
+                patch.putArray("techStack").add("Java").add("MySQL");
+                patch.putArray("bullets").addObject().put("text", "모의 공고용 AI 문장");
+                profiles.updateItem(STUDENT_ID, "PROJECTS", original.getItemId(), patch);
+                ProfileData.Project updated = mapper.findProjectItem(STUDENT_ID, original.getItemId());
+                assertEquals(changedTitle, updated.getTitle());
+                assertEquals("모의 8주", updated.getPeriodText());
+                assertEquals(5, updated.getTeamSize());
+                assertEquals(patch.get("techStack"), updated.getTechStack());
+                assertEquals(original.getReadme(), updated.getReadme());
+                assertEquals(original.getRoleNote(), updated.getRoleNote());
+                assertEquals(original.getPortfolioFileName(), updated.getPortfolioFileName());
+                assertTrue(updated.isIncludeInApply(), "PROJECTS는 PORTFOLIO의 include 값을 변경하면 안 된다");
+                assertEquals("USER", updated.getSource());
+                String metadataHash = sourceHash();
+
+                profiles.updateItem(STUDENT_ID, "PROJECTS", original.getItemId(),
+                        json.createObjectNode().put("title", marker()));
+                ProfileData.Project titleOnly = mapper.findProjectItem(STUDENT_ID, original.getItemId());
+                assertEquals(updated.getTechStack(), titleOnly.getTechStack(), "누락한 techStack은 보존해야 한다");
+                assertEquals("모의 8주", titleOnly.getPeriodText());
+                assertEquals(5, titleOnly.getTeamSize());
+                assertEquals(original.getReadme(), titleOnly.getReadme());
+                assertEquals(original.getRoleNote(), titleOnly.getRoleNote());
+                assertFalse(metadataHash.equals(sourceHash()));
+                assertM8Shape(profiles.getProfile(STUDENT_ID));
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+        }
+        verify(aiClient, times(3)).extractProfile(any(JsonNode.class));
+    }
+
+    @Test
+    void documentOriginalOnlyProjectEditLeavesRawRowsCompetencyAndHashUntouched() {
+        Baseline baseline = baseline();
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                ProfileData.Project original = projectFixture(STUDENT_ID);
+                List<ProjectRow> before = projectRows(STUDENT_ID);
+                List<CompetencyRow> competenciesBefore = competencyRows();
+                var patch = json.createObjectNode().put("role", "백엔드")
+                        .put("roleNote", "서류의 긴 역할 값도 무시")
+                        .put("readme", "서류에서 보낸 README도 무시");
+                patch.putArray("bullets").addObject().put("text", "서류 전용 모의 문장");
+                profiles.updateItem(STUDENT_ID, "PROJECTS", original.getItemId(), patch);
+                assertTrue(before.equals(projectRows(STUDENT_ID)), "서류 전용 값만 바꾸면 원문 행을 보존해야 한다");
+                assertTrue(competenciesBefore.equals(competencyRows()),
+                        "프로필 변경이 없으면 역량 프로필·해시·시각을 변경하면 안 된다");
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+        }
+        verifyNoInteractions(aiClient);
+    }
+
+    @Test
+    void portfolioIncludeUsesSameProjectIdAndPreservesFilenameAndOriginalsFromBothEntryPoints() {
         Baseline baseline = baseline();
         MockAiClient fixture = new MockAiClient(json);
         JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
@@ -965,8 +1052,8 @@ class ProfileItemDatabaseTest {
                 assertM8Shape(excluded);
                 String excludedHash = sourceHash();
 
-                service.updateItem(STUDENT_ID, itemId,
-                        new ProfileItemPatchRequest("PORTFOLIO", json.createObjectNode().put("include", true)));
+                profiles.updateItem(STUDENT_ID, "PORTFOLIO", itemId,
+                        json.createObjectNode().put("include", true).put("fileName", "여전히변경금지.pdf"));
                 ProfileData.Project rawIncluded = mapper.findProjectItem(STUDENT_ID, itemId);
                 assertTrue(rawIncluded.isIncludeInApply());
                 assertEquals(original.getTitle(), rawIncluded.getTitle());
@@ -985,7 +1072,7 @@ class ProfileItemDatabaseTest {
     }
 
     @Test
-    void anotherStudentsProjectAndPortfolioCannotBeChanged() {
+    void anotherStudentsProjectAndPortfolioCannotBeChangedByEitherEntryPoint() {
         Baseline baseline = baseline();
         StudentProfileResponse otherBaseline = profiles.getProfile(2L);
         List<ProjectRow> otherRawBaseline = projectRows(2L);
@@ -1003,6 +1090,12 @@ class ProfileItemDatabaseTest {
                 assertThrows(ProfileItemNotFoundException.class,
                         () -> service.updateItem(STUDENT_ID, foreignId,
                                 new ProfileItemPatchRequest("PORTFOLIO", json.createObjectNode().put("include", false))));
+                assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "PROJECTS", foreignId,
+                                json.createObjectNode().put("title", marker())));
+                assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "PORTFOLIO", foreignId,
+                                json.createObjectNode().put("include", false)));
                 assertTrue(otherWithFixture.equals(projectRows(2L)), "다른 수료생의 원문 행을 보존해야 한다");
                 assertTrue(baseline.projects().equals(projectRows(STUDENT_ID)));
                 assertTrue(baseline.competencies().equals(competencyRows()));
@@ -1016,8 +1109,8 @@ class ProfileItemDatabaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"M8_ADD", "M8_UPDATE", "M8_DELETE", "PORTFOLIO"})
-    void aiFailureRollsBackProjectWritesFromM8IncludingRawOriginals(String operation) {
+    @ValueSource(strings = {"M8_ADD", "M8_UPDATE", "M8_DELETE", "DOCUMENT_ADD", "DOCUMENT_UPDATE", "PORTFOLIO"})
+    void aiFailureRollsBackProjectWritesFromBothEntryPointsIncludingRawOriginals(String operation) {
         Baseline baseline = baseline();
         StudentProfileResponse otherBaseline = profiles.getProfile(2L);
         String changedTitle = marker();
@@ -1037,13 +1130,17 @@ class ProfileItemDatabaseTest {
                                             .put("title", changedTitle).put("readme", "모의 변경 원문")
                                             .put("roleNote", "모의 변경 역할 기록")));
                             case "M8_DELETE" -> service.deleteItem(STUDENT_ID, original.getItemId(), "PROJECTS");
-                            case "PORTFOLIO" -> service.updateItem(STUDENT_ID, original.getItemId(),
-                                    new ProfileItemPatchRequest("PORTFOLIO", json.createObjectNode().put("include", false)));
+                            case "DOCUMENT_ADD" -> profiles.addItem(STUDENT_ID, "PROJECTS",
+                                    json.createObjectNode().put("title", changedTitle));
+                            case "DOCUMENT_UPDATE" -> profiles.updateItem(STUDENT_ID, "PROJECTS", original.getItemId(),
+                                    json.createObjectNode().put("title", changedTitle).put("readme", "서류 덮어쓰기 금지"));
+                            case "PORTFOLIO" -> profiles.updateItem(STUDENT_ID, "PORTFOLIO", original.getItemId(),
+                                    json.createObjectNode().put("include", false));
                             default -> throw new IllegalArgumentException(operation);
                         }
                     });
                     assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
-                    assertTrue(status.isRollbackOnly(), "M8 서비스가 AI 실패를 롤백 대상으로 표시해야 한다");
+                    assertTrue(status.isRollbackOnly(), "각 진입 서비스가 AI 실패를 롤백 대상으로 표시해야 한다");
                     if (operation.endsWith("ADD")) {
                         assertEquals(1L, jdbc.queryForObject("""
                                 SELECT COUNT(*) FROM student_project WHERE student_id = ? AND title = ?
@@ -1158,6 +1255,49 @@ class ProfileItemDatabaseTest {
     }
 
     @Test
+    void documentBasicPatchUsesSameSingletonAndPreservesUnrelatedStudentColumns() {
+        Baseline baseline = baseline();
+        List<Map<String, Object>> otherStudent = studentRows(2L);
+        Map<String, Object> protectedBefore = protectedStudentValues(STUDENT_ID);
+        String name = marker();
+        MockAiClient fixture = new MockAiClient(json);
+        JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
+        when(aiClient.extractProfile(any(JsonNode.class)))
+                .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                var patch = json.createObjectNode().put("name", name).put("desiredJob", "모의 서비스 개발")
+                        .put("preferredRegion", "모의 원격 근무").put("militaryStatus", "DO_NOT_WRITE")
+                        .put("completedOn", "2000-01-01").put("courseId", 9999)
+                        .put("lastResponseAt", "2000-01-01T00:00:00");
+                patch.putArray("skills").add("DO_NOT_WRITE");
+
+                profiles.updateItem(STUDENT_ID, "BASIC", STUDENT_ID, patch);
+
+                StudentProfileResponse changed = profiles.getProfile(STUDENT_ID);
+                assertEquals(name, changed.basic().name());
+                assertEquals("모의 서비스 개발", changed.basic().desiredJob());
+                assertEquals("모의 원격 근무", changed.basic().preferredRegion());
+                assertTrue(java.util.Objects.equals(baseline.profile().basic().email(), changed.basic().email()),
+                        "서류가 생략한 이메일은 보존해야 한다");
+                assertTrue(java.util.Objects.equals(baseline.profile().basic().githubUrl(), changed.basic().githubUrl()));
+                assertTrue(protectedBefore.equals(protectedStudentValues(STUDENT_ID)));
+                assertTrue(otherStudent.equals(studentRows(2L)));
+                assertStoredCompetency(changed, expectedCompetency);
+                assertM8Shape(changed);
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+            assertTrue(otherStudent.equals(studentRows(2L)));
+        }
+        ArgumentCaptor<JsonNode> request = ArgumentCaptor.forClass(JsonNode.class);
+        verify(aiClient).extractProfile(request.capture());
+        assertEquals(name, request.getValue().path("basic").path("name").asText());
+        assertEquals("모의 서비스 개발", request.getValue().path("basic").path("desiredJob").asText());
+    }
+
+    @Test
     void basicSingletonMismatchAndMissingStudentCannotModifyEitherStudent() {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
@@ -1167,6 +1307,9 @@ class ProfileItemDatabaseTest {
                 status.setRollbackOnly();
                 assertThrows(ProfileItemNotFoundException.class, () -> service.updateItem(STUDENT_ID, 2L,
                         new ProfileItemPatchRequest("BASIC", patch)));
+                BusinessException mismatch = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "BASIC", 2L, patch));
+                assertEquals(ErrorCode.INVALID_REQUEST, mismatch.getErrorCode());
                 BusinessException missing = assertThrows(BusinessException.class,
                         () -> service.updateItem(Long.MAX_VALUE, Long.MAX_VALUE,
                                 new ProfileItemPatchRequest("BASIC", patch)));
@@ -1182,8 +1325,9 @@ class ProfileItemDatabaseTest {
         verifyNoInteractions(aiClient);
     }
 
-    @Test
-    void aiFailureRollsBackBasicFromM8IncludingStudentTimestamps() {
+    @ParameterizedTest
+    @ValueSource(strings = {"M8", "DOCUMENT"})
+    void aiFailureRollsBackBasicFromBothEntryPointsIncludingStudentTimestamps(String entryPoint) {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedStudentValues(STUDENT_ID);
@@ -1197,7 +1341,11 @@ class ProfileItemDatabaseTest {
                     var patch = json.createObjectNode().put("name", name)
                             .put("email", "mock.rollback@example.com").put("desiredJob", "모의 실패 검증");
                     BusinessException failure = assertThrows(BusinessException.class, () -> {
-                        service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("BASIC", patch));
+                        if ("M8".equals(entryPoint)) {
+                            service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("BASIC", patch));
+                        } else {
+                            profiles.updateItem(STUDENT_ID, "BASIC", STUDENT_ID, patch);
+                        }
                     });
                     assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
                     assertTrue(status.isRollbackOnly(), "AI 실패가 같은 트랜잭션을 롤백 대상으로 표시해야 한다");
@@ -1218,8 +1366,9 @@ class ProfileItemDatabaseTest {
         verify(aiClient).extractProfile(any(JsonNode.class));
     }
 
-    @Test
-    void militaryPatchStoresAllSupportedValuesAndExplicitNullWithoutChangingOtherStudentFields() {
+    @ParameterizedTest
+    @ValueSource(strings = {"M8", "DOCUMENT"})
+    void militaryPatchStoresAllSupportedValuesAndExplicitNullWithoutChangingOtherStudentFields(String entryPoint) {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedMilitaryStudentValues(STUDENT_ID);
@@ -1247,8 +1396,14 @@ class ProfileItemDatabaseTest {
                     if (expected == null) patch.putNull("value");
                     else patch.put("value", expected);
 
-                    StudentProfileResponse changed = service.updateItem(STUDENT_ID, STUDENT_ID,
-                            new ProfileItemPatchRequest("MILITARY", patch));
+                    StudentProfileResponse changed;
+                    if ("M8".equals(entryPoint)) {
+                        changed = service.updateItem(STUDENT_ID, STUDENT_ID,
+                                new ProfileItemPatchRequest("MILITARY", patch));
+                    } else {
+                        profiles.updateItem(STUDENT_ID, "MILITARY", STUDENT_ID, patch);
+                        changed = profiles.getProfile(STUDENT_ID);
+                    }
 
                     assertEquals(expected, changed.basic().militaryStatus());
                     assertEquals(expected, jdbc.queryForObject(
@@ -1294,14 +1449,23 @@ class ProfileItemDatabaseTest {
                 status.setRollbackOnly();
                 assertThrows(ProfileItemNotFoundException.class,
                         () -> service.updateItem(STUDENT_ID, 2L, new ProfileItemPatchRequest("MILITARY", valid)));
+                BusinessException wrongDocumentId = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "MILITARY", 2L, valid));
+                assertEquals(ErrorCode.INVALID_REQUEST, wrongDocumentId.getErrorCode());
                 BusinessException invalidM8Value = assertThrows(BusinessException.class,
                         () -> service.updateItem(STUDENT_ID, STUDENT_ID,
                                 new ProfileItemPatchRequest("MILITARY", invalid)));
                 assertEquals(ErrorCode.INVALID_REQUEST, invalidM8Value.getErrorCode());
+                BusinessException invalidDocumentValue = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "MILITARY", STUDENT_ID, invalid));
+                assertEquals(ErrorCode.INVALID_REQUEST, invalidDocumentValue.getErrorCode());
                 BusinessException missingM8Student = assertThrows(BusinessException.class,
                         () -> service.updateItem(Long.MAX_VALUE, Long.MAX_VALUE,
                                 new ProfileItemPatchRequest("MILITARY", valid)));
                 assertEquals(ErrorCode.STUDENT_NOT_FOUND, missingM8Student.getErrorCode());
+                BusinessException missingDocumentStudent = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(Long.MAX_VALUE, "MILITARY", Long.MAX_VALUE, valid));
+                assertEquals(ErrorCode.STUDENT_NOT_FOUND, missingDocumentStudent.getErrorCode());
                 assertTrue(baseline.students().equals(studentRows(STUDENT_ID)));
                 assertTrue(baseline.competencies().equals(competencyRows()));
                 assertTrue(otherStudent.equals(studentRows(2L)));
@@ -1315,8 +1479,9 @@ class ProfileItemDatabaseTest {
         verifyNoInteractions(aiClient);
     }
 
-    @Test
-    void aiFailureRollsBackMilitaryFromM8IncludingStudentTimestamps() {
+    @ParameterizedTest
+    @ValueSource(strings = {"M8", "DOCUMENT"})
+    void aiFailureRollsBackMilitaryFromBothEntryPointsIncludingStudentTimestamps(String entryPoint) {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedMilitaryStudentValues(STUDENT_ID);
@@ -1331,7 +1496,11 @@ class ProfileItemDatabaseTest {
                     assertFalse(status.isRollbackOnly());
                     var patch = json.createObjectNode().put("value", changedValue);
                     BusinessException failure = assertThrows(BusinessException.class, () -> {
-                        service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("MILITARY", patch));
+                        if ("M8".equals(entryPoint)) {
+                            service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("MILITARY", patch));
+                        } else {
+                            profiles.updateItem(STUDENT_ID, "MILITARY", STUDENT_ID, patch);
+                        }
                     });
                     assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
                     assertTrue(status.isRollbackOnly(), "AI 실패가 병역 변경과 같은 트랜잭션을 롤백해야 한다");
@@ -1354,8 +1523,9 @@ class ProfileItemDatabaseTest {
         verify(aiClient).extractProfile(any(JsonNode.class));
     }
 
-    @Test
-    void skillsPatchReplacesAndClearsJsonArrayWhilePreservingOrderTextAndOtherStudentFields() {
+    @ParameterizedTest
+    @ValueSource(strings = {"M8", "DOCUMENT"})
+    void skillsPatchReplacesAndClearsJsonArrayWhilePreservingOrderTextAndOtherStudentFields(String entryPoint) {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedSkillsStudentValues(STUDENT_ID);
@@ -1383,8 +1553,14 @@ class ProfileItemDatabaseTest {
                     patch.set("tags", tags);
                     patch.putArray("summary").addObject().put("text", "프로필 기술 원문에 저장하면 안 되는 모의 AI 문장");
                     patch.putArray("skills").add("DO_NOT_WRITE");
-                    StudentProfileResponse changed = service.updateItem(STUDENT_ID, STUDENT_ID,
-                            new ProfileItemPatchRequest("SKILLS", patch));
+                    StudentProfileResponse changed;
+                    if ("M8".equals(entryPoint)) {
+                        changed = service.updateItem(STUDENT_ID, STUDENT_ID,
+                                new ProfileItemPatchRequest("SKILLS", patch));
+                    } else {
+                        profiles.updateItem(STUDENT_ID, "SKILLS", STUDENT_ID, patch);
+                        changed = profiles.getProfile(STUDENT_ID);
+                    }
 
                     assertEquals(tags, json.valueToTree(changed.skills()),
                             "기술 목록은 순서·중복·공백·특수문자를 바꾸지 않고 전체 교체해야 한다");
@@ -1418,6 +1594,35 @@ class ProfileItemDatabaseTest {
     }
 
     @Test
+    void documentSkillsSummaryOnlyPatchLeavesStudentAndCompetencyUntouchedWithoutExtracting() {
+        Baseline baseline = baseline();
+        List<Map<String, Object>> otherStudent = studentRows(2L);
+        List<Map<String, Object>> statusesBefore = skillsStudentStatusRows();
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                var patch = json.createObjectNode().put("source", "AI");
+                patch.putArray("summary").addObject().put("text", "서류에만 남기는 모의 기술 요약")
+                        .put("sentenceId", "mock-skills-1");
+
+                profiles.updateItem(STUDENT_ID, "SKILLS", STUDENT_ID, patch);
+
+                assertTrue(baseline.students().equals(studentRows(STUDENT_ID)),
+                        "요약만 바꾸면 기술 원문과 학생 updated_at도 보존해야 한다");
+                assertTrue(baseline.competencies().equals(competencyRows()),
+                        "프로필 변경이 없으면 역량 프로필·해시·추출 시각을 보존해야 한다");
+                assertTrue(otherStudent.equals(studentRows(2L)));
+                assertTrue(statusesBefore.equals(skillsStudentStatusRows()));
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+            assertTrue(otherStudent.equals(studentRows(2L)));
+            assertTrue(statusesBefore.equals(skillsStudentStatusRows()));
+        }
+        verifyNoInteractions(aiClient);
+    }
+
+    @Test
     void skillsMalformedArrayMissingStudentAndWrongSingletonCannotWriteOrExtract() {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
@@ -1434,11 +1639,17 @@ class ProfileItemDatabaseTest {
                 status.setRollbackOnly();
                 assertThrows(ProfileItemNotFoundException.class,
                         () -> service.updateItem(STUDENT_ID, 2L, new ProfileItemPatchRequest("SKILLS", valid)));
+                BusinessException wrongDocumentId = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "SKILLS", 2L, valid));
+                assertEquals(ErrorCode.INVALID_REQUEST, wrongDocumentId.getErrorCode());
                 for (JsonNode invalid : invalidValues) {
                     BusinessException invalidM8 = assertThrows(BusinessException.class,
                             () -> service.updateItem(STUDENT_ID, STUDENT_ID,
                                     new ProfileItemPatchRequest("SKILLS", invalid)));
+                    BusinessException invalidDocument = assertThrows(BusinessException.class,
+                            () -> profiles.updateItem(STUDENT_ID, "SKILLS", STUDENT_ID, invalid));
                     assertEquals(ErrorCode.INVALID_REQUEST, invalidM8.getErrorCode());
+                    assertEquals(ErrorCode.INVALID_REQUEST, invalidDocument.getErrorCode());
                 }
                 var summaryOnly = json.createObjectNode().put("source", "AI");
                 summaryOnly.putArray("summary");
@@ -1446,10 +1657,16 @@ class ProfileItemDatabaseTest {
                         () -> service.updateItem(STUDENT_ID, STUDENT_ID,
                                 new ProfileItemPatchRequest("SKILLS", summaryOnly)));
                 assertEquals(ErrorCode.INVALID_REQUEST, missingTags.getErrorCode());
+                BusinessException wrongSummaryId = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(STUDENT_ID, "SKILLS", 2L, summaryOnly));
+                assertEquals(ErrorCode.INVALID_REQUEST, wrongSummaryId.getErrorCode());
                 BusinessException missingM8Student = assertThrows(BusinessException.class,
                         () -> service.updateItem(Long.MAX_VALUE, Long.MAX_VALUE,
                                 new ProfileItemPatchRequest("SKILLS", valid)));
+                BusinessException missingDocumentStudent = assertThrows(BusinessException.class,
+                        () -> profiles.updateItem(Long.MAX_VALUE, "SKILLS", Long.MAX_VALUE, summaryOnly));
                 assertEquals(ErrorCode.STUDENT_NOT_FOUND, missingM8Student.getErrorCode());
+                assertEquals(ErrorCode.STUDENT_NOT_FOUND, missingDocumentStudent.getErrorCode());
                 assertTrue(baseline.students().equals(studentRows(STUDENT_ID)));
                 assertTrue(baseline.competencies().equals(competencyRows()));
                 assertTrue(otherStudent.equals(studentRows(2L)));
@@ -1463,8 +1680,9 @@ class ProfileItemDatabaseTest {
         verifyNoInteractions(aiClient);
     }
 
-    @Test
-    void aiFailureRollsBackSkillsFromM8IncludingStudentTimestamps() {
+    @ParameterizedTest
+    @ValueSource(strings = {"M8", "DOCUMENT"})
+    void aiFailureRollsBackSkillsFromBothEntryPointsIncludingStudentTimestamps(String entryPoint) {
         Baseline baseline = baseline();
         List<Map<String, Object>> otherStudent = studentRows(2L);
         Map<String, Object> protectedBefore = protectedSkillsStudentValues(STUDENT_ID);
@@ -1478,7 +1696,11 @@ class ProfileItemDatabaseTest {
                     assertFalse(status.isRollbackOnly());
                     var patch = json.createObjectNode().set("tags", tags);
                     BusinessException failure = assertThrows(BusinessException.class, () -> {
-                        service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("SKILLS", patch));
+                        if ("M8".equals(entryPoint)) {
+                            service.updateItem(STUDENT_ID, STUDENT_ID, new ProfileItemPatchRequest("SKILLS", patch));
+                        } else {
+                            profiles.updateItem(STUDENT_ID, "SKILLS", STUDENT_ID, patch);
+                        }
                     });
                     assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
                     assertTrue(status.isRollbackOnly(), "AI 실패는 기술 원문 저장도 같은 트랜잭션에서 롤백해야 한다");
@@ -1596,6 +1818,47 @@ class ProfileItemDatabaseTest {
         assertFalse(removedInput.path("includeInApply").asBoolean());
         assertEquals(attachedInput.get("readme"), removedInput.get("readme"));
         assertEquals(attachedInput.get("roleNote"), removedInput.get("roleNote"));
+    }
+
+    @Test
+    void documentPortfolioStillChangesOnlyIncludeAfterM8RegistersFilename() {
+        Baseline baseline = baseline();
+        List<Map<String, Object>> otherStudent = studentRows(2L);
+        List<ProjectRow> otherProjects = projectRows(2L);
+        MockAiClient fixture = new MockAiClient(json);
+        JsonNode expectedCompetency = fixture.extractProfile(json.createObjectNode()).get("profile");
+        when(aiClient.extractProfile(any(JsonNode.class)))
+                .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                ProfileData.Project original = projectFixture(STUDENT_ID);
+                Long itemId = original.getItemId();
+                service.updateItem(STUDENT_ID, itemId, new ProfileItemPatchRequest("PORTFOLIO",
+                        json.createObjectNode().put("fileName", "모의_M8_등록.pdf")));
+                assertEquals("모의_M8_등록.pdf", mapper.findProjectItem(STUDENT_ID, itemId).getPortfolioFileName());
+
+                profiles.updateItem(STUDENT_ID, "PORTFOLIO", itemId, json.createObjectNode()
+                        .put("include", false).put("fileName", "서류에서_덮어쓰기_금지.pdf")
+                        .put("title", "덮어쓰기 금지").put("readme", "덮어쓰기 금지")
+                        .put("roleNote", "덮어쓰기 금지"));
+
+                ProfileData.Project changed = mapper.findProjectItem(STUDENT_ID, itemId);
+                assertEquals("모의_M8_등록.pdf", changed.getPortfolioFileName());
+                assertFalse(changed.isIncludeInApply());
+                assertPortfolioOriginalsUnchanged(original, changed);
+                assertStoredCompetency(profiles.getProfile(STUDENT_ID), expectedCompetency);
+                assertM8Shape(profiles.getProfile(STUDENT_ID));
+                assertTrue(baseline.students().equals(studentRows(STUDENT_ID)));
+                assertTrue(otherStudent.equals(studentRows(2L)));
+                assertTrue(otherProjects.equals(projectRows(2L)));
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+            assertTrue(otherStudent.equals(studentRows(2L)));
+            assertTrue(otherProjects.equals(projectRows(2L)));
+        }
+        verify(aiClient, times(2)).extractProfile(any(JsonNode.class));
     }
 
     @Test
