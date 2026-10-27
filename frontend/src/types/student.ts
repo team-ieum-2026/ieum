@@ -59,9 +59,9 @@ export interface JobSummary {
   location: string;
   employmentType: string;
   career: string;
-  deadlineOn: string;
+  deadlineOn: string | null;
   untilFilled: boolean;
-  dDay: number;
+  dDay: number | null;
 }
 
 export interface RecommendationItemSummary {
@@ -73,7 +73,7 @@ export interface RecommendationItemSummary {
 }
 
 export interface Recommendations {
-  recommendationId: number;
+  recommendationId: number | null;
   createdAt: string;
   basis: string;
   items: RecommendationItemSummary[];
