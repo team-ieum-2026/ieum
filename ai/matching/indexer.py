@@ -129,7 +129,7 @@ def run_index(
                 "matchText": pre.match_text,
                 "careerRequired": pre.career_required,
                 "region": pre.region,
-                "minEducation": job.min_education,
+                "education": job.education,
                 "vector": vector,
                 "indexedAt": now,
             }

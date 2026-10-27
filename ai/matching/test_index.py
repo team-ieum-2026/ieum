@@ -88,12 +88,29 @@ class IndexFlowTest(TempStoreCase):
                            embed=fake_embed, model_name=MODEL)
         self.assertEqual(result.indexed_count, 1)
         saved = self.store.load()["1"]
-        self.assertIsNone(saved["minEducation"])
+        self.assertIsNone(saved["education"])
         self.assertIsNone(saved["region"])
 
-    def test_min_education_is_saved(self):
-        self.index([{**JOB, "minEducation": "학력무관"}])
-        self.assertEqual(self.store.load()["1"]["minEducation"], "학력무관")
+    def test_education_is_saved(self):
+        self.index([{**JOB, "education": "학력무관"}])
+        self.assertEqual(self.store.load()["1"]["education"], "학력무관")
+        self.index([{**JOB, "jobPostingId": 2, "education": None}])
+        self.assertIsNone(self.store.load()["2"]["education"])
+
+    def test_removed_ids_missing_or_null(self):
+        self.index([JOB])
+        for body in ({"jobs": []}, {"jobs": [], "removedJobPostingIds": None}, {"jobs": None, "removedJobPostingIds": []}):
+            with self.subTest(body=body):
+                result = run_index(IndexRequest.model_validate(body), self.store, embed=fake_embed, model_name=MODEL)
+                self.assertEqual((result.removed_count, result.failed_count), (0, 0))
+        self.assertIn("1", self.store.load())
+
+    def test_reactivated_job_is_indexed_again(self):
+        """BE 는 꺼졌다가 다시 켜진 공고를 같은 contentHash 로 다시 보낸다. 지워진 뒤라 새로 색인한다."""
+        self.index([JOB])
+        self.index(removed=[1])
+        result = self.index([JOB])
+        self.assertEqual((result.indexed_count, result.skipped_count), (1, 0))
 
     def test_one_bad_job_does_not_stop_others(self):
         bad = {"jobPostingId": 2, "title": "contentHash 없음"}
@@ -230,6 +247,88 @@ class RouterTest(TempStoreCase):
         self.assertFalse(backend["careerRequired"])
         self.assertEqual((saved["9602"]["region"], saved["9602"]["careerRequired"]), ("경기 성남시", True))
         self.assertTrue(saved["9603"]["careerRequired"])
+        self.assertEqual([saved[k]["education"] for k in ["9601", "9602", "9603"]], ["대졸(4년)", "학력무관", None])
+
+
+# BE JobSyncService 와 같은 값
+BE_BATCH_SIZE = 20
+BE_READ_KEYS = ("indexedCount", "skippedCount", "removedCount")
+
+
+def be_job(job_id: int, content_hash: str | None = None) -> dict:
+    """BE indexRequest 가 만드는 공고 한 건 (키 9개, 모의 데이터)"""
+    return {
+        "jobPostingId": job_id,
+        "contentHash": content_hash or f"{job_id:064x}",
+        "companyName": f"모의회사{job_id}",
+        "title": f"백엔드 개발자 {job_id}",
+        "jobCategory": "응용 소프트웨어 개발자",
+        "location": "서울 구로구",
+        "career": "신입",
+        "education": "학력무관" if job_id % 2 else None,
+        "description": f"[직무] 응용 소프트웨어 개발자\n[내용] Spring Boot API 개발 {job_id}\n[전형] 서류 면접",
+    }
+
+
+def be_batches(jobs: list[dict], removed_ids: list[int]) -> list[dict]:
+    """BE indexInBatches 와 같은 방식: 20건씩, removedJobPostingIds 는 첫 묶음에만 (나머지는 [])"""
+    count = max(1, -(-len(jobs) // BE_BATCH_SIZE))
+    return [
+        {"removedJobPostingIds": removed_ids if b == 0 else [], "jobs": jobs[b * BE_BATCH_SIZE:(b + 1) * BE_BATCH_SIZE]}
+        for b in range(count)
+    ]
+
+
+class BeBatchTest(TempStoreCase):
+    """BE 가 보내는 그대로의 묶음 요청을 /ai/matching/index 로 보내고, BE 처럼 세 키만 읽어 더한다."""
+
+    def post_all(self, bodies: list[dict]) -> list[dict]:
+        client = TestClient(app)
+        with patch.object(router, "store", self.store), \
+             patch.object(indexer, "default_embedder", return_value=fake_embed), \
+             patch.object(indexer, "default_model_name", return_value=MODEL):
+            responses = [client.post("/ai/matching/index", json=body) for body in bodies]
+        for res in responses:
+            self.assertEqual(res.status_code, 200)
+        return [res.json()["data"] for res in responses]
+
+    def test_batches_with_removed_ids_only_in_first(self):
+        # 지난 배치에서 색인된 공고 5개 (9001 ~ 9005)
+        self.index([be_job(i) for i in range(9001, 9006)])
+
+        # 이번 배치: 새 공고 44건 + 다시 켜진 9001(내용 같음) = 45건 → 20 · 20 · 5 세 묶음
+        # 꺼진 공고 9002 · 9003 과 색인에 없던 7777 은 첫 묶음에만
+        jobs = [be_job(i) for i in range(100, 144)] + [be_job(9001)]
+        bodies = be_batches(jobs, [9002, 9003, 7777])
+        self.assertEqual([len(b["jobs"]) for b in bodies], [20, 20, 5])
+        self.assertEqual([b["removedJobPostingIds"] for b in bodies], [[9002, 9003, 7777], [], []])
+        del bodies[2]["removedJobPostingIds"]  # 키가 아예 없어도 된다
+
+        data = self.post_all(bodies)
+
+        for d in data:
+            for key in BE_READ_KEYS:
+                self.assertIsInstance(d[key], int)
+        self.assertEqual([d["removedCount"] for d in data], [2, 0, 0])
+        total = {key: sum(d.get(key, 0) for d in data) for key in BE_READ_KEYS}
+        self.assertEqual(total, {"indexedCount": 44, "skippedCount": 1, "removedCount": 2})
+        self.assertEqual(sum(d["failedCount"] for d in data), 0)
+
+        saved = self.store.load()
+        self.assertEqual(len(saved), 5 - 2 + 44)
+        self.assertNotIn("9002", saved)
+        self.assertNotIn("9003", saved)
+        self.assertEqual(saved["101"]["education"], "학력무관")
+        self.assertIsNone(saved["100"]["education"])
+
+    def test_removed_only_request(self):
+        """바뀐 공고는 없고 꺼진 공고만 있을 때 BE 는 jobs: [] 인 요청 한 번을 보낸다."""
+        self.index([be_job(9001)])
+        bodies = be_batches([], [9001])
+        self.assertEqual(bodies, [{"removedJobPostingIds": [9001], "jobs": []}])
+        data = self.post_all(bodies)
+        self.assertEqual({k: data[0][k] for k in BE_READ_KEYS}, {"indexedCount": 0, "skippedCount": 0, "removedCount": 1})
+        self.assertEqual(self.store.load(), {})
 
 
 if __name__ == "__main__":

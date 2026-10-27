@@ -1,7 +1,8 @@
 # 주인: AI-B
 """공고 색인 저장소: ai/data/index/jobs_index.json
 
-{ "<jobPostingId>": { contentHash, preprocessVersion, embeddingModel, matchText, careerRequired, region, minEducation, vector, indexedAt } }
+{ "<jobPostingId>": { contentHash, preprocessVersion, embeddingModel, matchText, careerRequired, region, education, vector, indexedAt } }
+education 은 요청의 jobs[].education(MIN_EDUBG 원문) 그대로다.
 JSON 키는 문자열이라 jobPostingId 도 문자열로 저장한다. 쓰기는 같은 폴더의 임시 파일에 쓴 뒤 교체한다(중간에 죽어도 기존 파일이 깨지지 않게).
 """
 
