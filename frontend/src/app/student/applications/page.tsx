@@ -1,8 +1,8 @@
-// 주인: FE-A — M7 지원 현황 (FE-A-12)
-export default function ApplicationsPage() {
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M7 지원 현황</h1>
-    </section>
-  );
+// 주인: FE-A — ApplicationsScreen
+import ApplicationsScreen from "@/components/student/ApplicationsScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function Page({ searchParams }: PageProps<"/student/applications">) {
+  const studentId = studentIdFrom(await searchParams);
+  return <ApplicationsScreen key={studentId} studentId={studentId} />;
 }

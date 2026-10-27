@@ -1,9 +1,11 @@
-// 주인: FE-A — M3 패스 사유 (FE-A-09)
-export default async function PassReasonPage({ params }: PageProps<"/student/jobs/[itemId]/pass">) {
+// 주인: FE-A — PassReasonScreen
+import { notFound } from "next/navigation";
+import PassReasonScreen from "@/components/student/PassReasonScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function Page({ params, searchParams }: PageProps<"/student/jobs/[itemId]/pass">) {
   const { itemId } = await params;
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M3 패스 사유 · itemId {itemId}</h1>
-    </section>
-  );
+  if (!/^\d+$/.test(itemId) || !Number.isSafeInteger(Number(itemId)) || Number(itemId) < 1) notFound();
+  const studentId = studentIdFrom(await searchParams);
+  return <PassReasonScreen key={`${itemId}-${studentId}`} itemId={Number(itemId)} studentId={studentId} />;
 }

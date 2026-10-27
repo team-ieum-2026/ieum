@@ -1,9 +1,9 @@
-// 주인: FE-A — C3 수료생 상세 (FE-A-15)
-export default async function StudentDetailPage({ params }: PageProps<"/coordinator/students/[studentId]">) {
+// 주인: FE-A — StudentDetailScreen
+import { notFound } from "next/navigation";
+import StudentDetailScreen from "./StudentDetailScreen";
+
+export default async function Page({ params }: PageProps<"/coordinator/students/[studentId]">) {
   const { studentId } = await params;
-  return (
-    <section>
-      <h1 className="text-2xl font-bold">C3 수료생 상세 · studentId {studentId}</h1>
-    </section>
-  );
+  if (!/^\d+$/.test(studentId) || !Number.isSafeInteger(Number(studentId)) || Number(studentId) < 1) notFound();
+  return <StudentDetailScreen key={studentId} studentId={Number(studentId)} />;
 }
