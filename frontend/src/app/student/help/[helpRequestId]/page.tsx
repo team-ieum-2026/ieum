@@ -1,9 +1,11 @@
-// 주인: FE-A — M4 도움 요청 완료 (FE-A-10)
-export default async function HelpRequestDonePage({ params }: PageProps<"/student/help/[helpRequestId]">) {
+// 주인: FE-A — HelpRequestScreen
+import { notFound } from "next/navigation";
+import HelpRequestScreen from "@/components/student/HelpRequestScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function Page({ params, searchParams }: PageProps<"/student/help/[helpRequestId]">) {
   const { helpRequestId } = await params;
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M4 도움 요청 완료 · helpRequestId {helpRequestId}</h1>
-    </section>
-  );
+  if (!/^\d+$/.test(helpRequestId) || !Number.isSafeInteger(Number(helpRequestId)) || Number(helpRequestId) < 1) notFound();
+  const studentId = studentIdFrom(await searchParams);
+  return <HelpRequestScreen key={`${helpRequestId}-${studentId}`} helpRequestId={Number(helpRequestId)} studentId={studentId} />;
 }
