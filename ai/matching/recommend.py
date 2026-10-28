@@ -3,7 +3,9 @@
 
 ① 후보: 색인 공고 중 excludeJobPostingIds 에 없고, careerRequired 아니고, vector 가 있는 것
    (vector 는 지금 임베딩 모델로 만든 것만. 모델이 바뀐 공고는 /index 다시 시도에서 채워진다)
-② 지역: config.REGION_POLICY — METRO(수도권 전부 후보, 희망 시 · 도 우선 정렬) / STRICT(희망 시 · 도만)
+② 지역: config.REGION_POLICY (fallback.region_allowed). 희망 지역은 "서울, 경기"처럼 여러 개일 수 있다
+   METRO: 희망 지역에 수도권이 있으면 수도권 전부 후보(희망 시 · 도 우선 정렬), 수도권 밖뿐이면(예: 부산) 그 시 · 도만
+   STRICT: 희망 시 · 도만. 희망 지역이 없으면 둘 다 전체
 ③ 검색어: 프로필(희망 직무 · 기술 · 역할 · 성과 · 자격증) 한 문장 → embed_texts(task_type="RETRIEVAL_QUERY")
 ④ 코사인 유사도 상위 config.CANDIDATE_K
 ⑤ 공용 rerank 로 후보 전부 점수 (0~1)
@@ -31,6 +33,7 @@ from matching.fallback import (
     job_terms,
     matched_words,
     recommend_from_index,
+    region_allowed,
     region_tier,
     skill_patterns,
     term_pattern,
@@ -144,7 +147,7 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
         if job_id in excluded or entry.get("careerRequired"):
             continue
         tier = region_tier(profile.preferred_region, entry.get("region"))
-        if config.REGION_POLICY == "STRICT" and tier != 0:
+        if not region_allowed(profile.preferred_region, tier, config.REGION_POLICY):
             continue
         candidates.append(Candidate(job_id, entry, tier))
     if not candidates:
