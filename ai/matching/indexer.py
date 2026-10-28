@@ -4,15 +4,18 @@
 - contentHash · preprocessVersion · embeddingModel 이 저장된 값과 모두 같고 벡터가 있으면 건너뛴다(skipped).
   벡터가 null 인 공고(임베딩 준비 전에 색인된 것)는 건너뛰지 않고 다시 계산한다.
 - 임베딩은 묶음당 1번: 이번 요청에서 임베딩할 공고 텍스트를 한 번에 공용 embed_texts 로 넘긴다
-  (문서용 task_type 은 embed_texts 기본값 RETRIEVAL_DOCUMENT). 결과 개수가 다르거나 호출이 실패하면
-  그 묶음의 공고 모두 실패(failed)로 두고, 전처리 결과는 vector null 로 저장해 아래 "다시 시도"에서 채운다.
+  (문서용 task_type 은 embed_texts 기본값 RETRIEVAL_DOCUMENT).
+- 묶음 호출이 실패하거나 결과 개수가 다르면 그 묶음만 1건씩 다시 부른다. 1건 호출도 실패한 공고만 실패(failed)로 두고
+  전처리 결과는 vector null 로 저장해 아래 "다시 시도"에서 채운다. 나머지 공고는 벡터와 함께 저장한다.
+  1건 호출이 SINGLE_FAIL_STOP 번 연달아 실패하면(분당 한도 등) 남은 공고는 부르지 않고 null 로 둔다.
 - common.embedding 이 없거나 NotImplementedError 면 전처리 결과만 저장하고 vector 는 null (embeddingStatus: NOT_READY).
 - 형식 · 전처리 실패는 저장하지 않고 기존 값을 그대로 둔다. 공고 하나가 실패해도 나머지는 계속한다.
 - 다시 시도: BE 는 한 번 보낸 공고를 다시 보내지 않으므로(contentHash 가 같으면), /index 가 불릴 때마다
   이번 요청의 공고를 처리한 뒤 저장소에서 vector 가 null 이거나 embeddingModel 이 현재 모델과 다른 공고를
   최대 RETRY_LIMIT 건 골라 저장된 matchText 로 다시 임베딩한다 (이것도 묶음 1번). 마지막 시도가 오래된 공고부터
   고른다 (계속 실패하는 공고가 다른 공고의 차례를 막지 않게). 임베딩 모듈이 준비 전이면 건너뛴다.
-- 그래서 /index 한 번에 임베딩 API 호출은 최대 2번이다 (이번 요청 묶음 1번 + 다시 시도 1번).
+- 그래서 /index 한 번에 임베딩 API 호출은 묶음이 성공하면 최대 2번 (이번 요청 묶음 1번 + 다시 시도 1번),
+  묶음이 실패하면 그 묶음의 공고 수만큼 1건 호출이 더해진다.
 """
 
 import html
@@ -34,6 +37,9 @@ KST = timezone(timedelta(hours=9))
 
 # /index 한 번에 다시 시도하는 최대 공고 수 (임베딩 API 한도 보호, BE 묶음 크기와 같게)
 RETRY_LIMIT = 20
+
+# 묶음 실패 뒤 1건씩 부를 때, 이만큼 연달아 실패하면 나머지는 부르지 않는다 (한도 오류에 호출을 더 쌓지 않게)
+SINGLE_FAIL_STOP = 3
 
 Embedder = Callable[[Sequence[str]], list[list[float]]]
 _DEFAULT: Any = object()
@@ -96,8 +102,9 @@ def run_index(
     dirty = False
     now = datetime.now(KST).isoformat(timespec="seconds")
 
-    def try_embed_batch(texts: list[str], what: str) -> tuple[list[list[float]] | None, bool]:
-        """(벡터 목록 또는 None, 시도했는지). 모듈 준비 전(NotImplementedError)이면 embed_ready 를 끄고 시도 안 한 것으로."""
+    def try_embed_batch(texts: list[str], what: str) -> tuple[list[list[float] | None] | None, bool]:
+        """(텍스트마다 벡터 또는 None, 시도했는지). 묶음이 실패하면 1건씩 다시 부른다.
+        모듈 준비 전(NotImplementedError)이면 embed_ready 를 끄고 (None, False)."""
         nonlocal embed_ready
         try:
             vectors = _vectors(embed(texts), len(texts))
@@ -107,10 +114,15 @@ def run_index(
             return None, False
         except Exception as e:
             logger.warning("index embedding failed %s count=%d error=%s", what, len(texts), type(e).__name__)
-            return None, True
-        if vectors is None:
-            logger.warning("index embedding count mismatch %s (expected %d vectors)", what, len(texts))
-        return vectors, True
+            vectors = None
+        else:
+            if vectors is None:
+                logger.warning("index embedding count mismatch %s (expected %d vectors)", what, len(texts))
+        if vectors is not None:
+            return list(vectors), True
+        if len(texts) == 1:
+            return [None], True
+        return _embed_one_by_one(embed, texts, what), True
 
     with store.lock:
         entries = store.load()
@@ -148,7 +160,7 @@ def run_index(
             vectors, tried = try_embed_batch([pre.match_text for _, pre in pending], "request")
             attempted.update(str(job.job_posting_id) for job, _ in pending)
 
-        # 3) 저장
+        # 3) 저장 (묶음이 실패해 1건씩 부른 경우, 실패한 공고만 vector null)
         for i, (job, pre) in enumerate(pending):
             vector = vectors[i] if vectors is not None else None
             entries[str(job.job_posting_id)] = {
@@ -201,6 +213,27 @@ def run_index(
     return data
 
 
+def _embed_one_by_one(embed: Embedder, texts: list[str], what: str) -> list[list[float] | None]:
+    """묶음 실패 뒤 1건씩. 실패한 것만 None. SINGLE_FAIL_STOP 번 연달아 실패하면 나머지는 부르지 않고 None."""
+    out: list[list[float] | None] = []
+    streak = 0
+    for text in texts:
+        if streak >= SINGLE_FAIL_STOP:
+            out.append(None)
+            continue
+        try:
+            result = _vectors(embed([text]), 1)
+        except Exception as e:  # NotImplementedError 는 묶음 호출에서 이미 걸러진다
+            logger.warning("index embedding single failed %s error=%s", what, type(e).__name__)
+            result = None
+        out.append(result[0] if result else None)
+        streak = 0 if result else streak + 1
+    filled = sum(v is not None for v in out)
+    logger.info("index embedding one-by-one %s count=%d filled=%d stopped=%s",
+                what, len(texts), filled, streak >= SINGLE_FAIL_STOP)
+    return out
+
+
 def _needs_embedding(entry: Entry, model_name: str | None) -> bool:
     return entry.get("vector") is None or entry.get("embeddingModel") != model_name
 
@@ -210,7 +243,7 @@ def _retry_missing(
     attempted: set[str],
     model_name: str | None,
     now: str,
-    try_embed_batch: Callable[[list[str], str], tuple[list[list[float]] | None, bool]],
+    try_embed_batch: Callable[[list[str], str], tuple[list[list[float] | None] | None, bool]],
 ) -> tuple[int, bool]:
     """vector 가 없거나 모델이 다른 공고를 최대 RETRY_LIMIT 건 묶음 1번으로 다시 임베딩한다. (채운 수, 저장 필요 여부)
 
@@ -230,7 +263,7 @@ def _retry_missing(
     for i, key in enumerate(targets):
         entry = entries[key]
         entry["embedAttemptedAt"] = now
-        if vectors is not None:
+        if vectors is not None and vectors[i] is not None:
             entry["vector"] = vectors[i]
             entry["embeddingModel"] = model_name
             filled += 1
