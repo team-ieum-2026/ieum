@@ -1,11 +1,8 @@
 // 주인: FE-A — R0 역할 선택 (FE-A-02)
 import Link from "next/link";
-import { studentIdFrom } from "@/components/student/navigation";
 import StudentEntry from "@/components/student/StudentEntry";
 
-export default async function RoleSelectPage({ searchParams }: PageProps<"/">) {
-  const studentId = studentIdFrom(await searchParams);
-
+export default function RoleSelectPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-1 flex-col justify-between gap-12 bg-surface-warm px-6 pt-[72px] pb-10 text-ink">
       <div className="flex flex-col gap-3.5">
@@ -39,7 +36,7 @@ export default async function RoleSelectPage({ searchParams }: PageProps<"/">) {
         <h2 id="role-select-heading" className="mb-1 text-[13px] font-bold text-ink-sub">
           어떤 화면으로 볼까요?
         </h2>
-        <StudentEntry initialStudentId={studentId} />
+        <StudentEntry />
         <Link
           href="/coordinator"
           className="flex flex-col gap-0.5 rounded-[14px] border-[1.5px] border-line bg-surface px-5 py-[18px] hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"

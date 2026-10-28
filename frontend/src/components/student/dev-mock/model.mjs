@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
+import { loadSeed } from "./seed.mjs";
 import { ApiFault, choice, id, keys, object, passReasons, record, requireValue, text, validateItem } from "./validation.mjs";
 
 const fixtureDirectory = new URL("../../../../public/mock/", import.meta.url);
@@ -14,7 +15,7 @@ function sentences(value) {
 }
 
 export class MockModel {
-  constructor({ now = Date.now, generationMs = 2200 } = {}) {
+  constructor({ now = Date.now, generationMs = 2200, dataSource = "seed" } = {}) {
     this.now = now;
     this.generationMs = generationMs;
     this.fixtures = Object.fromEntries(readdirSync(fixtureDirectory).filter((name) => name.endsWith(".json"))
@@ -22,6 +23,8 @@ export class MockModel {
     const fixture = (name) => clone(this.fixtures[name].data);
     this.state = { students: new Map(), items: new Map(), recommendations: new Map(), current: new Map(),
       applications: new Map(), helps: new Map(), nextItem: 1000, nextRecommendation: 100, nextApplication: 8, nextHelp: 5, nextRecord: 1000, nextContact: 3 };
+    if (dataSource === "seed") { loadSeed(this); return; }
+    requireValue(dataSource === "fixtures", "지원하지 않는 목업 데이터 원본이에요.");
     const s = this.state;
     const profile = fixture("M8_student_profile.json");
     const detail = fixture("C3_coordinator_student_detail.json");
@@ -120,10 +123,18 @@ export class MockModel {
   }
   detail(itemId) {
     const item = this.item(itemId);
+    const seededJob = this.seedJobs?.get(item.job.jobPostingId);
+    if (seededJob) return { itemId, rank: item.rank, response: this.jobResponse(item).response,
+      job: { ...this.jobCard(seededJob), jobCategory: seededJob.job_category ?? null, workAddress: seededJob.work_address ?? null,
+        education: seededJob.education ?? null, salaryText: seededJob.salary_text ?? null, postedOn: seededJob.posted_on ?? null,
+        description: seededJob.description ?? null, homepageUrl: null, source: seededJob.source, sourceLabel: "개발용 모의 공고" },
+      summary: item.reasonSummary, reasons: (item.reasons ?? item.reasonSummary.map((text) => ({ text, evidence: [] }))).map((reason) => ({ ...reason,
+        evidence: reason.evidence.map((entry) => ({ refType: entry.refType, refId: entry.refId, label: entry.label ?? null,
+          quote: entry.quote ?? null, url: entry.url ?? null, collectedAt: entry.collectedAt ?? null })) })) };
     const template = this.fixtures["M2_recommendation_item_detail.json"].data;
     const full = item.studentId === 1 && item.job.jobPostingId === template.job.jobPostingId;
     return { itemId, rank: item.rank, response: this.jobResponse(item).response,
-      job: full ? { ...clone(template.job), ...item.job } : { ...item.job, jobCategory: "", workAddress: item.job.location, education: "", salaryText: "", postedOn: "", description: "", homepageUrl: null, source: template.job.source, sourceLabel: template.job.sourceLabel },
+      job: full ? { ...clone(template.job), ...item.job } : { ...item.job, jobCategory: null, workAddress: item.job.location, education: null, salaryText: null, postedOn: null, description: null, homepageUrl: null, source: template.job.source, sourceLabel: template.job.sourceLabel },
       summary: full ? clone(template.summary) : item.reasonSummary,
       reasons: full ? clone(template.reasons) : item.reasonSummary.map((value) => ({ text: value, evidence: [] })),
     };
@@ -345,7 +356,7 @@ export class MockModel {
   updateHelp(helpRequestId, body, coordinator) {
     const help = this.help(helpRequestId);
     if (coordinator) {
-      keys(body, ["status"], ["status"]); choice(body.status, ["OPEN", "CONTACTED"]); help.status = body.status;
+      keys(body, ["status"], ["status"]); choice(body.status, ["OPEN", "CONTACTED", "CLOSED"]); help.status = body.status;
     } else {
       keys(body, ["contactMethod", "memo"], ["contactMethod", "memo"]);
       choice(body.contactMethod, [null, "SMS", "PHONE", "EMAIL"]);
