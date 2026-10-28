@@ -201,3 +201,25 @@ README 형식도 사람마다 다르게 합니다: 개조식 위주, 서술형, 
 - AGENTS.md상 시드 데이터는 **AI-B가 생성하고 BE-B가 적재**합니다. 이 문서로 자료를 생성하려면 PM · AI-B와 먼저 합의가 필요합니다.
 - `db/seed.sql` 반영은 BE-B만 합니다. 생성 결과는 정해진 형식의 파일로 넘깁니다.
 - 일정: 10/29 페르소나 확정 → 10/29~30 자료 생성 → 10/30 자동 검사 → 10/31 BE-B 적재. 정답 · 함정 공고는 페르소나가 확정되면 병렬로 시작할 수 있습니다.
+
+## 생성 결과물과 실행 방법
+
+| 파일 | 내용 |
+| --- | --- |
+| `students/batch_1.json` ~ `batch_4.json` | **원본.** 20명의 등록 자료 (DB 컬럼 이름). 고칠 때는 여기만 고친다 |
+| `check_students.py` | 위 "자동 검사"를 실행. 실패하면 종료 코드 1 |
+| `build_seed_sql.py` | 원본 → 아래 두 파일 생성 |
+| `out/eval_students.sql` | **BE-B 적재용.** `db/seed.sql` 다음에 실행. id 1~20의 등록 자료만 교체 |
+| `out/student_materials.json` | AI 입력 형식(`StudentMaterial`, camelCase). DB 없이 추출 · 서류 생성 평가에 사용 |
+
+```bash
+python ai/eval/personas/check_students.py   # 검사
+python ai/eval/personas/build_seed_sql.py   # SQL · JSON 생성
+mysql -u <계정> -p ieum < ai/eval/personas/out/eval_students.sql   # BE-B 적재
+```
+
+적재할 때 알아 둘 것:
+- `student` 행은 지우지 않고 `UPDATE`만 한다. 이름 · 과정 · 이메일 · 수료일 · 마지막 응답 시각 · `student_status` · 추천 이력은 그대로다. `UPDATE`는 `id`와 이름이 둘 다 맞을 때만 적용되므로, 시드가 예상과 다르면 0행이 바뀐다.
+- 학력 · 경력 · 자격증 · 프로젝트 · 자기소개서는 id 1~20 것을 지우고 다시 넣는다. 한 트랜잭션이다.
+- 행 id: 학력 1000번대, 경력 2000번대, 자격증 3000번대(`1000 + 수료생 id × 10 + 순번`). 프로젝트는 기존 id(11 · 12 · 101~122)를 유지하고, 새 프로젝트는 201~213이다. **11 · 12는 M8 목업이, 113은 시드 추천 근거(`recommendation_item` 1091~1093)가 참조한다.**
+- 21~50번 수료생과 그들의 프로젝트(123~126)는 건드리지 않는다.

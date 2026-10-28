@@ -1,0 +1,1731 @@
+[
+  {
+    "studentId": 1,
+    "basic": {
+      "name": "김민준",
+      "email": "minjun.dev@example.com",
+      "githubUrl": "github.com/minjun-dev",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1011,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "경영학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-28"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3011,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2026-03-20"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MySQL",
+      "JPA",
+      "FastAPI",
+      "Gemini API"
+    ],
+    "projects": [
+      {
+        "itemId": 11,
+        "title": "모아요 · 스터디 모집 플랫폼",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 5,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "JPA",
+          "MySQL"
+        ],
+        "portfolioFileName": "모아요_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "백엔드 3명 중 모집 글 · 지원 · 알림 API를 맡았습니다.\n지원 상태 변경을 엔티티 메서드로 묶자고 제안해 팀 규칙으로 정했습니다.\n마감 전날 전체 시나리오 테스트를 맡아 버그 7건을 고쳤습니다.\n매일 아침 15분 스탠드업 진행을 맡았습니다.",
+        "readme": "# 모아요 · 스터디 모집 플랫폼\n\n## 소개\n관심 분야와 지역으로 스터디를 찾고, 모집 글을 올려 팀원을 모으는 서비스입니다. AI Agent 과정 최종 프로젝트로 5명이 6주 동안 만들었습니다. 프론트엔드(React)는 팀원 2명이 맡았고, 저는 백엔드 3명 중 모집 글 · 지원 · 알림 API를 담당했습니다.\n\n## 주요 기능\n- 모집 글 작성 · 수정 · 마감\n- 분야 · 지역 · 모집 상태로 필터 조회\n- 지원 신청과 승인 · 거절\n- 지원 결과 알림\n\n## 내가 한 일\n- 모집 글 CRUD와 필터 조회 API 12개를 설계하고 구현했습니다 (Java, Spring Boot, JPA, MySQL).\n- 지원 상태(대기 · 승인 · 거절) 변경을 엔티티 메서드로 묶어, 승인된 지원을 다시 대기로 돌리는 것처럼 잘못된 변경을 막았습니다.\n- 마감 전날 전체 시나리오를 직접 테스트해 버그 7건을 찾아 고쳤습니다.\n\n## 트러블슈팅: 목록 조회가 느린 문제\n모집 글 목록에서 글마다 작성자와 태그를 따로 조회하는 N+1 쿼리가 있었습니다. 글 20개를 불러오면 쿼리가 41번 실행됐습니다. fetch join과 batch size 설정으로 쿼리를 2번으로 줄였고, 평균 응답 시간이 1.8초에서 0.4초로 줄었습니다.\n\n## 결과\n- 교육과정 최종 발표 우수상\n- 시연 기간 2주 동안 수강생 34명이 실제로 사용했습니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 12,
+        "title": "AI 면접 코치",
+        "periodText": "2026.05 (3주)",
+        "teamSize": 3,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "FastAPI",
+          "Gemini API"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "Spring Boot와 FastAPI 서버 연동, 타임아웃 처리, 면접 기록 API를 맡았습니다.",
+        "readme": "# AI 면접 코치\n\n## 소개\n지원 직무를 고르면 예상 질문을 만들고, 답변을 입력하면 피드백을 주는 웹 서비스입니다. 중간 프로젝트로 3명이 3주 동안 만들었습니다.\n\n## 구조\nSpring Boot 서버가 사용자와 면접 기록을 관리하고, FastAPI 서버가 Gemini API를 호출해 질문과 피드백을 만듭니다.\n\n## 내가 한 일\n- Spring Boot에서 FastAPI 서버를 호출하는 클라이언트를 작성했습니다.\n- FastAPI 응답이 10초를 넘으면 기본 질문 목록을 돌려주도록 타임아웃을 처리했습니다.\n- 면접 기록 저장 · 조회 API를 만들었습니다.\n\n## 아쉬운 점\n피드백 품질을 숫자로 평가하지 못했습니다. 다음에는 평가 기준부터 정하고 싶습니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 201,
+        "title": "레시피 추천 챗봇",
+        "periodText": "2026.04 (2주)",
+        "teamSize": 1,
+        "techStack": [
+          "FastAPI",
+          "Gemini API"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 미니 프로젝트. 기획부터 구현까지 혼자 했습니다.",
+        "readme": "# 레시피 추천 챗봇\n\n냉장고에 있는 재료를 입력하면 만들 수 있는 요리를 추천하는 개인 미니 프로젝트입니다.\n\n## 내가 한 일\n- FastAPI로 추천 API를 만들었습니다.\n- Gemini API 응답을 JSON 스키마로 고정하고, 형식이 틀리면 한 번 다시 요청하게 했습니다.\n- 그 결과 테스트 질문 50개에서 응답 형식 때문에 화면이 깨지는 오류가 0건이 됐습니다.\n\n## 배운 점\nLLM 출력은 그대로 믿지 말고 형식부터 검증해야 한다는 것을 배웠습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "저는 맡은 일을 끝까지 확인하는 백엔드 개발자입니다. 경영학을 전공하며 숫자로 결과를 확인하는 습관을 들였고, 개발을 배우면서도 '동작한다'에서 멈추지 않고 '얼마나 잘 동작하는지'를 확인하려고 노력했습니다.\n\n모아요 프로젝트에서는 모집 글 · 지원 · 알림 API를 맡았습니다. 목록 조회가 느리다는 피드백을 받고 원인을 찾아보니 N+1 쿼리였고, fetch join과 batch size 설정으로 평균 응답 시간을 1.8초에서 0.4초로 줄였습니다. 마감 전날에는 전체 시나리오를 직접 테스트해 버그 7건을 찾아 고쳤습니다. 또 팀에 'PR 하나에는 기능 하나만 담자'는 리뷰 규칙을 제안해, 리뷰가 밀리던 문제를 줄였습니다. 레시피 추천 챗봇에서는 Gemini API 응답 형식을 고정하고 검증하는 방법을 익혔습니다.\n\n앞으로는 사용자가 믿고 쓰는 서비스의 백엔드를 맡아, 느린 곳과 틀린 곳을 먼저 찾아내는 개발자로 성장하고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 2,
+    "basic": {
+      "name": "이서준",
+      "email": "student02@example.com",
+      "githubUrl": "github.com/ieum-seed-02",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1021,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "컴퓨터공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-28"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2021,
+        "source": "REGISTERED",
+        "companyName": "○○정보기술",
+        "position": "백엔드 개발 인턴",
+        "startedOn": "2025-03-04",
+        "endedOn": "2025-08-29",
+        "description": "공공기관 관리자 페이지 유지보수(6개월). 게시판 · 통계 화면의 조회 쿼리 수정과 Java 배치 오류 대응."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3021,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2025-06-13"
+      },
+      {
+        "itemId": 3022,
+        "source": "REGISTERED",
+        "name": "SQLD",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2026-04-04"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MySQL",
+      "JPA",
+      "Servlet"
+    ],
+    "projects": [
+      {
+        "itemId": 101,
+        "title": "같이쓰자 · 공유 가계부",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "JPA",
+          "MySQL"
+        ],
+        "portfolioFileName": "가계부_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "백엔드 리드.\n인증(JWT) · 정산 API 담당, ERD 설계 주도.\n배포는 팀원이 담당.\n코드 리뷰 승인 권한을 맡아 PR 전부 검토.",
+        "readme": "# 같이쓰자 · 공유 가계부\n\n결론: 정산이 틀리지 않는 가계부.\n\n## 개요\n- 룸메이트 · 커플이 함께 쓰는 공유 가계부\n- 최종 프로젝트, 4명, 6주\n- 역할: 백엔드 리드\n\n## 기능\n- 그룹 생성, 초대 링크\n- 지출 등록, 카테고리별 통계\n- 월말 정산: 누가 누구에게 얼마를 보낼지 계산\n\n## 내가 한 일\n- JWT 로그인 · 토큰 재발급\n- 정산 알고리즘: 송금 횟수가 최소가 되도록 채권 · 채무 정리\n- 통계 API 개선: 월별 집계 쿼리에 복합 인덱스 추가 → 응답 1.2초 → 0.3초\n- ERD 설계: 테이블 9개\n\n## 트러블슈팅\n- 문제: 두 사람이 같은 지출을 동시에 수정하면 금액이 덮어써짐\n- 재현: 동시 요청 테스트로 재현\n- 해결: 낙관적 락(@Version) 적용, 충돌 시 다시 시도 안내\n- 결과: 동시 수정 테스트 200회에서 금액 불일치 0건\n\n## 테스트\n- 정산 로직은 단위 테스트를 먼저 작성\n- 나누어떨어지지 않는 금액 같은 경계 값 포함\n- 정산 결과 합계가 지출 합계와 같은지 매번 검증\n\n## 기술\n- Java, Spring Boot, JPA, MySQL\n\n## 회고\n- 정산은 1원만 틀려도 신뢰가 깨진다.\n- 그래서 테스트를 먼저 썼다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 102,
+        "title": "도서관 좌석 예약",
+        "periodText": "2026.04 (2주)",
+        "teamSize": 3,
+        "techStack": [
+          "Java",
+          "Servlet",
+          "MySQL"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "좌석 예약 · 취소 기능 담당.",
+        "readme": "# 도서관 좌석 예약\n\n- JSP · Servlet 미니 프로젝트, 3명, 2주\n- 좌석 배치도에서 빈 좌석을 골라 2시간 단위로 예약\n\n## 내가 한 일\n- 예약 · 취소 Servlet\n- 중복 예약 방지: DB 유니크 제약\n- 예약 만료 스케줄러",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "결론부터 말하면, 저는 데이터가 틀리지 않는 서비스를 만드는 백엔드 개발자입니다.\n\n같이쓰자 프로젝트에서 백엔드 리드를 맡았습니다. 정산 금액이 1원이라도 틀리면 사용자는 떠납니다. 그래서 두 사람이 같은 지출을 동시에 수정하는 문제를 먼저 재현했고, 낙관적 락으로 해결했습니다. 동시 수정 테스트 200회에서 금액 불일치는 0건이었습니다. 정산 로직은 단위 테스트를 먼저 쓰고 구현했고, 나누어떨어지지 않는 금액 같은 경계 값도 테스트에 넣었습니다. 통계 API가 느리다는 피드백에는 실행 계획을 보고 인덱스를 추가해 응답 시간을 10분의 1로 줄였습니다. 인턴 6개월 동안 공공기관 관리자 페이지를 유지보수하며, 남이 쓴 쿼리를 읽고 고치는 일에도 익숙해졌습니다.\n\n정산 · 결제처럼 틀리면 안 되는 도메인에서 일하고 싶습니다. 테스트를 먼저 쓰는 개발자가 되겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 3,
+    "basic": {
+      "name": "정하은",
+      "email": "student03@example.com",
+      "githubUrl": "github.com/ieum-seed-03",
+      "desiredJob": "프론트엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "NOT_APPLICABLE",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1031,
+        "source": "REGISTERED",
+        "schoolName": "△△대학교",
+        "major": "시각디자인학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2023-02-17"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2031,
+        "source": "REGISTERED",
+        "companyName": "△△디자인",
+        "position": "웹 디자이너",
+        "startedOn": "2023-03-02",
+        "endedOn": "2025-02-28",
+        "description": "기업 홈페이지 · 랜딩 페이지 시안 제작(2년). Figma로 화면 설계 후 개발사에 전달."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3031,
+        "source": "REGISTERED",
+        "name": "웹디자인개발기능사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2025-09-12"
+      },
+      {
+        "itemId": 3032,
+        "source": "REGISTERED",
+        "name": "GTQ 1급",
+        "issuer": "한국생산성본부",
+        "acquiredOn": "2022-08-20"
+      }
+    ],
+    "skills": [
+      "React",
+      "TypeScript",
+      "Storybook",
+      "Figma"
+    ],
+    "projects": [
+      {
+        "itemId": 103,
+        "title": "플랜토리 · 반려식물 일지",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Storybook",
+          "Figma"
+        ],
+        "portfolioFileName": "플랜토리_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "프론트엔드 리드로 화면 설계와 공통 컴포넌트를 맡았습니다.\nFigma 시안을 먼저 만들고 팀원과 화면 흐름을 맞췄습니다.\n접근성 점검과 개선을 담당했습니다.",
+        "readme": "# 플랜토리 · 반려식물 일지\n\n식물을 처음 키우는 사람이 물 주는 날을 놓치지 않도록 돕는 일지 서비스입니다. 사용자가 화면을 열었을 때 '오늘 무엇을 하면 되는지'가 가장 먼저 느껴지도록 만드는 것이 목표였습니다.\n\n## 주요 기능\n- 식물 등록과 물 주기 알림\n- 사진으로 남기는 성장 기록\n- 오늘 할 일만 모아 보여 주는 홈 화면\n\n## 내가 한 일\n- Figma로 전체 화면 시안을 먼저 만들고, 색 · 간격 · 글꼴을 디자인 토큰으로 정리했습니다.\n- React와 TypeScript로 버튼 · 카드 · 입력창 등 공통 컴포넌트 15개를 만들고 Storybook에 정리해, 팀원들이 같은 모양의 화면을 빠르게 만들 수 있게 했습니다.\n- 색 대비가 낮은 문구, 이름 없는 아이콘 버튼을 고쳐 Lighthouse 접근성 점수를 72점에서 95점으로 올렸습니다.\n\n## 트러블슈팅\n화면마다 여백이 조금씩 달라 서비스가 어수선하게 느껴졌습니다. 간격 값을 4의 배수로만 쓰도록 토큰을 정하고, 공통 컴포넌트에서만 간격을 정하도록 바꿔 일관된 경험을 만들었습니다.\n\n## 결과\n- 사용성 테스트에서 '처음 써도 헷갈리지 않는다'는 의견을 가장 많이 받았습니다.\n- 팀원들이 새 화면을 만들 때 시안을 다시 묻는 일이 거의 사라졌습니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 202,
+        "title": "새싹 UI · 개인 디자인 시스템",
+        "periodText": "2026.03 – 2026.04 (5주)",
+        "teamSize": 1,
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Storybook",
+          "Figma"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "개인 프로젝트. Figma 토큰 설계부터 React 컴포넌트 구현, Storybook 문서화까지 혼자 했습니다.",
+        "readme": "# 새싹 UI\n\n디자이너로 일하며 시안과 실제 화면이 조금씩 달라지는 경험을 자주 했습니다. 디자인 의도가 코드까지 그대로 이어지는 방법을 직접 익히고 싶어 만든 개인 디자인 시스템입니다.\n\n## 내가 한 일\n- Figma에서 색 · 글꼴 · 간격 토큰을 정의하고 TypeScript 상수로 옮겼습니다.\n- React 컴포넌트 24개를 만들고, 상태별(기본 · 눌림 · 비활성) 화면을 Storybook에 정리했습니다.\n- 키보드만으로 모든 컴포넌트를 쓸 수 있도록 포커스 표시를 통일했습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "사용자가 화면을 처음 마주했을 때 느끼는 첫인상을 소중히 여기는 프론트엔드 개발자입니다. 시각디자인을 전공하고 2년 동안 웹 디자이너로 일하며, 공들인 시안이 개발 과정에서 조금씩 달라지는 아쉬움을 자주 느꼈습니다. 그 간격을 직접 메우고 싶어 개발을 배우기 시작했습니다.\n\n플랜토리 프로젝트에서는 프론트엔드 리드로 Figma 시안을 먼저 만들고, 공통 컴포넌트 15개를 Storybook에 정리해 팀원 모두가 같은 모양의 화면을 빠르게 만들 수 있게 했습니다. 색 대비와 아이콘 버튼 이름을 손봐 접근성 점수를 72점에서 95점까지 끌어올렸습니다. 매주 금요일에는 팀 디자인 리뷰를 열어 화면의 어색한 부분을 함께 다듬었습니다.\n\n앞으로는 디자인 시스템을 다루는 팀에서, 디자이너와 개발자 사이의 언어를 잇는 개발자가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 4,
+    "basic": {
+      "name": "최지훈",
+      "email": "student04@example.com",
+      "githubUrl": "github.com/ieum-seed-04",
+      "desiredJob": "AI 서비스 개발",
+      "preferredRegion": "서울, 경기",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1041,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "통계학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2023-02-17"
+      },
+      {
+        "itemId": 1042,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교 대학원",
+        "major": "통계학과",
+        "degree": "MASTER",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-08-22"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3041,
+        "source": "REGISTERED",
+        "name": "ADsP",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2024-05-24"
+      }
+    ],
+    "skills": [
+      "Python",
+      "FastAPI",
+      "LangChain",
+      "scikit-learn"
+    ],
+    "projects": [
+      {
+        "itemId": 104,
+        "title": "법률 상담 RAG 챗봇",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 5,
+        "techStack": [
+          "Python",
+          "FastAPI",
+          "LangChain"
+        ],
+        "portfolioFileName": "법률RAG_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "검색 파이프라인과 평가를 맡았습니다.\n평가셋 120문항을 직접 만들고, 청킹 · 리랭커 실험을 설계했습니다.\n실험 결과를 매주 표로 공유해 팀의 개선 방향을 정했습니다.",
+        "readme": "# 법률 상담 RAG 챗봇\n\n## 배경\n임대차 분쟁처럼 자주 묻는 법률 질문에 판례와 법령 근거를 붙여 답하는 챗봇입니다. 검색 증강 생성(RAG) 방식으로, 답변마다 참고한 조문을 함께 보여 줍니다.\n\n## 가설\n'프롬프트를 고치는 것보다 검색 품질을 올리는 것이 정답률에 더 큰 영향을 준다'는 가설을 세웠습니다.\n\n## 실험 방법\n1. 실제 상담 게시판 질문을 바탕으로 평가셋 120문항(질문 · 정답 조문 · 모범 답안)을 만들었습니다.\n2. 청크 크기(300 · 500 · 800자)와 리랭커 사용 여부를 바꿔 가며 같은 평가셋으로 비교했습니다.\n3. 정답 조문이 답변 근거에 포함되면 정답으로 셌습니다(사람 2명이 교차 확인).\n\n## 결과\n- 기본 설정(청크 800자, 리랭커 없음): 정답률 61%\n- 청크 500자 + 리랭커: 정답률 84%\n- 프롬프트만 바꾼 경우는 4%p 안팎의 변화에 그쳐, 가설이 맞았습니다.\n\n## 내가 한 일\n- LangChain으로 검색 · 리랭크 파이프라인 구성\n- FastAPI로 질의 API 구현\n- 평가 스크립트 작성(Python), 실험 결과표 관리\n\n## 한계\n평가셋이 임대차 분야에 치우쳐 있어, 다른 분야에서의 성능은 확인하지 못했습니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 105,
+        "title": "중고차 가격 예측",
+        "periodText": "2026.04 (2주)",
+        "teamSize": 1,
+        "techStack": [
+          "Python",
+          "scikit-learn"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 프로젝트. 데이터 정제부터 모델 비교까지 혼자 했습니다.",
+        "readme": "# 중고차 가격 예측\n\n## 목표\n연식 · 주행거리 · 차종으로 중고차 가격을 예측합니다.\n\n## 방법\n- 공개 데이터 약 8천 건을 정제(이상치 · 결측치 처리)했습니다.\n- scikit-learn으로 선형 회귀와 랜덤 포레스트를 비교했습니다(5겹 교차 검증).\n\n## 결과\n평균 절대 오차(MAE)가 선형 회귀 182만 원, 랜덤 포레스트 131만 원으로 랜덤 포레스트가 더 나았습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "저는 감으로 판단하지 않고, 근거로 증명하는 AI 서비스 개발자가 되고 싶습니다. 통계학 석사 과정에서 결측치 처리 방법을 비교하는 논문을 쓰며, 결론보다 그 결론을 믿을 수 있는 이유가 더 중요하다는 것을 배웠습니다.\n\n법률 상담 RAG 챗봇 프로젝트에서 '프롬프트보다 검색 품질이 정답률을 좌우한다'는 가설을 세웠습니다. 이를 확인하려고 평가셋 120문항을 먼저 만들고, 청크 크기와 리랭커 사용 여부를 바꿔 가며 같은 기준으로 비교했습니다. 그 결과 정답률을 61%에서 84%로 올렸고, 프롬프트만 바꾼 경우의 변화는 크지 않다는 점(가설 확인)도 수치로 보였습니다. 실험 결과는 매주 표로 공유해 팀이 다음 실험을 고르는 기준으로 썼습니다.\n\n입사 후에는 근거 없는 답을 하지 않는 AI 서비스를 만드는 데 기여하고, 그 품질을 숫자로 설명할 수 있는 개발자가 되겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 5,
+    "basic": {
+      "name": "한예린",
+      "email": "student05@example.com",
+      "githubUrl": "github.com/ieum-seed-05",
+      "desiredJob": "풀스택 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1051,
+        "source": "REGISTERED",
+        "schoolName": "○○전문대학",
+        "major": "컴퓨터정보과",
+        "degree": "ASSOCIATE",
+        "status": "GRADUATED",
+        "graduatedOn": "2022-02-18"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2051,
+        "source": "REGISTERED",
+        "companyName": "□□몰",
+        "position": "웹 운영 담당 (계약직)",
+        "startedOn": "2024-01-02",
+        "endedOn": "2024-12-31",
+        "description": "쇼핑몰 상품 등록 · 배너 교체 · 주문 문의 응대(1년). 상품 일괄 등록 도구를 만들어 반복 업무를 줄임."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3051,
+        "source": "REGISTERED",
+        "name": "정보처리산업기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2023-11-17"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "React",
+      "MySQL",
+      "AWS"
+    ],
+    "projects": [
+      {
+        "itemId": 106,
+        "title": "모여라 · 동네 소모임 플랫폼",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "React",
+          "MySQL",
+          "AWS"
+        ],
+        "portfolioFileName": "모여라_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "모임 참여 기능의 화면과 API를 혼자 맡음.\n인원 초과 버그 원인 분석 및 해결 담당.\nAWS EC2 배포 담당.",
+        "readme": "# 모여라 · 동네 소모임 플랫폼\n\n## 개요\n가까운 동네 사람끼리 운동 · 독서 같은 소모임을 열고 참여하는 서비스. 클라우드 풀스택 과정 최종 프로젝트(4명, 6주).\n\n## 주요 기능\n- 모임 개설 · 수정 · 마감\n- 동네 기준 모임 검색\n- 모임 참여 신청 · 취소\n- 참여자 채팅방 입장\n\n## 담당 업무\n- 모임 참여 기능 담당: React 화면과 Spring Boot API를 함께 구현\n- 참여 신청 · 취소 API 4개, 화면 3개 구현\n- 참여 상태(신청 · 확정 · 취소) 변경 규칙 정리\n- AWS EC2 · RDS(MySQL) 배포 및 환경 변수 관리\n\n## 문제 해결: 정원 초과 버그\n- 현상: 마감 직전 여러 명이 동시에 신청하면 정원보다 많은 인원이 참여됨\n- 원인: 정원 확인과 저장 사이에 다른 요청이 끼어드는 경쟁 상태\n- 조치: 모임 행에 비관적 락을 걸어 정원 확인과 저장을 하나로 묶음\n- 검증: 동시 신청 100건 테스트에서 정원 초과 0건 확인\n\n## 결과\n- 시연 당일 실제 모임 6개가 열렸고 참여 오류 없이 운영됨\n\n## 회고\n- 화면과 API를 함께 맡아, 요청 형식을 맞추는 시간이 크게 줄었음\n\n## 사용 기술\n- Java, Spring Boot, React, MySQL, AWS(EC2, RDS)",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 203,
+        "title": "상품 일괄 등록 도구",
+        "periodText": "2024.06 (재직 중, 2주)",
+        "teamSize": 1,
+        "techStack": [
+          "Java",
+          "MySQL"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "재직 중 업무 개선을 위해 혼자 만듦.",
+        "readme": "# 상품 일괄 등록 도구\n\n## 배경\n쇼핑몰 운영 업무 중 상품을 관리자 화면에서 하나씩 등록하는 데 매주 많은 시간이 들었음.\n\n## 내용\n- 엑셀 파일을 읽어 상품 정보를 검증하고 MySQL에 한 번에 등록하는 Java 프로그램 작성\n- 가격 · 재고 칸이 비어 있으면 등록하지 않고 오류 목록을 따로 출력\n\n## 결과\n- 상품 등록 업무 주 4시간 절감\n- 팀 내 다른 운영 담당자 2명도 사용",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "화면부터 서버, 배포까지 한 기능을 끝까지 책임지는 풀스택 개발자를 목표로 하고 있습니다. 쇼핑몰 웹 운영을 1년간 담당하며 반복 업무를 줄이는 도구를 직접 만든 것이 개발을 본격적으로 배우게 된 계기였습니다. 당시 상품 일괄 등록 도구를 만들어 상품 등록 업무를 주 4시간 절감했습니다.\n\n모여라 프로젝트에서는 모임 참여 기능을 담당하여 React 화면과 Spring Boot API를 함께 구현했습니다. 마감 직전 동시 신청 시 정원이 초과되는 버그가 발생했고, 비관적 락을 적용하여 동시 신청 100건 테스트에서 정원 초과 0건을 확인했습니다. 또한 AWS EC2 배포를 맡아 시연 당일까지 서비스를 안정적으로 운영했습니다. 운영 경험 덕분에 배포 후 문의가 들어올 지점을 미리 짚어 팀원들에게 공유했습니다.\n\n입사 후에는 사용자의 불편을 가장 먼저 듣는 자리에서, 기능 하나를 처음부터 끝까지 맡는 개발자로 일하고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 6,
+    "basic": {
+      "name": "윤도현",
+      "email": "student06@example.com",
+      "githubUrl": "github.com/ieum-seed-06",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1061,
+        "source": "REGISTERED",
+        "schoolName": "○○고등학교",
+        "major": null,
+        "degree": "HIGH_SCHOOL",
+        "status": "GRADUATED",
+        "graduatedOn": "2021-02-05"
+      }
+    ],
+    "careers": [],
+    "certificates": [],
+    "skills": [
+      "Java",
+      "Spring Boot"
+    ],
+    "projects": [
+      {
+        "itemId": 107,
+        "title": "팀 프로젝트 쇼핑몰",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 5,
+        "techStack": [
+          "Java",
+          "Spring Boot"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "게시판 맡음",
+        "readme": "# 쇼핑몰\n팀 프로젝트로 만든 쇼핑몰입니다. 상품, 장바구니, 게시판 기능이 있습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "성실하게 배우는 자세로 회사에 기여하겠습니다. 팀 프로젝트에서 맡은 일을 끝까지 최선을 다해 했읍니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 7,
+    "basic": {
+      "name": "강수아",
+      "email": "student07@example.com",
+      "githubUrl": "github.com/ieum-seed-07",
+      "desiredJob": "프론트엔드 개발",
+      "preferredRegion": "경기",
+      "militaryStatus": "NOT_APPLICABLE",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1071,
+        "source": "REGISTERED",
+        "schoolName": "▽▽대학교",
+        "major": "국어국문학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2023-02-17"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2071,
+        "source": "REGISTERED",
+        "companyName": "▽▽출판",
+        "position": "편집자",
+        "startedOn": "2023-03-02",
+        "endedOn": "2026-01-30",
+        "description": "단행본 원고 교정 · 편집."
+      }
+    ],
+    "certificates": [],
+    "skills": [
+      "Vue.js",
+      "JavaScript"
+    ],
+    "projects": [
+      {
+        "itemId": 108,
+        "title": "무비톡 · 영화 리뷰 사이트",
+        "periodText": "2026.05 – 2026.06 (3주)",
+        "teamSize": 3,
+        "techStack": [
+          "Vue.js",
+          "JavaScript"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "화면 몇 개 만듦",
+        "readme": "# 무비톡\n영화 리뷰를 남기는 사이트. 영화 API를 연동했습니다. 별점과 댓글 기능이 있습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "문장 하나에도 읽는 이의 호흡이 있다고 믿어 온 사람으로서, 화면 하나에도 사용자의 호흡이 머무를 수 있도록 섬세하게 빚어내는 개발자가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 8,
+    "basic": {
+      "name": "오민석",
+      "email": "student08@example.com",
+      "githubUrl": "github.com/ieum-seed-08",
+      "desiredJob": "AI 서비스 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1081,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "컴퓨터공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2026-02-20"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3081,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2025-12-12"
+      }
+    ],
+    "skills": [
+      "Python",
+      "FastAPI",
+      "Gemini API",
+      "Whisper"
+    ],
+    "projects": [
+      {
+        "itemId": 109,
+        "title": "미팅노트 · 회의록 요약 에이전트",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Python",
+          "FastAPI",
+          "Gemini API",
+          "Whisper"
+        ],
+        "portfolioFileName": "미팅노트_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "AI 파이프라인 리드. STT → 요약 → 액션 아이템 추출 파이프라인 설계, structured output schema 정의와 validation · retry 로직 구현.\n평가셋 구성과 수기 채점 기준 정리.\n백엔드 팀원과 API contract를 먼저 합의해 병렬 개발.",
+        "readme": "# MeetingNote · 회의록 요약 에이전트\n\n회의 녹음 파일을 올리면 Whisper로 transcription을 하고, Gemini API로 요약 · 결정 사항 · 액션 아이템(담당자, 기한)을 structured output으로 뽑아 주는 서비스입니다.\n\n## Architecture\n- Upload API (FastAPI) → async job queue → Whisper STT → chunking(화자 전환 기준) → Gemini summarization → schema validation → 결과 저장\n- 긴 회의는 chunk 단위로 map-reduce 요약 후 최종 merge\n\n## 내가 한 일\n- LLM output을 pydantic schema로 정의하고, validation 실패 시 error message를 prompt에 넣어 최대 2회 retry하는 로직 구현. 그 결과 평가셋 기준 output format error 0건 달성(도입 전 50건 중 9건 실패).\n- 액션 아이템 추출 품질은 자동 지표가 마땅치 않아 회의 50건에 대해 수기 채점 기준(담당자 · 기한 · 내용 일치)을 만들고 팀원 2명이 교차 채점. 최종 정확도 88%.\n- Whisper 처리 시간이 길어 동기 응답이 timeout 나는 문제를 job polling 구조로 변경.\n\n## Troubleshooting\nGemini가 가끔 담당자 이름을 회의에 없는 사람으로 hallucination하는 문제가 있었습니다. transcript에 등장한 화자 목록을 enum으로 schema에 넣어 제약을 걸어 해결했습니다.\n\n## Stack\nPython, FastAPI, Whisper, Gemini API",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 204,
+        "title": "영수증 OCR 가계부",
+        "periodText": "2026.04 (2주)",
+        "teamSize": 2,
+        "techStack": [
+          "Python",
+          "FastAPI",
+          "Gemini API"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "Gemini API multimodal 호출과 결과 파싱 담당.",
+        "readme": "# 영수증 OCR 가계부\n\n영수증 사진을 찍으면 Gemini API multimodal 입력으로 가게 이름 · 날짜 · 금액을 추출해 가계부에 기록하는 미니 프로젝트입니다.\n\n## 내가 한 일\n- FastAPI 업로드 API와 Gemini 호출부 구현\n- 금액 필드는 숫자 validation 후 실패 시 사용자 확인 화면으로 넘김\n\n## 결과\n테스트 영수증 40장 중 35장에서 세 항목을 모두 정확히 추출했습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "LLM이 그럴듯한 결과를 한 번 내는 것보다, 매번 같은 형식으로 믿을 수 있는 결과를 내는 시스템을 설계하는 데 관심이 많은 AI 서비스 개발자입니다.\n\n미팅노트 프로젝트에서 AI 파이프라인 리드를 맡아 Whisper STT부터 Gemini API 요약, 액션 아이템 추출까지의 흐름을 설계했습니다. LLM output을 schema로 정의하고 validation 실패 시 오류 내용을 prompt에 넣어 retry하는 로직을 구현해 output format error를 0건으로 만들었고, 자동 지표가 없는 액션 아이템 품질은 수기 채점 기준을 직접 만들어 정확도 88%를 확인했습니다. 기획 단계에서는 실제로 회의록을 쓰는 직장인 12명을 인터뷰해, 사용자가 원하는 것이 긴 요약이 아니라 '누가 언제까지 무엇을'이라는 점을 먼저 확인했습니다.\n\n입사 후에는 LLM 기능을 실제 서비스에 붙일 때 생기는 불안정함을 구조로 해결하는 엔지니어가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 9,
+    "basic": {
+      "name": "신유진",
+      "email": "student09@example.com",
+      "githubUrl": "github.com/ieum-seed-09",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1091,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "수학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2024-02-16"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3091,
+        "source": "REGISTERED",
+        "name": "SQLD",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2025-09-05"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MyBatis",
+      "MySQL",
+      "Redis"
+    ],
+    "projects": [
+      {
+        "itemId": 110,
+        "title": "닥터콜 · 병원 예약 시스템",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 5,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "MyBatis",
+          "MySQL",
+          "Redis"
+        ],
+        "portfolioFileName": "닥터콜_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "예약 도메인 담당.\n동시 예약 문제를 재현하는 테스트를 먼저 작성하고 Redis 분산락으로 해결.\n부하 테스트 시나리오 작성.",
+        "readme": "# 닥터콜 · 병원 예약 시스템\n\n진료 과목과 시간대를 골라 병원 진료를 예약하는 서비스. 최종 프로젝트, 5명, 6주.\n\n## 기능\n- 병원 · 의사 · 시간대 조회\n- 진료 예약 · 변경 · 취소\n- 예약 하루 전 알림\n\n## 내가 한 일\n예약 도메인을 맡았다. 조회는 MyBatis로 동적 쿼리를 작성했다.\n\n## 문제: 같은 시간대 중복 예약\n문제를 먼저 정의했다. 한 시간대의 정원을 n, 동시에 들어온 요청을 m이라 하면, m > n일 때 성공한 예약 수는 n 이하여야 한다. 그런데 정원 확인과 저장 사이에 다른 요청이 끼어들어 이 조건이 깨졌다.\n\n따라서 다음 순서로 접근했다.\n1. 재현: 동시 요청 테스트를 먼저 작성해 실패를 확인했다.\n2. 해결: 서버가 여러 대여도 동작하도록 DB 락 대신 Redis 분산락을 시간대 단위로 걸었다.\n3. 검증: 같은 테스트를 다시 돌려 중복 예약 0건을 확인했다.\n\n## 부하 테스트\nk6로 예약 API에 부하를 걸어 TPS 300에서 오류율 1% 미만을 확인했다. 즉, 진료 예약이 몰리는 오전 시간대를 감당할 수 있다.\n\n## 기술\nJava, Spring Boot, MyBatis, MySQL, Redis, k6\n\n## 정리\n버그는 재현할 수 있어야 고칠 수 있다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 205,
+        "title": "알고리즘 스터디 디스코드 봇",
+        "periodText": "2026.03 (1주)",
+        "teamSize": 1,
+        "techStack": [
+          "Java",
+          "MySQL"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 프로젝트.",
+        "readme": "# 알고리즘 스터디 봇\n\n매일 아침 문제를 하나 골라 디스코드 채널에 올리고, 풀이 제출 여부를 기록하는 봇.\n\n- Java로 작성\n- 제출 기록은 MySQL에 저장\n- 주간 제출 현황을 표로 출력",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "수학을 전공해 문제를 정의하고 쪼개는 데 익숙합니다. 따라서 버그도 감으로 고치지 않고, 먼저 재현합니다.\n\n닥터콜 프로젝트에서 예약 도메인을 맡았고, 조회는 MyBatis로 동적 쿼리를 작성했습니다. 같은 시간대에 정원보다 많은 예약이 들어가는 문제가 있었고, 동시 요청 테스트를 먼저 작성해 실패를 재현했습니다. 서버가 여러 대여도 동작하도록 Redis 분산락을 적용했고, 같은 테스트로 중복 예약 0건을 확인했습니다. 이어서 부하 테스트로 TPS 300에서도 안정적으로 동작함을 확인했습니다. 즉, 고쳤다고 말하기 전에 고쳐졌음을 보였습니다. 스터디에서는 매주 풀이를 발표하며, 내 풀이가 왜 맞는지 설명하는 연습을 해 왔습니다.\n\n입사 후에도 같은 방식으로 일하겠습니다. 정의하고, 재현하고, 증명하는 백엔드 개발자가 되겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 10,
+    "basic": {
+      "name": "임건우",
+      "email": "student10@example.com",
+      "githubUrl": "github.com/ieum-seed-10",
+      "desiredJob": "게임 클라이언트 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1101,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "게임공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-21"
+      }
+    ],
+    "careers": [],
+    "certificates": [],
+    "skills": [
+      "Unity",
+      "C#",
+      "Java",
+      "Spring Boot"
+    ],
+    "projects": [
+      {
+        "itemId": 111,
+        "title": "던전 러너 · 2D 로그라이크",
+        "periodText": "2026.04 – 2026.05 (5주)",
+        "teamSize": 1,
+        "techStack": [
+          "Unity",
+          "C#"
+        ],
+        "portfolioFileName": "던전러너_플레이영상.mp4",
+        "includeInApply": true,
+        "roleNote": "개인 프로젝트! 기획, 프로그래밍, 레벨 디자인 전부 혼자 했습니다.",
+        "readme": "# 던전 러너\n\n매번 구조가 바뀌는 던전을 내려가는 2D 로그라이크 게임입니다. 정말 만들고 싶었던 게임이라 교육과정 틈틈이 혼자 만들었습니다!\n\n## 특징\n- 방 단위 절차적 던전 생성 (매 판 다른 지도)\n- 무기 조합 시스템\n- 보스 패턴 3종\n\n## 구현\n- Unity, C#\n- 오브젝트 풀링으로 탄환 생성 때 끊기던 프레임을 해결\n- 던전 생성은 방 그래프를 먼저 만들고 복도를 잇는 방식\n\n## 다음 목표\n친구 10명에게 테스트를 받았는데 난이도가 너무 어렵다는 의견이 많아서 조정 중입니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 206,
+        "title": "같이가요 · 모임 앱 백엔드",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Java",
+          "Spring Boot"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "교육과정 최종 프로젝트. 모임 일정 API 담당.",
+        "readme": "# 같이가요\n\n모임 일정을 정하고 참석 여부를 모으는 앱의 백엔드입니다. 교육과정 최종 프로젝트로 4명이 만들었습니다.\n\n## 내가 한 일\n- 일정 등록 · 수정 · 참석 응답 API (Java, Spring Boot)\n- 참석 인원 집계 쿼리 작성",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "게임 클라이언트 개발자가 정말 되고 싶습니다! 교육과정에서 웹을 배웠지만, Unity로 던전을 만들던 시간이 가장 즐거웠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 11,
+    "basic": {
+      "name": "배소윤",
+      "email": "student11@example.com",
+      "githubUrl": "github.com/ieum-seed-11",
+      "desiredJob": "프론트엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1111,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "산업공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2024-08-23"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3111,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2026-03-20"
+      }
+    ],
+    "skills": [
+      "React",
+      "Next.js",
+      "TypeScript",
+      "WebSocket"
+    ],
+    "projects": [
+      {
+        "itemId": 112,
+        "title": "그려봐 · 실시간 협업 화이트보드",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "React",
+          "TypeScript",
+          "WebSocket"
+        ],
+        "portfolioFileName": "그려봐_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "첫째, 캔버스 그리기 엔진과 되돌리기 기능을 맡았습니다.\n둘째, WebSocket 동기화 메시지 형식을 설계했습니다.\n셋째, 렌더링 성능 측정과 개선을 담당했습니다.",
+        "readme": "# 그려봐 · Real-time Collaborative Whiteboard\n\n## Overview\n여러 사람이 같은 화이트보드에 동시에 그리고, 서로의 커서를 실시간으로 보는 협업 도구입니다. 클라우드 풀스택 과정 최종 프로젝트로 4명이 6주 동안 만들었습니다.\n\n## Features\n- 펜 · 도형 · 텍스트 그리기\n- 동시 접속 사용자 커서 표시\n- 되돌리기 · 다시 하기\n- 보드 링크 공유\n\n## What I did\n첫째, Canvas API로 그리기 엔진을 만들었습니다. 모든 그리기 동작을 명령 객체로 표현하는 명령 패턴을 써서, 되돌리기와 다시 하기를 명령 목록의 이동만으로 처리했습니다. 덕분에 새 도형을 추가할 때 되돌리기 코드를 따로 고칠 필요가 없어졌습니다.\n\n둘째, WebSocket으로 주고받는 메시지 형식을 설계했습니다. 그리기 명령 자체를 메시지로 보내므로, 받은 쪽은 같은 명령을 자기 캔버스에 실행하기만 하면 됩니다.\n\n셋째, 렌더링 성능을 개선했습니다. 커서 이동 메시지가 들어올 때마다 전체 캔버스를 다시 그려 프레임이 떨어졌습니다. 정적 레이어와 커서 레이어를 분리하고 requestAnimationFrame으로 묶어 그리도록 바꿔, 8명이 동시에 그릴 때도 60fps를 유지했습니다.\n\n## Troubleshooting\n두 사람이 거의 동시에 같은 도형을 지우면 화면이 서로 달라지는 문제가 있었습니다. 서버가 붙인 순서 번호대로만 명령을 적용하도록 바꿔 해결했습니다.\n\n## Result\n- React, TypeScript, WebSocket\n- 최종 발표에서 청중 20여 명이 함께 접속해 시연",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 207,
+        "title": "개인 기술 블로그",
+        "periodText": "2026.03 – 2026.04 (4주)",
+        "teamSize": 1,
+        "techStack": [
+          "Next.js",
+          "React",
+          "TypeScript"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "개인 프로젝트. 설계, 구현, 배포를 모두 직접 했습니다.",
+        "readme": "# Tech Blog\n\n## Overview\n공부한 내용을 정리하는 개인 블로그입니다. Next.js의 정적 생성(SSG)으로 만들었습니다.\n\n## What I did\n첫째, 마크다운 글을 빌드 시점에 HTML로 바꾸는 정적 생성 구조를 만들었습니다.\n둘째, 글마다 메타 태그와 사이트맵을 자동 생성해 검색 노출을 준비했습니다.\n셋째, 이미지 최적화와 글꼴 지연 로딩으로 Lighthouse 성능 점수 98점을 받았습니다.\n\n## Stack\nNext.js, React, TypeScript",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "눈에 보이는 결과를 빠르게 만드는 것만큼, 그 뒤의 구조를 오래 고민하는 프론트엔드 개발자입니다.\n\n첫째, 구조를 먼저 생각합니다. 그려봐 프로젝트에서 그리기 동작을 명령 객체로 표현하는 명령 패턴을 써서 되돌리기 기능을 설계했고, 덕분에 새 도형을 추가해도 되돌리기 코드는 손댈 필요가 없었습니다. 둘째, 성능을 숫자로 확인합니다. 커서 메시지 때문에 떨어지던 프레임을 레이어 분리로 해결해 8명이 동시에 그려도 60fps를 유지했고, 개인 블로그에서는 Lighthouse 성능 98점을 받았습니다. 셋째, 함께 읽히는 코드를 씁니다. 팀에서 매주 코드 리뷰 진행을 맡아, 리뷰 내용을 정리해 팀 규칙으로 남겼습니다.\n\n입사 후에는 많은 사용자가 동시에 쓰는 서비스에서, 빠르면서도 무너지지 않는 화면을 만드는 개발자가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 12,
+    "basic": {
+      "name": "박서연",
+      "email": "student12@example.com",
+      "githubUrl": "github.com/ieum-seed-12",
+      "desiredJob": "데이터 엔지니어",
+      "preferredRegion": "서울",
+      "militaryStatus": "NOT_APPLICABLE",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1121,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "경제학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-21"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2121,
+        "source": "REGISTERED",
+        "companyName": "□□리서치",
+        "position": "데이터 분석 인턴",
+        "startedOn": "2025-03-04",
+        "endedOn": "2025-06-30",
+        "description": "설문 응답 데이터 정제와 SQL 집계 보고서 작성(4개월)."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3121,
+        "source": "REGISTERED",
+        "name": "SQLD",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2025-03-29"
+      },
+      {
+        "itemId": 3122,
+        "source": "REGISTERED",
+        "name": "ADsP",
+        "issuer": "한국데이터산업진흥원",
+        "acquiredOn": "2024-11-16"
+      }
+    ],
+    "skills": [
+      "Python",
+      "Airflow",
+      "SQL",
+      "PostgreSQL",
+      "Streamlit"
+    ],
+    "projects": [
+      {
+        "itemId": 113,
+        "title": "따릉이 수요 예측 데이터 파이프라인",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 3,
+        "techStack": [
+          "Python",
+          "Airflow",
+          "PostgreSQL",
+          "Streamlit"
+        ],
+        "portfolioFileName": "따릉이_파이프라인_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "수집부터 적재, 대시보드까지 이어지는 데이터 파이프라인 전체를 설계하고 구현하는 일을 맡았습니다.\n팀원 두 명은 수요 예측 모델을 맡았고, 저는 그 모델이 매일 같은 형식의 데이터를 받을 수 있도록 하는 데 집중했습니다.\n장애가 났을 때 어디서 멈췄는지 알 수 있도록 단계별 기록을 남기는 방식을 정했습니다.",
+        "readme": "# 따릉이 수요 예측 데이터 파이프라인\n\n서울 공공자전거의 대여소별 대여 기록과 날씨 데이터를 매일 수집해, 다음 날 대여소별 수요를 예측하는 데 필요한 데이터를 만들어 내는 파이프라인입니다. AI Agent 과정 최종 프로젝트로 세 명이 여섯 주 동안 진행했으며, 저는 수집부터 적재와 대시보드까지 이어지는 흐름 전체를 맡았습니다.\n\n처음에는 수집 스크립트를 손으로 실행했는데, 하루라도 실행을 빠뜨리면 예측 모델의 입력에 빈 날짜가 생기는 문제가 있었습니다. 그래서 Airflow로 수집, 정제, 적재, 집계의 네 단계를 하나의 DAG로 묶고 매일 새벽에 자동으로 실행되도록 했습니다. 각 단계는 실패하면 세 번까지 다시 시도하고, 그래도 실패하면 어느 단계에서 멈췄는지 기록을 남기도록 했습니다.\n\n정제 단계에서는 대여소 이름이 기간에 따라 바뀌는 경우가 있어, 대여소 번호를 기준으로 이름 변경 이력을 따로 관리하는 표를 만들었습니다. 적재는 PostgreSQL에 날짜 단위로 덮어쓰도록 해서, 같은 날짜를 다시 실행해도 데이터가 중복되지 않게 했습니다.\n\n마지막으로 Streamlit으로 대여소별 실제 대여량과 예측값을 함께 보여 주는 대시보드를 만들었습니다.\n\n결과적으로 운영 기간 30일 동안 파이프라인은 실패 0회로 매일 실행되었고, 예측 모델은 빈 날짜 없이 데이터를 받을 수 있었습니다.",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 208,
+        "title": "SQL 튜닝 스터디",
+        "periodText": "2026.05 (3주)",
+        "teamSize": 1,
+        "techStack": [
+          "SQL",
+          "PostgreSQL"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 학습 프로젝트.",
+        "readme": "# SQL 튜닝 스터디\n\n공개된 상거래 데이터를 PostgreSQL에 올려 두고, 느린 SQL을 하나씩 실행 계획으로 살펴보며 고쳐 본 기록입니다. 가장 느렸던 월별 매출 집계 쿼리는 불필요한 하위 쿼리를 조인으로 바꾸고 날짜 칸에 인덱스를 추가해, 실행 시간이 8초에서 0.6초로 줄었습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "데이터가 매일 끊기지 않고 같은 모양으로 들어오게 만드는 일에서 보람을 느끼는 데이터 엔지니어 지망생입니다. 경제학을 공부하고 리서치 회사에서 데이터 분석 인턴으로 일하는 동안, 분석이 잘못되는 원인의 대부분이 분석 방법보다 앞 단계의 데이터에 있다는 것을 여러 번 경험했고, 그 앞 단계를 맡고 싶다는 생각으로 이 길을 택했습니다.\n\n따릉이 수요 예측 프로젝트에서는 수집, 정제, 적재, 집계의 네 단계를 Airflow로 묶어 매일 자동으로 실행되게 했고, 운영 기간 30일 동안 실패 없이 데이터를 쌓았습니다. 대여소 이름이 바뀌는 문제는 번호를 기준으로 변경 이력을 관리해 해결했고, 같은 날짜를 다시 실행해도 중복이 생기지 않도록 적재 방식을 정했습니다. 팀원들이 모델을 다루는 동안 저는 매일 아침 파이프라인 기록을 확인하고 그 결과를 짧게 공유하는 일을 이어 갔습니다.\n\n앞으로는 여러 팀이 믿고 쓰는 데이터를 안정적으로 만들어 내는 엔지니어로 일하고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 13,
+    "basic": {
+      "name": "조현우",
+      "email": "student13@example.com",
+      "githubUrl": "github.com/ieum-seed-13",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "부산",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1131,
+        "source": "REGISTERED",
+        "schoolName": "△△대학교",
+        "major": "기계공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2023-02-17"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2131,
+        "source": "REGISTERED",
+        "companyName": "△△정밀",
+        "position": "생산관리",
+        "startedOn": "2023-03-02",
+        "endedOn": "2025-02-28",
+        "description": "부품 생산 계획 수립과 창고 재고 관리."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3131,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2026-03-20"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MySQL"
+    ],
+    "projects": [
+      {
+        "itemId": 114,
+        "title": "물류 재고 관리 시스템",
+        "periodText": "2026.07 (4주)",
+        "teamSize": 4,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "MySQL"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "입출고 API",
+        "readme": "# 재고 관리 시스템\n\n창고에 들어오고 나가는 물건을 기록하고, 현재 재고를 계산하는 시스템입니다. 4명이 만들었고 저는 입출고 API를 맡았습니다.\n\n## 기능\n- 입고 등록\n- 출고 등록\n- 품목별 현재 재고 조회\n\n## 고친 문제\n같은 품목을 동시에 출고하면 재고가 음수가 되는 문제가 있었습니다. 출고할 때 재고를 확인하고 줄이는 부분에 락을 걸어서 고쳤습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "부산에서 가족 곁에 있으면서 백엔드 개발자로 일하고 싶습니다. 공장에서 재고를 맞추던 경험을 살려 물류 서비스를 만들고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 14,
+    "basic": {
+      "name": "황지민",
+      "email": "student14@example.com",
+      "githubUrl": "github.com/ieum-seed-14",
+      "desiredJob": "AI 서비스 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1141,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "심리학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-08-22"
+      }
+    ],
+    "careers": [],
+    "certificates": [],
+    "skills": [
+      "Python",
+      "OpenAI API"
+    ],
+    "projects": [
+      {
+        "itemId": 115,
+        "title": "감정 일기 챗봇",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 2,
+        "techStack": [
+          "Python",
+          "OpenAI API"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "프롬프트 작성",
+        "readme": "# 감정 일기 챗봇\n하루 일기를 쓰면 감정을 정리해 주는 챗봇입니다. Python과 OpenAI API로 만들었습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "사람의 정서에 공감하고 마음을 함께 헤아리는 AI 서비스를 만들고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 15,
+    "basic": {
+      "name": "남궁태오",
+      "email": "student15@example.com",
+      "githubUrl": "github.com/ieum-seed-15",
+      "desiredJob": "클라우드 · 인프라 엔지니어",
+      "preferredRegion": "서울, 경기",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1151,
+        "source": "REGISTERED",
+        "schoolName": "○○전문대학",
+        "major": "정보통신과",
+        "degree": "ASSOCIATE",
+        "status": "GRADUATED",
+        "graduatedOn": "2022-02-18"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2151,
+        "source": "REGISTERED",
+        "companyName": "□□시스템",
+        "position": "IT 헬프데스크",
+        "startedOn": "2024-02-01",
+        "endedOn": "2025-01-31",
+        "description": "사내 PC · 계정 장애 응대(1년). 리눅스 파일 서버 백업 상태 점검."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3151,
+        "source": "REGISTERED",
+        "name": "리눅스마스터 2급",
+        "issuer": "한국정보통신진흥협회",
+        "acquiredOn": "2024-07-06"
+      },
+      {
+        "itemId": 3152,
+        "source": "REGISTERED",
+        "name": "AWS Certified Solutions Architect – Associate",
+        "issuer": "Amazon Web Services",
+        "acquiredOn": "2026-06-19"
+      }
+    ],
+    "skills": [
+      "AWS",
+      "Docker",
+      "Linux",
+      "GitHub Actions",
+      "Spring Boot"
+    ],
+    "projects": [
+      {
+        "itemId": 116,
+        "title": "마켓톡 · 중고 거래 채팅",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Spring Boot",
+          "AWS",
+          "Docker",
+          "GitHub Actions"
+        ],
+        "portfolioFileName": "마켓톡_인프라_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "인프라 담당.\nAWS ECS 기반 배포 환경 구축.\nGitHub Actions CI/CD 파이프라인 구성.\n서버 2대 구성 시 채팅 메시지 유실 문제 원인 분석 참여.",
+        "readme": "# 마켓톡 · 중고 거래 채팅\n\n## 개요\n- 동네 중고 거래 + 판매자 · 구매자 1:1 채팅 서비스\n- 최종 프로젝트, 4명, 6주\n- 담당: 인프라 (배포 · CI/CD · 모니터링)\n\n## 인프라 구성\n- Spring Boot 애플리케이션 Docker 이미지화\n- AWS ECS(Fargate) 서비스 2개 태스크로 운영, ALB로 부하 분산\n- RDS(MySQL), ElastiCache(Redis) 사용\n- 환경 변수 · 비밀 값은 Parameter Store로 관리\n\n## CI/CD\n- GitHub Actions로 테스트 → 이미지 빌드 → ECR 푸시 → ECS 배포 자동화\n- 기존 수동 배포(SSH 접속 후 jar 교체) 대비 배포 시간 15분 → 3분 단축\n- 배포 실패 시 이전 태스크 정의로 자동 롤백 설정\n\n## 트러블슈팅\n- 현상: 서버를 2대로 늘린 뒤 일부 채팅 메시지가 상대에게 전달되지 않음\n- 원인: WebSocket 연결이 서버별로 나뉘어, 다른 서버에 붙은 상대에게 메시지 전달 불가\n- 조치: 백엔드 팀원과 함께 Redis Pub/Sub로 서버 간 메시지 중계 구조 도입\n- 결과: 부하 테스트 중 메시지 유실 0건 확인\n\n## 모니터링\n- CloudWatch 대시보드로 CPU · 메모리 · 5xx 오류 수 확인\n- 오류 급증 시 디스코드 알림 연동",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 117,
+        "title": "홈랩 모니터링",
+        "periodText": "2026.04 – 2026.05 (3주)",
+        "teamSize": 1,
+        "techStack": [
+          "Linux",
+          "Docker"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 프로젝트. 구성 · 운영 전부 직접 수행.",
+        "readme": "# 홈랩 모니터링\n\n## 개요\n- 집에 있는 미니 PC에 Linux(Ubuntu) 설치 후 개인 서버로 운영\n- Docker Compose로 Prometheus, Grafana, node-exporter 구성\n\n## 내용\n- 서버 CPU · 디스크 · 온도 지표 수집\n- 디스크 사용률 80% 초과 시 알림 설정\n- cron으로 매일 설정 파일 백업\n\n## 배운 점\n- 지표를 먼저 보고 장애를 예측하는 습관 형성",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "서비스가 멈추지 않게 받치는 클라우드 · 인프라 엔지니어를 목표로 합니다. IT 헬프데스크에서 1년간 장애를 응대하며, 장애는 고치는 것보다 미리 막는 것이 중요하다는 점을 체감함. 이후 리눅스마스터 2급과 AWS 자격증을 취득하며 인프라를 체계적으로 공부했습니다.\n\n마켓톡 프로젝트에서 인프라를 담당했습니다. Spring Boot 애플리케이션을 Docker 이미지로 만들고 AWS ECS에 올렸으며, GitHub Actions로 테스트부터 배포까지 자동화해 배포 시간을 15분에서 3분으로 단축함. 서버를 2대로 늘린 뒤 채팅 메시지가 사라지는 문제가 생겼을 때는 백엔드 팀원과 원인을 함께 찾고 Redis Pub/Sub 구조를 도입해 메시지 유실 0건을 확인했습니다. 개인적으로는 홈랩 서버를 운영하며 모니터링 경험을 쌓고 있습니다. 매주 장애 대응 기록을 정리해 팀 위키에 공유함.\n\n입사 후 서비스 운영 안정성을 책임지는 엔지니어로 성장하겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 16,
+    "basic": {
+      "name": "문채원",
+      "email": "student16@example.com",
+      "githubUrl": "github.com/ieum-seed-16",
+      "desiredJob": "프론트엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "NOT_APPLICABLE",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1161,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "컴퓨터공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-21"
+      }
+    ],
+    "careers": [],
+    "certificates": [],
+    "skills": [
+      "React",
+      "TypeScript",
+      "React Query",
+      "Gemini API"
+    ],
+    "projects": [
+      {
+        "itemId": 118,
+        "title": "트립메이트 · AI 여행 일정 추천",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "React",
+          "TypeScript",
+          "React Query",
+          "Gemini API"
+        ],
+        "portfolioFileName": "트립메이트_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "프론트엔드 담당. AI 응답을 기다리는 화면과 일정 편집 화면을 맡았습니다.\n사용자 테스트를 직접 진행하고 결과를 화면 개선으로 연결했습니다.",
+        "readme": "# 트립메이트 · AI 여행 일정 추천\n\n## 소개\n여행지와 날짜, 취향을 입력하면 Gemini API가 하루 단위 여행 일정을 만들어 주는 서비스입니다. 최종 프로젝트로 4명이 6주 동안 만들었습니다.\n\n## 문제: 사용자가 기다리다 떠난다\n첫 버전은 일정이 다 만들어질 때까지 빈 로딩 화면만 보여 줬습니다. 일정 하나를 만드는 데 15초 정도 걸렸고, 사용자 테스트에서 참가자 20명 중 8명(40%)이 결과를 보기 전에 화면을 닫았습니다.\n\n## 해결\n- 서버가 일정을 하루 단위로 잘라 스트리밍하도록 팀원과 맞추고, 화면은 도착한 날부터 바로 보여 주도록 바꿨습니다.\n- 아직 오지 않은 날은 '2일차 일정을 짜고 있어요'처럼 단계별 문구로 채웠습니다.\n- React Query로 일정 데이터를 캐시해, 편집 화면과 오가도 다시 요청하지 않게 했습니다.\n\n## 결과\n같은 방식의 두 번째 사용자 테스트(20명)에서 결과를 보기 전에 떠난 사람이 3명(15%)으로 줄었습니다.\n\n## 그 밖에 맡은 화면\n- 일정 편집: 장소 순서를 끌어서 바꾸기, 하루 일정만 다시 만들기 버튼\n- 일정 공유 링크 화면\n\n## 기술\nReact, TypeScript, React Query, Gemini API",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 209,
+        "title": "오픈소스 접근성 기여",
+        "periodText": "2026.05 (2주)",
+        "teamSize": 1,
+        "techStack": [
+          "React",
+          "TypeScript"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "개인 활동. 이슈 선정부터 PR 작성까지 혼자 했습니다.",
+        "readme": "# 오픈소스 접근성 기여\n\nReact 기반 공개 UI 라이브러리에서 접근성 이슈를 찾아 고쳤습니다.\n\n- 모달이 열렸을 때 키보드 포커스가 바깥으로 빠져나가는 문제 수정\n- 아이콘 버튼에 읽을 수 있는 이름(aria-label) 추가\n\n두 PR 모두 메인테이너 리뷰를 거쳐 병합됐습니다(PR 2건).",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "AI가 답을 만드는 15초 동안, 사용자는 무엇을 보고 있을까요? 저는 이 질문에서 프론트엔드 개발의 재미를 찾았습니다.\n\n트립메이트 프로젝트의 첫 버전은 일정이 다 만들어질 때까지 빈 로딩 화면만 보여 줬습니다. 사용자 100명에게 테스트를 해 보니 40%가 결과를 보기 전에 화면을 닫았습니다. 저는 서버와 협의해 일정을 하루 단위로 받아 도착한 날부터 바로 보여 주고, 기다리는 동안에는 '2일차 일정을 짜고 있어요' 같은 단계별 문구를 띄웠습니다. 두 번째 테스트에서 이탈은 15%로 줄었습니다. 이후 오픈소스 UI 라이브러리의 접근성 문제를 고치는 PR 2건을 병합시키며, 화면은 모든 사람이 쓸 수 있어야 한다는 것도 배웠습니다.\n\nAI 기능이 '기다려야 하는 것'이 아니라 '함께 만들어지는 것'으로 느껴지는 화면을 만드는 개발자가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 17,
+    "basic": {
+      "name": "서지호",
+      "email": "student17@example.com",
+      "githubUrl": "github.com/ieum-seed-17",
+      "desiredJob": "임베디드 개발",
+      "preferredRegion": "경기",
+      "militaryStatus": "SERVED",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1171,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "전자공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2024-02-16"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3171,
+        "source": "REGISTERED",
+        "name": "전자기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2024-06-14"
+      }
+    ],
+    "skills": [
+      "C",
+      "Arduino",
+      "Java",
+      "Spring Boot"
+    ],
+    "projects": [
+      {
+        "itemId": 119,
+        "title": "스마트 화분 IoT",
+        "periodText": "2026.04 – 2026.05 (4주)",
+        "teamSize": 2,
+        "techStack": [
+          "C",
+          "Arduino",
+          "Spring Boot"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "아두이노 펌웨어, 센서 회로 담당. 서버는 팀원.",
+        "readme": "# 스마트 화분\n\n토양 습도 센서 값을 읽어 서버로 보내고, 건조하면 펌프로 물을 주는 화분.\n\n## 하드웨어\n- 아두이노 우노, 토양 습도 센서, 온습도 센서(DHT11), 워터 펌프, 릴레이 모듈, Wi-Fi 모듈(ESP-01)\n\n## 펌웨어 (C, Arduino)\n- 10분마다 센서 값 측정, 평균 내서 잡음 줄임\n- 습도가 기준 아래면 펌프 3초 작동\n- Wi-Fi로 서버에 측정값 전송\n\n## 서버\n- Spring Boot로 측정값 저장 · 조회 API (팀원 담당)",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 210,
+        "title": "쇼핑몰 백엔드",
+        "periodText": "2026.06 – 2026.07 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Java",
+          "Spring Boot"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "교육과정 최종 프로젝트. 주문 API 담당.",
+        "readme": "# 쇼핑몰 백엔드\n\n교육과정 최종 프로젝트. 4명.\n\n- 주문 생성 · 취소 API (Java, Spring Boot)\n- 주문 상태 조회",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "아두이노, C, 센서 제어, 펌프 구동을 다뤄 왔고, 하드웨어와 소프트웨어를 잇는 임베디드 개발자가 되고 싶습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 18,
+    "basic": {
+      "name": "권나연",
+      "email": "student18@example.com",
+      "githubUrl": "github.com/ieum-seed-18",
+      "desiredJob": "백엔드 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": null,
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1181,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "영어영문학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2023-02-17"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2181,
+        "source": "REGISTERED",
+        "companyName": "◇◇코리아",
+        "position": "고객지원",
+        "startedOn": "2023-03-02",
+        "endedOn": "2025-02-28",
+        "description": "영어 · 한국어 고객 문의 응대, 장애 문의를 개발팀에 전달하는 티켓 작성."
+      }
+    ],
+    "certificates": [
+      {
+        "itemId": 3181,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2026-03-20"
+      }
+    ],
+    "skills": [
+      "Java",
+      "Spring Boot",
+      "MyBatis",
+      "FastAPI"
+    ],
+    "projects": [
+      {
+        "itemId": 120,
+        "title": "인터뷰온 · AI 면접 연습",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 5,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "MyBatis",
+          "FastAPI"
+        ],
+        "portfolioFileName": "인터뷰온_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "백엔드 담당. AI 서버와의 비동기 연동, 상태 조회 API, mock 응답 contract 정의를 owner로 맡았습니다.\n프론트엔드 · AI 팀원과 API 명세를 먼저 합의하는 회의를 주도했습니다.",
+        "readme": "# InterviewOn · AI 면접 연습\n\n## Overview\n직무를 고르면 AI가 면접 질문을 하고, 답변을 녹음하면 피드백 리포트를 주는 서비스입니다. 백엔드(Spring Boot)와 AI 서버(FastAPI)를 나눠 5명이 6주 동안 만들었습니다.\n\n## My role\n- 백엔드 API 설계 · 구현 (Java, Spring Boot, MyBatis)\n- AI 서버 연동 담당\n\n## Problem\n피드백 리포트 생성에 30초 이상 걸려서, 처음에는 HTTP 요청이 그대로 기다리다 timeout이 자주 났습니다. 시연 리허설 한 번에 timeout이 12건 발생했습니다.\n\n## Solution\n- 요청을 받으면 바로 job ID를 돌려주고, AI 서버 호출은 비동기로 처리하도록 바꿨습니다.\n- 프론트엔드는 상태 조회 API를 2초마다 호출해 진행 단계를 보여 줍니다.\n- AI 서버가 준비되기 전에도 개발이 멈추지 않도록, 응답 형식(contract)을 먼저 정하고 mock 응답을 돌려주는 클라이언트를 만들었습니다.\n\n## Result\n- 이후 리허설과 최종 시연에서 timeout 0건\n- 프론트엔드 · AI 팀원이 백엔드를 기다리지 않고 병렬로 개발",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 211,
+        "title": "영어 단어장 API",
+        "periodText": "2026.04 (2주)",
+        "teamSize": 1,
+        "techStack": [
+          "Java",
+          "Spring Boot",
+          "MyBatis"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "개인 미니 프로젝트.",
+        "readme": "# Vocabulary API\n\n단어 등록, 오늘 복습할 단어 조회, 외운 단어 표시 기능을 제공하는 API입니다. 복습 주기는 간격 반복 방식(1일 · 3일 · 7일)으로 계산했습니다.\n\n- Java, Spring Boot, MyBatis",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "여러 서버와 여러 사람 사이의 communication을 매끄럽게 만드는 백엔드 개발자가 되고 싶습니다. 외국계 회사에서 고객지원으로 일하며 장애 문의를 개발팀에 전달하는 티켓을 쓰다 보니, 문제를 정확한 언어로 정리하는 일이 얼마나 중요한지 알게 됐고, 직접 그 문제를 고치는 쪽에 서고 싶어 개발을 시작했습니다.\n\n인터뷰온 프로젝트에서 AI 서버 연동을 owner로 맡았습니다. 피드백 생성이 30초 이상 걸려 timeout이 자주 나자, 요청은 바로 job ID로 응답하고 AI 호출은 비동기로 처리하는 구조로 바꿨고, 최종 시연에서 timeout 0건을 만들었습니다. 또 응답 contract를 먼저 정하고 mock 응답을 제공해 팀원들이 백엔드를 기다리지 않고 개발할 수 있게 했습니다. 팀 API 문서는 영어로도 정리해, 해외에서 일하는 현직자 멘토에게 리뷰를 받았습니다.\n\n입사 후에는 글로벌 사용자를 대상으로 하는 서비스에서, 시스템과 사람 모두를 잇는 개발자로 ownership을 갖고 일하겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 19,
+    "basic": {
+      "name": "유하람",
+      "email": "student19@example.com",
+      "githubUrl": "github.com/ieum-seed-19",
+      "desiredJob": "풀스택 개발",
+      "preferredRegion": "인천",
+      "militaryStatus": "EXEMPT",
+      "completedOn": "2026-07-31"
+    },
+    "course": {
+      "courseId": 2,
+      "name": "청년취업사관학교 클라우드 풀스택 과정",
+      "cohort": "3기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-02-02",
+      "endedOn": "2026-07-31"
+    },
+    "education": [
+      {
+        "itemId": 1191,
+        "source": "REGISTERED",
+        "schoolName": "○○고등학교",
+        "major": null,
+        "degree": "HIGH_SCHOOL",
+        "status": "GRADUATED",
+        "graduatedOn": "2019-02-08"
+      }
+    ],
+    "careers": [
+      {
+        "itemId": 2191,
+        "source": "REGISTERED",
+        "companyName": "○○카페",
+        "position": "매니저",
+        "startedOn": "2022-03-02",
+        "endedOn": "2025-01-31",
+        "description": "매장 운영, 예약 관리."
+      }
+    ],
+    "certificates": [],
+    "skills": [
+      "React",
+      "Node.js"
+    ],
+    "projects": [
+      {
+        "itemId": 121,
+        "title": "가게 예약 웹",
+        "periodText": "2026.06 (2주)",
+        "teamSize": 1,
+        "techStack": [
+          "React",
+          "Node.js"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "혼자 만듦",
+        "readme": "카페 예약 받는 웹이에요. React랑 Node.js로 만들었어요.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "카페에서 일하면서 예약 관리가 너무 불편해서 개발을 시작했어요.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  },
+  {
+    "studentId": 20,
+    "basic": {
+      "name": "장우진",
+      "email": "student20@example.com",
+      "githubUrl": "github.com/ieum-seed-20",
+      "desiredJob": "AI 서비스 개발",
+      "preferredRegion": "서울",
+      "militaryStatus": "EXEMPT",
+      "completedOn": "2026-08-29"
+    },
+    "course": {
+      "courseId": 1,
+      "name": "청년취업사관학교 AI Agent 과정",
+      "cohort": "4기",
+      "campus": "동대문캠퍼스",
+      "startedOn": "2026-03-02",
+      "endedOn": "2026-08-29"
+    },
+    "education": [
+      {
+        "itemId": 1201,
+        "source": "REGISTERED",
+        "schoolName": "○○대학교",
+        "major": "컴퓨터공학과",
+        "degree": "BACHELOR",
+        "status": "GRADUATED",
+        "graduatedOn": "2025-02-21"
+      }
+    ],
+    "careers": [],
+    "certificates": [
+      {
+        "itemId": 3201,
+        "source": "REGISTERED",
+        "name": "정보처리기사",
+        "issuer": "한국산업인력공단",
+        "acquiredOn": "2025-09-05"
+      }
+    ],
+    "skills": [
+      "Python",
+      "FastAPI",
+      "LangGraph",
+      "Qdrant",
+      "Docker"
+    ],
+    "projects": [
+      {
+        "itemId": 122,
+        "title": "찾아줘 · 사내 문서 검색 에이전트",
+        "periodText": "2026.07 – 2026.08 (6주)",
+        "teamSize": 4,
+        "techStack": [
+          "Python",
+          "FastAPI",
+          "Qdrant",
+          "Docker"
+        ],
+        "portfolioFileName": "찾아줘_포트폴리오.pdf",
+        "includeInApply": true,
+        "roleNote": "RAG 파이프라인과 답변 검증 단계를 리드했습니다.\n검증 단계 PoC를 먼저 만들어 팀 설득 후 본 개발에 반영했습니다.\nQdrant 색인 · Docker Compose 개발 환경 구성 담당.",
+        "readme": "# 찾아줘 · 사내 문서 검색 에이전트\n\n## 🎯 What\n사내 규정 · 매뉴얼 문서를 검색해 답하고, 답변 문장마다 출처 문서를 붙여 주는 RAG 에이전트입니다. 최종 프로젝트, 4명, 6주.\n\n## 🔥 Key Result\n- 답변 근거 일치율 93% (답변 문장의 출처가 실제로 그 내용을 담고 있는 비율, 평가 질문 기준)\n- 검증 단계 도입 전보다 근거 없는 문장이 크게 줄어 사용자 신뢰도 향상\n\n## 🛠 How\n- 문서 청킹 → 임베딩 → Qdrant 색인\n- FastAPI 질의 API\n- 생성된 답변을 문장 단위로 나누고, 각 문장이 출처 청크에 실제로 있는 내용인지 LLM으로 한 번 더 검사하는 검증 단계 추가\n- 검증을 통과하지 못한 문장은 답변에서 빼고 '확인 불가'로 표시\n- Docker Compose로 API · Qdrant · 평가 스크립트를 한 번에 띄우는 개발 환경\n\n## 💡 Why it matters\n에이전트가 틀린 답을 자신 있게 말하는 것이 가장 위험하다고 판단했고, 검증 단계 PoC로 효과를 먼저 보여 준 뒤 본 개발에 넣었습니다.\n\n## 🙋 My role\n- RAG 파이프라인 · 검증 단계 리드\n- Qdrant 색인, Docker Compose 개발 환경 구성",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 212,
+        "title": "LangGraph 일정 비서",
+        "periodText": "2026.05 (3주)",
+        "teamSize": 1,
+        "techStack": [
+          "Python",
+          "LangGraph"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": true,
+        "roleNote": "개인 프로젝트.",
+        "readme": "# 일정 비서 에이전트\n\n## 🎯 What\n자연어로 일정을 말하면 일정 추가 · 조회 · 충돌 확인을 해 주는 에이전트.\n\n## 🛠 How\n- LangGraph로 의도 분류 → 도구 호출 → 결과 확인 흐름을 그래프로 구성\n- 일정이 겹치면 사용자에게 다시 확인하는 분기 추가\n- Python으로 구현",
+        "source": "REGISTERED"
+      },
+      {
+        "itemId": 213,
+        "title": "게시판 API",
+        "periodText": "2026.03 (1주)",
+        "teamSize": 3,
+        "techStack": [
+          "Python",
+          "FastAPI"
+        ],
+        "portfolioFileName": null,
+        "includeInApply": false,
+        "roleNote": "교육과정 미니 프로젝트. 댓글 API 담당.",
+        "readme": "# 게시판 API\n\n교육과정 첫 미니 프로젝트. FastAPI로 게시글 · 댓글 CRUD를 만들었습니다. 댓글 API를 맡았습니다.",
+        "source": "REGISTERED"
+      }
+    ],
+    "coverLetter": {
+      "content": "에이전트가 틀린 답을 자신 있게 말하는 문제, 저는 이 문제를 구조로 풀어 본 개발자입니다.\n\n찾아줘 프로젝트에서 RAG 파이프라인과 답변 검증 단계를 리드했습니다. 답변을 문장 단위로 나누고 각 문장이 출처 문서에 실제로 있는 내용인지 한 번 더 검사하는 단계를 설계했고, 근거 일치율 93%라는 결과를 냈습니다. 팀을 설득하기 위해 검증 단계 PoC를 먼저 만들어 효과를 보여 줬고, 그 결과가 본 개발에 그대로 반영됐습니다. 개인적으로는 LangGraph로 일정 비서 에이전트를 만들며 도구 호출 흐름을 설계하는 경험도 쌓았습니다. 교육과정 중 참가한 교내 AI 해커톤에서는 이 검증 아이디어로 대상을 받았습니다.\n\n입사 후에는 믿을 수 있는 AI 에이전트를 빠르게 PoC하고 서비스로 완성하는 개발자로 바로 기여하겠습니다.",
+      "updatedAt": "2026-10-29T09:00:00+09:00"
+    }
+  }
+]
