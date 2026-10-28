@@ -21,6 +21,10 @@
   --color-surface-warm: #fef7ee;
   --color-page: #e7eae8;
 
+  /* R0 역할 선택 영역 배경 */
+  --color-entry-surface: #f8faf6;
+  --color-entry-heading: #365a45;
+
   /* 경고 · 위험 */
   --color-warn-bg: #fef3c7;
   --color-warn-ink: #78350f;
@@ -29,4 +33,9 @@
 
   /* 코디네이터 화면 배경 */
   --color-coord-bg: #f1f5f9;
+}
+
+@theme inline {
+  /* R0 제목: page.tsx에서 로드한 고운돋움 */
+  --font-entry-heading: var(--font-gowun-dodum), var(--font-sans);
 }
