@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from matching.models import IndexJob
 
-PREPROCESS_VERSION = "v1"
+PREPROCESS_VERSION = "v2"  # v2: 경력 필수 표기 확대 (경력 : N년 · N년차 · N년↑ · 범위 N~M년 등)
 
 # 매칭용 텍스트 글자 수 상한. 실험은 리랭커(bge-reranker-v2-m3) 토크나이저로 400토큰에서 잘랐지만 토크나이저가 requirements 에 없어 글자 수로 자른다.
 # 근거: 실험 데이터(jobs_clean.json 138건)에서 400토큰에서 잘린 24건의 잘린 위치가 최소 739자 · 중앙값 831자.
@@ -46,7 +46,16 @@ TECH_UNIFY = [
 REGION_UNIFY = {"경기도": "경기", "서울특별시": "서울", "인천광역시": "인천"}
 
 # 경력 필수: 본문 "경력 N년 이상" · "N년 이상 (실무) 경력". 바로 뒤에 '우대' 가 오면 필수가 아니다
-_CAREER_RE = re.compile(r"경력\s*\d+\s*년\s*이상|\d+\s*년\s*이상\s*(의\s*)?(실무\s*)?경력")
+# "경력" 뒤에는 ":" "：" "-" "(" · "사항" · "최소" 가 올 수 있다. "N년차 이상" · "N년↑" 도 같은 뜻.
+# "N년 이상" 과 "경력" 사이에는 단어 1~2개까지 (예: "3년 이상 백엔드 개발 경력")
+_CAREER_SEP = r"\s*(?:사항)?\s*[:：\-(]?\s*"
+_YEARS_UP = r"\d+\s*년\s*(?:차\s*)?(?:이상|↑)"
+_CAREER_RE = re.compile(
+    rf"경력{_CAREER_SEP}(?:최소\s*\d+\s*년|{_YEARS_UP})"
+    rf"|{_YEARS_UP}\s*(?:의\s*)?(?:\S+[ \t]+){{0,2}}경력"
+)
+# 범위 "경력 N~M년": N 이 1 이상이면 필수, 0 이면 신입도 되므로 필수 아님
+_CAREER_RANGE = re.compile(rf"경력{_CAREER_SEP}(\d+)\s*[~\-]\s*\d+\s*년")
 _PREFER_AFTER = re.compile(r"^.{0,12}우대")
 # 본문에 신입 지원 문구가 있으면 본문의 "N년 이상" 만으로는 경력 필수로 보지 않는다
 _NEWCOMER = re.compile(r"신입\s*(지원|가능|및\s*경력|/\s*경력|·\s*경력|,\s*경력)|신입\s*포함")
@@ -96,7 +105,8 @@ def is_office_only(competency: str) -> bool:
 def career_required(career: str | None, description: str) -> bool:
     if (career or "").strip() == "경력":
         return True
-    hits = [m for m in _CAREER_RE.finditer(description) if not _PREFER_AFTER.match(description[m.end():])]
+    matches = [*_CAREER_RE.finditer(description), *(m for m in _CAREER_RANGE.finditer(description) if int(m.group(1)) >= 1)]
+    hits = [m for m in matches if not _PREFER_AFTER.match(description[m.end():])]
     return bool(hits) and not _NEWCOMER.search(description)
 
 
