@@ -9,6 +9,7 @@ import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
 import SectionDetailSheet, { type DetailSection } from "@/components/resume/SectionDetailSheet";
 import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
+import { studentHref } from "@/components/student/navigation";
 import { SECTION_FIELDS, isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
@@ -23,7 +24,7 @@ const primaryButton =
 const secondaryButton =
   "flex min-h-[52px] flex-1 items-center justify-center rounded-xl border border-line bg-surface text-[15px] font-bold text-ink";
 
-export default function ResumeDraft({ applicationId }: { applicationId: number }) {
+export default function ResumeDraft({ applicationId, studentId }: { applicationId: number; studentId: number }) {
   const router = useRouter();
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   // notFound: 404 APPLICATION_NOT_FOUND — 다시 불러와도 같으므로 "다시 시도" 대신 지원 현황으로 보낸다
@@ -74,7 +75,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
         message={loadError.message}
         action={
           loadError.notFound ? (
-            <Link href="/student/applications" className="font-bold text-primary">
+            <Link href={studentHref("/student/applications", studentId)} className="font-bold text-primary">
               지원 현황으로 가기
             </Link>
           ) : (
@@ -89,7 +90,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
 
   const { status, job, document } = detail;
   const progressLink = (
-    <Link href={`/student/applications/${applicationId}/progress`} className="font-bold text-primary">
+    <Link href={studentHref(`/student/applications/${applicationId}/progress`, studentId)} className="font-bold text-primary">
       진행 화면으로 가기
     </Link>
   );
@@ -113,7 +114,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
     setSubmitError(null);
     try {
       await submitApplication(applicationId);
-      router.push("/student/applications");
+      router.push(studentHref("/student/applications", studentId));
     } catch (e: unknown) {
       // 서버 message 는 화면에 그대로 띄워도 되는 문장 (docs/API.md 1장)
       setSubmitError(e instanceof ApiError ? e.message : "검토 요청을 보내지 못했어요.");
@@ -225,7 +226,7 @@ export default function ResumeDraft({ applicationId }: { applicationId: number }
           </>
         )}
 
-        {coverLetter && <CoverLetterCard applicationId={applicationId} section={coverLetter} />}
+        {coverLetter && <CoverLetterCard applicationId={applicationId} studentId={studentId} section={coverLetter} />}
       </div>
 
       <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1 border-t border-line bg-surface px-5 pb-3 pt-2.5">
@@ -306,7 +307,15 @@ function CenterNotice({ message, action }: { message: string; action?: React.Rea
   );
 }
 
-function CoverLetterCard({ applicationId, section }: { applicationId: number; section: CoverLetterSection }) {
+function CoverLetterCard({
+  applicationId,
+  studentId,
+  section,
+}: {
+  applicationId: number;
+  studentId: number;
+  section: CoverLetterSection;
+}) {
   const aiCount = section.sentences.filter((s) => s.source === "AI").length;
   const userCount = section.sentences.length - aiCount;
 
@@ -314,7 +323,7 @@ function CoverLetterCard({ applicationId, section }: { applicationId: number; se
     <>
       {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 */}
       <Link
-        href={`/student/applications/${applicationId}/cover-letter`}
+        href={studentHref(`/student/applications/${applicationId}/cover-letter`, studentId)}
         className="mt-4 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="flex flex-wrap items-center gap-1.5">
