@@ -58,7 +58,7 @@ _CAREER_RE = re.compile(
 _CAREER_RANGE = re.compile(rf"경력{_CAREER_SEP}(\d+)\s*[~\-]\s*\d+\s*년")
 _PREFER_AFTER = re.compile(r"^.{0,12}우대")
 # 본문에 신입 지원 문구가 있으면 본문의 "N년 이상" 만으로는 경력 필수로 보지 않는다
-_NEWCOMER = re.compile(r"신입\s*(지원|가능|및\s*경력|/\s*경력|·\s*경력|,\s*경력)|신입\s*포함")
+_NEWCOMER = re.compile(r"신입\s*(지원|가능|및\s*경력|/\s*경력|·\s*경력|,\s*경력|또는|혹은)|신입\s*포함")
 
 
 @dataclass(frozen=True)

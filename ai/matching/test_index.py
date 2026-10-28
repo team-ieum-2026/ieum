@@ -426,7 +426,12 @@ class PreprocessTest(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertTrue(career_required("관계없음", f"[내용] {text}"))
         not_caught = ["경력 3년 이상 우대", "3년 이상 경력자 우대", "경력 0~2년", "신입·경력 모두 가능",
-                      "신입·경력 모두 가능, 경력 3년 이상"]
+                      "신입·경력 모두 가능, 경력 3년 이상",
+                      # 실제 공고 881번 근무조건 문구
+                      "경력조건 :  신입 또는  2년차 이상 경력자채용",
+                      # 신입도 지원 가능한 표기 + 경력 연수
+                      "신입 및 경력 지원, 경력 3년 이상", "신입/경력 지원, 경력 3년 이상",
+                      "신입 혹은 경력 3년 이상", "신입 또는 경력 3년 이상"]
         for text in not_caught:
             with self.subTest(text=text):
                 self.assertFalse(career_required("관계없음", f"[내용] {text}"))
