@@ -3,14 +3,16 @@
     "companyInfo": {
       "companyInfoId": null,
       "companyName": "(주)온다랩",
-      "status": "PARTIAL",
-      "talentKeywords": ["끝까지 책임지는 사람", "함께 성장"],
-      "coreValues": ["책임", "협업"],
-      "recentIssue": null,
+      "status": "FOUND",
+      "talentKeywords": ["끝까지 책임지는 사람", "사용자 관점"],
+      "coreValues": ["책임감", "빠른 실행"],
+      "recentIssue": "AI 상담 서비스 정식 출시 (가상)",
       "sources": [
-        { "item": "talentKeywords", "url": "https://example.com/ondalab/careers", "collectedAt": "2026-10-24T08:00:00+09:00" },
-        { "item": "coreValues", "url": "https://example.com/ondalab/careers", "collectedAt": "2026-10-24T08:00:00+09:00" }
-      ]
+        { "item": "talentKeywords", "url": "https://onda-lab.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://onda-lab.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/onda-lab-ai-launch", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
     }
   }
 }
