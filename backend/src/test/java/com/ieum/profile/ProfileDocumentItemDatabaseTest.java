@@ -7,17 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ieum.ai.AiClient;
-import com.ieum.ai.MockAiClient;
 import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
 import java.time.LocalDate;
@@ -32,7 +27,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -50,7 +44,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
         "spring.config.import=optional:file:.env[.properties],optional:file:backend/.env[.properties]",
         "spring.sql.init.mode=never",
-        "app.ai.mock=true"
+        "app.ai.mock=true",
+        "app.seoul.sync-cron=-",
+        "app.status.recalculate-cron=-"
 })
 class ProfileDocumentItemDatabaseTest {
 
@@ -112,24 +108,21 @@ class ProfileDocumentItemDatabaseTest {
             "CAREER,ADD", "CAREER,UPDATE", "CAREER,DELETE",
             "CERTIFICATES,ADD", "CERTIFICATES,UPDATE", "CERTIFICATES,DELETE"
     })
-    void aiFailureMarksEachDocumentMutationRollbackOnly(String section, String operation) {
-        when(aiClient.extractProfile(any(JsonNode.class)))
-                .thenThrow(new BusinessException(ErrorCode.AI_SERVER_ERROR));
+    void documentMutationsDoNotCallAiBeforeCommit(String section, String operation) {
         withRollback(status -> {
             Long itemId = "ADD".equals(operation) ? null : recordFixture(section, STUDENT_ID);
             String changedName = marker();
             List<Map<String, Object>> competencyBefore = competencyRows();
             assertFalse(status.isRollbackOnly());
 
-            BusinessException failure = assertThrows(BusinessException.class, () -> {
+            {
                 if ("ADD".equals(operation)) profiles.addItem(STUDENT_ID, section, validItem(section, changedName));
                 else if ("UPDATE".equals(operation)) profiles.updateItem(STUDENT_ID, section, itemId,
                         json.createObjectNode().put(nameField(section), changedName));
                 else profiles.deleteItem(STUDENT_ID, section, itemId);
-            });
+            };
 
-            assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
-            assertTrue(status.isRollbackOnly(), "실제 서비스 프록시가 호출자 트랜잭션을 롤백 대상으로 표시해야 한다");
+            assertFalse(status.isRollbackOnly(), "Source saves must complete without invoking AI before commit");
             if ("ADD".equals(operation)) {
                 assertEquals(1L, jdbc.queryForObject("SELECT COUNT(*) FROM " + table(section)
                                 + " WHERE student_id = ? AND " + nameColumn(section) + " = ?",
@@ -143,7 +136,7 @@ class ProfileDocumentItemDatabaseTest {
             assertTrue(competencyBefore.equals(competencyRows()),
                     "실패한 추출 결과로 기존 역량·해시·추출 시각을 변경하면 안 된다");
         });
-        verify(aiClient).extractProfile(any(JsonNode.class));
+        verifyNoInteractions(aiClient);
     }
 
     @ParameterizedTest
@@ -167,7 +160,7 @@ class ProfileDocumentItemDatabaseTest {
     @ParameterizedTest
     @ValueSource(strings = {"EDUCATION", "CAREER", "CERTIFICATES"})
     void documentPatchReadsLatestDatabaseValueInsteadOfCachedItem(String section) {
-        JsonNode expectedCompetency = useMockAi();
+        JsonNode expectedCompetency = existingCompetency();
         String latestOptionalValue = "모의 최신 보관값";
         withRollback(status -> {
             Long itemId = recordFixture(section, STUDENT_ID);
@@ -183,17 +176,13 @@ class ProfileDocumentItemDatabaseTest {
             assertEquals(latestOptionalValue, recordRow(section, STUDENT_ID, itemId).get(optionalColumn(section)),
                     "누락한 필드는 캐시의 예전 값 대신 현재 DB 값으로 유지해야 한다");
             assertStoredCompetency(expectedCompetency);
-            ArgumentCaptor<JsonNode> input = ArgumentCaptor.forClass(JsonNode.class);
-            verify(aiClient).extractProfile(input.capture());
-            JsonNode extractedItem = findInput(input.getValue(), section, itemId);
-            assertNotNull(extractedItem);
-            assertEquals(latestOptionalValue, extractedItem.get(optionalField(section)).textValue());
+            verifyNoInteractions(aiClient);
         });
     }
 
     @Test
-    void documentProjectDeleteRemovesOnlyItsOwnProjectAndRefreshesCompetency() {
-        JsonNode expectedCompetency = useMockAi();
+    void documentProjectDeleteRemovesOnlyItsOwnProjectAndKeepsPreviousCompetencyBeforeCommit() {
+        JsonNode expectedCompetency = existingCompetency();
         withRollback(status -> {
             ProfileData.Project project = projectFixture();
             List<Map<String, Object>> otherProjects = projectRows(OTHER_STUDENT_ID);
@@ -201,16 +190,13 @@ class ProfileDocumentItemDatabaseTest {
             assertNull(mapper.findProjectItem(STUDENT_ID, project.getItemId()));
             assertTrue(otherProjects.equals(projectRows(OTHER_STUDENT_ID)), "다른 수료생의 프로젝트는 보존해야 한다");
             assertStoredCompetency(expectedCompetency);
-            ArgumentCaptor<JsonNode> input = ArgumentCaptor.forClass(JsonNode.class);
-            verify(aiClient).extractProfile(input.capture());
-            assertNull(findInput(input.getValue(), "PROJECTS", project.getItemId()),
-                    "삭제한 프로젝트가 재추출 입력에 남으면 안 된다");
+            verifyNoInteractions(aiClient);
         });
     }
 
     @Test
     void documentPortfolioDeleteOnlyExcludesExistingAttachmentAndPreservesOriginals() {
-        JsonNode expectedCompetency = useMockAi();
+        JsonNode expectedCompetency = existingCompetency();
         withRollback(status -> {
             ProfileData.Project original = projectFixture();
             profiles.deleteItem(STUDENT_ID, "PORTFOLIO", original.getItemId());
@@ -227,22 +213,19 @@ class ProfileDocumentItemDatabaseTest {
             assertEquals(original.getRoleNote(), changed.getRoleNote());
             assertStoredCompetency(expectedCompetency);
         });
-        verify(aiClient).extractProfile(any(JsonNode.class));
+        verifyNoInteractions(aiClient);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"PROJECTS", "PORTFOLIO"})
-    void aiFailureRollsBackDocumentProjectAndPortfolioDeletion(String section) {
-        when(aiClient.extractProfile(any(JsonNode.class)))
-                .thenThrow(new BusinessException(ErrorCode.AI_SERVER_ERROR));
+    void savesDocumentProjectAndPortfolioDeletionWithoutCallingAiBeforeCommit(String section) {
         withRollback(status -> {
             ProfileData.Project original = projectFixture();
             List<Map<String, Object>> competencyBefore = competencyRows();
             assertFalse(status.isRollbackOnly());
-            BusinessException failure = assertThrows(BusinessException.class,
-                    () -> profiles.deleteItem(STUDENT_ID, section, original.getItemId()));
-            assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
-            assertTrue(status.isRollbackOnly());
+            profiles.deleteItem(STUDENT_ID, section, original.getItemId());
+
+            assertFalse(status.isRollbackOnly(), "Source saves must complete without invoking AI before commit");
             ProfileData.Project changed = mapper.findProjectItem(STUDENT_ID, original.getItemId());
             if ("PROJECTS".equals(section)) assertNull(changed, "프로젝트 DELETE 뒤 AI가 실패해야 한다");
             else {
@@ -254,11 +237,11 @@ class ProfileDocumentItemDatabaseTest {
             }
             assertTrue(competencyBefore.equals(competencyRows()));
         });
-        verify(aiClient).extractProfile(any(JsonNode.class));
+        verifyNoInteractions(aiClient);
     }
 
     private void assertDocumentRecordCrud(String section) {
-        JsonNode expectedCompetency = useMockAi();
+        JsonNode expectedCompetency = existingCompetency();
         withRollback(status -> {
             String originalName = marker();
             ObjectNode item = validItem(section, originalName).put("studentId", OTHER_STUDENT_ID)
@@ -283,7 +266,7 @@ class ProfileDocumentItemDatabaseTest {
             assertEquals(optionalBefore, changed.get(optionalColumn(section)));
             assertEquals("USER", changed.get("source"));
             assertStoredCompetency(expectedCompetency);
-            assertFalse(addedHash.equals(sourceHash()), "이름 변경이 재추출 원문 해시에 반영되어야 한다");
+            assertEquals(addedHash, sourceHash(), "Extraction must remain unchanged before the source transaction commits");
 
             profiles.updateItem(STUDENT_ID, section, itemId,
                     json.createObjectNode().putNull(optionalField(section)));
@@ -296,11 +279,9 @@ class ProfileDocumentItemDatabaseTest {
             profiles.deleteItem(STUDENT_ID, section, itemId);
             assertTrue(recordRows(section, STUDENT_ID, itemId).isEmpty());
             assertStoredCompetency(expectedCompetency);
-            assertFalse(clearedHash.equals(sourceHash()), "항목 삭제도 원문 해시에 반영되어야 한다");
+            assertEquals(clearedHash, sourceHash(), "Extraction must remain unchanged before the source transaction commits");
         });
-        ArgumentCaptor<JsonNode> inputs = ArgumentCaptor.forClass(JsonNode.class);
-        verify(aiClient, times(4)).extractProfile(inputs.capture());
-        assertEquals(4, inputs.getAllValues().size());
+        verifyNoInteractions(aiClient);
     }
 
     private void withRollback(Consumer<TransactionStatus> test) {
@@ -332,17 +313,14 @@ class ProfileDocumentItemDatabaseTest {
         return result;
     }
 
-    private JsonNode useMockAi() {
-        MockAiClient fixture = new MockAiClient(json, null);
-        when(aiClient.extractProfile(any(JsonNode.class)))
-                .thenAnswer(invocation -> fixture.extractProfile(invocation.getArgument(0)));
-        return fixture.extractProfile(json.createObjectNode()).get("profile");
+    private JsonNode existingCompetency() {
+        return mapper.findStudent(STUDENT_ID).getCompetencyProfile();
     }
 
     private void assertStoredCompetency(JsonNode expected) {
-        assertTrue(expected.equals(mapper.findCurrentStudent(STUDENT_ID).getCompetencyProfile()),
-                "공개 서비스가 재추출한 역량 JSON을 같은 트랜잭션에서 저장해야 한다");
-        assertTrue(sourceHash().matches("[0-9a-f]{64}"));
+        assertEquals(expected, mapper.findCurrentStudent(STUDENT_ID).getCompetencyProfile(),
+                "Extraction must remain unchanged before the source transaction commits");
+        verifyNoInteractions(aiClient);
     }
 
     private String sourceHash() {

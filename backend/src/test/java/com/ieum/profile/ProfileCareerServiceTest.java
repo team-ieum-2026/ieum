@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -36,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileCareerServiceTest {
@@ -50,15 +50,18 @@ class ProfileCareerServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void addsAllCareerFieldsAndReextractsStoredCareerBeforeReturningGeneratedId() {
+    void addsAllCareerFieldsAndQueuesRefreshBeforeReturningGeneratedId() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         doAnswer(invocation -> {
             ProfileData.Career career = invocation.getArgument(0);
@@ -66,20 +69,16 @@ class ProfileCareerServiceTest {
             return 1;
         }).when(mapper).insertCareer(any(ProfileData.Career.class));
         StudentProfileResponse updated = profile(true);
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         StudentProfileResponse result = service.addItem(7L, new ProfileItemRequest("CAREER", validItem()));
 
         assertSame(updated, result);
         ArgumentCaptor<ProfileData.Career> saved = ArgumentCaptor.forClass(ProfileData.Career.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).insertCareer(saved.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         assertAll(
                 () -> assertEquals(7L, saved.getValue().getStudentId()),
@@ -89,8 +88,7 @@ class ProfileCareerServiceTest {
                 () -> assertEquals(LocalDate.of(2023, 1, 15), saved.getValue().getStartedOn()),
                 () -> assertEquals(LocalDate.of(2024, 6, 30), saved.getValue().getEndedOn()),
                 () -> assertEquals("Mock Description", saved.getValue().getDescription()),
-                () -> assertEquals(77L, result.careers().get(0).itemId()),
-                () -> assertEquals("Mock Company", sources.getValue().get("careers").get(0).get("companyName").asText()));
+                () -> assertEquals(77L, result.careers().get(0).itemId()));
         verify(mapper, never()).insertCertificate(any(ProfileData.Certificate.class));
         verify(mapper, never()).insertEducation(any(ProfileData.Education.class));
     }
@@ -99,7 +97,7 @@ class ProfileCareerServiceTest {
     void patchesRegisteredCareerPreservingOmissionsAndClearingNullToMarkOngoingEmployment() {
         prepareExisting();
         when(mapper.updateCareer(any(ProfileData.Career.class))).thenReturn(1);
-        prepareExtraction(profile(true));
+        prepareSavedProfile(profile(true));
         JsonNode item = JSON.createObjectNode().putNull("position").putNull("endedOn");
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest("CAREER", item));
@@ -128,29 +126,24 @@ class ProfileCareerServiceTest {
 
         assertEquals(ErrorCode.INVALID_REQUEST, failure.getErrorCode());
         verify(mapper, never()).updateCareer(any(ProfileData.Career.class));
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void deletesRegisteredCareerBeforeExtractingWithoutDeletedCareer() {
+    void deletesRegisteredCareerAndQueuesRefreshBeforeReturningSavedProfile() {
         prepareExisting();
         when(mapper.deleteCareer(7L, 77L)).thenReturn(1);
         StudentProfileResponse updated = profile(false);
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         assertSame(updated, service.deleteItem(7L, 77L, "CAREER"));
 
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findCareerItem(7L, 77L);
         order.verify(mapper).deleteCareer(7L, 77L);
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
-        order.verify(profiles).getProfile(7L);
-        assertEquals(0, sources.getValue().get("careers").size());
         verify(mapper, never()).deleteCertificate(any(), any());
         verify(mapper, never()).deleteEducation(any(), any());
     }
@@ -166,7 +159,7 @@ class ProfileCareerServiceTest {
 
         verify(mapper, never()).updateCareer(any(ProfileData.Career.class));
         verify(mapper, never()).deleteCareer(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -178,24 +171,22 @@ class ProfileCareerServiceTest {
 
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).insertCareer(any(ProfileData.Career.class));
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void aiFailureAfterCareerUpdateDoesNotSaveCompetencyOrReturnSuccess() {
+    void careerUpdatePublishesRefreshWithoutCallingAi() {
         prepareExisting();
         when(mapper.updateCareer(any(ProfileData.Career.class))).thenReturn(1);
         when(profiles.getProfile(7L)).thenReturn(profile(true));
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        BusinessException expected = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(ai.extractProfile(any(JsonNode.class))).thenThrow(expected);
 
-        BusinessException failure = assertThrows(BusinessException.class, () -> service.updateItem(
-                7L, 77L, new ProfileItemPatchRequest("CAREER", JSON.createObjectNode().put("position", "Mock Updated Position"))));
+        service.updateItem(
+                7L, 77L, new ProfileItemPatchRequest("CAREER", JSON.createObjectNode().put("position", "Mock Updated Position")));
 
-        assertSame(expected, failure);
         verify(mapper).updateCareer(any(ProfileData.Career.class));
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(ai);
     }
 
     private void prepareExisting() {
@@ -205,12 +196,8 @@ class ProfileCareerServiceTest {
                 LocalDate.of(2023, 1, 15), LocalDate.of(2024, 6, 30), "Mock Description"));
     }
 
-    private JsonNode prepareExtraction(StudentProfileResponse updated) {
+    private void prepareSavedProfile(StudentProfileResponse updated) {
         when(profiles.getProfile(7L)).thenReturn(updated);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        JsonNode competency = JSON.createObjectNode();
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
     }
 
     private static Stream<JsonNode> datePatchesConflictingWithStoredCareer() {

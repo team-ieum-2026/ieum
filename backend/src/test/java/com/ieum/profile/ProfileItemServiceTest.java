@@ -3,13 +3,10 @@ package com.ieum.profile;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -22,25 +19,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ieum.ai.AiClient;
 import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileItemServiceTest {
@@ -59,45 +52,36 @@ class ProfileItemServiceTest {
     @Mock
     private AiClient aiClient;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profileService, aiClient, JSON);
+        service = new ProfileItemService(mapper, profileService, events);
     }
 
     @Test
-    void extractsFromUpdatedCertificateAndProjectOriginalsBeforeReturningRefreshedProfile() {
+    void savesCertificateAndQueuesRefreshBeforeReturningSavedProfile() {
         ProfileItemRequest request = request();
-        JsonNode extracted = JSON.createObjectNode()
-                .set("certificates", JSON.createArrayNode().add("모의 자격증"));
         StudentProfileResponse raw = profile(null, JSON.createObjectNode());
-        StudentProfileResponse refreshed = profile(
-                OffsetDateTime.of(2026, 10, 26, 14, 0, 0, 0, ZoneOffset.ofHours(9)), extracted);
         when(mapper.lockStudent(7L)).thenReturn(7L);
         doAnswer(invocation -> {
             ProfileData.Certificate certificate = invocation.getArgument(0);
             certificate.setItemId(31L);
             return 1;
         }).when(mapper).insertCertificate(any(ProfileData.Certificate.class));
-        when(profileService.getProfile(7L)).thenReturn(raw, refreshed);
-        when(mapper.findProjects(7L)).thenReturn(List.of(project()));
-        when(aiClient.extractProfile(any(JsonNode.class)))
-                .thenReturn(JSON.createObjectNode().set("profile", extracted));
+        when(profileService.getProfile(7L)).thenReturn(raw);
 
         StudentProfileResponse result = service.addItem(7L, request);
 
-        assertSame(refreshed, result);
+        assertSame(raw, result);
         ArgumentCaptor<ProfileData.Certificate> certificateCaptor = ArgumentCaptor.forClass(ProfileData.Certificate.class);
-        ArgumentCaptor<JsonNode> inputCaptor = ArgumentCaptor.forClass(JsonNode.class);
-        ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        InOrder order = inOrder(mapper, profileService, aiClient);
+        InOrder order = inOrder(mapper, profileService, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).insertCertificate(certificateCaptor.capture());
-        order.verify(profileService).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(aiClient).extractProfile(inputCaptor.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(extracted), hashCaptor.capture());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profileService).getProfile(7L);
 
         ProfileData.Certificate inserted = certificateCaptor.getValue();
@@ -106,18 +90,7 @@ class ProfileItemServiceTest {
                 () -> assertEquals(31L, inserted.getItemId()),
                 () -> assertEquals(request.item().get("name").asText(), inserted.getName()),
                 () -> assertEquals(request.item().get("issuer").asText(), inserted.getIssuer()),
-                () -> assertEquals(LocalDate.parse(request.item().get("acquiredOn").asText()), inserted.getAcquiredOn()),
-                () -> assertTrue(hashCaptor.getValue().matches("[0-9a-f]{64}")));
-        JsonNode input = inputCaptor.getValue();
-        assertAll(
-                () -> assertEquals(7L, input.get("studentId").asLong()),
-                () -> assertFalse(input.has("competencyProfile")),
-                () -> assertFalse(input.has("profileUpdatedAt")),
-                () -> assertEquals("모의 자격증", input.get("certificates").get(0).get("name").asText()),
-                () -> assertEquals("USER", input.get("certificates").get(0).get("source").asText()),
-                () -> assertEquals("모의 프로젝트 원문", input.get("projects").get(0).get("readme").asText()),
-                () -> assertEquals("모의 API 담당", input.get("projects").get(0).get("roleNote").asText()),
-                () -> assertEquals("REGISTERED", input.get("projects").get(0).get("source").asText()));
+                () -> assertEquals(LocalDate.parse(request.item().get("acquiredOn").asText()), inserted.getAcquiredOn()));
     }
 
     @Test
@@ -129,68 +102,31 @@ class ProfileItemServiceTest {
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, error.getErrorCode());
         verify(mapper).lockStudent(9999L);
         verifyNoMoreInteractions(mapper);
-        verifyNoInteractions(profileService, aiClient);
+        verifyNoInteractions(profileService, aiClient, events);
     }
 
     @Test
-    void propagatesAiFailureWithoutSavingCompetencyOrReturningSuccess() {
-        prepareExtraction();
-        BusinessException failure = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(aiClient.extractProfile(any(JsonNode.class))).thenThrow(failure);
+    void addingAnItemPublishesRefreshWithoutCallingAi() {
+        prepareSavedProfile();
 
-        BusinessException error = assertThrows(BusinessException.class, () -> service.addItem(7L, request()));
+        service.addItem(7L, request());
 
-        assertSame(failure, error);
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
         verify(profileService).getProfile(7L);
         verifyNoMoreInteractions(profileService);
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(aiClient);
     }
 
-    @ParameterizedTest
-    @MethodSource("malformedAiResponses")
-    void rejectsMalformedAiProfileWithoutSaving(JsonNode response) {
-        prepareExtraction();
-        when(aiClient.extractProfile(any(JsonNode.class))).thenReturn(response);
-
-        BusinessException error = assertThrows(BusinessException.class, () -> service.addItem(7L, request()));
-
-        assertEquals(ErrorCode.AI_SERVER_ERROR, error.getErrorCode());
-        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
-        verify(profileService).getProfile(7L);
-        verifyNoMoreInteractions(profileService);
-    }
-
-    private void prepareExtraction() {
+    private void prepareSavedProfile() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         when(profileService.getProfile(7L)).thenReturn(profile(null, null));
-        when(mapper.findProjects(7L)).thenReturn(List.of(project()));
-    }
-
-    private static Stream<JsonNode> malformedAiResponses() {
-        return Stream.of(
-                null,
-                NullNode.getInstance(),
-                JSON.createObjectNode(),
-                JSON.createObjectNode().set("profile", NullNode.getInstance()),
-                JSON.createObjectNode().set("profile", JSON.createArrayNode()),
-                JSON.createObjectNode().put("profile", "invalid"));
     }
 
     private static ProfileItemRequest request() {
         return new ProfileItemRequest(
                 "CERTIFICATES", JSON.valueToTree(new ProfileItemRequest.CertificateItem(
                         "모의 자격증", "모의 발급기관", LocalDate.of(2026, 9, 1))));
-    }
-
-    private static ProfileData.Project project() {
-        ProfileData.Project project = new ProfileData.Project();
-        project.setItemId(11L);
-        project.setTitle("모의 프로젝트");
-        project.setReadme("모의 프로젝트 원문");
-        project.setRoleNote("모의 API 담당");
-        project.setSource("REGISTERED");
-        project.setTechStack(JSON.createArrayNode().add("Java"));
-        return project;
     }
 
     private static StudentProfileResponse profile(OffsetDateTime extractedAt, JsonNode competency) {
