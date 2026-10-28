@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-09 서류 검토. 학생 응답 시각과 서류 본문은 변경하지 않는다. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.coordinator.CoordinatorApplicationMapper">
+
+    <resultMap id="detail" type="com.ieum.coordinator.CoordinatorApplicationData$Detail" autoMapping="true">
+        <id property="applicationId" column="application_id"/>
+        <result property="document" column="document" typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <select id="findDetail" resultMap="detail">
+        SELECT a.id AS application_id, a.student_id, a.job_posting_id,
+               s.name AS student_name, a.status, j.company_name, j.title, ad.document
+        FROM application a
+        JOIN student s ON s.id = a.student_id
+        JOIN job_posting j ON j.id = a.job_posting_id
+        LEFT JOIN application_document ad ON ad.application_id = a.id
+        WHERE a.id = #{applicationId}
+    </select>
+
+    <select id="lockApplication" resultType="com.ieum.coordinator.CoordinatorApplicationData$ReviewTarget"
+            useCache="false" flushCache="true">
+        SELECT id AS application_id, student_id, status
+        FROM application
+        WHERE id = #{applicationId}
+        FOR UPDATE
+    </select>
+
+    <update id="approve">
+        UPDATE application
+        SET status = 'APPROVED', reviewed_at = #{reviewedAt,jdbcType=TIMESTAMP}, reject_note = NULL
+        WHERE id = #{applicationId} AND CAST(status AS BINARY) = 'SUBMITTED'
+    </update>
+
+    <update id="reject">
+        UPDATE application
+        SET status = 'REJECTED', reviewed_at = #{reviewedAt,jdbcType=TIMESTAMP},
+            reject_note = #{note,jdbcType=LONGVARCHAR}
+        WHERE id = #{applicationId} AND CAST(status AS BINARY) = 'SUBMITTED'
+    </update>
+
+    <update id="deliver">
+        UPDATE application
+        SET status = 'DELIVERED', delivered_at = #{deliveredAt,jdbcType=TIMESTAMP}
+        WHERE id = #{applicationId} AND CAST(status AS BINARY) = 'APPROVED'
+    </update>
+
+    <insert id="insertRejectContact">
+        INSERT INTO contact_log (student_id, contact_type, note, created_at)
+        VALUES (#{studentId}, 'MESSAGE', #{note,jdbcType=LONGVARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+</mapper>
