@@ -1,11 +1,11 @@
 "use client";
 // 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08). 서류 전체 + 선택 문장 근거 + 검증 요약 + 반려 · 승인 · 전달 완료
 // API: docs/API.md 2-3. 승인 SUBMITTED → APPROVED, 반려 { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
-// 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다. 서류 부품은 FE-B-01 (ResumeDocument · EvidencePanel).
+// 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다. 왼쪽 서류는 C4 전용 요약(C4DocumentSummary), 근거는 FE-B-01 EvidencePanel.
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import C4DocumentSummary, { coverLetterMarkers, userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
 import EvidencePanel from "@/components/resume/EvidencePanel";
-import ResumeDocument from "@/components/resume/ResumeDocument";
 import { applicationLabels } from "@/components/student/labels";
 import StatusChip from "@/components/ui/StatusChip";
 import { ApiError } from "@/lib/api/client";
@@ -44,6 +44,18 @@ const ACTION: Record<Action, { title: string; description: string; confirm: stri
 
 /** 버튼이 켜지는 상태 (docs/API.md 2-3 상태 전이) */
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
+
+/** 코디네이터 입장 상태 이름: 제출된 서류는 "검토 대기", 나머지는 기존 지원서 상태 라벨(FE-A labels) 그대로 */
+const STATUS_LABEL: Record<ApplicationStatus, string> = { ...applicationLabels, SUBMITTED: "검토 대기" };
+const STATUS_TONE: Record<ApplicationStatus, "neutral" | "success" | "warning" | "danger"> = {
+  GENERATING: "neutral",
+  DRAFT: "neutral",
+  SUBMITTED: "warning",
+  APPROVED: "success",
+  DELIVERED: "success",
+  REJECTED: "danger",
+  FAILED: "danger",
+};
 
 const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
   FOUND: "기업 정보 확인",
@@ -139,53 +151,51 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   };
 
   const allAiLinked = verification.aiSentenceWithEvidence === verification.aiSentenceCount;
+  const markers = coverLetterMarkers(document);
+  // 종류별 합이 서버의 userEditedCount 와 같을 때만 나눠 보여 준다 (다르면 서버 총합만)
+  const edits = userEditBreakdown(document);
+  const editsTotal = edits.reduce((sum, e) => sum + e.count, 0);
+  const editedValue =
+    edits.length > 0 && editsTotal === verification.userEditedCount
+      ? edits.map((e) => `${e.label} ${e.count}`).join(" · ")
+      : `${verification.userEditedCount}개`;
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-col gap-1">
-        <Link href="/coordinator" className="w-fit text-xs font-bold text-ink-sub hover:text-ink">
-          ← 대시보드
-        </Link>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="flex items-center gap-1.5 text-xs text-ink-sub">
+            <Link href="/coordinator" className="font-bold hover:text-ink">
+              ← 대시보드
+            </Link>
+            <span aria-hidden="true">·</span>
+            {/* C4 API 에 제출 시각이 없어서 날짜는 표시하지 않는다 */}
+            <span>서류 검토</span>
+          </p>
+          <h1 className="text-[22px] font-bold">
             <Link href={`/coordinator/students/${student.studentId}`} className="underline-offset-4 hover:underline">
               {student.name}
             </Link>{" "}
             → {job.companyName} {job.title}
           </h1>
-          <StatusChip tone={status === "REJECTED" ? "warning" : status === "SUBMITTED" ? "neutral" : "success"}>
-            {applicationLabels[status]}
-          </StatusChip>
         </div>
+        {/* 목업처럼 제목 오른쪽 위 상태 배지 (실제 status 기준) */}
+        <StatusChip tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusChip>
       </header>
 
-      {doneMessage && (
-        <p
-          role="status"
-          className="flex items-center justify-between gap-3 rounded-xl bg-primary-tint px-4 py-3 text-sm font-bold text-primary-strong"
-        >
-          {doneMessage}
-          <Link href="/coordinator" className="shrink-0 text-xs underline underline-offset-2">
-            대시보드로 돌아가기
-          </Link>
-        </p>
-      )}
+      {/* 왼쪽 서류는 페이지와 함께 세로로 스크롤, 오른쪽 패널은 화면에 붙어 근거 · 버튼이 계속 보이게 */}
+      <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-6">
+        <C4DocumentSummary
+          document={document}
+          selectedSentenceId={selected?.sentenceId ?? null}
+          onSelectSentence={setSelected}
+        />
 
-      <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-5">
-        <div className="flex flex-col gap-2">
-          <p className="text-xs text-ink-sub">AI 작성 문장(초록 밑줄)을 누르면 오른쪽에 근거가 보여요.</p>
-          <ResumeDocument
-            document={document}
-            selectedSentenceId={selected?.sentenceId ?? null}
-            onSelectSentence={setSelected}
-          />
-        </div>
-
-        <aside className="sticky top-8 flex flex-col gap-4">
+        <aside className="sticky top-6 flex max-h-[calc(100vh-48px)] flex-col gap-3 overflow-y-auto">
           <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-[15px] font-bold">선택한 문장의 근거</h2>
             {selected && <p className="rounded-lg bg-coord-bg px-3 py-2 text-[13px] leading-relaxed">{selected.text}</p>}
-            <EvidencePanel sentence={selected} bare />
+            <EvidencePanel sentence={selected} bare marker={selected ? markers.get(selected.sentenceId) : undefined} />
           </section>
 
           <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
@@ -197,7 +207,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                 warn={!allAiLinked}
               />
               <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
-              <SummaryRow label="수료생 직접 수정" value={`${verification.userEditedCount}개`} />
+              <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
               <SummaryRow
                 label="기업 정보"
                 value={COMPANY_INFO_LABEL[verification.companyInfoStatus]}
@@ -208,14 +218,24 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           </section>
 
           <section className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
-            <p className="text-xs leading-relaxed text-ink-sub">
-              승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요.
-            </p>
+            {/* 처리 결과는 버튼 바로 위에 (왼쪽 서류 높이가 밀리지 않게) */}
+            {doneMessage ? (
+              <p role="status" className="flex flex-col gap-1 rounded-xl bg-primary-tint px-3 py-2.5 text-[13px] font-bold text-primary-strong">
+                {doneMessage}
+                <Link href="/coordinator" className="w-fit text-xs underline underline-offset-2">
+                  대시보드로 돌아가기
+                </Link>
+              </p>
+            ) : (
+              <p className="text-xs leading-relaxed text-ink-sub">
+                승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요.
+              </p>
+            )}
             <button
               type="button"
               disabled={status !== ALLOWED.APPROVE}
               onClick={() => setConfirming("APPROVE")}
-              className="min-h-11 rounded-xl bg-primary text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted"
+              className="min-h-10 rounded-xl bg-primary text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted"
             >
               승인 · 기관 추천으로 전달
             </button>
@@ -223,7 +243,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
               type="button"
               disabled={status !== ALLOWED.REJECT}
               onClick={() => setConfirming("REJECT")}
-              className="min-h-11 rounded-xl border-[1.5px] border-danger bg-surface text-sm font-bold text-danger disabled:border-line disabled:text-ink-muted"
+              className="min-h-10 rounded-xl border-[1.5px] border-danger bg-surface text-sm font-bold text-danger disabled:border-line disabled:text-ink-muted"
             >
               반려 · 수료생에게 연락
             </button>
@@ -231,7 +251,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
               type="button"
               disabled={status !== ALLOWED.DELIVER}
               onClick={() => setConfirming("DELIVER")}
-              className="min-h-11 rounded-xl border-[1.5px] border-primary bg-surface text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
+              className="min-h-10 rounded-xl border-[1.5px] border-primary bg-surface text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
             >
               전달 완료로 변경 (승인 후)
             </button>
