@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import C4DocumentSummary, { coverLetterMarkers, userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
+import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import EvidencePanel from "@/components/resume/EvidencePanel";
 import { applicationLabels } from "@/components/student/labels";
 import StatusChip from "@/components/ui/StatusChip";
@@ -65,7 +66,8 @@ const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
 
 export default function ApplicationReviewScreen({ applicationId }: { applicationId: number }) {
   const [detail, setDetail] = useState<CoordinatorApplication | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // notFound(404)면 다시 불러와도 같으므로 "다시 시도"를 숨긴다
+  const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [selected, setSelected] = useState<Sentence | null>(null);
   const [confirming, setConfirming] = useState<Action | null>(null);
@@ -83,7 +85,12 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         if (!ignore) setDetail(data);
       })
       .catch((e: unknown) => {
-        if (!ignore) setLoadError(e instanceof ApiError ? e.message : "서류를 불러오지 못했어요.");
+        if (ignore) return;
+        setLoadError(
+          e instanceof ApiError
+            ? { message: e.message, notFound: e.status === 404 }
+            : { message: "서류를 불러오지 못했어요.", notFound: false },
+        );
       });
     return () => {
       ignore = true;
@@ -93,20 +100,23 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   if (!detail) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-sm text-ink-sub">
-        <p>{loadError ?? "서류를 불러오는 중이에요…"}</p>
+        <p>{loadError?.message ?? "서류를 불러오는 중이에요…"}</p>
+        {loadError?.notFound && <p className="text-xs text-ink-muted">주소의 지원서 번호를 확인하거나 대시보드에서 다시 골라 주세요.</p>}
         {loadError && (
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                setLoadError(null);
-                setReloadKey((k) => k + 1);
-              }}
-              className="font-bold text-primary"
-            >
-              다시 시도
-            </button>
-            <Link href="/coordinator" className="font-bold text-ink-sub">
+            {!loadError.notFound && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadError(null);
+                  setReloadKey((k) => k + 1);
+                }}
+                className="font-bold text-primary"
+              >
+                다시 시도
+              </button>
+            )}
+            <Link href="/coordinator" className={`font-bold ${loadError.notFound ? "text-primary" : "text-ink-sub"}`}>
               대시보드로
             </Link>
           </div>
@@ -136,6 +146,8 @@ export default function ApplicationReviewScreen({ applicationId }: { application
             ? await rejectApplication(applicationId, { note: note.trim() })
             : await deliverApplication(applicationId);
       setDetail((prev) => (prev ? { ...prev, status: result.status } : prev));
+      // 사이드바가 대시보드 API 로 대기 건수를 다시 센다
+      notifyReviewQueueChanged();
       setDoneMessage(ACTION[action].done);
       setConfirming(null);
       setNote("");
@@ -143,14 +155,22 @@ export default function ApplicationReviewScreen({ applicationId }: { application
       // 서버 message 는 화면에 그대로 띄워도 되는 문장 (docs/API.md 1장)
       setActionError(e instanceof ApiError ? e.message : "처리하지 못했어요. 다시 시도해 주세요.");
       // 그사이 다른 처리로 상태가 바뀌었으면(409) 최신 상태로 버튼을 맞춘다
-      if (e instanceof ApiError && e.status === 409) setReloadKey((k) => k + 1);
+      if (e instanceof ApiError && e.status === 409) {
+        setReloadKey((k) => k + 1);
+        notifyReviewQueueChanged();
+      }
     } finally {
       busyRef.current = false;
       setBusy(false);
     }
   };
 
+  const hasAi = verification.aiSentenceCount > 0;
   const allAiLinked = verification.aiSentenceWithEvidence === verification.aiSentenceCount;
+  // AI 문장이 0개면 "모두 근거 연결"이 아니라 확인할 문장이 없다고 알린다
+  const aiValue = !hasAi
+    ? "없음"
+    : `${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`;
   const markers = coverLetterMarkers(document);
   // 종류별 합이 서버의 userEditedCount 와 같을 때만 나눠 보여 준다 (다르면 서버 총합만)
   const edits = userEditBreakdown(document);
@@ -203,8 +223,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
             <dl className="flex flex-col gap-1.5 text-[13px]">
               <SummaryRow
                 label="AI 문장"
-                value={`${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`}
-                warn={!allAiLinked}
+                value={aiValue}
+                note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."}
+                warn={hasAi && !allAiLinked}
               />
               <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
               <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
