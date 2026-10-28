@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -16,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -29,10 +25,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfilePortfolioServiceTest {
@@ -45,35 +41,32 @@ class ProfilePortfolioServiceTest {
     private ProfileService profiles;
     @Mock
     private AiClient ai;
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void patchesFilenameAndIncludeWithoutReplacingProjectOriginalsBeforeExtracting() {
+    void patchesFilenameAndIncludeWithoutReplacingProjectOriginalsAndQueuesRefresh() {
         prepareExisting(true);
         StudentProfileResponse updated = profile("mock-replacement.pdf", false);
-        prepareM8Extraction(updated, project("mock-replacement.pdf", false));
+        prepareSavedProfile(updated);
         var item = JSON.createObjectNode().put("fileName", "mock-replacement.pdf").put("include", false)
                 .put("title", "Ignored Title").put("readme", "Ignored README").put("roleNote", "Ignored Role");
 
         assertSame(updated, service.updateItem(7L, 77L, new ProfileItemPatchRequest("PORTFOLIO", item)));
 
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findProjectItem(7L, 77L);
         order.verify(mapper).updatePortfolio(7L, 77L, "mock-replacement.pdf", false);
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
-        order.verify(profiles).getProfile(7L);
-        assertEquals("Original README", sources.getValue().path("projects").get(0).path("readme").asText());
-        assertEquals("Original role record", sources.getValue().path("projects").get(0).path("roleNote").asText());
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectMetadata(any(), any());
         verify(mapper, never()).deleteProject(any(), any());
@@ -82,7 +75,7 @@ class ProfilePortfolioServiceTest {
     @Test
     void filenameOnlyPatchKeepsStoredIncludeFlag() {
         prepareExisting(false);
-        prepareM8Extraction(profile("mock-replacement.pdf", false), project("mock-replacement.pdf", false));
+        prepareSavedProfile(profile("mock-replacement.pdf", false));
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest("PORTFOLIO",
                 JSON.createObjectNode().put("fileName", "mock-replacement.pdf")));
@@ -94,7 +87,7 @@ class ProfilePortfolioServiceTest {
     @Test
     void explicitNullFilenameClearsOnlyAttachmentAndPreservesOmittedInclude() {
         prepareExisting(true);
-        prepareM8Extraction(profile(null, true), project(null, true));
+        prepareSavedProfile(profile(null, true));
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest("PORTFOLIO",
                 JSON.createObjectNode().putNull("fileName")));
@@ -105,24 +98,19 @@ class ProfilePortfolioServiceTest {
     }
 
     @Test
-    void deletingPortfolioClearsFilenameAndIncludeWhileKeepingProjectInAiSources() {
+    void deletingPortfolioClearsFilenameAndIncludeWhilePreservingProject() {
         prepareExisting(true);
         StudentProfileResponse updated = profile(null, false);
-        prepareM8Extraction(updated, project(null, false));
+        prepareSavedProfile(updated);
 
         assertSame(updated, service.deleteItem(7L, 77L, "PORTFOLIO"));
 
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findProjectItem(7L, 77L);
         order.verify(mapper).updatePortfolio(7L, 77L, null, false);
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        assertEquals(1, sources.getValue().path("projects").size());
-        assertEquals("Mock Project", sources.getValue().path("projects").get(0).path("title").asText());
-        assertEquals("Original README", sources.getValue().path("projects").get(0).path("readme").asText());
         verify(mapper, never()).deleteProject(any(), any());
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectMetadata(any(), any());
@@ -139,7 +127,7 @@ class ProfilePortfolioServiceTest {
 
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
         verify(mapper, never()).deleteProject(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -154,16 +142,13 @@ class ProfilePortfolioServiceTest {
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, update.getErrorCode());
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, delete.getErrorCode());
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
     void documentPortfolioUpdatesOnlyIncludeAndKeepsRegisteredFilenameAndOriginals() {
-        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        ProfileService documentService = spy(new ProfileService(mapper, events));
         prepareExisting(true);
-        doReturn(profile("mock-original.pdf", false)).when(documentService).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of(project("mock-original.pdf", false)));
-        prepareAiResult();
 
         documentService.updateItem(7L, "PORTFOLIO", 77L, JSON.createObjectNode()
                 .put("fileName", "ignored-document.pdf").put("include", false)
@@ -173,11 +158,7 @@ class ProfilePortfolioServiceTest {
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectMetadata(any(), any());
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        verify(ai).extractProfile(sources.capture());
-        assertEquals("mock-original.pdf", sources.getValue().path("projects").get(0)
-                .path("portfolioFileName").asText());
-        assertEquals("Original README", sources.getValue().path("projects").get(0).path("readme").asText());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(documentService, never()).getProfile(any());
     }
 
@@ -191,7 +172,7 @@ class ProfilePortfolioServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, failure.getErrorCode());
         verify(mapper, never()).insertProject(any(), any());
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     private void prepareExisting(boolean include) {
@@ -199,15 +180,8 @@ class ProfilePortfolioServiceTest {
         when(mapper.findProjectItem(7L, 77L)).thenReturn(project("mock-original.pdf", include));
     }
 
-    private void prepareM8Extraction(StudentProfileResponse result, ProfileData.Project rawProject) {
+    private void prepareSavedProfile(StudentProfileResponse result) {
         when(profiles.getProfile(7L)).thenReturn(result);
-        when(mapper.findProjects(7L)).thenReturn(List.of(rawProject));
-        prepareAiResult();
-    }
-
-    private void prepareAiResult() {
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
-                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
     }
 
     private static ProfileData.Project project(String filename, boolean include) {

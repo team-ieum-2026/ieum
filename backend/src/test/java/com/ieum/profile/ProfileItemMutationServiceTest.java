@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileItemMutationServiceTest {
@@ -54,33 +54,33 @@ class ProfileItemMutationServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void partialPatchPreservesFieldsNotSentAndExtractsAfterUpdate() {
+    void partialPatchPreservesFieldsNotSentAndQueuesRefreshAfterUpdate() {
         prepareOwnedCertificate();
         when(mapper.updateCertificate(any(ProfileData.Certificate.class))).thenReturn(1);
         StudentProfileResponse updated = profile("모의 수정 자격증");
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         StudentProfileResponse result = service.updateItem(7L, 31L,
                 patch(JSON.createObjectNode().put("name", "모의 수정 자격증")));
 
         assertSame(updated, result);
         ArgumentCaptor<ProfileData.Certificate> captured = ArgumentCaptor.forClass(ProfileData.Certificate.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findCertificate(7L, 31L);
         order.verify(mapper).updateCertificate(captured.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(any(JsonNode.class));
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         ProfileData.Certificate saved = captured.getValue();
         assertAll(
@@ -95,7 +95,7 @@ class ProfileItemMutationServiceTest {
     void explicitNullClearsNullableFieldsAndPreservesName() {
         prepareOwnedCertificate();
         when(mapper.updateCertificate(any(ProfileData.Certificate.class))).thenReturn(1);
-        prepareExtraction(profile("모의 기존 자격증"));
+        prepareSavedProfile(profile("모의 기존 자격증"));
 
         service.updateItem(7L, 31L,
                 patch(JSON.createObjectNode().putNull("issuer").putNull("acquiredOn")));
@@ -112,7 +112,7 @@ class ProfileItemMutationServiceTest {
     void validDatePatchUsesStrictIsoDateAndPreservesOtherValues() {
         prepareOwnedCertificate();
         when(mapper.updateCertificate(any(ProfileData.Certificate.class))).thenReturn(1);
-        prepareExtraction(profile("모의 기존 자격증"));
+        prepareSavedProfile(profile("모의 기존 자격증"));
 
         service.updateItem(7L, 31L,
                 patch(JSON.createObjectNode().put("acquiredOn", "2026-10-01")));
@@ -124,27 +124,21 @@ class ProfileItemMutationServiceTest {
     }
 
     @Test
-    void deletionReextractsFromProfileAfterRemovingCertificate() {
+    void deletionQueuesRefreshAfterRemovingCertificate() {
         prepareOwnedCertificate();
         when(mapper.deleteCertificate(7L, 31L)).thenReturn(1);
         StudentProfileResponse updated = profile(null);
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         StudentProfileResponse result = service.deleteItem(7L, 31L, "CERTIFICATES");
 
         assertSame(updated, result);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findCertificate(7L, 31L);
         order.verify(mapper).deleteCertificate(7L, 31L);
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
-        order.verify(profiles).getProfile(7L);
-        assertEquals(0, sources.getValue().get("certificates").size(),
-                "삭제한 자격증이 재추출 원문에 남아 있으면 안 된다");
     }
 
     @Test
@@ -156,7 +150,7 @@ class ProfileItemMutationServiceTest {
                 7L, 9999L, patch(JSON.createObjectNode().put("name", "모의 수정"))));
 
         verify(mapper, never()).updateCertificate(any(ProfileData.Certificate.class));
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -167,7 +161,7 @@ class ProfileItemMutationServiceTest {
         assertThrows(ProfileItemNotFoundException.class, () -> service.deleteItem(7L, 9999L, "CERTIFICATES"));
 
         verify(mapper, never()).deleteCertificate(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -180,7 +174,7 @@ class ProfileItemMutationServiceTest {
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, error.getErrorCode());
         verify(mapper, never()).findCertificate(any(), any());
         verify(mapper, never()).deleteCertificate(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @ParameterizedTest
@@ -195,7 +189,7 @@ class ProfileItemMutationServiceTest {
 
         assertEquals(ErrorCode.INVALID_REQUEST, error.getErrorCode());
         verify(mapper, never()).updateCertificate(any(ProfileData.Certificate.class));
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -207,37 +201,34 @@ class ProfileItemMutationServiceTest {
 
         assertEquals(ErrorCode.INVALID_REQUEST, error.getErrorCode());
         verify(mapper, never()).deleteCertificate(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void failedAiAfterUpdateDoesNotSaveCompetencyOrReturnSuccess() {
+    void certificateUpdatePublishesRefreshWithoutCallingAi() {
         prepareOwnedCertificate();
         when(mapper.updateCertificate(any(ProfileData.Certificate.class))).thenReturn(1);
-        prepareRawProfile(profile("모의 수정"));
-        BusinessException failure = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(ai.extractProfile(any(JsonNode.class))).thenThrow(failure);
+        prepareSavedProfile(profile("모의 수정"));
 
-        BusinessException result = assertThrows(BusinessException.class, () -> service.updateItem(
-                7L, 31L, patch(JSON.createObjectNode().put("name", "모의 수정"))));
+        service.updateItem(
+                7L, 31L, patch(JSON.createObjectNode().put("name", "모의 수정")));
 
-        assertSame(failure, result);
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(ai);
     }
 
     @Test
-    void failedAiAfterDeleteDoesNotSaveCompetencyOrReturnSuccess() {
+    void certificateDeletionPublishesRefreshWithoutCallingAi() {
         prepareOwnedCertificate();
         when(mapper.deleteCertificate(7L, 31L)).thenReturn(1);
-        prepareRawProfile(profile(null));
-        BusinessException failure = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(ai.extractProfile(any(JsonNode.class))).thenThrow(failure);
+        prepareSavedProfile(profile(null));
 
-        BusinessException result = assertThrows(BusinessException.class,
-                () -> service.deleteItem(7L, 31L, "CERTIFICATES"));
+        service.deleteItem(7L, 31L, "CERTIFICATES");
 
-        assertSame(failure, result);
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(ai);
     }
 
     private void prepareOwnedCertificate() {
@@ -245,16 +236,8 @@ class ProfileItemMutationServiceTest {
         when(mapper.findCertificate(7L, 31L)).thenReturn(existingCertificate());
     }
 
-    private JsonNode prepareExtraction(StudentProfileResponse updated) {
-        prepareRawProfile(updated);
-        JsonNode competency = JSON.createObjectNode().set("certificates", JSON.createArrayNode());
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
-    }
-
-    private void prepareRawProfile(StudentProfileResponse updated) {
+    private void prepareSavedProfile(StudentProfileResponse updated) {
         when(profiles.getProfile(7L)).thenReturn(updated);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
     }
 
     private static ProfileItemPatchRequest patch(JsonNode item) {

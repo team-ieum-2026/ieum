@@ -7,9 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -17,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -34,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileBasicServiceTest {
@@ -46,18 +43,21 @@ class ProfileBasicServiceTest {
     private ProfileService profiles;
     @Mock
     private AiClient ai;
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void updatesOnlyBasicFieldsAndReextractsBeforeReturningFullProfile() {
+    void updatesOnlyBasicFieldsAndQueuesRefreshBeforeReturningSavedProfile() {
         prepareExisting();
         StudentProfileResponse updated = profile();
-        prepareM8Extraction(updated);
+        prepareSavedProfile(updated);
         var item = JSON.createObjectNode().put("name", "Updated Mock Student").put("email", "updated@example.com")
                 .put("githubUrl", "github.com/mock-updated").put("desiredJob", "Mock Backend")
                 .put("preferredRegion", "Mock Seoul").put("studentId", 8L).put("courseId", 99L)
@@ -68,15 +68,11 @@ class ProfileBasicServiceTest {
         assertSame(updated, service.updateItem(7L, 7L, new ProfileItemPatchRequest("BASIC", item)));
 
         ArgumentCaptor<ProfileData.Student> saved = ArgumentCaptor.forClass(ProfileData.Student.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findCurrentStudent(7L);
         order.verify(mapper).updateBasic(saved.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         assertAll(
                 () -> assertEquals(7L, saved.getValue().getStudentId()),
@@ -88,14 +84,13 @@ class ProfileBasicServiceTest {
                 () -> assertNull(saved.getValue().getCourseId()),
                 () -> assertNull(saved.getValue().getMilitaryStatus()),
                 () -> assertNull(saved.getValue().getSkills()),
-                () -> assertNull(saved.getValue().getCompletedOn()),
-                () -> assertEquals("Mock Backend", sources.getValue().path("basic").path("desiredJob").asText()));
+                () -> assertNull(saved.getValue().getCompletedOn()));
     }
 
     @Test
     void partialPatchKeepsEveryOmittedBasicValueFromCurrentStudent() {
         prepareExisting();
-        prepareM8Extraction(profile());
+        prepareSavedProfile(profile());
 
         service.updateItem(7L, 7L, new ProfileItemPatchRequest("BASIC",
                 JSON.createObjectNode().put("desiredJob", "Mock Backend")));
@@ -113,7 +108,7 @@ class ProfileBasicServiceTest {
     @Test
     void explicitNullClearsOptionalValuesAndKeepsRequiredName() {
         prepareExisting();
-        prepareM8Extraction(profile());
+        prepareSavedProfile(profile());
 
         service.updateItem(7L, 7L, new ProfileItemPatchRequest("BASIC", JSON.createObjectNode()
                 .putNull("email").putNull("githubUrl").putNull("desiredJob").putNull("preferredRegion")));
@@ -137,7 +132,7 @@ class ProfileBasicServiceTest {
 
         verify(mapper, never()).findCurrentStudent(any());
         verify(mapper, never()).updateBasic(any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -150,7 +145,7 @@ class ProfileBasicServiceTest {
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).findCurrentStudent(any());
         verify(mapper, never()).updateBasic(any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -162,7 +157,7 @@ class ProfileBasicServiceTest {
 
         assertEquals(ErrorCode.INVALID_REQUEST, failure.getErrorCode());
         verify(mapper, never()).updateBasic(any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -177,28 +172,22 @@ class ProfileBasicServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, addFailure.getErrorCode());
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateBasic(any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void documentBasicUpdateUsesSharedWriterAndCurrentSnapshotForAi() {
-        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+    void documentBasicUpdateUsesSharedWriterAndQueuesRefresh() {
+        ProfileService documentService = spy(new ProfileService(mapper, events));
         prepareExisting();
-        doReturn(profile()).when(documentService).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
-                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
 
         documentService.updateItem(7L, "BASIC", 7L,
                 JSON.createObjectNode().put("desiredJob", "Mock Backend"));
 
         verify(mapper).findCurrentStudent(7L);
         verify(mapper).updateBasic(any(ProfileData.Student.class));
-        verify(documentService).getCurrentProfile(7L);
-        verify(mapper).findCurrentProjects(7L);
         verify(documentService, never()).getProfile(any());
         verify(mapper, never()).findProjects(any());
-        verify(ai).extractProfile(any());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     private void prepareExisting() {
@@ -206,11 +195,8 @@ class ProfileBasicServiceTest {
         when(mapper.findCurrentStudent(7L)).thenReturn(student());
     }
 
-    private void prepareM8Extraction(StudentProfileResponse result) {
+    private void prepareSavedProfile(StudentProfileResponse result) {
         when(profiles.getProfile(7L)).thenReturn(result);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
-                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
     }
 
     private static ProfileData.Student student() {

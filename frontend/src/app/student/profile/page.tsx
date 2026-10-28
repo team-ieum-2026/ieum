@@ -1,8 +1,8 @@
 // 주인: FE-B — M8 내 프로필 (FE-B-06)
-export default function ProfilePage() {
-  return (
-    <section className="p-4">
-      <h1 className="text-xl font-bold">M8 내 프로필</h1>
-    </section>
-  );
+import ProfileScreen from "@/app/student/profile/ProfileScreen";
+import { studentIdFrom } from "@/components/student/navigation";
+
+export default async function ProfilePage({ searchParams }: PageProps<"/student/profile">) {
+  const studentId = studentIdFrom(await searchParams);
+  return <ProfileScreen key={studentId} studentId={studentId} />;
 }

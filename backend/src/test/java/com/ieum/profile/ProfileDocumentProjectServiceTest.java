@@ -11,7 +11,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -38,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileDocumentProjectServiceTest {
@@ -50,11 +50,14 @@ class ProfileDocumentProjectServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileService service;
 
     @BeforeEach
     void setUp() {
-        service = spy(new ProfileService(mapper, ai, JSON));
+        service = spy(new ProfileService(mapper, events));
     }
 
     @Test
@@ -65,7 +68,6 @@ class ProfileDocumentProjectServiceTest {
             saved.setItemId(77L);
             return 1;
         }).when(mapper).insertProject(eq(7L), any(ProfileData.Project.class));
-        prepareExtraction(List.of(project()));
         var item = documentItem();
 
         assertEquals(77L, service.addItem(7L, "PROJECTS", item));
@@ -81,25 +83,20 @@ class ProfileDocumentProjectServiceTest {
                 () -> assertNull(saved.getValue().getRoleNote()),
                 () -> assertNull(saved.getValue().getPortfolioFileName()),
                 () -> assertTrue(saved.getValue().isIncludeInApply()));
-        verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
     }
 
     @Test
-    void documentUpdatesOnlyMetadataAndSendsPreservedOriginalTextToAi() {
+    void documentUpdatesMetadataAndPreservesOriginalsWhileQueuingRefresh() {
         prepareExisting();
-        JsonNode competency = prepareExtraction(List.of(project()));
 
         service.updateItem(7L, "PROJECTS", 77L, documentItem());
 
         ArgumentCaptor<ProfileData.Project> saved = ArgumentCaptor.forClass(ProfileData.Project.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, ai);
+        InOrder order = inOrder(mapper, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findProjectItem(7L, 77L);
         order.verify(mapper).updateProjectMetadata(eq(7L), saved.capture());
-        order.verify(mapper).findCurrentProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         assertAll(
                 () -> assertEquals("Updated Project", saved.getValue().getTitle()),
                 () -> assertEquals("8 weeks", saved.getValue().getPeriodText()),
@@ -108,9 +105,7 @@ class ProfileDocumentProjectServiceTest {
                 () -> assertEquals("Original README", saved.getValue().getReadme()),
                 () -> assertEquals("Original role record", saved.getValue().getRoleNote()),
                 () -> assertEquals("mock-portfolio.pdf", saved.getValue().getPortfolioFileName()),
-                () -> assertTrue(saved.getValue().isIncludeInApply()),
-                () -> assertEquals("Original README", sources.getValue().get("projects").get(0).get("readme").asText()),
-                () -> assertEquals("Original role record", sources.getValue().get("projects").get(0).get("roleNote").asText()));
+                () -> assertTrue(saved.getValue().isIncludeInApply()));
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectInclude(any(), any(), anyBoolean());
     }
@@ -118,7 +113,6 @@ class ProfileDocumentProjectServiceTest {
     @Test
     void documentPatchKeepsOmittedTechStackAndOtherMetadata() {
         prepareExisting();
-        prepareExtraction(List.of(project()));
 
         service.updateItem(7L, "PROJECTS", 77L, JSON.createObjectNode().put("title", "Updated Project"));
 
@@ -156,7 +150,6 @@ class ProfileDocumentProjectServiceTest {
     @Test
     void documentPortfolioPatchChangesIncludeWithoutReplacingFilenameOrOriginalText() {
         prepareExisting();
-        prepareExtraction(List.of(project()));
 
         service.updateItem(7L, "PORTFOLIO", 77L, JSON.createObjectNode()
                 .put("include", false).put("fileName", "generated.pdf")
@@ -165,47 +158,33 @@ class ProfileDocumentProjectServiceTest {
         verify(mapper).updateProjectInclude(7L, 77L, false);
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectMetadata(any(), any());
-        verify(ai).extractProfile(any());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @Test
-    void documentProjectDeleteChecksOwnershipAndExtractsAfterRemovingTheRow() {
+    void documentProjectDeleteChecksOwnershipAndQueuesRefreshAfterRemovingTheRow() {
         prepareExisting();
-        JsonNode competency = prepareExtraction(List.of());
 
         service.deleteItem(7L, "PROJECTS", 77L);
 
-        InOrder order = inOrder(mapper, service, ai);
+        InOrder order = inOrder(mapper, service, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findProjectItem(7L, 77L);
         order.verify(mapper).deleteProject(7L, 77L);
-        order.verify(service).getCurrentProfile(7L);
-        order.verify(mapper).findCurrentProjects(7L);
-        order.verify(ai).extractProfile(any());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
     }
 
     @Test
-    void documentPortfolioDeleteOnlyExcludesItAndKeepsAttachmentAndOriginalsInAiInput() {
+    void documentPortfolioDeleteOnlyExcludesItAndPreservesAttachmentAndOriginals() {
         prepareExisting();
-        ProfileData.Project excluded = project();
-        excluded.setIncludeInApply(false);
-        prepareExtraction(List.of(excluded));
 
         service.deleteItem(7L, "PORTFOLIO", 77L);
 
         verify(mapper).updateProjectInclude(7L, 77L, false);
         verify(mapper, never()).deleteProject(any(), any());
         verify(mapper, never()).updatePortfolio(any(), any(), any(), anyBoolean());
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        verify(ai).extractProfile(sources.capture());
-        JsonNode saved = sources.getValue().get("projects").get(0);
-        assertAll(
-                () -> assertEquals(false, saved.get("includeInApply").booleanValue()),
-                () -> assertEquals("mock-portfolio.pdf", saved.get("portfolioFileName").asText()),
-                () -> assertEquals("Original README", saved.get("readme").asText()),
-                () -> assertEquals("Original role record", saved.get("roleNote").asText()));
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @ParameterizedTest
@@ -226,19 +205,16 @@ class ProfileDocumentProjectServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"PROJECTS", "PORTFOLIO"})
-    void documentDeletePropagatesAiFailureWithoutSavingCompetency(String section) {
+    void documentDeletionPublishesRefreshWithoutCallingAi(String section) {
         prepareExisting();
-        doReturn(profile()).when(service).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        when(ai.extractProfile(any())).thenThrow(new BusinessException(ErrorCode.AI_SERVER_ERROR));
 
-        BusinessException failure = assertThrows(BusinessException.class,
-                () -> service.deleteItem(7L, section, 77L));
+        service.deleteItem(7L, section, 77L);
 
-        assertEquals(ErrorCode.AI_SERVER_ERROR, failure.getErrorCode());
         if ("PROJECTS".equals(section)) verify(mapper).deleteProject(7L, 77L);
         else verify(mapper).updateProjectInclude(7L, 77L, false);
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(ai);
     }
 
     @Test
@@ -327,14 +303,6 @@ class ProfileDocumentProjectServiceTest {
     private void prepareExisting() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         when(mapper.findProjectItem(7L, 77L)).thenReturn(project());
-    }
-
-    private JsonNode prepareExtraction(List<ProfileData.Project> projects) {
-        doReturn(profile()).when(service).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(projects);
-        JsonNode competency = JSON.createObjectNode();
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
     }
 
     private static JsonNode documentItem() {
