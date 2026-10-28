@@ -154,6 +154,40 @@ class ProfileItemDatabaseTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"ABSENT", "NULL_HASH", "HASH"})
+    void savingBeforeCommitPreservesAbsentProfileAndNullableSourceHash(String fixture) {
+        Baseline baseline = baseline();
+        try {
+            transactions.executeWithoutResult(status -> {
+                status.setRollbackOnly();
+                mapper.lockStudent(STUDENT_ID);
+                jdbc.update("DELETE FROM competency_profile WHERE student_id = ?", STUDENT_ID);
+                String expectedHash = "HASH".equals(fixture) ? "c".repeat(64) : null;
+                JsonNode expectedProfile = "ABSENT".equals(fixture) ? null : competency(marker());
+                if (expectedProfile != null) {
+                    mapper.upsertCompetencyProfile(STUDENT_ID, expectedProfile, expectedHash);
+                }
+                List<CompetencyRow> before = competencyRows();
+                assertEquals(expectedHash, sourceHash());
+
+                StudentProfileResponse saved = service.addItem(STUDENT_ID, request(marker(), null, null));
+
+                assertEquals(expectedHash, sourceHash());
+                assertTrue(before.equals(competencyRows()), "커밋 전에는 역량 행·해시·추출 시각을 유지해야 한다");
+                assertStoredCompetency(saved, expectedProfile);
+                if ("ABSENT".equals(fixture)) {
+                    assertEquals(0L, competencyCount());
+                    assertNull(saved.competencyProfile());
+                    assertNull(saved.profileUpdatedAt());
+                }
+                verifyNoInteractions(aiClient);
+            });
+        } finally {
+            assertBaselineUnchanged(baseline);
+        }
+    }
+
     @Test
     void savingWithoutAiDoesNotMarkTransactionRollbackOnly() {
         Baseline baseline = baseline();
@@ -1977,8 +2011,10 @@ class ProfileItemDatabaseTest {
     }
 
     private String sourceHash() {
-        return jdbc.queryForObject("SELECT source_hash FROM competency_profile WHERE student_id = ?",
+        // 시드의 1~20번에는 역량 행이 없다. 행 없음과 SQL NULL 모두 정상적인 미추출 상태다.
+        List<String> hashes = jdbc.queryForList("SELECT source_hash FROM competency_profile WHERE student_id = ?",
                 String.class, STUDENT_ID);
+        return hashes.isEmpty() ? null : hashes.get(0);
     }
 
     private void assertStoredCompetency(StudentProfileResponse response, JsonNode expected) {
