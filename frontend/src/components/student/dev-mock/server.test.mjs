@@ -6,7 +6,7 @@ import { createMockServer } from "./server.mjs";
 
 async function fixture(t) {
   let clock = Date.parse("2026-10-27T12:00:00+09:00");
-  const server = createMockServer({ now: () => clock, generationMs: 2200 });
+  const server = createMockServer({ now: () => clock, generationMs: 2200, dataSource: "fixtures" });
   server.listen(0, "127.0.0.1"); await once(server, "listening");
   t.after(() => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -156,6 +156,26 @@ test("학생별 데이터 격리, 검색/페이지, 초기 데이터 정규화, 
   }
   await r("/api/coordinator/students?page=0", "GET", undefined, 400);
   const bad = await r("/api/help-requests", "POST", { studentId: 1, recommendationItemId: b.items[1].itemId }, 400); assert.equal(bad.code, "INVALID_REQUEST");
+});
+
+test("모든 후보에 응답하면 빈 추천을 반환하고 다시 추천해도 응답한 공고를 넣지 않는다", async (t) => {
+  const f = await fixture(t); const r = f.request;
+  let batch = await r("/api/students/12/recommendations/current");
+  const answeredJobs = new Set();
+  for (let round = 0; round < 3 && batch.items.length; round++) {
+    for (const item of batch.items) {
+      assert.ok(!answeredJobs.has(item.job.jobPostingId));
+      await r(`/api/recommendation-items/${item.itemId}/response`, "POST", { response: "PASS", passReason: "JOB_MISMATCH", passNote: null });
+      answeredJobs.add(item.job.jobPostingId);
+    }
+    batch = await r("/api/students/12/recommendations/refresh", "POST");
+  }
+  assert.equal(answeredJobs.size, 4);
+  assert.deepEqual(batch.items, []);
+  assert.deepEqual((await r("/api/students/12/recommendations/current")).items, []);
+  assert.deepEqual((await r("/api/students/12/recommendations/refresh", "POST")).items, []);
+  assert.equal((await r("/api/students/12/profile")).studentId, 12);
+  assert.equal((await r("/api/students/1/recommendations/current")).items.length, 3);
 });
 
 test("CORS/JSON 오류와 서버 재시작 초기화, 원본 목업 무변경", async (t) => {

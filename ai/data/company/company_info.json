@@ -1,0 +1,156 @@
+{
+  "_note": "가상 기업 정보 (모의 데이터). db/seed.sql DEV_SEED 공고(501~503, 601~612)의 가상 회사만 넣었다. 501~503은 ai/eval/fixtures/company_info.examples.json 과 같은 내용. URL은 모두 example.com 가짜 주소이고, 최근 이슈는 '(가상)' 표시. 실제 회사 정보 아님. 실존 기업과 이름이 겹칠 수 있는 (주)한빛솔루션 · (주)모바일팩토리는 넣지 않았다(조회하면 NOT_FOUND). 검토용 표: company_info_review.md",
+  "companies": [
+    {
+      "companyName": "(주)온다랩",
+      "status": "FOUND",
+      "talentKeywords": ["끝까지 책임지는 사람", "사용자 관점"],
+      "coreValues": ["책임감", "빠른 실행"],
+      "recentIssue": "AI 상담 서비스 정식 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://onda-lab.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://onda-lab.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/onda-lab-ai-launch", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "데이터웨이브(주)",
+      "status": "PARTIAL",
+      "talentKeywords": ["데이터로 말하는 사람"],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://datawave.example.com/recruit", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)서울에이아이랩",
+      "status": "NOT_FOUND",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)브릿지웍스",
+      "status": "FOUND",
+      "talentKeywords": ["동료와 함께 문제를 푸는 사람", "기본기가 탄탄한 개발자"],
+      "coreValues": ["협업", "신뢰", "꾸준한 개선"],
+      "recentIssue": "중소 제조사용 주문 관리 서비스 개편 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://bridgeworks.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://bridgeworks.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/bridgeworks-order-renewal", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "코드너리(주)",
+      "status": "NOT_FOUND",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)데이터숲",
+      "status": "FOUND",
+      "talentKeywords": ["호기심이 많은 사람", "숫자로 근거를 대는 사람"],
+      "coreValues": ["정확성", "공유"],
+      "recentIssue": "공공 데이터 정제 파이프라인 구축 사업 수주 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://datasoop.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://datasoop.example.com/culture", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/datasoop-public-data", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "에이아이웨이브(주)",
+      "status": "FOUND",
+      "talentKeywords": ["빠르게 배우고 실험하는 사람", "결과를 공유하는 사람"],
+      "coreValues": ["실험", "투명성"],
+      "recentIssue": "사내 문서 검색용 LLM 서비스 시범 운영 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://aiwave.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://aiwave.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/aiwave-llm-pilot", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)스마트물류",
+      "status": "FOUND",
+      "talentKeywords": ["현장을 이해하는 개발자", "책임감 있는 사람"],
+      "coreValues": ["안전", "효율"],
+      "recentIssue": "이천 물류센터 재고 관리 시스템 교체 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://smart-logis.example.com/recruit", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://smart-logis.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/smart-logis-wms", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "그린IT(주)",
+      "status": "FOUND",
+      "talentKeywords": ["꼼꼼하게 기록하는 사람", "고객을 먼저 생각하는 사람"],
+      "coreValues": ["안정성", "친절"],
+      "recentIssue": "사내 업무 시스템 클라우드 이전 완료 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://green-it.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://green-it.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/green-it-cloud-move", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)픽셀랩",
+      "status": "NOT_FOUND",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)클라우드원",
+      "status": "FOUND",
+      "talentKeywords": ["자동화를 좋아하는 사람", "장애를 끝까지 추적하는 사람"],
+      "coreValues": ["신뢰성", "자동화"],
+      "recentIssue": "신입 클라우드 엔지니어 교육 과정 신설 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://cloudone.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://cloudone.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/cloudone-junior-program", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)에듀테크랩",
+      "status": "FOUND",
+      "talentKeywords": ["배움을 즐기는 사람", "사용자 의견을 듣는 사람"],
+      "coreValues": ["성장", "공감"],
+      "recentIssue": "학습 기록 분석 기능 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://edutech-lab.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://edutech-lab.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/edutech-lab-analytics", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)헬스노트",
+      "status": "NOT_FOUND",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    }
+  ]
+}

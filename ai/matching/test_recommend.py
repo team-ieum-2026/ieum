@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from matching import router
-from matching.fallback import job_terms, recommend_from_index, region_tier
+from matching.fallback import job_terms, preferred_sidos, recommend_from_index, region_tier
 from matching.models import RecommendRequest
 from matching.store import IndexStore
 
@@ -108,10 +108,10 @@ class OrderTest(FallbackCase):
         self.put({
             1: entry("[공고] 백엔드 Java Spring Boot MySQL", region="경기 성남시"),  # 4점 · 수도권
             2: entry("[공고] Java", region="서울 마포구"),                         # 1점 · 서울
-            3: entry("[공고] 백엔드 Java Spring Boot MySQL", region="부산 해운대구"),  # 4점 · 수도권 밖
+            3: entry("[공고] 백엔드 Java Spring Boot MySQL", region="부산 해운대구"),  # 4점 · 수도권 밖 → 후보 아님 (METRO)
             4: entry("[공고] Java MySQL", region="인천 연수구"),                   # 2점 · 수도권
         })
-        self.assertEqual(self.ids(self.recommend(top_k=4)), [2, 1, 4, 3])
+        self.assertEqual(self.ids(self.recommend(top_k=4)), [2, 1, 4])
 
     def test_no_preferred_region_orders_by_score(self):
         self.put({1: entry("[공고] Java", region="서울 마포구"), 2: entry("[공고] 백엔드 Java MySQL", region="경기 성남시")})
@@ -122,6 +122,24 @@ class OrderTest(FallbackCase):
         self.assertEqual(region_tier("서울", "경기 성남시"), 1)
         self.assertEqual(region_tier("서울", "부산 해운대구"), 2)
         self.assertEqual(region_tier(None, "부산 해운대구"), 0)
+        # 여러 지역: 하나라도 맞으면 0
+        self.assertEqual(region_tier("서울, 경기", "서울 구로구"), 0)
+        self.assertEqual(region_tier("서울, 경기", "경기 성남시"), 0)
+        self.assertEqual(region_tier("서울, 경기", "인천 연수구"), 1)
+
+    def test_preferred_sidos(self):
+        self.assertEqual(preferred_sidos("서울, 경기"), ["서울", "경기"])
+        self.assertEqual(preferred_sidos("서울특별시 / 경기도,인천광역시"), ["서울", "경기", "인천"])
+        self.assertEqual(preferred_sidos("서울 강남구"), ["서울"])
+        self.assertEqual(preferred_sidos("부산광역시"), ["부산"])
+        self.assertEqual(preferred_sidos("경상남도"), ["경남"])
+        self.assertEqual(preferred_sidos("서울, 서울"), ["서울"])
+        self.assertEqual(preferred_sidos(None), [])
+        self.assertEqual(preferred_sidos("강남구"), [])
+
+    def test_outside_capital_gives_empty_when_no_jobs_there(self):
+        self.put({1: entry("[공고] 백엔드 Java", region="서울 구로구"), 2: entry("[공고] 백엔드 Java", region="경기 성남시")})
+        self.assertEqual(self.recommend(profile={**PROFILE, "preferredRegion": "부산"}), [])
 
     def test_top_k(self):
         self.put({i: entry("[공고] Java") for i in range(1, 6)})
@@ -152,12 +170,17 @@ class ResponseTest(FallbackCase):
             2: entry("[공고] 백엔드 서버"),
         })
         items = self.recommend()
-        self.assertEqual(items[0]["reasons"], [{
-            "text": "희망 직무 '백엔드'와 맞고, 보유 기술 Spring Boot · MySQL이(가) 공고에 나옵니다",
-            "evidence": [{"refType": "PROJECT", "refId": 11}, {"refType": "PROJECT", "refId": 12}],
-        }])
-        # 희망 직무만 겹치면 붙일 근거가 없다
-        self.assertEqual(items[1]["reasons"], [{"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": []}])
+        # 기술은 프로필 근거, 희망 직무는 공고 근거(JOB_POSTING)
+        self.assertEqual(items[0]["reasons"], [
+            {"text": "보유 기술 Spring Boot · MySQL이(가) 공고에 나옵니다",
+             "evidence": [{"refType": "PROJECT", "refId": 11}, {"refType": "PROJECT", "refId": 12}]},
+            {"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": [{"refType": "JOB_POSTING", "refId": 1}]},
+        ])
+        self.assertEqual(items[1]["reasons"], [
+            {"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": [{"refType": "JOB_POSTING", "refId": 2}]},
+        ])
+        # 모든 문장에 근거가 하나 이상 (API.md 3-2)
+        self.assertTrue(all(r["evidence"] for i in items for r in i["reasons"]))
 
     def test_http_response_shape_is_unchanged(self):
         self.put({7: entry("[공고] 백엔드 Java"), 8: entry("[공고] Java"), 9: entry("[공고] MySQL")})

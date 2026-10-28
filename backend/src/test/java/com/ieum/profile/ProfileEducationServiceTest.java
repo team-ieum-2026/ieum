@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -33,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileEducationServiceTest {
@@ -47,15 +47,18 @@ class ProfileEducationServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void addsEducationAndReextractsFromStoredEducationBeforeReturningProfile() {
+    void addsEducationAndQueuesRefreshBeforeReturningSavedProfile() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         doAnswer(invocation -> {
             ProfileData.Education education = invocation.getArgument(0);
@@ -63,20 +66,16 @@ class ProfileEducationServiceTest {
             return 1;
         }).when(mapper).insertEducation(any(ProfileData.Education.class));
         StudentProfileResponse updated = profile(true);
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         StudentProfileResponse result = service.addItem(7L, new ProfileItemRequest("EDUCATION", validItem()));
 
         assertSame(updated, result);
         ArgumentCaptor<ProfileData.Education> saved = ArgumentCaptor.forClass(ProfileData.Education.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).insertEducation(saved.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         assertAll(
                 () -> assertEquals(7L, saved.getValue().getStudentId()),
@@ -85,8 +84,7 @@ class ProfileEducationServiceTest {
                 () -> assertEquals("컴퓨터공학", saved.getValue().getMajor()),
                 () -> assertEquals("BACHELOR", saved.getValue().getDegree()),
                 () -> assertEquals("GRADUATED", saved.getValue().getStatus()),
-                () -> assertEquals(LocalDate.of(2026, 2, 28), saved.getValue().getGraduatedOn()),
-                () -> assertEquals("모의대학교", sources.getValue().get("education").get(0).get("schoolName").asText()));
+                () -> assertEquals(LocalDate.of(2026, 2, 28), saved.getValue().getGraduatedOn()));
         verify(mapper, never()).insertCertificate(any(ProfileData.Certificate.class));
     }
 
@@ -94,7 +92,7 @@ class ProfileEducationServiceTest {
     void partialEducationPatchPreservesOmittedFieldsAndClearsExplicitNull() {
         prepareExisting();
         when(mapper.updateEducation(any(ProfileData.Education.class))).thenReturn(1);
-        prepareExtraction(profile(true));
+        prepareSavedProfile(profile(true));
         JsonNode item = JSON.createObjectNode().put("schoolName", "모의 수정 대학교").putNull("major")
                 .putNull("graduatedOn");
 
@@ -114,25 +112,20 @@ class ProfileEducationServiceTest {
     }
 
     @Test
-    void deletesEducationBeforeExtractingProfileWithoutDeletedItem() {
+    void deletesEducationAndQueuesRefreshBeforeReturningSavedProfile() {
         prepareExisting();
         when(mapper.deleteEducation(7L, 55L)).thenReturn(1);
         StudentProfileResponse updated = profile(false);
-        JsonNode competency = prepareExtraction(updated);
+        prepareSavedProfile(updated);
 
         assertSame(updated, service.deleteItem(7L, 55L, "EDUCATION"));
 
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findEducationItem(7L, 55L);
         order.verify(mapper).deleteEducation(7L, 55L);
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
-        order.verify(profiles).getProfile(7L);
-        assertEquals(0, sources.getValue().get("education").size());
         verify(mapper, never()).deleteCertificate(any(), any());
     }
 
@@ -147,7 +140,7 @@ class ProfileEducationServiceTest {
 
         verify(mapper, never()).updateEducation(any(ProfileData.Education.class));
         verify(mapper, never()).deleteEducation(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -159,24 +152,22 @@ class ProfileEducationServiceTest {
 
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).insertEducation(any(ProfileData.Education.class));
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void aiFailureAfterEducationUpdateDoesNotSaveCompetencyOrReturnSuccess() {
+    void educationUpdatePublishesRefreshWithoutCallingAi() {
         prepareExisting();
         when(mapper.updateEducation(any(ProfileData.Education.class))).thenReturn(1);
         when(profiles.getProfile(7L)).thenReturn(profile(true));
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        BusinessException expected = new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        when(ai.extractProfile(any(JsonNode.class))).thenThrow(expected);
 
-        BusinessException failure = assertThrows(BusinessException.class, () -> service.updateItem(
-                7L, 55L, new ProfileItemPatchRequest("EDUCATION", JSON.createObjectNode().put("major", "모의 전공"))));
+        service.updateItem(
+                7L, 55L, new ProfileItemPatchRequest("EDUCATION", JSON.createObjectNode().put("major", "모의 전공")));
 
-        assertSame(expected, failure);
         verify(mapper).updateEducation(any(ProfileData.Education.class));
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
+        verifyNoInteractions(ai);
     }
 
     private void prepareExisting() {
@@ -185,12 +176,8 @@ class ProfileEducationServiceTest {
                 55L, "REGISTERED", "모의대학교", "컴퓨터공학", "BACHELOR", "GRADUATED", LocalDate.of(2026, 2, 28)));
     }
 
-    private JsonNode prepareExtraction(StudentProfileResponse updated) {
+    private void prepareSavedProfile(StudentProfileResponse updated) {
         when(profiles.getProfile(7L)).thenReturn(updated);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        JsonNode competency = JSON.createObjectNode();
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
     }
 
     private static JsonNode validItem() {

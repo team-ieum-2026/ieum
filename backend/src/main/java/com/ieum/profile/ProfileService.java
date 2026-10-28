@@ -2,8 +2,6 @@
 package com.ieum.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ieum.ai.AiClient;
 import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
 import java.time.LocalDateTime;
@@ -11,12 +9,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * M8 프로필 조회와 BE-A가 호출할 프로필 변경 서비스 계약.
- * 조회는 읽기 전용이다. 서류 저장 시 프로젝트 원문을 보존하고 변경 후 AI를 재추출한다.
+ * 조회는 읽기 전용이다. 서류 저장 시 프로젝트 원문을 보존하고 저장 확정 후 AI 재추출을 요청한다.
  */
 @Service
 public class ProfileService {
@@ -29,16 +28,16 @@ public class ProfileService {
     private final ProfileSkillsWriter skills;
     private final ProfileRecordWriter records;
     private final ProfileProjectWriter projects;
-    private final ProfileExtraction extraction;
+    private final ApplicationEventPublisher events;
 
-    public ProfileService(ProfileMapper profileMapper, AiClient aiClient, ObjectMapper objectMapper) {
+    public ProfileService(ProfileMapper profileMapper, ApplicationEventPublisher events) {
         this.profileMapper = profileMapper;
         this.basic = new ProfileBasicWriter(profileMapper);
         this.military = new ProfileMilitaryWriter(profileMapper);
         this.skills = new ProfileSkillsWriter(profileMapper);
         this.records = new ProfileRecordWriter(profileMapper);
         this.projects = new ProfileProjectWriter(profileMapper);
-        this.extraction = new ProfileExtraction(profileMapper, aiClient, objectMapper);
+        this.events = events;
     }
 
     /**
@@ -58,7 +57,7 @@ public class ProfileService {
         if (ProfileRecordWriter.supports(section)) itemId = records.add(studentId, section, item);
         else if ("PROJECTS".equals(section)) itemId = projects.add(studentId, item, false);
         else throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        extraction.refresh(studentId, getCurrentProfile(studentId), true);
+        events.publishEvent(new ProfileChangedEvent(studentId));
         return itemId;
     }
 
@@ -92,7 +91,7 @@ public class ProfileService {
         } catch (ProfileItemNotFoundException exception) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, exception.getMessage());
         }
-        if (changed) extraction.refresh(studentId, getCurrentProfile(studentId), true);
+        if (changed) events.publishEvent(new ProfileChangedEvent(studentId));
     }
 
     /**
@@ -114,7 +113,7 @@ public class ProfileService {
         } catch (ProfileItemNotFoundException exception) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, exception.getMessage());
         }
-        extraction.refresh(studentId, getCurrentProfile(studentId), true);
+        events.publishEvent(new ProfileChangedEvent(studentId));
     }
 
     private void lockStudent(Long studentId) {
