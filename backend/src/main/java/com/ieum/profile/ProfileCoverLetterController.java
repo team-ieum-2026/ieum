@@ -25,7 +25,7 @@ public class ProfileCoverLetterController {
     }
 
     @PutMapping
-    @Operation(summary = "자기소개서 원본 수정", description = "원문을 저장하고 역량 프로필을 갱신한 전체 프로필을 반환합니다.")
+    @Operation(summary = "자기소개서 원본 수정", description = "원문 저장 후 전체 프로필을 반환하며 AI 재추출은 커밋 뒤 비동기로 처리합니다. profileUpdatedAt은 마지막 추출 완료 시각으로, 완료 후 프로필을 다시 조회하면 갱신됩니다.")
     public ApiResponse<StudentProfileResponse> updateCoverLetter(
             @Parameter(description = "수료생 번호", example = "1") @PathVariable("studentId") Long studentId,
             @Valid @RequestBody CoverLetterUpdateRequest request) {

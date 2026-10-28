@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -33,6 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * - 공고 배치 뒤 미리 만들기: RecommendationPrefetcher 가 부른다 (trigger BATCH)
  * AI가 준 공고 중 DB에 없거나 꺼진 공고는 버린다. 남는 게 없으면 0건 묶음으로 저장하고 items: [] 로 응답한다.
  * 0건 묶음은 프로필이 바뀌거나 다음 공고 배치가 돌 때까지 그대로 쓴다.
+ * 저장할 때마다 RecommendationCreatedEvent 로 상태 재계산(BE-B-06)에 알린다.
  */
 @Service
 public class RecommendationService {
@@ -47,14 +49,16 @@ public class RecommendationService {
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate tx;
+    private final ApplicationEventPublisher events;
 
     public RecommendationService(RecommendationMapper mapper, ProfileService profileService, AiClient aiClient,
-                                 ObjectMapper objectMapper, TransactionTemplate tx) {
+                                 ObjectMapper objectMapper, TransactionTemplate tx, ApplicationEventPublisher events) {
         this.mapper = mapper;
         this.profileService = profileService;
         this.aiClient = aiClient;
         this.objectMapper = objectMapper;
         this.tx = tx;
+        this.events = events;
     }
 
     public RecommendationResponse getCurrent(Long studentId) {
@@ -147,6 +151,7 @@ public class RecommendationService {
         if (!rows.isEmpty()) {
             mapper.insertItems(rows);
         }
+        events.publishEvent(new RecommendationCreatedEvent(studentId, rec.getId(), triggerType, rows.size()));
         return rec.getId();
     }
 

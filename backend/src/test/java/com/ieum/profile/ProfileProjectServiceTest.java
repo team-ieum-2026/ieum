@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
@@ -34,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileProjectServiceTest {
@@ -48,15 +48,18 @@ class ProfileProjectServiceTest {
     @Mock
     private AiClient ai;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void m8CreatesOriginalProjectAndExtractsOriginalTextBeforeReturningFullProfile() {
+    void m8CreatesOriginalProjectAndQueuesRefreshBeforeReturningSavedProfile() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         doAnswer(invocation -> {
             ProfileData.Project saved = invocation.getArgument(1);
@@ -64,19 +67,15 @@ class ProfileProjectServiceTest {
             return 1;
         }).when(mapper).insertProject(eq(7L), any(ProfileData.Project.class));
         StudentProfileResponse updated = profile(true);
-        JsonNode competency = prepareExtraction(updated, List.of(project()));
+        prepareSavedProfile(updated);
 
         assertSame(updated, service.addItem(7L, new ProfileItemRequest("PROJECTS", validItem())));
 
         ArgumentCaptor<ProfileData.Project> saved = ArgumentCaptor.forClass(ProfileData.Project.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).insertProject(eq(7L), saved.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), eq(competency), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         assertAll(
                 () -> assertEquals(77L, saved.getValue().getItemId()),
@@ -85,15 +84,13 @@ class ProfileProjectServiceTest {
                 () -> assertEquals(4, saved.getValue().getTeamSize()),
                 () -> assertEquals(JSON.createArrayNode().add("Java"), saved.getValue().getTechStack()),
                 () -> assertEquals("Original role record", saved.getValue().getRoleNote()),
-                () -> assertEquals("Original README", saved.getValue().getReadme()),
-                () -> assertEquals("Original role record", sources.getValue().get("projects").get(0).get("roleNote").asText()),
-                () -> assertEquals("Original README", sources.getValue().get("projects").get(0).get("readme").asText()));
+                () -> assertEquals("Original README", saved.getValue().getReadme()));
     }
 
     @Test
     void m8CanChangeReadmeAndRoleRecordExplicitlyWhilePreservingOmittedMetadata() {
         prepareExisting();
-        prepareExtraction(profile(true), List.of(project()));
+        prepareSavedProfile(profile(true));
         JsonNode item = JSON.createObjectNode().put("readme", "Revised original README").put("roleNote", "Revised role record");
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest("PROJECTS", item));
@@ -115,7 +112,7 @@ class ProfileProjectServiceTest {
     @Test
     void m8MetadataPatchPreservesOriginalsAndExplicitNullOnlyClearsRequestedOptionalField() {
         prepareExisting();
-        prepareExtraction(profile(true), List.of(project()));
+        prepareSavedProfile(profile(true));
         JsonNode item = JSON.createObjectNode().put("title", "Updated Project").putNull("teamSize");
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest("PROJECTS", item));
@@ -131,9 +128,9 @@ class ProfileProjectServiceTest {
     }
 
     @Test
-    void m8PortfolioPatchOnlyUpdatesIncludeThenReextracts() {
+    void m8PortfolioPatchOnlyUpdatesIncludeThenQueuesRefresh() {
         prepareExisting();
-        prepareExtraction(profile(true), List.of(project()));
+        prepareSavedProfile(profile(true));
 
         service.updateItem(7L, 77L, new ProfileItemPatchRequest(
                 "PORTFOLIO", JSON.createObjectNode().put("include", false)));
@@ -141,25 +138,22 @@ class ProfileProjectServiceTest {
         verify(mapper).updateProjectInclude(7L, 77L, false);
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).updateProjectMetadata(any(), any());
-        verify(ai).extractProfile(any());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @Test
-    void m8CanDeleteOriginalProjectAndExtractWithoutDeletedProject() {
+    void m8CanDeleteOriginalProjectAndQueueRefresh() {
         prepareExisting();
         StudentProfileResponse updated = profile(false);
-        prepareExtraction(updated, List.of());
+        prepareSavedProfile(updated);
 
         assertSame(updated, service.deleteItem(7L, 77L, "PROJECTS"));
 
-        InOrder order = inOrder(mapper, ai);
+        InOrder order = inOrder(mapper, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).findProjectItem(7L, 77L);
         order.verify(mapper).deleteProject(7L, 77L);
-        order.verify(mapper).findProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        assertEquals(0, sources.getValue().get("projects").size());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @Test
@@ -173,7 +167,7 @@ class ProfileProjectServiceTest {
 
         verify(mapper, never()).updateProjectOriginal(any(), any());
         verify(mapper, never()).deleteProject(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -185,7 +179,7 @@ class ProfileProjectServiceTest {
 
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).insertProject(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     private void prepareExisting() {
@@ -193,12 +187,8 @@ class ProfileProjectServiceTest {
         when(mapper.findProjectItem(7L, 77L)).thenReturn(project());
     }
 
-    private JsonNode prepareExtraction(StudentProfileResponse updated, List<ProfileData.Project> projects) {
+    private void prepareSavedProfile(StudentProfileResponse updated) {
         when(profiles.getProfile(7L)).thenReturn(updated);
-        when(mapper.findProjects(7L)).thenReturn(projects);
-        JsonNode competency = JSON.createObjectNode();
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode().set("profile", competency));
-        return competency;
     }
 
     private static JsonNode validItem() {
