@@ -511,7 +511,7 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
 | `POST /ai/profile/extract` | AI-B | BE-B | 등록 자료 → 역량 프로필 JSON | S2 |
 | `POST /ai/matching/index` | AI-B | BE-A (일 배치 후) | 공고 임베딩 색인 갱신 (`contentHash`가 바뀐 공고만) | S3 |
 | `POST /ai/matching/recommend` | AI-B | BE-A | 프로필 → Top-3 공고 + 추천 근거 | S3 · S4 |
-| `POST /ai/company/collect` | AI-B | BE-A (시연 전 1회) | 기업 정보 웹 검색 수집 → `company_info` 형식 | S7 |
+| `POST /ai/company/collect` | AI-B | BE-A (시연 전 1회) | 기업 정보 조회 → `company_info` 형식 (1단계 저장 파일, 2단계 웹 검색) | S7 |
 | `POST /ai/document/draft` | AI-A | BE-A | 등록 자료 + 프로필 + 공고 + 기업 정보 → 서류 JSON | S7 |
 | `GET /ai/health` | AI-A | 누구나 | 서버 상태 확인 `{ "data": { "status": "OK" } }` | - |
 
@@ -544,6 +544,28 @@ FE는 AI 서버를 직접 부르지 않습니다. 요청 · 응답 형식은 위
 
 - 리랭커 때문에 1명당 30~60초 걸릴 수 있습니다. BE의 AI 호출 응답 대기 시간은 120초입니다.
 - 맞는 공고가 없으면 `items: []`로 응답합니다. BE는 이것도 0건 추천으로 저장합니다.
+
+#### `POST /ai/company/collect`
+
+```json
+// 요청
+{ "companyName": "(주)온다랩" }
+// 응답
+{ "data": { "companyInfo": {
+  "companyInfoId": null, "companyName": "(주)온다랩", "status": "FOUND",
+  "talentKeywords": ["끝까지 책임지는 사람", "사용자 관점"], "coreValues": ["책임감", "빠른 실행"],
+  "recentIssue": "AI 상담 서비스 정식 출시 (가상)",
+  "sources": [ { "item": "talentKeywords", "url": "https://onda-lab.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" } ],
+  "collectedAt": "2026-10-28T09:00:00+09:00" } } }
+```
+
+- 지금(1단계)은 AI 서버의 저장 파일(`ai/data/company/company_info.json`)에서 회사명으로 찾습니다. 시드 공고 회사의 가상 기업 정보이고, 출처는 `example.com`, 내용에 "(가상)"을 붙입니다. 웹 검색 수집은 2단계입니다.
+- 저장된 정보가 없으면 지어내지 않고 `status: "NOT_FOUND"`, 나머지는 빈 배열 · `null`로 응답합니다.
+- `companyName`은 요청값 그대로 돌려줍니다. `companyInfoId`는 DB 저장 전이라 항상 `null`입니다.
+- `status`: `FOUND`(인재상 · 핵심 가치 · 최근 이슈 모두) · `PARTIAL`(일부, 못 찾은 항목은 빈 배열 · `null`) · `NOT_FOUND`
+- `sources[].item`: 이 출처가 뒷받침하는 항목 `talentKeywords` · `coreValues` · `recentIssue`
+- 회사명이 비어 있으면 400 `INVALID_REQUEST`
+- BE는 `status` · `talentKeywords` · `coreValues` · `recentIssue` · `sources`만 읽어 `company_info`(`status` + `info` JSON)에 저장합니다. 저장 이름은 요청한 회사명입니다.
 
 #### `POST /ai/document/draft`
 

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import EvidencePanel from "@/components/resume/EvidencePanel";
 import SentenceText from "@/components/resume/SentenceText";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
+import { studentHref } from "@/components/student/navigation";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument } from "@/lib/api/resume";
 import type { ApplicationDetail, ApplicationDocument, CoverLetterSection, Sentence } from "@/types/resume";
@@ -17,7 +18,7 @@ const findSentence = (document: ApplicationDocument, sentenceId: string) =>
     .find((s): s is CoverLetterSection => s.section === "COVER_LETTER")
     ?.sentences.find((s) => s.sentenceId === sentenceId) ?? null;
 
-export default function CoverLetterEditor({ applicationId }: { applicationId: number }) {
+export default function CoverLetterEditor({ applicationId, studentId }: { applicationId: number; studentId: number }) {
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -45,7 +46,7 @@ export default function CoverLetterEditor({ applicationId }: { applicationId: nu
     };
   }, [applicationId, reloadKey]);
 
-  const backHref = `/student/applications/${applicationId}`;
+  const backHref = studentHref(`/student/applications/${applicationId}`, studentId);
 
   if (!detail) {
     return (

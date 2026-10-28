@@ -57,8 +57,8 @@
 | `backend/.../job/`, `recommendation/`, `application/`, `ai/` + 같은 이름의 `resources/mapper/` | BE-A |
 | `backend/.../profile/`, `helprequest/`, `status/`, `coordinator/`, `domain/`, `common/mybatis/` + 같은 이름의 `resources/mapper/` | BE-B |
 | `db/schema.sql`, `db/seed.sql`, `docs/ERD.md` | BE-B |
-| `ai/main.py`, `ai/common/`, `ai/schemas/`, `ai/document/`, `ai/eval/` | AI-A |
-| `ai/profile/`, `ai/matching/`, `ai/company/`, `ai/data/` | AI-B |
+| `ai/main.py`, `ai/common/`(아래 AI-B 파일 제외), `ai/schemas/`, `ai/document/`, `ai/eval/` | AI-A |
+| `ai/profile/`, `ai/matching/`, `ai/company/`, `ai/data/`, `ai/common/embedding.py` · `reranker.py` · `test_embedding.py` · `test_reranker.py` | AI-B |
 | `docs/`(ERD 제외, `JOB_API.md`는 BE-A), `AGENTS.md`, `CLAUDE.md`, `README.md`, `.github/`, `.gitignore`, `frontend/public/mock/` | PM |
 | 의존성 파일 `package.json` · `package-lock.json` · `build.gradle` · `requirements.txt` | PM |
 
@@ -73,7 +73,8 @@
 | BE 도메인 클래스 · DB 스키마 | BE-B | BE-A가 컬럼이 필요하면 BE-B에 요청. `application` 테이블은 BE-A가 생성 · 제출, BE-B가 승인 · 반려 · 전달만 변경 |
 | BE 공통 설정 · `application.yml` | BE-A | 설정 추가 시 PR 설명에 명시 |
 | `ai/main.py` 라우터 등록 | AI-A | 라우터는 이미 등록됨. 각자 자기 `router.py`만 수정 |
-| `ai/common/` (LLM · 임베딩 · 리랭커 · 설정) | AI-A | 모델 · 키 설정은 여기 한 곳. AI-B는 import만 하고 변경은 AI-A에 요청 |
+| `ai/common/` (LLM · 설정) | AI-A | 모델 · 키 설정은 `config.py` 한 곳. 새 설정값이나 `llm.py` 변경이 필요하면 AI-A에 요청 |
+| `ai/common/` (임베딩 · 리랭커) | AI-B | `embedding.py` · `reranker.py`와 그 테스트는 AI-B가 직접 수정. 설정값은 위 AI-A 규칙을 따름 |
 | AI 데이터 형식 `ai/schemas/` · `docs/API.md` 3장 | AI-A | AI-B는 형식에 맞춰 데이터만 채움 |
 | 의존성 파일 | PM | 라이브러리 추가는 디스코드에 먼저 알리고 `파트/build/add-라이브러리명` 브랜치 PR 하나로 따로 올림 |
 | 시드 데이터 | BE-B 적재 · AI-B 생성 | AI-B는 정해진 형식의 파일만 넘기고, 적재 스크립트는 BE-B만 수정 |
