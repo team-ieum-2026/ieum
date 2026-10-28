@@ -178,7 +178,7 @@ class EmbeddingTest(TempStoreCase):
         saved = self.store.load()
         self.assertEqual([saved[str(i)]["vector"][0] for i in (1, 2, 3)], [float(len(t)) for t in calls[0]])
 
-    def test_batch_error_saves_null_for_whole_batch_and_retries_next_time(self):
+    def test_batch_and_single_errors_save_null_and_retry_next_time(self):
         def broken(texts):
             raise RuntimeError("boom")
 
@@ -226,6 +226,81 @@ class EmbeddingTest(TempStoreCase):
             result = run_index(IndexRequest.model_validate({"jobs": [JOB]}), self.store, model_name=MODEL)
         self.assertEqual((result.indexed_count, result.failed_job_posting_ids, result.embedding_status), (0, [1], "OK"))
         self.assertIsNone(self.store.load()["1"]["vector"])
+
+
+class BatchFallbackTest(TempStoreCase):
+    """묶음 임베딩이 실패하면 그 묶음만 1건씩 다시 불러, 실패한 공고만 vector null"""
+
+    def flaky(self, calls, bad="실패공고", batch_error=True):
+        """여러 건 묶음은 실패(예외 또는 개수 틀림), 1건 호출은 bad 가 들어간 글만 실패"""
+        def embed(texts):
+            calls.append(list(texts))
+            if len(texts) > 1:
+                if batch_error:
+                    raise RuntimeError("429 흉내")
+                return fake_embed(texts)[:-1]
+            if bad in texts[0]:
+                raise RuntimeError("이 글만 실패")
+            return fake_embed(texts)
+        return embed
+
+    def jobs(self, titles):
+        return [{**JOB, "jobPostingId": i, "contentHash": f"h{i}", "title": t} for i, t in enumerate(titles, start=1)]
+
+    def test_request_batch_failure_falls_back_to_singles(self):
+        for batch_error in (True, False):  # 예외 · 결과 개수 틀림
+            with self.subTest(batch_error=batch_error):
+                self.store.save({})
+                calls = []
+                result = self.index(self.jobs(["백엔드", "실패공고", "데이터"]), embed=self.flaky(calls, batch_error=batch_error))
+                self.assertEqual([len(c) for c in calls], [3, 1, 1, 1])  # 묶음 1번 + 1건씩 3번
+                self.assertEqual((result.indexed_count, result.failed_job_posting_ids), (2, [2]))
+                saved = self.store.load()
+                self.assertIsNotNone(saved["1"]["vector"])
+                self.assertIsNone(saved["2"]["vector"])
+                self.assertIsNone(saved["2"]["embeddingModel"])
+                self.assertIsNotNone(saved["3"]["vector"])
+                self.assertEqual(saved["3"]["embeddingModel"], MODEL)
+                self.assertEqual(saved["3"]["vector"], fake_embed([saved["3"]["matchText"]])[0])
+
+    def test_retry_batch_failure_falls_back_to_singles(self):
+        self.index(self.jobs(["백엔드", "실패공고", "데이터", "프론트"]), embed=not_ready_embed)
+        calls = []
+        result = self.index([], embed=self.flaky(calls))
+        self.assertEqual([len(c) for c in calls], [4, 1, 1, 1, 1])
+        self.assertEqual(result.retried_count, 3)
+        saved = self.store.load()
+        self.assertEqual([k for k in ("1", "2", "3", "4") if saved[k]["vector"] is None], ["2"])
+        self.assertTrue(all(saved[k]["embedAttemptedAt"] for k in ("1", "2", "3", "4")))
+        # 다음 호출 때 실패한 공고만 다시 시도
+        calls.clear()
+        again = self.index([], embed=fake_embed)
+        self.assertEqual(again.retried_count, 1)
+
+    def test_single_job_batch_is_not_called_twice(self):
+        calls = []
+        result = self.index(self.jobs(["실패공고"]), embed=self.flaky(calls))
+        self.assertEqual((len(calls), result.failed_job_posting_ids), (1, [1]))
+
+    def test_stops_after_consecutive_single_failures(self):
+        calls = []
+
+        def always_fails(texts):
+            calls.append(list(texts))
+            raise RuntimeError("분당 한도 흉내")
+
+        result = self.index(self.jobs([f"공고{i}" for i in range(6)]), embed=always_fails)
+        # 묶음 1번 + 1건씩 SINGLE_FAIL_STOP 번 뒤 멈춤
+        self.assertEqual([len(c) for c in calls], [6] + [1] * indexer.SINGLE_FAIL_STOP)
+        self.assertEqual(sorted(result.failed_job_posting_ids), [1, 2, 3, 4, 5, 6])
+        self.assertTrue(all(v["vector"] is None and v["embedAttemptedAt"] for v in self.store.load().values()))
+
+    def test_streak_resets_on_success(self):
+        calls = []
+        titles = ["실패공고A", "실패공고B", "백엔드", "실패공고C", "실패공고D", "데이터"]
+        result = self.index(self.jobs(titles), embed=self.flaky(calls))
+        self.assertEqual(len(calls), 1 + 6)  # 연속 실패가 2번에서 끊겨 끝까지 1건씩 부른다
+        self.assertEqual(sorted(result.failed_job_posting_ids), [1, 2, 4, 5])
 
 
 class RetryTest(TempStoreCase):

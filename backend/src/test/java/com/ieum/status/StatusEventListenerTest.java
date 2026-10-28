@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import com.ieum.application.ApplicationSubmittedEvent;
 import com.ieum.coordinator.ApplicationReviewChangedEvent;
 import com.ieum.helprequest.HelpRequestChangedEvent;
+import com.ieum.recommendation.RecommendationCreatedEvent;
 import com.ieum.recommendation.RecommendationRespondedEvent;
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -67,7 +68,7 @@ class StatusEventListenerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW"})
+    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW", "CREATED_EMPTY", "CREATED_NONEMPTY"})
     void everyCommittedSourceEventRecalculatesWithAnotherConnection(String eventType) throws Exception {
         var student = new StatusData.Student();
         student.setStudentId(7L);
@@ -92,7 +93,7 @@ class StatusEventListenerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW"})
+    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW", "CREATED_EMPTY", "CREATED_NONEMPTY"})
     void rolledBackOriginalWritesDoNotRecalculateStatus(String eventType) throws Exception {
         transactions.executeWithoutResult(status -> {
             context.publishEvent(event(eventType));
@@ -105,7 +106,7 @@ class StatusEventListenerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW"})
+    @ValueSource(strings = {"RESPONDED", "SUBMITTED", "HELP_REQUEST", "REVIEW", "CREATED_EMPTY", "CREATED_NONEMPTY"})
     void failedStatusWriteCannotFailAnyAlreadyCommittedSource(String eventType) throws Exception {
         when(mapper.lockStudent(7L)).thenThrow(new IllegalStateException("simulated unavailable database"));
 
@@ -145,6 +146,8 @@ class StatusEventListenerTest {
             case "SUBMITTED" -> new ApplicationSubmittedEvent(7L, 13L);
             case "HELP_REQUEST" -> new HelpRequestChangedEvent(7L, 14L);
             case "REVIEW" -> new ApplicationReviewChangedEvent(7L, 13L);
+            case "CREATED_EMPTY" -> new RecommendationCreatedEvent(7L, 12L, "VISIT", 0);
+            case "CREATED_NONEMPTY" -> new RecommendationCreatedEvent(7L, 12L, "REFRESH", 3);
             default -> throw new IllegalArgumentException("알 수 없는 테스트 이벤트");
         };
     }

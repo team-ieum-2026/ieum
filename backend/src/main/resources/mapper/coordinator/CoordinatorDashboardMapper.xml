@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-07 대시보드 조회. 상태 재계산과 원문 변경은 하지 않는다. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.coordinator.CoordinatorDashboardMapper">
+
+    <select id="findStudentStates" resultType="com.ieum.coordinator.CoordinatorDashboardData$StudentState">
+        SELECT s.id AS student_id, s.name AS student_name,
+               ss.status, ss.sub_status, s.last_response_at, s.completed_on
+        FROM student s
+        LEFT JOIN student_status ss ON ss.student_id = s.id
+        ORDER BY s.id
+    </select>
+
+    <select id="findOpenHelpRequests" resultType="com.ieum.coordinator.CoordinatorDashboardData$HelpRequest">
+        SELECT h.id AS help_request_id, s.id AS student_id, s.name AS student_name,
+               CONCAT(c.name, ' ', c.cohort) AS course_label, h.created_at,
+               CONCAT(j.company_name, ' ', j.title) AS job_title, h.contact_method, h.memo
+        FROM help_request h
+        JOIN student s ON s.id = h.student_id
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN recommendation_item ri ON ri.id = h.recommendation_item_id
+        LEFT JOIN job_posting j ON j.id = ri.job_posting_id
+        WHERE h.status = 'OPEN'
+        ORDER BY h.created_at DESC, h.id DESC
+    </select>
+
+    <select id="findReviewQueue" resultType="com.ieum.coordinator.CoordinatorDashboardData$ReviewQueueItem">
+        SELECT a.id AS application_id, s.name AS student_name,
+               CONCAT(j.company_name, ' ', j.title) AS job_title, a.submitted_at
+        FROM application a
+        JOIN student s ON s.id = a.student_id
+        JOIN job_posting j ON j.id = a.job_posting_id
+        WHERE a.status = 'SUBMITTED'
+        ORDER BY a.submitted_at ASC, a.id ASC
+    </select>
+
+    <!-- 최신 PASS가 메모를 비웠다면 과거 메모를 다시 대기 목록에 올리지 않는다. -->
+    <select id="findLatestPassNotes" resultType="com.ieum.coordinator.CoordinatorDashboardData$NoteToCheck">
+        WITH ranked_passes AS (
+            SELECT r.student_id, ri.pass_note, ri.responded_at,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY r.student_id
+                       ORDER BY ri.responded_at DESC, ri.id DESC
+                   ) AS response_rank
+            FROM recommendation_item ri
+            JOIN recommendation r ON r.id = ri.recommendation_id
+            WHERE ri.response = 'PASS'
+        )
+        SELECT p.student_id, s.name AS student_name, p.pass_note
+        FROM ranked_passes p
+        JOIN student s ON s.id = p.student_id
+        WHERE p.response_rank = 1 AND REGEXP_LIKE(p.pass_note, '[^[:space:]]')
+        ORDER BY p.responded_at DESC, p.student_id ASC
+    </select>
+
+</mapper>
