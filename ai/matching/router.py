@@ -8,9 +8,9 @@ import asyncio
 from fastapi import APIRouter
 
 from common.response import ok
-from matching.fallback import recommend_from_index
 from matching.indexer import run_index
 from matching.models import IndexRequest, RecommendRequest
+from matching.recommend import recommend_jobs
 from matching.store import IndexStore
 
 router = APIRouter(prefix="/ai/matching", tags=["matching"])
@@ -32,8 +32,8 @@ async def index_jobs(body: IndexRequest) -> dict:
 
 @router.post("/recommend")
 async def recommend(body: RecommendRequest) -> dict:
-    # TODO(AI-B-03): 지금은 색인 저장소 공고 + 규칙 필터 + 단어 겹침 점수의 임시 추천 (matching/fallback.py).
-    # 임베딩 · 리랭커가 들어오면 임베딩으로 후보 → common.reranker.rerank 로 Top-3 으로 교체한다.
+    # 규칙 필터 → 임베딩 후보 → 리랭커 → Top-K (matching/recommend.py). 임베딩 · 리랭커가 실패하면 규칙 추천(fallback.py)
     # 맞는 공고가 없으면 억지로 추천하지 않고 items: [] (팀 결정)
-    data = await asyncio.to_thread(recommend_from_index, body, store)
+    # 리랭커(CPU)가 오래 걸리므로 스레드에서 돌려 서버가 멈추지 않게 한다
+    data = await asyncio.to_thread(recommend_jobs, body, store)
     return ok(data.model_dump(by_alias=True))
