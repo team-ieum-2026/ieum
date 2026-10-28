@@ -324,8 +324,9 @@ class ProfileDocumentItemDatabaseTest {
     }
 
     private String sourceHash() {
-        return jdbc.queryForObject("SELECT source_hash FROM competency_profile WHERE student_id = ?",
+        List<String> hashes = jdbc.queryForList("SELECT source_hash FROM competency_profile WHERE student_id = ?",
                 String.class, STUDENT_ID);
+        return hashes.isEmpty() ? null : hashes.get(0);
     }
 
     private List<Map<String, Object>> competencyRows() {
