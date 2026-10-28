@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -16,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -29,10 +25,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileMilitaryServiceTest {
@@ -45,18 +41,21 @@ class ProfileMilitaryServiceTest {
     private ProfileService profiles;
     @Mock
     private AiClient ai;
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void updatesOnlyMilitaryColumnBeforeExtractingAndReturningFullProfile() {
+    void updatesOnlyMilitaryColumnAndQueuesRefreshBeforeReturningSavedProfile() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         StudentProfileResponse updated = profile("SERVED");
-        prepareM8Extraction(updated);
+        prepareSavedProfile(updated);
         var item = JSON.createObjectNode().put("value", "SERVED").put("name", "Ignored Mock Name")
                 .put("desiredJob", "Ignored Job").put("courseId", 99L)
                 .put("completedOn", "2000-01-01").put("lastResponseAt", "2000-01-01T00:00:00")
@@ -65,31 +64,26 @@ class ProfileMilitaryServiceTest {
 
         assertSame(updated, service.updateItem(7L, 7L, new ProfileItemPatchRequest("MILITARY", item)));
 
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).updateMilitary(7L, "SERVED");
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
-        order.verify(profiles).getProfile(7L);
-        assertEquals("SERVED", sources.getValue().path("basic").path("militaryStatus").asText());
         verify(mapper, never()).updateBasic(any());
         verify(mapper, never()).findCurrentStudent(any());
     }
 
     @Test
-    void explicitNullClearsMilitaryThroughPatchAndReextracts() {
+    void explicitNullClearsMilitaryThroughPatchAndQueuesRefresh() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
-        prepareM8Extraction(profile(null));
+        prepareSavedProfile(profile(null));
 
         StudentProfileResponse result = service.updateItem(7L, 7L,
                 new ProfileItemPatchRequest("MILITARY", JSON.createObjectNode().putNull("value")));
 
         verify(mapper).updateMilitary(7L, null);
         assertNull(result.basic().militaryStatus());
-        verify(ai).extractProfile(any());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @Test
@@ -100,7 +94,7 @@ class ProfileMilitaryServiceTest {
                 new ProfileItemPatchRequest("MILITARY", JSON.createObjectNode().put("value", "SERVED"))));
 
         verify(mapper, never()).updateMilitary(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -112,7 +106,7 @@ class ProfileMilitaryServiceTest {
 
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).updateMilitary(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -124,7 +118,7 @@ class ProfileMilitaryServiceTest {
 
         assertEquals(ErrorCode.INVALID_REQUEST, failure.getErrorCode());
         verify(mapper, never()).updateMilitary(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -139,41 +133,26 @@ class ProfileMilitaryServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, addFailure.getErrorCode());
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateMilitary(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void documentMilitaryUpdateUsesSharedWriterAndCurrentSnapshotForAi() {
-        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+    void documentMilitaryUpdateUsesSharedWriterAndQueuesRefresh() {
+        ProfileService documentService = spy(new ProfileService(mapper, events));
         when(mapper.lockStudent(7L)).thenReturn(7L);
-        doReturn(profile("EXEMPT")).when(documentService).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        prepareAiResult();
 
         documentService.updateItem(7L, "MILITARY", 7L, JSON.createObjectNode().put("value", "EXEMPT"));
 
-        InOrder order = inOrder(mapper, documentService, ai);
+        InOrder order = inOrder(mapper, documentService, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).updateMilitary(7L, "EXEMPT");
-        order.verify(documentService).getCurrentProfile(7L);
-        order.verify(mapper).findCurrentProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
-        assertEquals("EXEMPT", sources.getValue().path("basic").path("militaryStatus").asText());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(documentService, never()).getProfile(any());
         verify(mapper, never()).findProjects(any());
     }
 
-    private void prepareM8Extraction(StudentProfileResponse result) {
+    private void prepareSavedProfile(StudentProfileResponse result) {
         when(profiles.getProfile(7L)).thenReturn(result);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        prepareAiResult();
-    }
-
-    private void prepareAiResult() {
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
-                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
     }
 
     private static StudentProfileResponse profile(String militaryStatus) {

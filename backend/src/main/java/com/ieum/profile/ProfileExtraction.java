@@ -12,7 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-/** M8과 서류 저장이 같은 원문으로 AI 프로필을 재추출한다. 트랜잭션은 호출자가 관리한다. */
+/** 등록 자료를 AI 요청으로 변환한다. 읽기·AI 호출·결과 저장의 경계는 호출자가 관리한다. */
 final class ProfileExtraction {
 
     private final ProfileMapper mapper;
@@ -30,20 +30,28 @@ final class ProfileExtraction {
     }
 
     void refresh(Long studentId, StudentProfileResponse registered, boolean currentRead) {
+        JsonNode sources = sources(studentId, registered, currentRead);
+        mapper.upsertCompetencyProfile(studentId, extract(sources), sourceHash(sources));
+    }
+
+    JsonNode sources(Long studentId, StudentProfileResponse registered, boolean currentRead) {
         ObjectNode sources = objectMapper.valueToTree(registered);
         sources.remove("competencyProfile");
         sources.remove("profileUpdatedAt");
         sources.set("projects", objectMapper.valueToTree(currentRead
                 ? mapper.findCurrentProjects(studentId) : mapper.findProjects(studentId)));
-        // TODO(AI-A/AI-B): 실제 extract 요청 형식 확정 시 입력 변환을 맞춘다.
-        String sourceHash = sourceHash(sources);
+        // itemId는 원본 테이블의 PK다. 프로젝트 원문은 M8 표시용 응답에서 빠지므로 다시 포함한다.
+        return sources;
+    }
+
+    JsonNode extract(JsonNode sources) {
         JsonNode result = aiClient.extractProfile(sources);
         JsonNode profile = result == null ? null : result.get("profile");
         if (profile == null || !profile.isObject()) throw new BusinessException(ErrorCode.AI_SERVER_ERROR);
-        mapper.upsertCompetencyProfile(studentId, profile, sourceHash);
+        return profile;
     }
 
-    private String sourceHash(JsonNode sources) {
+    String sourceHash(JsonNode sources) {
         try {
             byte[] content = objectMapper.writeValueAsBytes(sources);
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(content));

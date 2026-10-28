@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -34,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileSkillsServiceTest {
@@ -46,19 +46,22 @@ class ProfileSkillsServiceTest {
     private ProfileService profiles;
     @Mock
     private AiClient ai;
+    @Mock
+    private ApplicationEventPublisher events;
+
     private ProfileItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileItemService(mapper, profiles, ai, JSON);
+        service = new ProfileItemService(mapper, profiles, events);
     }
 
     @Test
-    void replacesOnlySkillsAndPreservesTagOrderDuplicatesAndSurroundingWhitespaceBeforeExtracting() {
+    void replacesOnlySkillsAndPreservesTagOrderDuplicatesAndWhitespaceWhileQueuingRefresh() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
         List<String> tags = List.of("Spring Boot", " Java ", "Spring Boot", "모의 기술");
         StudentProfileResponse updated = profile(tags);
-        prepareM8Extraction(updated);
+        prepareSavedProfile(updated);
         var item = tagsItem(tags).put("source", "AI").put("name", "Ignored Mock Name")
                 .put("militaryStatus", "EXEMPT").put("lastResponseAt", "2000-01-01T00:00:00")
                 .put("status", "EMPLOYED");
@@ -68,32 +71,27 @@ class ProfileSkillsServiceTest {
         assertSame(updated, service.updateItem(7L, 7L, new ProfileItemPatchRequest("SKILLS", item)));
 
         ArgumentCaptor<JsonNode> saved = ArgumentCaptor.forClass(JsonNode.class);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        InOrder order = inOrder(mapper, profiles, ai);
+        InOrder order = inOrder(mapper, profiles, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).updateSkills(eq(7L), saved.capture());
-        order.verify(profiles).getProfile(7L);
-        order.verify(mapper).findProjects(7L);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         order.verify(profiles).getProfile(7L);
         assertEquals(JSON.valueToTree(tags), saved.getValue());
-        assertEquals(JSON.valueToTree(tags), sources.getValue().path("skills"));
         verify(mapper, never()).updateBasic(any());
         verify(mapper, never()).updateMilitary(any(), any());
     }
 
     @Test
-    void emptyTagsClearsListThroughPatchAndReextracts() {
+    void emptyTagsClearsListThroughPatchAndQueuesRefresh() {
         when(mapper.lockStudent(7L)).thenReturn(7L);
-        prepareM8Extraction(profile(List.of()));
+        prepareSavedProfile(profile(List.of()));
 
         StudentProfileResponse result = service.updateItem(7L, 7L,
                 new ProfileItemPatchRequest("SKILLS", tagsItem(List.of())));
 
         verify(mapper).updateSkills(7L, JSON.createArrayNode());
         assertEquals(List.of(), result.skills());
-        verify(ai).extractProfile(any());
+        verify(events).publishEvent(new ProfileChangedEvent(7L));
     }
 
     @Test
@@ -104,7 +102,7 @@ class ProfileSkillsServiceTest {
                 new ProfileItemPatchRequest("SKILLS", tagsItem(List.of("Java")))));
 
         verify(mapper, never()).updateSkills(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -116,7 +114,7 @@ class ProfileSkillsServiceTest {
 
         assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
         verify(mapper, never()).updateSkills(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -131,7 +129,7 @@ class ProfileSkillsServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, nullFailure.getErrorCode());
         assertEquals(ErrorCode.INVALID_REQUEST, summaryFailure.getErrorCode());
         verify(mapper, never()).updateSkills(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
@@ -146,31 +144,23 @@ class ProfileSkillsServiceTest {
         assertEquals(ErrorCode.INVALID_REQUEST, addFailure.getErrorCode());
         assertEquals(ErrorCode.INVALID_REQUEST, deleteFailure.getErrorCode());
         verify(mapper, never()).updateSkills(any(), any());
-        verifyNoInteractions(profiles, ai);
+        verifyNoInteractions(profiles, ai, events);
     }
 
     @Test
-    void documentSkillsUpdateIgnoresSummaryAndUsesCurrentSnapshotForAi() {
-        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+    void documentSkillsUpdateIgnoresSummaryAndQueuesRefresh() {
+        ProfileService documentService = spy(new ProfileService(mapper, events));
         when(mapper.lockStudent(7L)).thenReturn(7L);
         List<String> tags = List.of("Java", "Spring Boot");
-        doReturn(profile(tags)).when(documentService).getCurrentProfile(7L);
-        when(mapper.findCurrentProjects(7L)).thenReturn(List.of());
-        prepareAiResult();
         var item = tagsItem(tags).put("source", "AI");
         item.putArray("summary").add("Generated document sentence");
 
         documentService.updateItem(7L, "SKILLS", 7L, item);
 
-        InOrder order = inOrder(mapper, documentService, ai);
+        InOrder order = inOrder(mapper, documentService, events);
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).updateSkills(7L, JSON.valueToTree(tags));
-        order.verify(documentService).getCurrentProfile(7L);
-        order.verify(mapper).findCurrentProjects(7L);
-        ArgumentCaptor<JsonNode> sources = ArgumentCaptor.forClass(JsonNode.class);
-        order.verify(ai).extractProfile(sources.capture());
-        order.verify(mapper).upsertCompetencyProfile(eq(7L), any(JsonNode.class), anyString());
-        assertEquals(JSON.valueToTree(tags), sources.getValue().path("skills"));
+        order.verify(events).publishEvent(new ProfileChangedEvent(7L));
         verify(documentService, never()).getProfile(any());
         verify(mapper, never()).findProjects(any());
     }
@@ -178,7 +168,7 @@ class ProfileSkillsServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"summary", "source"})
     void documentOnlySummaryOrSourceKeepsProfileAndCompetencyUntouched(String field) {
-        ProfileService documentService = spy(new ProfileService(mapper, ai, JSON));
+        ProfileService documentService = spy(new ProfileService(mapper, events));
         when(mapper.lockStudent(7L)).thenReturn(7L);
         var item = JSON.createObjectNode();
         if ("summary".equals(field)) item.putArray("summary").add("Generated document sentence");
@@ -195,15 +185,8 @@ class ProfileSkillsServiceTest {
         verifyNoInteractions(ai);
     }
 
-    private void prepareM8Extraction(StudentProfileResponse result) {
+    private void prepareSavedProfile(StudentProfileResponse result) {
         when(profiles.getProfile(7L)).thenReturn(result);
-        when(mapper.findProjects(7L)).thenReturn(List.of());
-        prepareAiResult();
-    }
-
-    private void prepareAiResult() {
-        when(ai.extractProfile(any(JsonNode.class))).thenReturn(JSON.createObjectNode()
-                .set("profile", JSON.createObjectNode().put("marker", "mock-competency")));
     }
 
     private static com.fasterxml.jackson.databind.node.ObjectNode tagsItem(List<String> tags) {

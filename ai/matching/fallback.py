@@ -1,7 +1,8 @@
 # 주인: AI-B
 """임시 추천 (AI-B-03 임시 방식): 색인 저장소의 공고를 규칙 필터 + 단어 겹침 점수로 고른다.
 
-임베딩 · 리랭커(common.embedding · common.reranker)가 들어오면 이 파일의 순위 매기기를 교체한다.
+본 추천은 matching/recommend.py(임베딩 후보 → 리랭커)다. 이 파일은 그 대체 경로이고,
+단어 매칭 · 근거 문장(build_reasons) · 지역 묶음(region_tier) 함수는 recommend.py 도 같이 쓴다.
 (후보: 임베딩 유사도 → 리랭커 Top-3. 규칙 필터 · 중복 합치기 · 응답 형식은 그대로 쓸 수 있다)
 
 1. 후보: jobs_index.json 의 공고 중 excludeJobPostingIds 에 없는 것
@@ -10,7 +11,9 @@
 4. 순서: 희망 지역과 같은 시 · 도 → 수도권 → 그 밖, 같은 묶음 안에서는 점수 높은 순, 동점이면 jobPostingId 순
 5. 점수 0 인 공고는 추천하지 않는다. 남는 공고가 없으면 items: [] (억지로 채우지 않음)
 6. 회사명 · 제목이 같은 공고(근무지만 다름)는 하나만 남긴다
-7. reasons: 겹친 단어로 만든 한 줄. evidence 는 겹친 skills 의 기존 근거. LLM 은 쓰지 않는다
+7. reasons: 겹친 단어로 만든 문장 (build_reasons). 기술은 프로필 근거, 희망 직무는 JOB_POSTING 근거. LLM 은 쓰지 않는다
+
+지금은 matching/recommend.py(임베딩 · 리랭커)가 실패하거나 벡터 있는 공고가 없을 때의 대체 경로로 쓴다.
 """
 
 import logging
@@ -89,17 +92,37 @@ def _skill_evidence(profile: CompetencyProfile, names: list[str]) -> list[Eviden
     return [EvidenceRef(ref_type=t, ref_id=i) for t, i in refs]
 
 
-def reason(profile: CompetencyProfile, scored: Scored) -> RecommendReason:
-    job = " · ".join(scored.job_terms)
-    skills = " · ".join(scored.skills)
-    if scored.job_terms and scored.skills:
-        text = f"희망 직무 '{job}'와 맞고, 보유 기술 {skills}이(가) 공고에 나옵니다"
-    elif scored.skills:
-        text = f"보유 기술 {skills}이(가) 공고에 나옵니다"
-    else:
-        text = f"희망 직무 '{job}'와 공고 직무가 맞습니다"
-    # 희망 직무는 근거 refType 이 없어 skills 근거만 붙는다 (희망 직무만 겹치면 evidence 는 [])
-    return RecommendReason(text=text, evidence=_skill_evidence(profile, scored.skills))
+def build_reasons(
+    profile: CompetencyProfile, job_posting_id: int, matched_terms: list[str], matched_skills: list[str]
+) -> list[RecommendReason]:
+    """겹친 단어로 만든 추천 근거 (LLM 없음). 임시 추천 · 임베딩 추천이 같이 쓴다.
+
+    - 보유 기술이 겹치면: 그 기술의 프로필 근거(PROJECT 등)
+    - 희망 직무 단어가 공고에 나오면: 공고 근거 JOB_POSTING(refId = jobPostingId)
+    겹친 게 없으면 [] (임베딩 추천은 별도 문장을 붙인다)
+    """
+    reasons: list[RecommendReason] = []
+    evidence = _skill_evidence(profile, matched_skills)
+    if matched_skills and evidence:
+        reasons.append(RecommendReason(text=f"보유 기술 {' · '.join(matched_skills)}이(가) 공고에 나옵니다", evidence=evidence))
+    if matched_terms:
+        reasons.append(RecommendReason(
+            text=f"희망 직무 '{' · '.join(matched_terms)}'와 공고 직무가 맞습니다",
+            evidence=[job_posting_ref(job_posting_id)],
+        ))
+    return reasons
+
+
+def job_posting_ref(job_posting_id: int) -> EvidenceRef:
+    return EvidenceRef(ref_type="JOB_POSTING", ref_id=job_posting_id)
+
+
+def matched_words(text: str, terms: dict[str, re.Pattern], skills: dict[str, list[re.Pattern]]) -> tuple[list[str], list[str]]:
+    """(공고에 나온 희망 직무 단어, 공고에 나온 보유 기술 대표 이름)"""
+    return (
+        [t for t, rx in terms.items() if rx.search(text)],
+        [name for name, rxs in skills.items() if any(rx.search(text) for rx in rxs)],
+    )
 
 
 def recommend_from_index(req: RecommendRequest, store: IndexStore) -> RecommendData:
@@ -119,9 +142,7 @@ def recommend_from_index(req: RecommendRequest, store: IndexStore) -> RecommendD
         job_id = int(key)
         if job_id in excluded or entry.get("careerRequired"):
             continue
-        text = entry.get("matchText") or ""
-        matched_terms = [t for t, rx in terms.items() if rx.search(text)]
-        matched_skills = [name for name, rxs in skills.items() if any(rx.search(text) for rx in rxs)]
+        matched_terms, matched_skills = matched_words(entry.get("matchText") or "", terms, skills)
         s = Scored(job_id, entry, region_tier(profile.preferred_region, entry.get("region")), matched_terms, matched_skills)
         if s.score > 0:
             scored.append(s)
@@ -144,6 +165,9 @@ def recommend_from_index(req: RecommendRequest, store: IndexStore) -> RecommendD
         req.student_id, len(entries), len(scored), len(picked),
     )
     return RecommendData(items=[
-        RecommendItem(job_posting_id=s.job_posting_id, rank=rank, reasons=[reason(profile, s)])
+        RecommendItem(
+            job_posting_id=s.job_posting_id, rank=rank,
+            reasons=build_reasons(profile, s.job_posting_id, s.job_terms, s.skills),
+        )
         for rank, s in enumerate(picked, start=1)
     ])

@@ -163,14 +163,34 @@ class EmbeddingTest(TempStoreCase):
         result = self.index([JOB], embed=lambda texts: [])
         self.assertEqual(result.failed_job_posting_ids, [1])
 
-    def test_embedding_error_fails_only_that_job(self):
-        def flaky(texts):
-            if "실패" in texts[0]:
-                raise RuntimeError("boom")
+    def test_batch_is_embedded_in_one_call(self):
+        calls = []
+
+        def counting_embed(texts):
+            calls.append(list(texts))
             return fake_embed(texts)
 
-        result = self.index([{**JOB, "jobPostingId": 2, "title": "실패 공고"}, JOB], embed=flaky)
-        self.assertEqual((result.indexed_count, result.failed_job_posting_ids), (1, [2]))
+        jobs = [{**JOB, "jobPostingId": i, "contentHash": f"h{i}"} for i in (1, 2, 3)]
+        result = self.index(jobs, embed=counting_embed)
+        self.assertEqual(result.indexed_count, 3)
+        self.assertEqual(len(calls), 1)  # 3건을 한 번에 (다시 시도할 공고가 없어 두 번째 호출도 없음)
+        self.assertEqual(len(calls[0]), 3)
+        saved = self.store.load()
+        self.assertEqual([saved[str(i)]["vector"][0] for i in (1, 2, 3)], [float(len(t)) for t in calls[0]])
+
+    def test_batch_error_saves_null_for_whole_batch_and_retries_next_time(self):
+        def broken(texts):
+            raise RuntimeError("boom")
+
+        jobs = [{**JOB, "jobPostingId": 2, "title": "다른 공고"}, JOB]
+        result = self.index(jobs, embed=broken)
+        self.assertEqual((result.indexed_count, sorted(result.failed_job_posting_ids)), (0, [1, 2]))
+        saved = self.store.load()
+        self.assertTrue(all(saved[k]["vector"] is None and saved[k]["embedAttemptedAt"] for k in ("1", "2")))
+
+        again = self.index([])
+        self.assertEqual(again.retried_count, 2)
+        self.assertTrue(all(v["vector"] is not None for v in self.store.load().values()))
 
     def test_not_implemented_saves_preprocess_with_null_vector(self):
         result = self.index([JOB], embed=not_ready_embed)
@@ -252,7 +272,8 @@ class RetryTest(TempStoreCase):
             return fake_embed(texts)
 
         first = self.index([], embed=counting_embed)
-        self.assertEqual((first.retried_count, len(calls)), (indexer.RETRY_LIMIT, 20))
+        # 20건을 묶음 1번으로
+        self.assertEqual((first.retried_count, len(calls), len(calls[0])), (indexer.RETRY_LIMIT, 1, 20))
         missing = [k for k, v in self.store.load().items() if v["vector"] is None]
         self.assertEqual(sorted(missing, key=int), ["21", "22", "23", "24", "25"])
 

@@ -1,14 +1,13 @@
 // 주인: BE-B
 package com.ieum.profile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ieum.ai.AiClient;
 import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 프로필 자료 변경과 AI 재추출 결과 저장을 하나의 트랜잭션으로 처리한다. */
+/** 프로필 자료를 먼저 저장하고, 저장 확정 후 AI 재추출을 요청한다. */
 @Service
 public class ProfileItemService {
 
@@ -18,17 +17,17 @@ public class ProfileItemService {
     private final ProfileMilitaryWriter military;
     private final ProfileSkillsWriter skills;
     private final ProfileProjectWriter projects;
-    private final ProfileExtraction extraction;
+    private final ApplicationEventPublisher events;
 
     public ProfileItemService(
-            ProfileMapper mapper, ProfileService profileService, AiClient aiClient, ObjectMapper objectMapper) {
+            ProfileMapper mapper, ProfileService profileService, ApplicationEventPublisher events) {
         this.mapper = mapper;
         this.profileService = profileService;
         this.basic = new ProfileBasicWriter(mapper);
         this.military = new ProfileMilitaryWriter(mapper);
         this.skills = new ProfileSkillsWriter(mapper);
         this.projects = new ProfileProjectWriter(mapper);
-        this.extraction = new ProfileExtraction(mapper, aiClient, objectMapper);
+        this.events = events;
     }
 
     @Transactional
@@ -55,7 +54,7 @@ public class ProfileItemService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        return extractAndReturn(studentId);
+        return saveAndReturn(studentId);
     }
 
     @Transactional
@@ -92,7 +91,7 @@ public class ProfileItemService {
         } else {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
-        return extractAndReturn(studentId);
+        return saveAndReturn(studentId);
     }
 
     @Transactional
@@ -118,7 +117,7 @@ public class ProfileItemService {
         } else {
             projects.deletePortfolio(studentId, itemId);
         }
-        return extractAndReturn(studentId);
+        return saveAndReturn(studentId);
     }
 
     @Transactional
@@ -130,7 +129,7 @@ public class ProfileItemService {
             throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
         }
         mapper.upsertCoverLetter(studentId, content);
-        return extractAndReturn(studentId);
+        return saveAndReturn(studentId);
     }
 
     private ProfileData.Career careerData(Long studentId, Long itemId, ProfileItemRequest.CareerItem item) {
@@ -179,8 +178,8 @@ public class ProfileItemService {
         return certificate;
     }
 
-    private StudentProfileResponse extractAndReturn(Long studentId) {
-        extraction.refresh(studentId, profileService.getProfile(studentId));
+    private StudentProfileResponse saveAndReturn(Long studentId) {
+        events.publishEvent(new ProfileChangedEvent(studentId));
         return profileService.getProfile(studentId);
     }
 }

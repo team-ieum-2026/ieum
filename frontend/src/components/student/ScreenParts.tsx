@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
 
-export function StudentScreen({ children }: { children: ReactNode }) {
-  return <div className="flex flex-1 flex-col bg-surface-warm text-ink">{children}</div>;
+export function StudentScreen({ children, lighter = false }: { children: ReactNode; lighter?: boolean }) {
+  return <div className={`flex flex-1 flex-col text-ink ${lighter ? "bg-[color-mix(in_srgb,var(--color-surface-warm)_60%,var(--color-surface))]" : "bg-surface-warm"}`}>{children}</div>;
 }
 
 export function ScreenHeader({ title, back }: { title: string; back?: string }) {

@@ -32,7 +32,7 @@ public class ProfileItemController {
     }
 
     @PostMapping
-    @Operation(summary = "프로필 항목 추가", description = "CERTIFICATES·EDUCATION·CAREER·PROJECTS를 지원합니다. 프로젝트의 roleNote·readme 원문 수정은 M8 경로에서만 가능합니다. 항목과 재추출한 역량 프로필을 함께 저장하고 전체 프로필을 반환합니다.")
+    @Operation(summary = "프로필 항목 추가", description = "CERTIFICATES·EDUCATION·CAREER·PROJECTS를 지원합니다. 프로젝트의 roleNote·readme 원문 수정은 M8 경로에서만 가능합니다. 항목 저장 후 전체 프로필을 반환하며 AI 재추출은 커밋 뒤 비동기로 처리합니다. profileUpdatedAt은 마지막 추출 완료 시각으로, 완료 후 프로필을 다시 조회하면 갱신됩니다.")
     public ApiResponse<StudentProfileResponse> addItem(
             @Parameter(description = "수료생 번호", example = "1")
             @PathVariable("studentId") Long studentId,
