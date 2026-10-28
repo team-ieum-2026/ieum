@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-08 수료생 목록·상세·상담 기록. 상태 재계산은 하지 않는다. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.coordinator.CoordinatorStudentMapper">
+
+    <resultMap id="student" type="com.ieum.coordinator.CoordinatorStudentData$Student" autoMapping="true">
+        <id property="studentId" column="student_id"/>
+        <result property="competencyProfile" column="competency_profile"
+                typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
+    </resultMap>
+
+    <!-- 대시보드와 같은 표시 정책이다. 저장된 판정 원문은 바꾸지 않는다. -->
+    <sql id="displayStatus">
+        CASE WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'NEED_HELP')
+             THEN ss.status ELSE 'CHECK_REQUIRED' END
+    </sql>
+
+    <sql id="displaySubStatus">
+        CASE WHEN CAST(ss.status AS BINARY) = 'SEEKING'
+             THEN CASE WHEN CAST(ss.sub_status AS BINARY) IN ('APPLYING', 'OTHER')
+                       THEN ss.sub_status ELSE 'WAITING' END
+             ELSE NULL END
+    </sql>
+
+    <sql id="studentSource">
+        FROM student s
+        LEFT JOIN student_status ss ON ss.student_id = s.id
+    </sql>
+
+    <sql id="studentFilters">
+        <where>
+            <if test="status != null">
+                AND <include refid="displayStatus"/> = #{status}
+            </if>
+            <if test="subStatus != null">
+                AND <include refid="displaySubStatus"/> = #{subStatus}
+            </if>
+            <if test="namePattern != null">
+                AND s.name LIKE #{namePattern} ESCAPE '!'
+            </if>
+        </where>
+    </sql>
+
+    <sql id="studentColumns">
+        s.id AS student_id, s.name, CONCAT(c.name, ' ', c.cohort) AS course_label, s.completed_on,
+        <include refid="displayStatus"/> AS status,
+        <include refid="displaySubStatus"/> AS sub_status,
+        s.last_response_at,
+        (EXISTS(
+            SELECT 1
+            FROM recommendation_item ri_note
+            JOIN recommendation r_note ON r_note.id = ri_note.recommendation_id
+            WHERE r_note.student_id = s.id AND REGEXP_LIKE(ri_note.pass_note, '[^[:space:]]')
+        ) OR EXISTS(
+            SELECT 1 FROM contact_log WHERE student_id = s.id
+        )) AS has_note
+    </sql>
+
+    <select id="countStudents" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        <include refid="studentSource"/>
+        <include refid="studentFilters"/>
+    </select>
+
+    <select id="findStudents" resultMap="student">
+        SELECT <include refid="studentColumns"/>
+        <include refid="studentSource"/>
+        JOIN course c ON c.id = s.course_id
+        <include refid="studentFilters"/>
+        ORDER BY s.id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findStudent" resultMap="student">
+        SELECT <include refid="studentColumns"/>,
+               s.email, s.desired_job, s.preferred_region, ss.reason,
+               cp.profile AS competency_profile
+        <include refid="studentSource"/>
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN competency_profile cp ON cp.student_id = s.id
+        WHERE s.id = #{studentId}
+    </select>
+
+    <select id="findRegisteredSummary" resultType="com.ieum.coordinator.CoordinatorStudentData$RegisteredSummary">
+        SELECT (SELECT COUNT(*) FROM student_education WHERE student_id = #{studentId}) AS education,
+               (SELECT COUNT(*) FROM student_certificate WHERE student_id = #{studentId}) AS certificates,
+               (SELECT COUNT(*) FROM student_project WHERE student_id = #{studentId}) AS projects,
+               EXISTS(
+                   SELECT 1 FROM student_cover_letter
+                   WHERE student_id = #{studentId}
+               ) AS has_cover_letter
+    </select>
+
+    <select id="findRecommendations" resultType="com.ieum.coordinator.CoordinatorStudentData$Recommendation">
+        SELECT id AS recommendation_id, created_at
+        FROM recommendation
+        WHERE student_id = #{studentId}
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <select id="findHistoryItems" resultType="com.ieum.coordinator.CoordinatorStudentData$HistoryItem">
+        SELECT r.id AS recommendation_id, ri.id AS item_id, j.company_name, j.title,
+               ri.response, ri.pass_reason, ri.pass_note, ri.responded_at,
+               a.id AS application_id, a.status AS application_status
+        FROM recommendation r
+        JOIN recommendation_item ri ON ri.recommendation_id = r.id
+        JOIN job_posting j ON j.id = ri.job_posting_id
+        LEFT JOIN application a ON a.recommendation_item_id = ri.id AND a.student_id = r.student_id
+        WHERE r.student_id = #{studentId}
+        ORDER BY ri.rank_no ASC, ri.id ASC
+    </select>
+
+    <select id="findContactLogs" resultType="com.ieum.coordinator.CoordinatorStudentData$ContactLog">
+        SELECT id AS contact_log_id, student_id, contact_type, note, created_at
+        FROM contact_log
+        WHERE student_id = #{studentId}
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <insert id="insertContactLog" useGeneratedKeys="true" keyProperty="contactLogId">
+        INSERT INTO contact_log (student_id, contact_type, note, created_at)
+        VALUES (#{studentId}, #{contactType}, #{note,jdbcType=LONGVARCHAR}, #{createdAt})
+    </insert>
+
+</mapper>
