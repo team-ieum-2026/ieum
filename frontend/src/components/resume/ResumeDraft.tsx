@@ -15,6 +15,7 @@ import { summarizeSection, type CardSection, type SectionSummary } from "@/compo
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
 import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
+import type { Source } from "@/types/student";
 
 const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
 const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
@@ -307,6 +308,19 @@ function CenterNotice({ message, action }: { message: string; action?: React.Rea
   );
 }
 
+/** 자기소개서 카드 안내 문구. 실제 문장 출처 구성에 맞춘다 (문장이 없으면 null) */
+function coverLetterNote(ai: number, registered: number, user: number): string | null {
+  if (ai + registered + user === 0) return null;
+  if (ai === 0) {
+    if (user === 0) return "수료 때 등록한 자기소개서 원본 문장이에요.";
+    if (registered === 0) return "직접 쓰거나 고친 문장이에요.";
+    return "등록한 원본에 직접 고친 문장이 섞여 있어요.";
+  }
+  if (registered + user === 0) return "공고에 맞춰 AI가 추천 작성한 내용이에요.";
+  const others = [registered > 0 && "등록", user > 0 && "직접 입력"].filter(Boolean).join(" · ");
+  return `AI가 추천 작성한 문장과 ${others} 문장이 함께 있어요.`;
+}
+
 function CoverLetterCard({
   applicationId,
   studentId,
@@ -316,8 +330,12 @@ function CoverLetterCard({
   studentId: number;
   section: CoverLetterSection;
 }) {
-  const aiCount = section.sentences.filter((s) => s.source === "AI").length;
-  const userCount = section.sentences.length - aiCount;
+  // 출처별로 따로 센다 (등록 자료 문장을 "직접 입력"으로 세지 않게)
+  const countOf = (source: Source) => section.sentences.filter((s) => s.source === source).length;
+  const aiCount = countOf("AI");
+  const registeredCount = countOf("REGISTERED");
+  const userCount = countOf("USER");
+  const note = coverLetterNote(aiCount, registeredCount, userCount);
 
   return (
     <>
@@ -329,9 +347,10 @@ function CoverLetterCard({
         <span className="flex flex-wrap items-center gap-1.5">
           <b className="mr-auto text-sm">자기소개서</b>
           {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장`} />}
+          {registeredCount > 0 && <SourceTag source="REGISTERED" label={`등록 ${registeredCount}문장`} />}
           {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
         </span>
-        <span className="-mt-1 text-[11px] text-ink-muted">공고에 맞춰 AI가 추천 작성한 내용이에요.</span>
+        {note && <span className="-mt-1 text-[11px] text-ink-muted">{note}</span>}
         {section.sentences.length > 0 ? (
           // 문장을 이어 붙여 최대 3줄, 넘치면 말줄임표. AI 문장은 밑줄 강조
           <span className="line-clamp-3 text-[13px] leading-[1.6] text-ink-sub">
