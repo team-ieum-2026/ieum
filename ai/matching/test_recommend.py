@@ -152,12 +152,17 @@ class ResponseTest(FallbackCase):
             2: entry("[공고] 백엔드 서버"),
         })
         items = self.recommend()
-        self.assertEqual(items[0]["reasons"], [{
-            "text": "희망 직무 '백엔드'와 맞고, 보유 기술 Spring Boot · MySQL이(가) 공고에 나옵니다",
-            "evidence": [{"refType": "PROJECT", "refId": 11}, {"refType": "PROJECT", "refId": 12}],
-        }])
-        # 희망 직무만 겹치면 붙일 근거가 없다
-        self.assertEqual(items[1]["reasons"], [{"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": []}])
+        # 기술은 프로필 근거, 희망 직무는 공고 근거(JOB_POSTING)
+        self.assertEqual(items[0]["reasons"], [
+            {"text": "보유 기술 Spring Boot · MySQL이(가) 공고에 나옵니다",
+             "evidence": [{"refType": "PROJECT", "refId": 11}, {"refType": "PROJECT", "refId": 12}]},
+            {"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": [{"refType": "JOB_POSTING", "refId": 1}]},
+        ])
+        self.assertEqual(items[1]["reasons"], [
+            {"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": [{"refType": "JOB_POSTING", "refId": 2}]},
+        ])
+        # 모든 문장에 근거가 하나 이상 (API.md 3-2)
+        self.assertTrue(all(r["evidence"] for i in items for r in i["reasons"]))
 
     def test_http_response_shape_is_unchanged(self):
         self.put({7: entry("[공고] 백엔드 Java"), 8: entry("[공고] Java"), 9: entry("[공고] MySQL")})
