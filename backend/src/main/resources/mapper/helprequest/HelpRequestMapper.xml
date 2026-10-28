@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — BE-B-05 도움 요청 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.helprequest.HelpRequestMapper">
+    <select id="findStudentId" resultType="java.lang.Long">
+        SELECT id FROM student WHERE id = #{studentId}
+    </select>
+
+    <update id="touchLastResponse">
+        UPDATE student
+        SET last_response_at = CASE
+            WHEN last_response_at IS NULL OR last_response_at &lt; #{respondedAt}
+                THEN #{respondedAt}
+            ELSE last_response_at
+        END
+        WHERE id = #{studentId}
+    </update>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="helpRequestId">
+        INSERT INTO help_request (student_id, recommendation_item_id, status, created_at)
+        VALUES (#{studentId}, #{recommendationItemId}, 'OPEN', #{createdAt})
+    </insert>
+
+    <select id="findForUpdate" resultType="com.ieum.helprequest.HelpRequestData$Row"
+            useCache="false" flushCache="true">
+        SELECT id AS help_request_id, student_id, recommendation_item_id,
+               contact_method, memo, status, created_at, closed_at
+        FROM help_request
+        WHERE id = #{helpRequestId}
+        FOR UPDATE
+    </select>
+
+    <update id="updateDetails">
+        UPDATE help_request
+        SET contact_method = #{contactMethod,jdbcType=VARCHAR}, memo = #{memo,jdbcType=LONGVARCHAR}
+        WHERE id = #{helpRequestId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE help_request SET status = #{status} WHERE id = #{helpRequestId}
+    </update>
+</mapper>
