@@ -1,4 +1,4 @@
-# 주인: AI-A (AI-A-01)
+# 주인: AI-B (AI-A-01 에서 넘겨받음)
 """리랭커 모듈 (cross-encoder, sentence-transformers). 모델은 .env RERANKER_MODEL, 비어 있으면 DEFAULT_MODEL.
 
 사용:
@@ -7,6 +7,9 @@
 
 - 기본 bge-reranker-v2-m3. 비교 후보 Qwen/Qwen3-Reranker-0.6B 는 RERANKER_MODEL 만 바꾸면 된다 (CPU 에서는 많이 느림).
 - 첫 호출 때 모델을 1회 로드한다 (처음 실행 시 Hugging Face 에서 내려받음, bge 약 2.2GB).
+  서버 시작 때 미리 불러 두려면 warmup() 을 부른다 (호출은 AI-A main.py).
+- 후보를 입력 길이순으로 정렬해 BATCH_SIZE 개씩 계산한다 (비슷한 길이끼리 묶어 패딩 낭비를 줄임).
+  점수는 원래 후보 순서로 되돌려 쓰므로 결과 모양은 정렬 전과 같다.
 - 의미가 얼마나 맞는지만 본다. 신입 가능 · 지역 같은 조건은 호출 전에 코드로 거른다 (AI-B matching).
 """
 
@@ -29,7 +32,8 @@ DEFAULT_MODEL = "BAAI/bge-reranker-v2-m3"
 
 # 한 쌍(query + 후보)의 최대 토큰 수. 넘치면 잘린다. 길수록 느려진다.
 MAX_LENGTH = 512
-BATCH_SIZE = 16
+# 한 번에 계산하는 쌍 수. 길이순으로 정렬한 뒤 이만큼씩 나눠 계산한다 (CPU 기준)
+BATCH_SIZE = 8
 
 # Qwen3-Reranker 는 지시문을 함께 넣어야 한다 (영어 권장). bge 는 쓰지 않는다.
 QWEN3_INSTRUCTION = (
@@ -104,6 +108,17 @@ def _load_model():
     return model
 
 
+def warmup() -> None:
+    """모델을 미리 불러 둔다 (서버 시작 때 1번). 이미 불러왔으면 아무것도 안 한다. 실패하면 RerankerError."""
+    _load_model()
+
+
+def _batches(query: str, candidates: Sequence[str]) -> list[list[int]]:
+    """후보 인덱스를 (query + 후보) 길이가 긴 순으로 정렬해 BATCH_SIZE 개씩 나눈다. 길이가 같으면 원래 순서."""
+    order = sorted(range(len(candidates)), key=lambda i: (-(len(query) + len(candidates[i])), i))
+    return [order[i : i + BATCH_SIZE] for i in range(0, len(order), BATCH_SIZE)]
+
+
 def rerank(query: str, candidates: Sequence[str], *, top_k: int = 3) -> list[tuple[int, float]]:
     """(query, 후보 문서들) → [(후보 인덱스, 점수 0~1)] 를 점수 내림차순으로 top_k 개. 점수가 같으면 원래 순서.
 
@@ -113,12 +128,19 @@ def rerank(query: str, candidates: Sequence[str], *, top_k: int = 3) -> list[tup
         return []
     model = _load_model()
     started = time.perf_counter()
+    scores = [0.0] * len(candidates)
     try:
-        raw = model.predict([(query, c) for c in candidates], batch_size=BATCH_SIZE, show_progress_bar=False)
+        for batch in _batches(query, candidates):
+            raw = model.predict([(query, candidates[i]) for i in batch], batch_size=BATCH_SIZE, show_progress_bar=False)
+            raw = list(raw)
+            if len(raw) != len(batch):
+                raise ValueError(f"predict returned {len(raw)} scores for {len(batch)} pairs")
+            for i, s in zip(batch, raw):
+                scores[i] = float(s)
     except Exception as e:
         logger.warning("reranker predict failed error=%s", type(e).__name__)
         raise RerankerError("리랭커 호출에 실패했어요.") from e
-    scores = [float(s) for s in raw]
-    logger.info("reranker predict count=%d latency_ms=%d", len(candidates), int((time.perf_counter() - started) * 1000))
+    logger.info("reranker predict count=%d batch=%d latency_ms=%d", len(candidates), BATCH_SIZE,
+                int((time.perf_counter() - started) * 1000))
     ranked = sorted(range(len(candidates)), key=lambda i: (-scores[i], i))
     return [(i, scores[i]) for i in ranked[:top_k]]
