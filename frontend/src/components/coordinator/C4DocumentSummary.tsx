@@ -232,7 +232,8 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
             <p className="text-[13px] text-ink-muted">작성된 문장이 없어요</p>
           ) : (
             // 본문은 15px · 줄 높이 2.3, 문장 사이에 조금 더 띄워 문장 단위로 끊어 읽기 쉽게
-            <p className="mt-1 text-[15px] leading-[2.3]">
+            // 넓은 화면에서 한 줄이 너무 길지 않게 읽기 폭만 제한 (카드 폭은 그대로, 왼쪽 정렬)
+            <p className="mt-1 max-w-[860px] text-[15px] leading-[2.3]">
               {cover.sentences.map((s, i) => (
                 <span key={s.sentenceId} className={i > 0 ? "ml-1.5" : undefined}>
                   {sentence(s, markers.get(s.sentenceId))}

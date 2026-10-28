@@ -168,31 +168,31 @@ function HelpRequests({ data }: { data: Dashboard }) {
       </div>
       <ul className="flex flex-col gap-2">
         {list.map((h) => (
-          <li
-            key={h.helpRequestId}
-            className="flex items-center justify-between gap-3 rounded-[10px] bg-surface px-3.5 py-2.5 text-[13px]"
-          >
-            <span className="min-w-0">
-              <b>{h.studentName}</b>
-              <span className="text-ink-sub">
-                {" · "}
-                {[
-                  h.courseLabel,
-                  `${monthDay(h.createdAt)} ${time(h.createdAt)}`,
-                  h.jobTitle && `공고: ${h.jobTitle}`,
-                  h.memo && `메모: "${h.memo}"`,
-                  h.contactMethod && `연락 희망: ${CONTACT_LABEL[h.contactMethod]}`,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
+          // 줄(흰 배경)은 카드 폭 그대로, 내용 · 버튼 묶음만 최대 960px → 넓은 화면에서도 "상세 보기"가 내용 가까이
+          <li key={h.helpRequestId} className="rounded-[10px] bg-surface px-3.5 py-2.5 text-[13px]">
+            <div className="flex max-w-[960px] items-center justify-between gap-3">
+              <span className="min-w-0">
+                <b>{h.studentName}</b>
+                <span className="text-ink-sub">
+                  {" · "}
+                  {[
+                    h.courseLabel,
+                    `${monthDay(h.createdAt)} ${time(h.createdAt)}`,
+                    h.jobTitle && `공고: ${h.jobTitle}`,
+                    h.memo && `메모: "${h.memo}"`,
+                    h.contactMethod && `연락 희망: ${CONTACT_LABEL[h.contactMethod]}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
               </span>
-            </span>
-            <Link
-              href={`/coordinator/students/${h.studentId}`}
-              className="shrink-0 rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
-            >
-              상세 보기
-            </Link>
+              <Link
+                href={`/coordinator/students/${h.studentId}`}
+                className="shrink-0 rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
+              >
+                상세 보기
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
