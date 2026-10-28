@@ -4,11 +4,12 @@ import CoordinatorSidebar from "@/components/coordinator/CoordinatorSidebar";
 
 export default function CoordinatorLayout({ children }: LayoutProps<"/coordinator">) {
   return (
-    // 1280px 화면 기준. 고정 w-[1280px] 는 세로 스크롤바(약 15px)만큼 가로로 넘쳐서 창 폭에 맞추되 1280 을 넘지 않게.
-    // 반응형은 만들지 않으므로(AGENTS.md) 최소 폭으로 데스크톱 배치를 지킨다
-    <div className="flex min-h-screen w-full min-w-[1200px] max-w-[1280px] bg-coord-bg">
+    // 데스크톱 창 폭을 그대로 쓴다 (오른쪽 빈 공간 없이). 고정 폭은 세로 스크롤바(약 15px)만큼 넘쳐서 w-full 로 맞춘다.
+    // 반응형은 만들지 않으므로(AGENTS.md) 최소 폭 1200px 로 데스크톱 배치를 지킨다
+    <div className="flex min-h-screen w-full min-w-[1200px] bg-coord-bg">
       <CoordinatorSidebar />
-      <main className="flex-1 p-8">{children}</main>
+      {/* min-w-0: 넓은 표 · 긴 글이 사이드바 옆 영역을 넘어 늘어나지 않게 */}
+      <main className="min-w-0 flex-1 p-8">{children}</main>
     </div>
   );
 }
