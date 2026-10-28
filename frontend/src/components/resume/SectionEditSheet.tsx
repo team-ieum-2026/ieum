@@ -1,20 +1,19 @@
 "use client";
-// 주인: FE-B — M6-2 섹션 편집 바텀시트 (FE-B-05). 목록 섹션(학력 · 경력 · 자격증)의 항목 추가 · 수정 · 삭제
+// 주인: FE-B — M6-2 섹션 편집 바텀시트 (FE-B-05). 목록 섹션(학력 · 경력 · 자격증 · M8 프로젝트)의 항목 추가 · 수정 · 삭제
 // 저장은 "+ 추가" · "적용" · "삭제"를 누를 때마다 한 건씩 (PATCH 는 한 번에 하나의 변경만, docs/API.md 2-1).
 // 실제 저장 방법은 부모가 onChange 로 넘긴다 → M6 은 서류 PATCH, M8(FE-B-06)은 프로필 API 로 재사용.
 import { useState } from "react";
 import BottomSheet from "@/components/resume/BottomSheet";
 import SourceTag from "@/components/resume/SourceTag";
 import {
-  SECTION_FIELDS,
   changedItemInput,
   hasChanges,
   isFormValid,
   toFormValues,
   toItemInput,
-  type EditableItem,
-  type EditableSectionName,
   type FormValues,
+  type ListItem,
+  type SectionFieldConfig,
 } from "@/components/resume/sectionFields";
 import {
   DoneButton,
@@ -33,9 +32,10 @@ import {
 
 export type { ItemChange } from "@/components/resume/sheetParts";
 
-interface SectionEditSheetProps {
-  section: EditableSectionName;
-  items: EditableItem[];
+interface SectionEditSheetProps<T extends ListItem> {
+  /** 섹션 입력칸 정의 (sectionFields.ts SECTION_FIELDS[섹션] · PROFILE_PROJECT_CONFIG) */
+  config: SectionFieldConfig<T>;
+  items: T[];
   /** false 면 목록만 보여 준다 (예: 이미 검토를 요청한 서류) */
   editable: boolean;
   /** "내 프로필에도 저장" 체크박스. M6 은 표시(기본 선택), M8 은 숨김 */
@@ -47,15 +47,14 @@ interface SectionEditSheetProps {
 
 type Mode = { kind: "idle" } | { kind: "edit"; itemId: string } | { kind: "delete"; itemId: string };
 
-export default function SectionEditSheet({
-  section,
+export default function SectionEditSheet<T extends ListItem>({
+  config,
   items,
   editable,
   showSaveToProfile = true,
   onChange,
   onClose,
-}: SectionEditSheetProps) {
-  const config = SECTION_FIELDS[section];
+}: SectionEditSheetProps<T>) {
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [editValues, setEditValues] = useState<FormValues>({});
   const [addValues, setAddValues] = useState<FormValues>(() => toFormValues(config.fields, null));
@@ -65,12 +64,12 @@ export default function SectionEditSheet({
   const save = (target: string, change: ItemChange, onSuccess: () => void) =>
     run(target, () => onChange(change, showSaveToProfile ? saveToProfile : false), onSuccess);
 
-  const startEdit = (item: EditableItem) => {
+  const startEdit = (item: T) => {
     setMode({ kind: "edit", itemId: item.itemId });
     setEditValues(toFormValues(config.fields, item));
     clearError();
   };
-  const startDelete = (item: EditableItem) => {
+  const startDelete = (item: T) => {
     setMode({ kind: "delete", itemId: item.itemId });
     clearError();
   };
@@ -152,7 +151,7 @@ export default function SectionEditSheet({
                       <span className="break-all text-sm text-ink">{title}</span>
                       {sub && <small className="text-xs text-ink-sub">{sub}</small>}
                     </span>
-                    <SourceTag source={item.source} />
+                    {item.source && <SourceTag source={item.source} />}
                     {editable && (
                       <>
                         <IconButton label={`${title} 수정`} onClick={() => startEdit(item)} disabled={saving}>

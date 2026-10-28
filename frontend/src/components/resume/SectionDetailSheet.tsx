@@ -26,6 +26,7 @@ import {
   IconButton,
   PencilIcon,
   SaveToProfileCheckbox,
+  TagInput,
   applyButton,
   cancelButton,
   inputClass,
@@ -54,8 +55,8 @@ interface SectionDetailSheetProps {
   onClose: () => void;
 }
 
-type Save = (target: string, change: ItemChange, onSuccess?: () => void) => Promise<void>;
-type Runner = ReturnType<typeof useSaveRunner>;
+export type Save = (target: string, change: ItemChange, onSuccess?: () => void) => Promise<void>;
+export type Runner = ReturnType<typeof useSaveRunner>;
 
 const TITLE: Record<DetailSection["section"], string> = {
   BASIC: "기본정보",
@@ -174,8 +175,8 @@ function SubTitle({ children }: { children: React.ReactNode }) {
   return <h3 className="text-[13px] font-bold text-ink">{children}</h3>;
 }
 
-/** 항목이 하나뿐인 섹션(기본정보 · 병역). 바뀐 필드만 itemId null 로 저장 */
-function SingleForm({
+/** 항목이 하나뿐인 섹션(기본정보 · 병역). 바뀐 필드만 itemId null 로 저장 (M8 도 사용) */
+export function SingleForm({
   fields,
   data,
   editable,
@@ -395,66 +396,16 @@ function ProjectInfo({
   );
 }
 
-/** 기술 태그. 추가 · 빼기를 모아 두었다가 "태그 적용"을 누르면 전체 목록을 itemId null 로 저장 */
-function TagEditor({ tags: saved, editable, runner, save }: { tags: string[]; editable: boolean; runner: Runner; save: Save }) {
+/** 기술 태그. 추가 · 빼기를 모아 두었다가 "태그 적용"을 누르면 전체 목록을 itemId null 로 저장 (M8 도 사용) */
+export function TagEditor({ tags: saved, editable, runner, save }: { tags: string[]; editable: boolean; runner: Runner; save: Save }) {
   const [tags, setTags] = useState(saved);
-  const [draft, setDraft] = useState("");
   const changed = tags.length !== saved.length || tags.some((t, i) => t !== saved[i]);
-  const add = () => {
-    const tag = draft.trim();
-    if (tag && !tags.includes(tag)) setTags([...tags, tag]);
-    setDraft("");
-  };
 
   return (
     <div className="flex flex-col gap-2">
-      {tags.length === 0 ? (
-        <p className="text-[13px] text-ink-muted">등록된 태그가 없어요</p>
-      ) : (
-        <ul className="flex flex-wrap gap-1.5" aria-label="기술 태그">
-          {tags.map((tag) => (
-            <li key={tag} className="flex items-center gap-0.5 rounded-md bg-page py-0.5 pl-2 pr-0.5 text-xs text-ink-sub">
-              {tag}
-              {editable && (
-                <button
-                  type="button"
-                  aria-label={`${tag} 태그 빼기`}
-                  onClick={() => setTags(tags.filter((t) => t !== tag))}
-                  disabled={runner.saving}
-                  className="flex size-6 items-center justify-center text-ink-muted"
-                >
-                  ×
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <TagInput tags={tags} onChange={setTags} disabled={!editable || runner.saving} label="기술 태그" />
       {editable && (
         <>
-          <div className="flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  add();
-                }
-              }}
-              placeholder="예: Docker"
-              aria-label="추가할 기술 태그"
-              className={inputClass}
-            />
-            <button
-              type="button"
-              onClick={add}
-              disabled={draft.trim() === "" || runner.saving}
-              className="min-h-11 shrink-0 rounded-[10px] border-[1.5px] border-primary bg-surface px-4 text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
-            >
-              + 추가
-            </button>
-          </div>
           <ErrorText error={runner.error} target="tags" />
           <div className="flex gap-2">
             <button
