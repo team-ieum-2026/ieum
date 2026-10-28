@@ -8,7 +8,8 @@
 1. 후보: jobs_index.json 의 공고 중 excludeJobPostingIds 에 없는 것
 2. 규칙 필터: careerRequired 공고 제외. 학력 필터는 아직 없음
 3. 점수: 프로필 desiredJob 단어 · skills 이름(별칭 포함)이 공고 matchText 에 나오는 개수(서로 다른 단어 수)
-4. 순서: 희망 지역과 같은 시 · 도 → 수도권 → 그 밖, 같은 묶음 안에서는 점수 높은 순, 동점이면 jobPostingId 순
+4. 지역: config.REGION_POLICY 로 후보를 거른 뒤(region_allowed), 희망 시 · 도 → 수도권 → 그 밖 순.
+   같은 묶음 안에서는 점수 높은 순, 동점이면 jobPostingId 순. 희망 지역은 "서울, 경기"처럼 여러 개일 수 있다
 5. 점수 0 인 공고는 추천하지 않는다. 남는 공고가 없으면 items: [] (억지로 채우지 않음)
 6. 회사명 · 제목이 같은 공고(근무지만 다름)는 하나만 남긴다
 7. reasons: 겹친 단어로 만든 문장 (build_reasons). 기술은 프로필 근거, 희망 직무는 JOB_POSTING 근거. LLM 은 쓰지 않는다
@@ -20,6 +21,7 @@ import logging
 import re
 from dataclasses import dataclass
 
+from matching import config
 from matching.models import RecommendData, RecommendItem, RecommendReason, RecommendRequest
 from matching.preprocess import unify_region
 from matching.store import Entry, IndexStore
@@ -29,6 +31,12 @@ from schemas import CompetencyProfile, EvidenceRef
 logger = logging.getLogger("ieum.matching")
 
 CAPITAL_AREA = ("서울", "경기", "인천")
+SIDO = {"서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원",
+        "충북", "충남", "전북", "전남", "경북", "경남", "제주"}
+# 접미사만 떼서는 짧은 이름이 안 나오는 시 · 도
+SIDO_FULL = {"충청북도": "충북", "충청남도": "충남", "전라북도": "전북", "전북특별자치도": "전북",
+             "전라남도": "전남", "경상북도": "경북", "경상남도": "경남"}
+_REGION_SPLIT = re.compile(r"[\s,/·]+")
 # 희망 직무에서 빼는 단어: 거의 모든 IT 공고에 나와 점수를 의미 없게 만든다
 JOB_STOPWORDS = {"개발", "개발자", "직무", "업무", "담당", "엔지니어", "신입", "경력", "희망"}
 _JOB_SPLIT = re.compile(r"[\s/·,()\[\]]+")
@@ -71,15 +79,41 @@ def skill_patterns(profile: CompetencyProfile) -> dict[str, list[re.Pattern]]:
     return patterns
 
 
+def to_sido(word: str | None) -> str | None:
+    """"서울특별시" · "서울시" · "경기도" → 짧은 시 · 도 이름. 시 · 도가 아니면 None (예: "강남구")"""
+    word = SIDO_FULL.get(word or "", word or "")
+    for suffix in ("특별자치시", "특별자치도", "특별시", "광역시", "시", "도"):
+        if word not in SIDO and word.endswith(suffix):
+            word = word[: -len(suffix)]
+    return word if word in SIDO else None
+
+
+def preferred_sidos(preferred: str | None) -> list[str]:
+    """희망 지역 → 시 · 도 목록. "서울, 경기" → ["서울", "경기"]. 시 · 도가 아닌 말(구 이름 등)은 뺀다"""
+    found = (to_sido(w) for w in _REGION_SPLIT.split(unify_region(preferred) or ""))
+    return list(dict.fromkeys(s for s in found if s))
+
+
 def region_tier(preferred: str | None, job_region: str | None) -> int:
-    """0: 희망 시 · 도와 같음 (희망 지역이 없으면 모두 0) · 1: 수도권 · 2: 그 밖"""
-    want = (unify_region(preferred) or "").split()[:1]
-    if not want:
+    """0: 희망 시 · 도 중 하나와 같음 (희망 지역이 없으면 모두 0) · 1: 수도권 · 2: 그 밖"""
+    wants = preferred_sidos(preferred)
+    if not wants:
         return 0
-    sido = (job_region or "").split()[:1]
-    if sido == want:
+    sido = to_sido((job_region or "").split()[0] if job_region and job_region.split() else None)
+    if sido in wants:
         return 0
-    return 1 if sido and sido[0] in CAPITAL_AREA else 2
+    return 1 if sido in CAPITAL_AREA else 2
+
+
+def region_allowed(preferred: str | None, tier: int, policy: str) -> bool:
+    """후보로 둘지. 희망 지역이 없으면 전부.
+    METRO: 희망 시 · 도 + (희망 지역에 수도권이 있으면) 수도권 전체. 희망 지역이 수도권 밖뿐이면 그 시 · 도만
+    STRICT: 희망 시 · 도만
+    """
+    wants = preferred_sidos(preferred)
+    if not wants or tier == 0:
+        return True
+    return policy == "METRO" and tier == 1 and any(w in CAPITAL_AREA for w in wants)
 
 
 def _skill_evidence(profile: CompetencyProfile, names: list[str]) -> list[EvidenceRef]:
@@ -142,8 +176,11 @@ def recommend_from_index(req: RecommendRequest, store: IndexStore) -> RecommendD
         job_id = int(key)
         if job_id in excluded or entry.get("careerRequired"):
             continue
+        tier = region_tier(profile.preferred_region, entry.get("region"))
+        if not region_allowed(profile.preferred_region, tier, config.REGION_POLICY):
+            continue
         matched_terms, matched_skills = matched_words(entry.get("matchText") or "", terms, skills)
-        s = Scored(job_id, entry, region_tier(profile.preferred_region, entry.get("region")), matched_terms, matched_skills)
+        s = Scored(job_id, entry, tier, matched_terms, matched_skills)
         if s.score > 0:
             scored.append(s)
     scored.sort(key=lambda s: (s.tier, -s.score, s.job_posting_id))

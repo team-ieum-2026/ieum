@@ -171,6 +171,66 @@ class RegionTest(RecommendCase):
         self.assertEqual(self.ids(items), [2, 3, 1])
 
 
+class RegionPolicyTest(RecommendCase):
+    """희망 지역 여러 개 · 수도권 밖 (METRO)"""
+
+    def setUp(self):
+        super().setUp()
+        self.put({
+            1: entry("seoul", region="서울 마포구"),
+            2: entry("gyeonggi", region="경기 성남시"),
+            3: entry("incheon", region="인천 연수구"),
+            4: entry("busan", region="부산 해운대구"),
+        })
+        self.scores = {"seoul": 0.2, "gyeonggi": 0.9, "incheon": 0.6, "busan": 0.95}
+        self.policy = patch.object(config, "REGION_POLICY", "METRO")
+        self.policy.start()
+
+    def tearDown(self):
+        self.policy.stop()
+        super().tearDown()
+
+    def rec(self, region, top_k=4, calls=None):
+        return self.run_rec(self.scores, profile={**PROFILE, "preferredRegion": region}, top_k=top_k, calls=calls)
+
+    def test_two_preferred_regions_are_both_first(self):
+        # 서울 · 경기 둘 다 희망 지역 → 둘이 먼저(점수 순), 그다음 인천. 부산은 후보 아님
+        self.assertEqual(self.ids(self.rec("서울, 경기")), [2, 1, 3])
+        self.assertEqual(self.ids(self.rec("서울특별시,경기도")), [2, 1, 3])
+
+    def test_capital_preference_widens_to_capital_area_only(self):
+        calls = []
+        self.assertEqual(self.ids(self.rec("서울", calls=calls)), [1, 2, 3])
+        self.assertEqual(sorted(calls[0]["candidates"]), ["gyeonggi", "incheon", "seoul"])
+
+    def test_outside_capital_keeps_only_that_sido(self):
+        self.assertEqual(self.ids(self.rec("부산")), [4])
+
+    def test_outside_capital_without_jobs_is_no_candidates(self):
+        self.store.save({k: v for k, v in self.store.load().items() if k != "4"})
+        with self.assertLogs("ieum.matching", level="INFO") as logs:
+            self.assertEqual(self.rec("부산"), [])
+        self.assertTrue(any("reason=NO_CANDIDATES" in line for line in logs.output), logs.output)
+
+    def test_no_preferred_region_keeps_all(self):
+        for region in (None, "", "강남구"):
+            with self.subTest(region=region):
+                self.assertEqual(self.ids(self.rec(region)), [4, 2, 3, 1])
+
+    def test_fallback_uses_same_region_rule(self):
+        self.put({1: entry("[공고] 백엔드", region="서울 마포구"), 2: entry("[공고] 백엔드", region="부산 해운대구"),
+                  3: entry("[공고] 백엔드", region="경기 성남시")})
+
+        def fallback(region):
+            req = self.req(profile={**PROFILE, "preferredRegion": region})
+            return self.ids(recommend_from_index(req, self.store).model_dump(by_alias=True)["items"])
+
+        self.assertEqual(fallback("서울"), [1, 3])
+        self.assertEqual(fallback("부산"), [2])
+        self.assertEqual(fallback("경기, 서울"), [1, 3])
+        self.assertEqual(fallback(None), [1, 2, 3])
+
+
 class EmptyReasonTest(RecommendCase):
     def assert_empty(self, reason, **kw):
         with self.assertLogs("ieum.matching", level="INFO") as logs:
