@@ -229,9 +229,9 @@ export class MockModel {
       requireValue(typeof body.saveToProfile === "boolean");
       const section = app.document.sections.find((entry) => entry.section === body.section);
       requireValue(!!section && !["TRAINING", "COVER_LETTER"].includes(body.section), "이 섹션은 항목으로 수정할 수 없어요.");
-      if (body.itemId !== undefined) text(body.itemId);
       if (!section.items) {
         requireValue(body.op === "UPDATE_ITEM", "단일 값 섹션은 수정만 할 수 있어요.");
+        requireValue(body.itemId === null, "단일 값 섹션의 itemId는 null이어야 해요.");
         validateItem(body.section, body.item);
         if (body.section === "BASIC") { Object.assign(section.fields, body.item); section.source = "USER"; }
         if (body.section === "MILITARY") { requireValue(Object.hasOwn(body.item, "value")); section.value = body.item.value; }
@@ -243,6 +243,7 @@ export class MockModel {
         section.items.push(item);
         body = { ...body, itemId };
       } else {
+        text(body.itemId);
         const index = section.items.findIndex((item) => item.itemId === body.itemId);
         requireValue(index >= 0, "항목을 찾을 수 없어요.", "NOT_FOUND", 404);
         if (body.op === "DELETE_ITEM") section.items.splice(index, 1);

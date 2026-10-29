@@ -31,6 +31,49 @@ async function newDraft(f) {
   return { ...response, job: item.job, document: detail.document };
 }
 
+test("M6-2 단일 섹션의 itemId null을 허용하고 프로필 동시 저장 선택을 지킨다", async (t) => {
+  const cases = [
+    { section: "BASIC", item: { desiredJob: "모의 수정 직무" }, documentValue: (s) => s.fields.desiredJob, profileValue: (p) => p.basic.desiredJob, expected: "모의 수정 직무" },
+    { section: "MILITARY", item: { value: "EXEMPT" }, documentValue: (s) => s.value, profileValue: (p) => p.basic.militaryStatus, expected: "EXEMPT" },
+    { section: "SKILLS", item: { tags: ["Java", "모의 기술"] }, documentValue: (s) => s.tags, profileValue: (p) => p.skills, expected: ["Java", "모의 기술"] },
+  ];
+  for (const entry of cases) for (const saveToProfile of [false, true]) {
+    await t.test(`${entry.section}, saveToProfile=${saveToProfile}`, async (st) => {
+      const f = await fixture(st);
+      const draft = await newDraft(f);
+      const app = `/api/applications/${draft.applicationId}`;
+      const before = await f.request("/api/students/1/profile");
+      const result = await f.request(`${app}/document`, "PATCH", {
+        op: "UPDATE_ITEM", section: entry.section, itemId: null, item: entry.item, saveToProfile,
+      });
+      const section = result.document.sections.find((s) => s.section === entry.section);
+      assert.deepEqual(entry.documentValue(section), entry.expected);
+      assert.deepEqual((await f.request(app)).document, result.document);
+      const profile = await f.request("/api/students/1/profile");
+      if (saveToProfile) assert.deepEqual(entry.profileValue(profile), entry.expected);
+      else assert.deepEqual(profile, before);
+    });
+  }
+});
+
+test("M6-2 목록의 null ID와 단일 섹션의 잘못된 ID·추가·삭제 요청은 거절한다", async (t) => {
+  const f = await fixture(t);
+  const draft = await newDraft(f);
+  const app = `/api/applications/${draft.applicationId}`;
+  const before = await f.request(app);
+  for (const body of [
+    { op: "UPDATE_ITEM", section: "CERTIFICATES", itemId: null, item: { name: "모의 자격증" }, saveToProfile: false },
+    { op: "DELETE_ITEM", section: "CERTIFICATES", itemId: null, saveToProfile: false },
+    { op: "UPDATE_ITEM", section: "BASIC", itemId: "basic-1", item: { desiredJob: "모의 직무" }, saveToProfile: false },
+    { op: "ADD_ITEM", section: "BASIC", item: { name: "모의 이름" }, saveToProfile: false },
+    { op: "DELETE_ITEM", section: "BASIC", itemId: null, saveToProfile: false },
+  ]) {
+    const error = await f.request(`${app}/document`, "PATCH", body, 400);
+    assert.equal(error.code, "INVALID_REQUEST");
+    assert.deepEqual(await f.request(app), before);
+  }
+});
+
 test("추천 → 지원 → 시간에 따른 생성 → 제출 → 승인/전달이 모든 조회에 일치한다", async (t) => {
   const f = await fixture(t); const r = f.request;
   const recommendation = await r("/api/students/1/recommendations/refresh", "POST");
