@@ -1,5 +1,5 @@
 {
-  "_note": "가상 기업 정보 (모의 데이터). db/seed.sql DEV_SEED 공고(501~503, 601~612)의 가상 회사만 넣었다. 501~503은 ai/eval/fixtures/company_info.examples.json 과 같은 내용. URL은 모두 example.com 가짜 주소이고, 최근 이슈는 '(가상)' 표시. 실제 회사 정보 아님. 실존 기업과 이름이 겹칠 수 있는 (주)한빛솔루션 · (주)모바일팩토리는 넣지 않았다(조회하면 NOT_FOUND). 검토용 표: company_info_review.md",
+  "_note": "가상 기업 정보 (모의 데이터). db/seed.sql DEV_SEED 공고(501~503, 601~612)의 가상 회사 13곳 + 평가용 가상 회사 34곳(ai/data/eval/companies.json 의 FOUND · PARTIAL, 평가 공고 900001~900150). 평가용 NOT_FOUND 3곳은 넣지 않았다(조회하면 NOT_FOUND). 501~503은 ai/eval/fixtures/company_info.examples.json 과 같은 내용. URL은 모두 example.com 가짜 주소이고, 최근 이슈는 '(가상)' 표시. 실제 회사 정보 아님. 실존 기업과 이름이 겹칠 수 있는 (주)한빛솔루션 · (주)모바일팩토리는 넣지 않았다(조회하면 NOT_FOUND). 검토용 표: company_info_review.md",
   "companies": [
     {
       "companyName": "(주)온다랩",
@@ -150,6 +150,427 @@
       "coreValues": [],
       "recentIssue": null,
       "sources": [],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)모래시계랩",
+      "status": "FOUND",
+      "talentKeywords": ["시간을 아끼는 방법을 찾는 사람", "작게 만들어 빨리 확인하는 사람"],
+      "coreValues": ["단순함", "속도"],
+      "recentIssue": "예약 관리 앱 베타 서비스 시작 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://moraesigye-lab.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://moraesigye-lab.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/moraesigye-lab-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)솔방울에이아이",
+      "status": "FOUND",
+      "talentKeywords": ["모델보다 문제를 먼저 보는 사람", "실험 결과를 정리해 나누는 사람"],
+      "coreValues": ["호기심", "정직한 실험"],
+      "recentIssue": "소상공인 리뷰 요약 모델 시범 적용 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://solbangul-ai.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://solbangul-ai.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/solbangul-ai-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "주식회사 라쿤코드",
+      "status": "PARTIAL",
+      "talentKeywords": ["코드 리뷰를 즐기는 사람"],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://raccoon-code.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)파도타기데이터",
+      "status": "FOUND",
+      "talentKeywords": ["데이터 품질을 끝까지 챙기는 사람", "현장 이야기를 듣는 사람"],
+      "coreValues": ["꾸준함", "공유"],
+      "recentIssue": "항만 물동량 대시보드 시범 사업 참여 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://padotagi-data.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://padotagi-data.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/padotagi-data-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)도토리스택",
+      "status": "FOUND",
+      "talentKeywords": ["작은 기능도 끝까지 다듬는 사람", "질문을 두려워하지 않는 사람"],
+      "coreValues": ["성장", "솔직함", "배려"],
+      "recentIssue": "동네 가게 주문 앱 가입자 10만 명 돌파 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://dotori-stack.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://dotori-stack.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/dotori-stack-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)새벽두시스튜디오",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": ["재미", "완성도"],
+      "recentIssue": null,
+      "sources": [
+        { "item": "coreValues", "url": "https://saebyeok2-studio.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)구름다리웍스",
+      "status": "FOUND",
+      "talentKeywords": ["장애 원인을 끝까지 파는 사람", "문서로 남기는 사람"],
+      "coreValues": ["안정성", "자동화"],
+      "recentIssue": "중소기업 서버 이전 대행 서비스 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://gureumdari-works.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://gureumdari-works.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/gureumdari-works-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "주식회사 펭귄로그",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": "로그 분석 도구 무료 버전 공개 (가상)",
+      "sources": [
+        { "item": "recentIssue", "url": "https://news.example.com/penguin-log-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)올빼미인사이트",
+      "status": "FOUND",
+      "talentKeywords": ["어려운 내용을 쉽게 설명하는 사람", "근거를 먼저 찾는 사람"],
+      "coreValues": ["정확성", "겸손"],
+      "recentIssue": "유통 수요 예측 리포트 서비스 시작 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://olppaemi-insight.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://olppaemi-insight.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/olppaemi-insight-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)초록펜슬",
+      "status": "PARTIAL",
+      "talentKeywords": ["학생 입장에서 생각하는 사람"],
+      "coreValues": ["공감"],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://chorok-pencil.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://chorok-pencil.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)가온결정보통신",
+      "status": "FOUND",
+      "talentKeywords": ["고객 현장을 먼저 찾아가는 사람", "약속을 지키는 사람"],
+      "coreValues": ["신뢰", "책임"],
+      "recentIssue": "지역 학교 전산실 유지보수 사업 재계약 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://gaongyeol-ict.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://gaongyeol-ict.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/gaongyeol-ict-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "미르솔정보(주)",
+      "status": "FOUND",
+      "talentKeywords": ["기본기를 꾸준히 쌓는 사람", "함께 배우는 사람"],
+      "coreValues": ["성실", "협력"],
+      "recentIssue": "물류 창고 관리 솔루션 2.0 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://mirsol-info.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://mirsol-info.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/mirsol-info-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)다솜결시스템",
+      "status": "PARTIAL",
+      "talentKeywords": ["하드웨어와 소프트웨어를 함께 보는 사람"],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://dasomgyeol-sys.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)청람소프텍",
+      "status": "FOUND",
+      "talentKeywords": ["꼼꼼하게 확인하는 사람", "고객의 말을 끝까지 듣는 사람"],
+      "coreValues": ["품질", "정직"],
+      "recentIssue": "공공기관 민원 시스템 고도화 사업 수주 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://chungram-softech.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://chungram-softech.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/chungram-softech-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "누리별테크 주식회사",
+      "status": "FOUND",
+      "talentKeywords": ["현장 장비를 직접 만져 보는 사람", "끈기 있는 사람"],
+      "coreValues": ["정밀", "도전"],
+      "recentIssue": "스마트팜 센서 제어기 신제품 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://nuribyeol-tech.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://nuribyeol-tech.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/nuribyeol-tech-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)바른셈회계솔루션",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": ["정확성", "고객 중심"],
+      "recentIssue": null,
+      "sources": [
+        { "item": "coreValues", "url": "https://bareunsem.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)온결디자인",
+      "status": "PARTIAL",
+      "talentKeywords": ["감각보다 근거로 설득하는 사람"],
+      "coreValues": [],
+      "recentIssue": "쇼핑몰 상세페이지 제작 누적 500건 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://ongyeol-design.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/ongyeol-design-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)새솔보안",
+      "status": "FOUND",
+      "talentKeywords": ["원칙을 지키는 사람", "작은 이상도 그냥 넘기지 않는 사람"],
+      "coreValues": ["원칙", "책임", "안전"],
+      "recentIssue": "중소기업 대상 보안 점검 서비스 시작 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://saesol-sec.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://saesol-sec.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/saesol-sec-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)마루결엔지니어링",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": "산업단지 통신 설비 유지보수 계약 (가상)",
+      "sources": [
+        { "item": "recentIssue", "url": "https://news.example.com/marugyeol-eng-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)별무리게임즈",
+      "status": "FOUND",
+      "talentKeywords": ["게임을 즐기고 분석하는 사람", "피드백을 반기는 사람"],
+      "coreValues": ["재미", "몰입"],
+      "recentIssue": "모바일 퍼즐 게임 글로벌 출시 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://byeolmuri-games.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://byeolmuri-games.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/byeolmuri-games-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)라온결커머스",
+      "status": "FOUND",
+      "talentKeywords": ["고객 데이터를 보고 움직이는 사람", "빠르게 시도하는 사람"],
+      "coreValues": ["고객", "실행"],
+      "recentIssue": "자체 쇼핑몰 앱 전면 개편 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://raongyeol-commerce.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://raongyeol-commerce.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/raongyeol-commerce-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)솔빛여행",
+      "status": "PARTIAL",
+      "talentKeywords": ["여행을 좋아하는 사람"],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://solbit-travel.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "미리내정밀(주)",
+      "status": "FOUND",
+      "talentKeywords": ["설비를 끝까지 책임지는 사람", "안전을 먼저 생각하는 사람"],
+      "coreValues": ["안전", "정밀", "개선"],
+      "recentIssue": "평택 2공장 자동화 라인 가동 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://mirinae-precision.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://mirinae-precision.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/mirinae-precision-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)결빛페이먼츠",
+      "status": "FOUND",
+      "talentKeywords": ["숫자 하나도 틀리지 않으려는 사람", "보안을 습관처럼 지키는 사람"],
+      "coreValues": ["신뢰", "보안"],
+      "recentIssue": "간편결제 가맹점 관리 시스템 개편 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://gyeolbit-pay.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://gyeolbit-pay.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/gyeolbit-pay-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "아라누리물류(주)",
+      "status": "PARTIAL",
+      "talentKeywords": ["현장과 사무실을 잇는 사람"],
+      "coreValues": ["안전"],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://aranuri-logis.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://aranuri-logis.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)솔가람제약",
+      "status": "FOUND",
+      "talentKeywords": ["규정을 정확히 지키는 사람", "배우려는 사람"],
+      "coreValues": ["정직", "생명 존중"],
+      "recentIssue": "사내 품질 문서 전산화 완료 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://solgaram-pharm.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://solgaram-pharm.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/solgaram-pharm-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)여울빛유통",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": ["고객 만족", "변화"],
+      "recentIssue": null,
+      "sources": [
+        { "item": "coreValues", "url": "https://yeoulbit-retail.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "다온결모빌리티(주)",
+      "status": "FOUND",
+      "talentKeywords": ["새 기술을 현장에 붙여 보는 사람", "동료를 돕는 사람"],
+      "coreValues": ["도전", "협업"],
+      "recentIssue": "차량 부품 검사용 비전 AI 도입 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://daongyeol-mobility.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://daongyeol-mobility.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/daongyeol-mobility-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "가람누리홀딩스 정보기술(주)",
+      "status": "FOUND",
+      "talentKeywords": ["고객의 일을 내 일처럼 하는 사람", "끝까지 배우는 사람"],
+      "coreValues": ["고객 가치", "전문성", "정도 경영"],
+      "recentIssue": "그룹 계열사 통합 클라우드 전환 1단계 완료 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://garamnuri-it.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://garamnuri-it.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/garamnuri-it-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(재)새빛도시데이터원",
+      "status": "FOUND",
+      "talentKeywords": ["공공의 이익을 생각하는 사람", "데이터를 정직하게 다루는 사람"],
+      "coreValues": ["공공성", "투명성"],
+      "recentIssue": "도시 교통 공공데이터 개방 확대 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://saebit-urbandata.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://saebit-urbandata.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/saebit-urbandata-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "벼리금융IT센터(주)",
+      "status": "FOUND",
+      "talentKeywords": ["원칙과 기록을 중시하는 사람", "장애를 두려워하지 않는 사람"],
+      "coreValues": ["안정", "신뢰", "책임"],
+      "recentIssue": "차세대 계정계 시스템 구축 착수 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://byeori-fit.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://byeori-fit.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/byeori-fit-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(재)구름바다디지털재단",
+      "status": "FOUND",
+      "talentKeywords": ["지역과 함께 성장하는 사람", "성실한 사람"],
+      "coreValues": ["공정", "봉사"],
+      "recentIssue": "지역 중소기업 디지털 전환 지원 사업 공고 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://gureumbada-dx.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://gureumbada-dx.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/gureumbada-dx-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "솔마루전자(주)",
+      "status": "FOUND",
+      "talentKeywords": ["세계 최고를 꿈꾸는 사람", "변화를 즐기는 사람"],
+      "coreValues": ["도전", "창의", "인재 존중"],
+      "recentIssue": "가전용 음성 인식 칩 양산 (가상)",
+      "sources": [
+        { "item": "talentKeywords", "url": "https://solmaru-elec.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "coreValues", "url": "https://solmaru-elec.example.com/about", "collectedAt": "2026-10-28T09:00:00+09:00" },
+        { "item": "recentIssue", "url": "https://news.example.com/solmaru-elec-news", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
+      "collectedAt": "2026-10-28T09:00:00+09:00"
+    },
+    {
+      "companyName": "(주)온새벽통신",
+      "status": "PARTIAL",
+      "talentKeywords": ["고객의 연결을 책임지는 사람"],
+      "coreValues": [],
+      "recentIssue": null,
+      "sources": [
+        { "item": "talentKeywords", "url": "https://onsaebyeok-tel.example.com/careers", "collectedAt": "2026-10-28T09:00:00+09:00" }
+      ],
       "collectedAt": "2026-10-28T09:00:00+09:00"
     }
   ]

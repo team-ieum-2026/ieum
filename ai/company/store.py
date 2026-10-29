@@ -4,7 +4,7 @@
 { "_note": "...", "companies": [ { companyName, status, talentKeywords, coreValues, recentIssue, sources, collectedAt } ] }
 형식은 schemas/company.py CompanyInfo 와 같다 (companyInfoId 는 DB id 라 저장하지 않는다).
 status 는 FOUND · PARTIAL · NOT_FOUND 그대로 돌려준다. 파일에 없는 회사도 NOT_FOUND 로 돌려준다.
-지금은 시드 DEV_SEED 공고의 가상 회사만 들어 있다 (검토표: company_info_review.md).
+시드 DEV_SEED 공고의 가상 회사 13곳 + 평가용 가상 회사 34곳이 들어 있다 (검토표: company_info_review.md).
 """
 
 import json
