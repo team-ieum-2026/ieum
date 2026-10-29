@@ -2,6 +2,7 @@
 // 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08). 서류 전체 + 선택 문장 근거 + 검증 요약 + 반려 · 승인 · 전달 완료
 // API: docs/API.md 2-3. 승인 SUBMITTED → APPROVED, 반려 { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
 // 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다. 왼쪽 서류는 C4 전용 요약(C4DocumentSummary), 근거는 FE-B-01 EvidencePanel.
+// document 가 null(GENERATING · FAILED · 본문 없음)이면 서류 · 근거 · 검증 요약 대신 안내를 보이고 승인 · 전달을 끈다.
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import C4DocumentSummary, { coverLetterMarkers, userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
@@ -125,7 +126,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
     );
   }
 
-  const { status, student, job, document, verification } = detail;
+  const { status, student, job, verification } = detail;
+  // GENERATING · FAILED 이거나 본문이 없으면 null (docs/API.md 2-2). 형식이 깨진 서류도 빈 서류로 보고 멈추지 않게 (M6 와 같은 방식)
+  const document = detail.document && Array.isArray(detail.document.sections) ? detail.document : null;
 
   const closeConfirm = () => {
     if (busy) return;
@@ -171,9 +174,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const aiValue = !hasAi
     ? "없음"
     : `${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`;
-  const markers = coverLetterMarkers(document);
+  const markers = document ? coverLetterMarkers(document) : new Map<string, string>();
   // 종류별 합이 서버의 userEditedCount 와 같을 때만 나눠 보여 준다 (다르면 서버 총합만)
-  const edits = userEditBreakdown(document);
+  const edits = document ? userEditBreakdown(document) : [];
   const editsTotal = edits.reduce((sum, e) => sum + e.count, 0);
   const editedValue =
     edits.length > 0 && editsTotal === verification.userEditedCount
@@ -205,37 +208,52 @@ export default function ApplicationReviewScreen({ applicationId }: { application
 
       {/* 왼쪽 서류는 페이지와 함께 세로로 스크롤, 오른쪽 패널은 화면에 붙어 근거 · 버튼이 계속 보이게 */}
       <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-6">
-        <C4DocumentSummary
-          document={document}
-          selectedSentenceId={selected?.sentenceId ?? null}
-          onSelectSentence={setSelected}
-        />
+        {document ? (
+          <C4DocumentSummary
+            document={document}
+            selectedSentenceId={selected?.sentenceId ?? null}
+            onSelectSentence={setSelected}
+          />
+        ) : (
+          <NoDocument status={status} onReload={() => setReloadKey((k) => k + 1)} />
+        )}
 
         <aside className="sticky top-6 flex max-h-[calc(100vh-48px)] flex-col gap-3 overflow-y-auto">
           <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-[15px] font-bold">선택한 문장의 근거</h2>
-            {selected && <p className="rounded-lg bg-coord-bg px-3 py-2 text-[13px] leading-relaxed">{selected.text}</p>}
-            <EvidencePanel sentence={selected} bare marker={selected ? markers.get(selected.sentenceId) : undefined} />
+            {!document ? (
+              <p className="text-[13px] text-ink-muted">서류가 없어 확인할 근거가 없어요.</p>
+            ) : (
+              <>
+                {selected && <p className="rounded-lg bg-coord-bg px-3 py-2 text-[13px] leading-relaxed">{selected.text}</p>}
+                <EvidencePanel sentence={selected} bare marker={selected ? markers.get(selected.sentenceId) : undefined} />
+              </>
+            )}
           </section>
 
           <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-[15px] font-bold">검증 요약</h2>
-            <dl className="flex flex-col gap-1.5 text-[13px]">
-              <SummaryRow
-                label="AI 문장"
-                value={aiValue}
-                note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."}
-                warn={hasAi && !allAiLinked}
-              />
-              <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
-              <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
-              <SummaryRow
-                label="기업 정보"
-                value={COMPANY_INFO_LABEL[verification.companyInfoStatus]}
-                note={verification.companyInfoStatus !== "FOUND" ? document.companyInfoNote : null}
-                warn={verification.companyInfoStatus === "NOT_FOUND"}
-              />
-            </dl>
+            {/* 서류가 없으면 서버 요약이 0개 · NOT_FOUND 로 오므로 "확인 불가"처럼 보이지 않게 숫자 대신 안내만 */}
+            {!document ? (
+              <p className="text-[13px] text-ink-muted">서류가 없어 검증할 내용이 없어요.</p>
+            ) : (
+              <dl className="flex flex-col gap-1.5 text-[13px]">
+                <SummaryRow
+                  label="AI 문장"
+                  value={aiValue}
+                  note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."}
+                  warn={hasAi && !allAiLinked}
+                />
+                <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
+                <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
+                <SummaryRow
+                  label="기업 정보"
+                  value={COMPANY_INFO_LABEL[verification.companyInfoStatus]}
+                  note={verification.companyInfoStatus !== "FOUND" ? document.companyInfoNote : null}
+                  warn={verification.companyInfoStatus === "NOT_FOUND"}
+                />
+              </dl>
+            )}
           </section>
 
           <section className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
@@ -249,12 +267,15 @@ export default function ApplicationReviewScreen({ applicationId }: { application
               </p>
             ) : (
               <p className="text-xs leading-relaxed text-ink-sub">
-                승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요.
+                {!document && status === ALLOWED.REJECT
+                  ? "서류 본문이 없어 승인할 수 없어요. 반려하고 수료생에게 연락해 주세요."
+                  : "승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요."}
               </p>
             )}
+            {/* 서버는 상태만 보지만, 빈 서류를 추천 · 전달하지 않도록 승인 · 전달은 서류가 있을 때만 켠다. 반려는 연락을 위해 상태만 본다 */}
             <button
               type="button"
-              disabled={status !== ALLOWED.APPROVE}
+              disabled={status !== ALLOWED.APPROVE || !document}
               onClick={() => setConfirming("APPROVE")}
               className="min-h-10 rounded-xl bg-primary text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted"
             >
@@ -270,7 +291,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
             </button>
             <button
               type="button"
-              disabled={status !== ALLOWED.DELIVER}
+              disabled={status !== ALLOWED.DELIVER || !document}
               onClick={() => setConfirming("DELIVER")}
               className="min-h-10 rounded-xl border-[1.5px] border-primary bg-surface text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
             >
@@ -305,6 +326,27 @@ export default function ApplicationReviewScreen({ applicationId }: { application
             </label>
           )}
         </ConfirmDialog>
+      )}
+    </div>
+  );
+}
+
+/** 서류가 없을 때 왼쪽 안내. GENERATING · FAILED 는 상태대로, 그 밖은 본문이 저장되지 않은 경우 */
+function NoDocument({ status, onReload }: { status: ApplicationStatus; onReload: () => void }) {
+  const [title, description] =
+    status === "GENERATING"
+      ? ["서류를 만들고 있어요.", "AI가 서류를 만드는 데 20~40초쯤 걸려요. 잠시 뒤 다시 불러와 주세요."]
+      : status === "FAILED"
+        ? ["서류를 만들지 못했어요.", "수료생이 서류를 다시 만들면 여기서 검토할 수 있어요."]
+        : ["서류 본문이 없어요.", "지원서는 있지만 저장된 서류가 없어요. 필요하면 수료생에게 연락해 주세요."];
+  return (
+    <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-surface px-7 py-6 text-center">
+      <p className="text-[15px] font-bold">{title}</p>
+      <p className="text-[13px] text-ink-sub">{description}</p>
+      {status === "GENERATING" && (
+        <button type="button" onClick={onReload} className="mt-2 text-sm font-bold text-primary">
+          다시 불러오기
+        </button>
       )}
     </div>
   );
