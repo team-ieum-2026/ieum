@@ -280,7 +280,8 @@ CREATE TABLE contact_log (
 -- 상태 판정 규칙 (S12, BE-B 구현) — 위에서부터 먼저 맞는 것을 적용
 --   1. EMPLOYED       : 패스 사유가 ALREADY_EMPLOYED인 응답이 있음
 --   2. NEED_HELP      : status = 'OPEN'인 help_request가 있음
---   3. CHECK_REQUIRED : last_response_at이 7일 이상 지남 (추천은 받았는데 응답 없음 포함)
+--   3. CHECK_REQUIRED : COALESCE(last_response_at, completed_on) 기준 7일 이상 지남
+--                      응답 이력이 없으면 수료일 00:00:00부터 계산. 첫 추천일은 쓰지 않음
 --   4. SEEKING        : 그 외
 --        APPLYING = SUBMITTED · APPROVED · DELIVERED 지원서가 있음
 --        OTHER    = 가장 최근 패스 사유가 OTHER
