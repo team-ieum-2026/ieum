@@ -81,7 +81,8 @@ export interface CoordinatorApplication {
   status: ApplicationStatus;
   student: { studentId: number; name: string };
   job: JobBrief;
-  document: ApplicationDocument;
+  /** GENERATING · FAILED 이거나 서류 본문이 없으면 null (이때 verification 은 0 · NOT_FOUND) */
+  document: ApplicationDocument | null;
   verification: Verification;
 }
 
