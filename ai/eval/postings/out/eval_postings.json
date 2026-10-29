@@ -3,7 +3,7 @@
   "snapshotAt": "2026-10-29",
   "source": "EVAL (평가용 정답 · 함정 공고, 실제 공고 아님)",
   "count": 91,
-  "note": "ai/data/jobs_general.json 과 같은 칸. 라벨은 ai/eval/gold/gold_matching.csv 에만 있음. render_postings.py 가 spec.json 으로 생성"
+  "note": "ai/data/eval/jobs_general.json 과 같은 칸. 라벨은 ai/eval/gold/gold_matching.csv 에만 있음. render_postings.py 가 spec.json 으로 생성"
  },
  "jobs": [
   {

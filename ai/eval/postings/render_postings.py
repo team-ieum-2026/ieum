@@ -3,7 +3,7 @@
 
 실행: python ai/eval/postings/render_postings.py
 출력
-- out/eval_postings.json: ai/data/jobs_general.json 과 같은 칸 · 형식 ({ _meta, jobs }). 라벨 없음 → BE 적재 · AI 색인용
+- out/eval_postings.json: ai/data/eval/jobs_general.json 과 같은 칸 · 형식 ({ _meta, jobs }). 라벨 없음 → BE 적재 · AI 색인용
 - ai/eval/gold/gold_matching.csv: 수료생 id · 공고 id · GOLD/TRAP · 함정 유형 · 난이도. 평가 스크립트 전용 (DB · 색인에 넣지 않음)
 
 본문은 명세의 칸(업무 · 필수 기술 · 우대 · 경력 · 학력)만 보고 만든다. 수료생 자료는 읽지 않는다.
@@ -18,7 +18,7 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 ROOT = HERE.parents[2]
-COMPANIES = ROOT / "ai/data/company/companies.json"
+COMPANIES = ROOT / "ai/data/eval/companies.json"
 GOLD_CSV = HERE.parent / "gold" / "gold_matching.csv"
 
 PROVINCE = {"서울": "서울특별시", "경기": "경기도", "인천": "인천광역시"}
@@ -175,7 +175,7 @@ def main() -> None:
         "snapshotAt": "2026-10-29",
         "source": "EVAL (평가용 정답 · 함정 공고, 실제 공고 아님)",
         "count": len(jobs),
-        "note": "ai/data/jobs_general.json 과 같은 칸. 라벨은 ai/eval/gold/gold_matching.csv 에만 있음. render_postings.py 가 spec.json 으로 생성",
+        "note": "ai/data/eval/jobs_general.json 과 같은 칸. 라벨은 ai/eval/gold/gold_matching.csv 에만 있음. render_postings.py 가 spec.json 으로 생성",
     }
     (out / "eval_postings.json").write_text(
         json.dumps({"_meta": meta, "jobs": jobs}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"

@@ -55,7 +55,7 @@ def main() -> int:
     jobs = {j["jobPostingId"]: j for j in
             json.loads((HERE / "out" / "eval_postings.json").read_text(encoding="utf-8"))["jobs"]}
     companies = {c["companyName"] for c in
-                 json.loads((ROOT / "ai/data/company/companies.json").read_text(encoding="utf-8"))["companies"]}
+                 json.loads((ROOT / "ai/data/eval/companies.json").read_text(encoding="utf-8"))["companies"]}
     students = load_students()
     failures = 0
 
