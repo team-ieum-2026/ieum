@@ -27,7 +27,7 @@ def run_one(model: str, task: str, item: dict) -> dict:
     _, schema, system, scorer = TASKS[task]
     res = call(model, system, item["prompt"], schema)
     return {
-        "model": model, "task": task, "item": item["id"], "error": res.error,
+        "model": model, "version": res.version, "task": task, "item": item["id"], "error": res.error,
         "score": scorer(res.parsed, item["gold"]) if res.parsed else None,
         "latency_s": round(res.latency_s, 2), "input_tokens": res.input_tokens,
         "output_tokens": res.output_tokens, "cost_usd": round(res.cost_usd, 6), "raw": res.raw,
@@ -83,7 +83,9 @@ def main() -> None:
         if r["error"]:
             print(f"오류 {r['model']} {r['task']} {r['item']}: {r['error']}")
     summarize(rows)
-    print(f"\n결과 원본: {path}")
+    versions = sorted({(r["model"], r["version"]) for r in rows if r["version"]})
+    print("\n실제 모델 버전: " + ", ".join(f"{m} → {v}" for m, v in versions))
+    print(f"결과 원본: {path}")
 
 
 if __name__ == "__main__":
