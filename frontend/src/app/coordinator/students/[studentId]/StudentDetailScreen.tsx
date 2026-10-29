@@ -27,7 +27,7 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
   const [saved, setSaved] = useState(false);
   return <div className="space-y-[18px]">
     <Link href="/coordinator/students" className="text-[13px] text-primary hover:underline">← 수료생 목록으로</Link>
-    <ApiState loading={loading} error={error} retry={reload} />
+    <ApiState loading={loading} error={error} retry={reload} notFoundHref="/coordinator/students" notFoundLabel="수료생 목록으로" />
     {data && <>
       <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><h1 className="text-2xl font-bold">{data.student.name}</h1><StatusChip tone={statusTone(data.student.status)}>{statusLabels[data.student.status]}{data.student.subStatus && ` · ${subStatusLabels[data.student.subStatus]}`}</StatusChip></div><Button variant="secondary" onClick={() => { setOpen(true); setSaveError(null); setSaved(false); }}>통화 · 상담 기록 추가</Button></div>
       {saved && <p role="status" className="rounded-xl bg-primary-tint p-3 text-sm text-primary">상담 기록을 저장했어요.</p>}
