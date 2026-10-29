@@ -2,10 +2,11 @@
 // 주인: FE-B — C1 대시보드 (FE-B-07). 도움 요청(맨 위) · 상태별 집계 4개 + 구직 중 세부 3개 · 비율 막대 · 할 일 3종
 // 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3). 이동: 도움 요청 · 전화 · 비고 → C3, 서류 검토 대기 → C4.
 // 도움 요청 "연락 완료" → PATCH /api/coordinator/help-requests/{id} { status: CONTACTED } → 대시보드 다시 조회 (OPEN 만 목록에 남는다)
+// 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
 // 완료 기준: "추가 확인 필요(무응답)"와 "구직 중(미취업)"은 다른 색 · 다른 칸.
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { REVIEW_QUEUE_ANCHOR } from "@/components/coordinator/CoordinatorSidebar";
+import { useEffect, useRef, useState } from "react";
+import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { ApiError } from "@/lib/api/client";
 import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import type { Dashboard } from "@/types/coordinator";
@@ -20,24 +21,49 @@ const time = (iso: string) => iso.slice(11, 16);
 /** 할 일 카드마다 앞에서 몇 개만 보여 준다 */
 const PREVIEW_COUNT = 3;
 
+/** 탭 복귀 재조회 최소 간격. 탭을 빠르게 오가도 그사이 다시 부르지 않는다 */
+const RETURN_REFRESH_GAP_MS = 5000;
+
 export default function DashboardScreen() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // 탭 복귀 재조회의 중복 방지용: 조회 중인지, 마지막 조회를 시작한 시각
+  const loadingRef = useRef(false);
+  const lastLoadRef = useRef(0);
 
   useEffect(() => {
     let ignore = false;
+    loadingRef.current = true;
+    lastLoadRef.current = Date.now();
     getDashboard()
       .then((d) => {
         if (!ignore) setData(d);
       })
       .catch((e: unknown) => {
         if (!ignore) setError(e instanceof ApiError ? e.message : "대시보드를 불러오지 못했어요.");
+      })
+      .finally(() => {
+        if (!ignore) loadingRef.current = false;
       });
     return () => {
       ignore = true;
+      loadingRef.current = false;
     };
   }, [reloadKey]);
+
+  // 다른 탭에서 돌아오면 다시 조회. 조회 중이거나 방금 불렀으면 건너뛴다. 사이드바 건수도 같이 다시 센다
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || loadingRef.current) return;
+      if (Date.now() - lastLoadRef.current < RETURN_REFRESH_GAP_MS) return;
+      setError(null);
+      setReloadKey((k) => k + 1);
+      notifyReviewQueueChanged();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // 사이드바 "서류 검토"(/coordinator#review-queue)로 들어오면 데이터가 그려진 뒤 그 영역으로 내려간다
   useEffect(() => {
