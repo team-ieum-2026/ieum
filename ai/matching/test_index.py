@@ -414,6 +414,28 @@ class PreprocessTest(unittest.TestCase):
         self.assertFalse(career_required("관계없음", "[내용] 신입 지원 가능, 경력 3년 이상"))
         self.assertFalse(career_required("신입", "[내용] 개발"))
 
+    def test_career_required_notations(self):
+        caught = [
+            "경력 : 3년이상", "경력:3년 이상", "경력: 2년 이상", "경력 - 3년 이상", "경력사항 : 3년 이상",
+            "경력(3년 이상)", "경력 3년차 이상", "경력 3년↑", "경력 최소 3년", "경력 3~5년", "경력 1~3년",
+            "3년 이상 백엔드 개발 경력", "3년 이상 경력",
+            # 실제 공고 674번 지원자격 문구
+            "지원자격\nㆍ경력 : 3년이상 (연구원급)\n\n우대사항\nㆍ공학계열",
+        ]
+        for text in caught:
+            with self.subTest(text=text):
+                self.assertTrue(career_required("관계없음", f"[내용] {text}"))
+        not_caught = ["경력 3년 이상 우대", "3년 이상 경력자 우대", "경력 0~2년", "신입·경력 모두 가능",
+                      "신입·경력 모두 가능, 경력 3년 이상",
+                      # 실제 공고 881번 근무조건 문구
+                      "경력조건 :  신입 또는  2년차 이상 경력자채용",
+                      # 신입도 지원 가능한 표기 + 경력 연수
+                      "신입 및 경력 지원, 경력 3년 이상", "신입/경력 지원, 경력 3년 이상",
+                      "신입 혹은 경력 3년 이상", "신입 또는 경력 3년 이상"]
+        for text in not_caught:
+            with self.subTest(text=text):
+                self.assertFalse(career_required("관계없음", f"[내용] {text}"))
+
     def test_sections_removed_and_reordered(self):
         desc = ("[직무] 웹 개발자\n[내용] 웹 서비스 개발\n[필요 역량] 문서작성 (워드프로세스 활용),표계산 (스프레드시트 활용)\n"
                 "[자격증] 정보처리기사\n[우대 조건] AWS 경험\n[근무 시간] 평일 9시\n[전형] 서류 면접")
