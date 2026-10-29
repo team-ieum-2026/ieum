@@ -1,9 +1,9 @@
 # 주인: AI-A
 """검수 결과와 규칙 판정(sample_key.csv) 비교.
 
-실행
-- 검수자 1명: python ai/eval/review/compare_sample.py answers_소민.csv
-- 검수자 2명: python ai/eval/review/compare_sample.py answers_소민.csv answers_지수.csv
+실행 (첫 인자는 dev 또는 test. 그 묶음의 sample_key_{dev|test}.csv 와 비교한다)
+- 검수자 1명: python ai/eval/review/compare_sample.py dev answers_dev_소민.csv
+- 검수자 2명: python ai/eval/review/compare_sample.py dev answers_dev_소민.csv answers_dev_영동.csv
 
 검수자가 2명이면 먼저 사람끼리 일치도(Cohen's κ)를 본다. κ 가 0.8 미만이면 규칙이 아니라 루브릭 문구가 모호한 것이므로,
 갈린 쌍을 해석 사례집(LABELING.md)에 정리하고 다시 채점한다. 사람끼리 갈린 쌍은 규칙과의 비교에서 뺀다.
@@ -56,9 +56,12 @@ def kappa(a: list, b: list) -> float:
 
 
 def main() -> None:
-    paths = [Path(p) for p in sys.argv[1:]] or [HERE / "sample_answers.csv"]
+    if len(sys.argv) < 2 or sys.argv[1] not in ("dev", "test"):
+        sys.exit("사용법: compare_sample.py dev|test 검수자1.csv [검수자2.csv]")
+    part = sys.argv[1]
+    paths = [Path(p) for p in sys.argv[2:]] or [HERE / f"sample_answers_{part}.csv"]
     raters = [read_scores(p) for p in paths]
-    key = {r["no"]: r for r in read_rows(HERE / "sample_key.csv")}
+    key = {r["no"]: r for r in read_rows(HERE / f"sample_key_{part}.csv")}
 
     common = sorted(set.intersection(*(set(r) for r in raters)), key=int)
     if not common:
