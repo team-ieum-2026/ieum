@@ -10,8 +10,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     gemini_api_key: str = ""
-    # 모델 이름은 AI-A가 월요일에 확정 후 .env 에 기입
+    # 모델 이름은 .env.example 에 적힌 값을 쓴다 (AI-A 확정)
     llm_model: str = ""
+    document_llm_model: str = ""  # 서류 생성 전용. 비우면 llm_model
     embedding_model: str = ""
     reranker_model: str = ""
 

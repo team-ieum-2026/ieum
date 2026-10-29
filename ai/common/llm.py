@@ -40,16 +40,16 @@ def _client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
-def _model() -> str:
-    model = get_settings().llm_model
+def _model(model: str | None = None) -> str:
+    model = model or get_settings().llm_model
     if not model:
         raise LLMError("LLM_MODEL 이 비어 있어요. ai/.env 를 확인하세요.")
     return model
 
 
-def _call(prompt: str, config: types.GenerateContentConfig, prompt_version: str) -> str:
+def _call(prompt: str, config: types.GenerateContentConfig, prompt_version: str, model: str | None = None) -> str:
     """Gemini 한 번 호출 → 응답 텍스트. 모델 · 걸린 시간 · 프롬프트 버전을 로그로 남긴다 (키 · 프롬프트 본문은 남기지 않음)."""
-    model = _model()
+    model = _model(model)
     started = time.perf_counter()
     try:
         response = _client().models.generate_content(model=model, contents=prompt, config=config)
@@ -78,12 +78,14 @@ def generate_json(
     temperature: float = 0.2,
     system_instruction: str | None = None,
     prompt_version: str = "unversioned",
+    model: str | None = None,
 ) -> T:
     """프롬프트를 보내고 `schema`(pydantic 모델)에 맞는 JSON을 받아 검증해서 돌려준다.
 
     - response_json_schema 로 JSON 출력을 강제한다. 키는 camelCase(alias) 로 받는다.
     - 검증에 실패하면 MAX_RETRIES 번 다시 부르고, 그래도 실패하면 LLMError.
     - prompt_version 은 로그로만 쓴다. 프롬프트를 바꾸면 버전도 올린다. 예: "document-draft-v2"
+    - model 을 비우면 LLM_MODEL. 서류 생성은 model=get_settings().document_llm_model 로 부른다 (비어 있으면 LLM_MODEL)
     """
     config = types.GenerateContentConfig(
         temperature=temperature,
@@ -93,7 +95,7 @@ def generate_json(
         automatic_function_calling=_NO_AFC,
     )
     for attempt in range(MAX_RETRIES + 1):
-        text = _call(prompt, config, prompt_version)
+        text = _call(prompt, config, prompt_version, model)
         try:
             return schema.model_validate_json(text)
         except ValidationError as e:
@@ -109,6 +111,7 @@ def generate_text(
     temperature: float = 0.2,
     system_instruction: str | None = None,
     prompt_version: str = "unversioned",
+    model: str | None = None,
 ) -> str:
     """자유 텍스트 응답."""
     config = types.GenerateContentConfig(
@@ -116,4 +119,4 @@ def generate_text(
         system_instruction=system_instruction,
         automatic_function_calling=_NO_AFC,
     )
-    return _call(prompt, config, prompt_version)
+    return _call(prompt, config, prompt_version, model)
