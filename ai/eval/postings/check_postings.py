@@ -10,6 +10,7 @@
 """
 
 import json
+import re
 import sys
 from collections import Counter
 from difflib import SequenceMatcher
@@ -24,6 +25,18 @@ NO_GOLD = {10, 13, 17}  # 정답 공고를 만들지 않는 수료생
 TYPE_TO_CONDITION = {"CAREER": "CAREER", "SKILL": "SKILL", "REGION": "REGION", "EDU": "EDU", "LOOKALIKE": "JOB"}
 LEAK_FAIL = 15  # 공백을 뺀 글자 수
 LENGTH = (120, 700)
+
+
+def required_in_body(desc: str) -> list[str] | None:
+    """본문의 자격요건 문장('A · B 사용 가능자' 또는 '기타(A, B 사용 경험)')에서 필수 기술을 다시 뽑는다."""
+    for segment in re.split(r"\n|<br>|</?p>", desc):
+        if " 사용 가능자" in segment:
+            head = re.sub(r"^\s*(?:ㆍ|·|-|지원 자격 :)\s*", "", segment).split(" 사용 가능자")[0]
+            return [x.strip() for x in head.split(" · ")]
+        m = re.search(r"기타\((.+) 사용 경험\)", segment)
+        if m:
+            return [x.strip() for x in m.group(1).split(", ")]
+    return None
 
 
 def load_students() -> dict[int, dict]:
@@ -97,10 +110,20 @@ def main() -> int:
             shown = p.get("display", {}).get(skill, skill)
             if shown not in desc:
                 fail(pid, f"필수 기술 '{shown}' 이 본문에 없음")
-        if p["career"] == "경력" and f"{p['years']}년 이상" not in desc:
-            fail(pid, "경력 조건이 본문에 없음")
-        if p["edu"] not in ("학력무관",) and not any(k in desc for k in ("졸업 이상", "학위")):
-            fail(pid, "학력 조건이 본문에 없음")
+        # 본문 → 조건 역추출: 라벨은 명세로 매기지만 모델은 본문과 칸을 읽으므로, 둘이 같은 조건을 말하는지 양방향으로 본다
+        years = re.findall(r"(\d+)년 이상", desc)
+        if (p["career"] == "경력") != bool(years) or (years and int(years[0]) != p.get("years")):
+            fail(pid, f"본문 경력 조건 {years} ≠ 명세 {p['career']} {p.get('years', '')}")
+        if bool(re.search(r"졸업 이상|학위", desc)) != (p["edu"] != "학력무관"):
+            fail(pid, f"본문 학력 조건 ≠ 명세 {p['edu']}")
+        if (job["career"], job["education"], job["location"]) != (p["career"], p["edu"], p["loc"]):
+            fail(pid, "경력 · 학력 · 지역 칸이 명세와 다름")
+        stated = required_in_body(desc)
+        shown = [p.get("display", {}).get(r, r) for r in p["required"]]
+        if stated is None:
+            fail(pid, "본문에서 필수 기술 문장을 찾지 못함")
+        elif stated != shown:
+            fail(pid, f"본문 필수 기술 {stated} ≠ 명세 {shown}")
         if not LENGTH[0] <= len(desc) <= LENGTH[1]:
             fail(pid, f"본문 {len(desc)}자 (기준 {LENGTH[0]}~{LENGTH[1]})")
         if p["loc"].split()[0] not in ("서울", "경기", "인천"):
