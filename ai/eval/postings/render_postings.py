@@ -183,7 +183,7 @@ def main() -> None:
 
     GOLD_CSV.parent.mkdir(exist_ok=True)
     with GOLD_CSV.open("w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(["student_id", "job_posting_id", "label", "trap_type", "level", "origin", "title"])
         for p in spec:
             w.writerow([p["sid"], p["id"], p["label"], p.get("type", ""), p.get("level", ""), "TARGET", p["title"]])

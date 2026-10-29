@@ -42,7 +42,7 @@ def main() -> None:
 
     OUT.parent.mkdir(exist_ok=True)
     with OUT.open("w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(["student_id", "job_posting_id", "score", "violations", "origin", "target_label", "trap_type"])
         w.writerows(rows)
     print(f"{len(rows)}쌍 → {OUT}  (적합 {counts[2]} · 부분 {counts[1]} · 부적합 {counts[0]})")
