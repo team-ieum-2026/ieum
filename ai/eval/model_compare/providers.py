@@ -8,6 +8,7 @@
 """
 
 import json
+import threading
 import time
 from dataclasses import dataclass
 from functools import lru_cache
@@ -26,6 +27,7 @@ MODELS = {
     "gemini-3.8-flash": ("gemini", "중간", (0.75, 3.75)),
     "gemini-4-argon": ("gemini", "상위", (2.00, 10.00)),
     "gpt-6-luna": ("openai", "경량", (0.10, 0.50)),
+    "gpt-5.6-luna": ("openai", "경량", (0.20, 1.20)),  # 한 세대 전. 경량 가격을 Gemini 와 더 가깝게 맞춘 비교용
     "gpt-6.1-terra": ("openai", "중간", (1.00, 5.00)),
     "gpt-6.1-sol": ("openai", "상위", (2.00, 10.00)),
 }
@@ -53,11 +55,19 @@ def _env() -> dict:
     return dotenv_values(ENV)
 
 
-@lru_cache
-def _gemini():
-    from google import genai
+_gemini_lock = threading.Lock()
+_gemini_client = None
 
-    return genai.Client(api_key=_env()["GEMINI_API_KEY"])
+
+def _gemini():
+    """여러 스레드가 동시에 처음 부르면 클라이언트가 여러 개 생기고, 버려진 쪽이 닫히며 연결이 끊긴다 → 한 번만 만든다"""
+    global _gemini_client
+    with _gemini_lock:
+        if _gemini_client is None:
+            from google import genai
+
+            _gemini_client = genai.Client(api_key=_env()["GEMINI_API_KEY"])
+        return _gemini_client
 
 
 def _call_gemini(model: str, system: str, prompt: str, schema: type[BaseModel]) -> tuple[str, int, int, str]:
