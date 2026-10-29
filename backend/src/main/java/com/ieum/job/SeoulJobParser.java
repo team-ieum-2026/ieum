@@ -32,6 +32,25 @@ public final class SeoulJobParser {
             "(?<!\\d)(?:0\\d{1,2}[-.)\\s]{0,2}\\d{3,4}[-.\\s]?\\d{4}|1[5-9]\\d{2}-\\d{4})(?!\\d)");
     private static final Pattern EMAIL = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
     static final String CONTACT_MASK = "[연락처 생략]";
+    static final String NAME_MASK = "[이름 생략]";
+
+    /*
+     * 공고 본문의 문의처 실명 (예: "○○일자리센터 ○○○ 상담사(☏…)", "담당자: ○○○").
+     * "운영 담당자를" · "고객사 담당자 및" 같은 직무 표현은 가리지 않도록 좁게 잡는다:
+     * 흔한 성씨로 시작하는 2~4글자 + 호칭이고, 호칭 뒤가 괄호 · 콜론 · 쉼표 · 줄 끝일 때만.
+     */
+    private static final String SURNAMES = "김이박최정강조윤장임한오서신권황안송류유전홍고문양손배백허남심노하곽성차주우구"
+            + "민진나지엄채원천방공현함변염여추도소석선설마길연위표명기반왕금옥육인맹제모탁국어은편용예봉경";
+    private static final String PERSON = "[" + SURNAMES + "][가-힣]{1,3}";
+    private static final String HONORIFIC = "상담사|담당자|주무관|매니저|컨설턴트|선생님";
+    private static final String AFTER_NAME = "(?=\\s*[(\\[☏:：/,]|\\s*$)";
+    /** "○○○ 상담사(" → 이름 + 호칭 */
+    private static final Pattern NAME_BEFORE_TITLE = Pattern.compile(
+            "(?<![가-힣])" + PERSON + "\\s?(" + HONORIFIC + ")" + AFTER_NAME, Pattern.MULTILINE);
+    /** "담당자: ○○○" · "담당 ○○○" → 표시 + 이름 */
+    private static final Pattern NAME_AFTER_LABEL = Pattern.compile(
+            "((?:담당자|담당|상담사|문의|연락처)\\s*[:：]\\s*|(?:담당자|담당)\\s+)" + PERSON + "(?![가-힣])"
+                    + "(?=\\s*[(\\[☏/,]|\\s*$|\\s+(?:" + HONORIFIC + "))", Pattern.MULTILINE);
 
     /** REGION 첫 단어의 긴 이름 → 짧은 이름. "경기도 화성시" → "경기 화성시" */
     private static final Map<String, String> REGION_SHORT = Map.ofEntries(
@@ -128,9 +147,11 @@ public final class SeoulJobParser {
         return maskContacts(sb.toString().trim());
     }
 
-    /** 본문 속 전화번호 · 이메일을 가림. 원문은 raw 에 남음 */
+    /** 본문 속 문의처 실명 · 전화번호 · 이메일을 가림. 원문은 raw 에 남음 */
     static String maskContacts(String s) {
-        String masked = PHONE.matcher(s).replaceAll(CONTACT_MASK);
+        String masked = NAME_BEFORE_TITLE.matcher(s).replaceAll(NAME_MASK + " $1");
+        masked = NAME_AFTER_LABEL.matcher(masked).replaceAll("$1" + NAME_MASK);
+        masked = PHONE.matcher(masked).replaceAll(CONTACT_MASK);
         return EMAIL.matcher(masked).replaceAll(CONTACT_MASK);
     }
 

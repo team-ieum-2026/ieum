@@ -69,6 +69,36 @@ class SeoulJobParserTest {
     }
 
     @Test
+    void contactPersonNamesAreMasked() {
+        String n = SeoulJobParser.NAME_MASK;
+        String c = SeoulJobParser.CONTACT_MASK;
+        // 실제 공고 647번 형태 (이름은 모의)
+        assertEquals("■ 지원문의 : 파주시일자리센터 " + n + " 상담사(☏" + c + ")",
+                SeoulJobParser.maskContacts("■ 지원문의 : 파주시일자리센터 홍길동 상담사(☏031-940-0000)"));
+        assertEquals("담당자: " + n + " (" + c + ")", SeoulJobParser.maskContacts("담당자: 김철수 (02-123-4567)"));
+        assertEquals("문의 " + n + " 매니저, 메일 " + c,
+                SeoulJobParser.maskContacts("문의 박영희 매니저, 메일 hr@example.com"));
+        assertEquals("채용 담당 " + n, SeoulJobParser.maskContacts("채용 담당 이민수"));
+    }
+
+    @Test
+    void jobTitlesWithHonorificWordsAreNotMasked() {
+        String[] texts = {
+            "하위 인사담당자에게 꼭 메일로 면접참석 여부를 알려주시고,",
+            "- 고객사 담당자 및 개발·인프라 담당자와 협업",
+            "동료 및 현업 담당자와 원활하게 소통하고 협업하실 수 있는 분",
+            "든든한 운영 담당자를 모십니다.",
+            "환경모니터링장비서비스를 위한 컴퓨터 담당자 1명 모집",
+            "모집인원: 담당자급 1명 또는 팀장급 1명",
+            "Jira 등록 및 담당자 배정·처리상태 관리",
+            "시스템 개발 및 유지보수 (.NET 개발자/ 개발 매니저 / ERP전문가)"
+        };
+        for (String text : texts) {
+            assertEquals(text, SeoulJobParser.maskContacts(text), text);
+        }
+    }
+
+    @Test
     void longRegionNamesAreShortened() {
         assertEquals("경기 화성시 동탄구", SeoulJobParser.normalizeRegion("경기도 화성시 동탄구"));
         assertEquals("서울 중구", SeoulJobParser.normalizeRegion("서울특별시 중구"));
