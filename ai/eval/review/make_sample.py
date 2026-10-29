@@ -2,11 +2,14 @@
 """매칭 정답표(pair_labels.csv) 사람 검수용 표본 시트.
 
 실행: python ai/eval/review/make_sample.py
-출력
-- review/sample_sheet.md: 수료생 · 공고 카드 (규칙 판정은 가림, 순서 섞음)
-- review/sample_answers.csv: 검수자가 채우는 칸 (my_score · memo). 검수자마다 복사해서 채운다
-- review/sample_key.csv: 규칙 판정 (검수가 끝난 뒤에 열기)
-비교: python ai/eval/review/compare_sample.py 검수자1.csv [검수자2.csv]
+출력 (split.json 의 dev · test 로 나눠 {part} = dev / test)
+- review/sample_sheet_{part}.md: 수료생 · 공고 카드 (규칙 판정은 가림, 순서 섞음)
+- review/sample_answers_{part}.csv: 검수자가 채우는 칸 (my_score · memo). 검수자마다 복사해서 채운다
+- review/sample_key_{part}.csv: 규칙 판정 (검수가 끝난 뒤에 열기)
+비교: python ai/eval/review/compare_sample.py dev 검수자1.csv [검수자2.csv]
+
+dev 와 test 를 나누는 이유: 매칭 담당(AI-B)은 dev 만 검수한다. test 쌍을 보면 test 수료생의 정답을 알게 되어
+최종 평가가 "처음 보는 상태"가 아니게 된다. test 는 매칭 개발을 하지 않는 사람이 검수한다.
 
 표본: 규칙이 다른 수료생 쌍에 준 2점은 전부 (정밀도 채점을 직접 좌우),
 1점 · 0점은 어긋난 조건별로 몇 쌍씩 (2점을 놓친 판정이 없는지 = 재현율).
@@ -50,6 +53,8 @@ def main() -> None:
             students[s["id"]] = s
     rows = list(csv.DictReader((EVAL / "gold/pair_labels.csv").open(encoding="utf-8")))
 
+    split = json.loads((EVAL / "split.json").read_text(encoding="utf-8"))
+
     picked = []
     for name, cond, n in STRATA:
         pool = [r for r in rows if cond(r)]
@@ -57,12 +62,18 @@ def main() -> None:
         picked += [(name, r) for r in chosen]
     rng.shuffle(picked)
 
+    for part in ("dev", "test"):
+        ids = set(split[part])
+        write_part(part, [(name, r) for name, r in picked if int(r["student_id"]) in ids], students, jobs)
+
+
+def write_part(part: str, picked: list, students: dict, jobs: dict) -> None:
     md = [
-        "# 매칭 정답표 검수 시트",
+        f"# 매칭 정답표 검수 시트 ({part}, {len(picked)}쌍)",
         "",
-        "각 쌍을 읽고 `sample_answers.csv` 의 `my_score` 에 점수를 적어 주세요. **`sample_key.csv` 는 다 적은 뒤에 여세요.**",
+        f"각 쌍을 읽고 `sample_answers_{part}.csv` 의 `my_score` 에 점수를 적어 주세요. **`sample_key_{part}.csv` 는 다 적은 뒤에 여세요.**",
         "",
-        "엑셀로 작업하면 저장할 때 형식을 **CSV UTF-8 (쉼표로 분리)** 로 골라 주세요. 검수자마다 `sample_answers.csv` 를 복사해(예: `answers_소민.csv`) 각자 채우고, **서로 답을 보지 마세요** (사람끼리 일치도를 잽니다).",
+        f"엑셀로 작업하면 저장할 때 형식을 **CSV UTF-8 (쉼표로 분리)** 로 골라 주세요. 검수자마다 `sample_answers_{part}.csv` 를 복사해(예: `answers_{part}_소민.csv`) 각자 채우고, **서로 답을 보지 마세요** (사람끼리 일치도를 잽니다).",
         "",
         "| 점수 | 기준 |",
         "| --- | --- |",
@@ -97,13 +108,13 @@ def main() -> None:
         answers.append([i, s["id"], j["jobPostingId"], "", ""])
         key.append([i, s["id"], j["jobPostingId"], r["score"], r["violations"], name])
 
-    (OUT / "sample_sheet.md").write_text("\n".join(md), encoding="utf-8")
+    (OUT / f"sample_sheet_{part}.md").write_text("\n".join(md), encoding="utf-8")
     # 검수자가 엑셀로 열 수 있도록 BOM 을 붙인다 (없으면 엑셀이 한글을 깨뜨림)
-    with (OUT / "sample_answers.csv").open("w", encoding="utf-8-sig", newline="") as f:
+    with (OUT / f"sample_answers_{part}.csv").open("w", encoding="utf-8-sig", newline="") as f:
         csv.writer(f, lineterminator="\n").writerows([["no", "student_id", "job_posting_id", "my_score", "memo"], *answers])
-    with (OUT / "sample_key.csv").open("w", encoding="utf-8-sig", newline="") as f:
+    with (OUT / f"sample_key_{part}.csv").open("w", encoding="utf-8-sig", newline="") as f:
         csv.writer(f, lineterminator="\n").writerows([["no", "student_id", "job_posting_id", "rule_score", "violations", "stratum"], *key])
-    print(f"{len(picked)}쌍 → {OUT / 'sample_sheet.md'}")
+    print(f"{part}: {len(picked)}쌍 → {OUT / f'sample_sheet_{part}.md'}")
 
 
 if __name__ == "__main__":
