@@ -36,8 +36,20 @@ import type { Source } from "@/types/student";
 
 const DESCRIPTION = "적용을 누르면 바로 저장되고, 다음 추천부터 반영돼요.";
 
+/** 역량 재추출은 저장 뒤 BE-B 가 따로 돌린다. 2초마다 프로필을 다시 읽어 profileUpdatedAt 이 바뀌면 반영 완료 */
+const POLL_MS = 2000;
+const POLL_TRIES = 15;
+
+/** 저장과 별개인 역량 프로필 정리 상태. base 는 저장 직전 profileUpdatedAt */
+type Extraction =
+  | { status: "WAITING"; base: string | null }
+  | { status: "DONE"; at: string }
+  | { status: "LATE" };
+
 /** "10.24" */
 const shortDate = (iso: string) => `${iso.slice(5, 7)}.${iso.slice(8, 10)}`;
+/** "10.24 09:12" (서버가 +09:00 으로 준다) */
+const shortDateTime = (iso: string) => `${shortDate(iso)} ${iso.slice(11, 16)}`;
 
 /** 직접 고친 항목이 하나라도 있으면 "직접 입력", 아니면 등록 */
 const pickSource = (sources: Source[]): Source | null =>
@@ -49,6 +61,39 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [editing, setEditing] = useState<SectionSummary | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [extraction, setExtraction] = useState<Extraction | null>(null);
+
+  // 저장 뒤 역량 프로필이 다시 정리될 때까지 조회. 역량 카드와 시각만 바꿔 열린 시트 · 다른 섹션은 건드리지 않는다
+  useEffect(() => {
+    if (extraction?.status !== "WAITING") return;
+    let stopped = false;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      tries += 1;
+      try {
+        const latest = await getProfile(studentId);
+        if (stopped) return;
+        if (latest.profileUpdatedAt && latest.profileUpdatedAt !== extraction.base) {
+          setProfile((p) =>
+            p && { ...p, competencyProfile: latest.competencyProfile, profileUpdatedAt: latest.profileUpdatedAt },
+          );
+          setExtraction({ status: "DONE", at: latest.profileUpdatedAt });
+          return;
+        }
+      } catch {
+        // 한 번 실패해도 다음 조회에서 다시 확인한다
+      }
+      if (stopped) return;
+      if (tries >= POLL_TRIES) setExtraction({ status: "LATE" });
+      else timer = setTimeout(poll, POLL_MS);
+    };
+    timer = setTimeout(poll, POLL_MS);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [extraction, studentId]);
 
   useEffect(() => {
     let ignore = false;
@@ -84,15 +129,16 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
     );
   }
 
-  /** 저장 성공 → 응답의 프로필 전체로 화면 갱신 + 배너. 실패는 throw → 시트가 입력값을 유지 */
+  /** 저장 성공 → 응답의 프로필 전체로 화면 갱신 + 저장 배너 + 역량 정리 확인 시작. 실패는 throw → 시트가 입력값을 유지 */
   const applyResult = (result: StudentProfile, label: string) => {
-    // 역량 프로필 시각이 바뀌었을 때만 "반영"이라고 쓴다
-    const refreshed = result.profileUpdatedAt !== null && result.profileUpdatedAt !== profile.profileUpdatedAt;
+    const base = profile.profileUpdatedAt;
     setProfile(result);
-    setBanner(
-      refreshed && result.profileUpdatedAt
-        ? `${label} 저장 완료 · 역량 프로필에 반영했어요 (${shortDate(result.profileUpdatedAt)})`
-        : `${label} 저장 완료`,
+    setBanner(`${label} 저장 완료`);
+    // 응답에 이미 새 시각이 오면 바로 반영 완료, 아니면 다시 조회해서 확인한다
+    setExtraction(
+      result.profileUpdatedAt !== null && result.profileUpdatedAt !== base
+        ? { status: "DONE", at: result.profileUpdatedAt }
+        : { status: "WAITING", base },
     );
   };
 
@@ -210,7 +256,7 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
         </p>
       )}
 
-      <CompetencyCard profile={profile} />
+      <CompetencyCard profile={profile} extraction={extraction} />
 
       <div className="flex flex-col gap-2">
         <h2 className="mx-1 text-sm font-bold">등록 자료</h2>
@@ -307,8 +353,14 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
   );
 }
 
+/** 역량 정리 상태 문구. 저장 배너와 따로 보여 "저장"과 "역량 반영"을 구분한다 */
+const EXTRACTION_TEXT = {
+  WAITING: "자료를 바탕으로 역량 프로필을 다시 정리하고 있어요…",
+  LATE: "역량 프로필 정리가 늦어지고 있어요. 잠시 뒤 다시 들어오면 반영돼 있어요.",
+} as const;
+
 /** 추천에 쓰이는 역량 프로필 (AI 정리). 등록 자료를 고치면 BE-B 가 다시 만든다 */
-function CompetencyCard({ profile }: { profile: StudentProfile }) {
+function CompetencyCard({ profile, extraction }: { profile: StudentProfile; extraction: Extraction | null }) {
   const cp = profile.competencyProfile;
   const tags = cp ? [...new Set([...cp.skills.map((s) => s.name), ...cp.certificates])] : [];
   return (
@@ -317,6 +369,18 @@ function CompetencyCard({ profile }: { profile: StudentProfile }) {
         <h2 className="text-sm font-bold">추천에 쓰이는 역량 프로필</h2>
         <SourceTag source="AI" label="AI 정리" />
       </div>
+      {extraction && (
+        <p
+          role="status"
+          className={`rounded-lg px-2.5 py-1.5 text-xs font-bold ${
+            extraction.status === "DONE" ? "bg-primary-tint text-primary-strong" : "bg-page text-ink-sub"
+          }`}
+        >
+          {extraction.status === "DONE"
+            ? `역량 프로필에 반영했어요 (${shortDateTime(extraction.at)})`
+            : EXTRACTION_TEXT[extraction.status]}
+        </p>
+      )}
       {cp ? (
         <>
           {cp.roles.length > 0 && <p className="text-[13px] text-ink">{cp.roles.join(", ")}</p>}

@@ -1,12 +1,13 @@
 "use client";
 // 주인: FE-B — C1 대시보드 (FE-B-07). 도움 요청(맨 위) · 상태별 집계 4개 + 구직 중 세부 3개 · 비율 막대 · 할 일 3종
 // 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3). 이동: 도움 요청 · 전화 · 비고 → C3, 서류 검토 대기 → C4.
+// 도움 요청 "연락 완료" → PATCH /api/coordinator/help-requests/{id} { status: CONTACTED } → 대시보드 다시 조회 (OPEN 만 목록에 남는다)
 // 완료 기준: "추가 확인 필요(무응답)"와 "구직 중(미취업)"은 다른 색 · 다른 칸.
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { REVIEW_QUEUE_ANCHOR } from "@/components/coordinator/CoordinatorSidebar";
 import { ApiError } from "@/lib/api/client";
-import { getDashboard } from "@/lib/api/coordinatorReview";
+import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import type { Dashboard } from "@/types/coordinator";
 import type { ContactMethod } from "@/types/student";
 
@@ -74,7 +75,7 @@ export default function DashboardScreen() {
         </p>
       </header>
 
-      <HelpRequests data={data} />
+      <HelpRequests data={data} onChanged={() => setReloadKey((k) => k + 1)} />
       <StatusOverview data={data} />
 
       <div className="grid grid-cols-3 gap-4">
@@ -148,8 +149,33 @@ export default function DashboardScreen() {
 }
 
 /** 맨 위 도움 요청. 수료생이 M2 → M4 에서 보낸 것 (INT-02) */
-function HelpRequests({ data }: { data: Dashboard }) {
-  const list = data.helpRequests;
+function HelpRequests({ data, onChanged }: { data: Dashboard; onChanged: () => void }) {
+  const [busyId, setBusyId] = useState<number | null>(null);
+  // 연락 완료 처리한 요청은 다시 조회 결과를 기다리지 않고 바로 뺀다
+  const [doneIds, setDoneIds] = useState<number[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const list = data.helpRequests.filter((h) => !doneIds.includes(h.helpRequestId));
+
+  const markContacted = async (helpRequestId: number) => {
+    setBusyId(helpRequestId);
+    setError(null);
+    try {
+      await updateHelpRequestStatus(helpRequestId, { status: "CONTACTED" });
+      setDoneIds((ids) => [...ids, helpRequestId]);
+      onChanged();
+    } catch (e) {
+      // 404 · 409: 이미 없거나 처리된 요청 → 최신 목록으로 다시 그린다
+      if (e instanceof ApiError && (e.status === 404 || e.status === 409)) {
+        setError("이미 처리됐거나 없는 요청이에요. 목록을 새로 불러왔어요.");
+        onChanged();
+      } else {
+        setError(e instanceof ApiError ? e.message : "연락 완료로 바꾸지 못했어요. 다시 시도해 주세요.");
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (list.length === 0) {
     return (
       <section aria-label="도움 요청" className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm text-ink-sub">
@@ -164,8 +190,13 @@ function HelpRequests({ data }: { data: Dashboard }) {
     >
       <div className="flex items-baseline gap-3">
         <h2 className="text-base font-bold text-danger">도움 요청 {list.length}건이 새로 들어왔어요</h2>
-        <span className="text-xs text-danger">먼저 연락해 주세요</span>
+        <span className="text-xs text-danger">먼저 연락해 주세요 · 연락했다면 연락 완료를 눌러 목록에서 빼 주세요</span>
       </div>
+      {error && (
+        <p role="alert" className="text-xs font-bold text-danger">
+          {error}
+        </p>
+      )}
       <ul className="flex flex-col gap-2">
         {list.map((h) => (
           // 줄(흰 배경)은 카드 폭 그대로, 내용 · 버튼 묶음만 최대 960px → 넓은 화면에서도 "상세 보기"가 내용 가까이
@@ -186,12 +217,23 @@ function HelpRequests({ data }: { data: Dashboard }) {
                     .join(" · ")}
                 </span>
               </span>
-              <Link
-                href={`/coordinator/students/${h.studentId}`}
-                className="shrink-0 rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
-              >
-                상세 보기
-              </Link>
+              <span className="flex shrink-0 gap-2">
+                <Link
+                  href={`/coordinator/students/${h.studentId}`}
+                  className="rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
+                >
+                  상세 보기
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => markContacted(h.helpRequestId)}
+                  disabled={busyId !== null}
+                  aria-label={`${h.studentName} 도움 요청 연락 완료`}
+                  className="rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:bg-line disabled:text-ink-muted"
+                >
+                  {busyId === h.helpRequestId ? "처리 중…" : "연락 완료"}
+                </button>
+              </span>
             </div>
           </li>
         ))}
