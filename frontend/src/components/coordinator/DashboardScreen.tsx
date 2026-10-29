@@ -1,12 +1,14 @@
 "use client";
 // 주인: FE-B — C1 대시보드 (FE-B-07). 도움 요청(맨 위) · 상태별 집계 4개 + 구직 중 세부 3개 · 비율 막대 · 할 일 3종
 // 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3). 이동: 도움 요청 · 전화 · 비고 → C3, 서류 검토 대기 → C4.
+// 도움 요청 "연락 완료" → PATCH /api/coordinator/help-requests/{id} { status: CONTACTED } → 대시보드 다시 조회 (OPEN 만 목록에 남는다)
+// 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
 // 완료 기준: "추가 확인 필요(무응답)"와 "구직 중(미취업)"은 다른 색 · 다른 칸.
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { REVIEW_QUEUE_ANCHOR } from "@/components/coordinator/CoordinatorSidebar";
+import { useEffect, useRef, useState } from "react";
+import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { ApiError } from "@/lib/api/client";
-import { getDashboard } from "@/lib/api/coordinatorReview";
+import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import type { Dashboard } from "@/types/coordinator";
 import type { ContactMethod } from "@/types/student";
 
@@ -19,24 +21,49 @@ const time = (iso: string) => iso.slice(11, 16);
 /** 할 일 카드마다 앞에서 몇 개만 보여 준다 */
 const PREVIEW_COUNT = 3;
 
+/** 탭 복귀 재조회 최소 간격. 탭을 빠르게 오가도 그사이 다시 부르지 않는다 */
+const RETURN_REFRESH_GAP_MS = 5000;
+
 export default function DashboardScreen() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // 탭 복귀 재조회의 중복 방지용: 조회 중인지, 마지막 조회를 시작한 시각
+  const loadingRef = useRef(false);
+  const lastLoadRef = useRef(0);
 
   useEffect(() => {
     let ignore = false;
+    loadingRef.current = true;
+    lastLoadRef.current = Date.now();
     getDashboard()
       .then((d) => {
         if (!ignore) setData(d);
       })
       .catch((e: unknown) => {
         if (!ignore) setError(e instanceof ApiError ? e.message : "대시보드를 불러오지 못했어요.");
+      })
+      .finally(() => {
+        if (!ignore) loadingRef.current = false;
       });
     return () => {
       ignore = true;
+      loadingRef.current = false;
     };
   }, [reloadKey]);
+
+  // 다른 탭에서 돌아오면 다시 조회. 조회 중이거나 방금 불렀으면 건너뛴다. 사이드바 건수도 같이 다시 센다
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || loadingRef.current) return;
+      if (Date.now() - lastLoadRef.current < RETURN_REFRESH_GAP_MS) return;
+      setError(null);
+      setReloadKey((k) => k + 1);
+      notifyReviewQueueChanged();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // 사이드바 "서류 검토"(/coordinator#review-queue)로 들어오면 데이터가 그려진 뒤 그 영역으로 내려간다
   useEffect(() => {
@@ -74,7 +101,7 @@ export default function DashboardScreen() {
         </p>
       </header>
 
-      <HelpRequests data={data} />
+      <HelpRequests data={data} onChanged={() => setReloadKey((k) => k + 1)} />
       <StatusOverview data={data} />
 
       <div className="grid grid-cols-3 gap-4">
@@ -148,8 +175,33 @@ export default function DashboardScreen() {
 }
 
 /** 맨 위 도움 요청. 수료생이 M2 → M4 에서 보낸 것 (INT-02) */
-function HelpRequests({ data }: { data: Dashboard }) {
-  const list = data.helpRequests;
+function HelpRequests({ data, onChanged }: { data: Dashboard; onChanged: () => void }) {
+  const [busyId, setBusyId] = useState<number | null>(null);
+  // 연락 완료 처리한 요청은 다시 조회 결과를 기다리지 않고 바로 뺀다
+  const [doneIds, setDoneIds] = useState<number[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const list = data.helpRequests.filter((h) => !doneIds.includes(h.helpRequestId));
+
+  const markContacted = async (helpRequestId: number) => {
+    setBusyId(helpRequestId);
+    setError(null);
+    try {
+      await updateHelpRequestStatus(helpRequestId, { status: "CONTACTED" });
+      setDoneIds((ids) => [...ids, helpRequestId]);
+      onChanged();
+    } catch (e) {
+      // 404 · 409: 이미 없거나 처리된 요청 → 최신 목록으로 다시 그린다
+      if (e instanceof ApiError && (e.status === 404 || e.status === 409)) {
+        setError("이미 처리됐거나 없는 요청이에요. 목록을 새로 불러왔어요.");
+        onChanged();
+      } else {
+        setError(e instanceof ApiError ? e.message : "연락 완료로 바꾸지 못했어요. 다시 시도해 주세요.");
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (list.length === 0) {
     return (
       <section aria-label="도움 요청" className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm text-ink-sub">
@@ -164,8 +216,13 @@ function HelpRequests({ data }: { data: Dashboard }) {
     >
       <div className="flex items-baseline gap-3">
         <h2 className="text-base font-bold text-danger">도움 요청 {list.length}건이 새로 들어왔어요</h2>
-        <span className="text-xs text-danger">먼저 연락해 주세요</span>
+        <span className="text-xs text-danger">먼저 연락해 주세요 · 연락했다면 연락 완료를 눌러 목록에서 빼 주세요</span>
       </div>
+      {error && (
+        <p role="alert" className="text-xs font-bold text-danger">
+          {error}
+        </p>
+      )}
       <ul className="flex flex-col gap-2">
         {list.map((h) => (
           // 줄(흰 배경)은 카드 폭 그대로, 내용 · 버튼 묶음만 최대 960px → 넓은 화면에서도 "상세 보기"가 내용 가까이
@@ -186,12 +243,23 @@ function HelpRequests({ data }: { data: Dashboard }) {
                     .join(" · ")}
                 </span>
               </span>
-              <Link
-                href={`/coordinator/students/${h.studentId}`}
-                className="shrink-0 rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
-              >
-                상세 보기
-              </Link>
+              <span className="flex shrink-0 gap-2">
+                <Link
+                  href={`/coordinator/students/${h.studentId}`}
+                  className="rounded-lg border-[1.5px] border-danger px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-danger"
+                >
+                  상세 보기
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => markContacted(h.helpRequestId)}
+                  disabled={busyId !== null}
+                  aria-label={`${h.studentName} 도움 요청 연락 완료`}
+                  className="rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:bg-line disabled:text-ink-muted"
+                >
+                  {busyId === h.helpRequestId ? "처리 중…" : "연락 완료"}
+                </button>
+              </span>
             </div>
           </li>
         ))}
