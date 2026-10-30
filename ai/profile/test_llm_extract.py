@@ -224,6 +224,26 @@ class SkillAliasTest(unittest.TestCase):
         for name in SKILL_ALIASES:
             self.assertEqual(canonical_skill(name), name)
 
+    def test_aws_services_map_to_aws(self):
+        for raw in ["AWS", "aws", "AWS EC2", "AWS ECS", "aws ecs", "AWS Lambda", "AWS-RDS", "AWS(EC2)", "EC2", "RDS",
+                    "s3", "ElastiCache", "Amazon Web Services"]:
+            with self.subTest(raw=raw):
+                self.assertEqual(canonical_skill(raw), "AWS")
+        for raw in ["Lambda", "AWSome", "Docker"]:
+            with self.subTest(raw=raw):
+                self.assertEqual(canonical_skill(raw), raw)
+
+    def test_aws_services_merge_into_one_skill(self):
+        skills = add_skills(
+            [ProfileSkill(name="AWS", evidence=[ref("PROJECT", 1)])],
+            [ProfileSkill(name="AWS EC2", evidence=[ref("PROJECT", 1), ref("COVER_LETTER", 5)]),
+             ProfileSkill(name="AWS ECS", evidence=[ref("PROJECT", 2)]), ProfileSkill(name="RDS", evidence=[])],
+        )
+        self.assertEqual(
+            [(s.name, [(e.ref_type, e.ref_id) for e in s.evidence]) for s in skills],
+            [("AWS", [("PROJECT", 1), ("COVER_LETTER", 5), ("PROJECT", 2)])],
+        )
+
     def test_unknown_name_keeps_original(self):
         self.assertEqual(canonical_skill("  Kafka "), "Kafka")
         self.assertEqual(canonical_skill("자바스크립트 엔진"), "자바스크립트 엔진")
@@ -253,6 +273,9 @@ class MentionTest(unittest.TestCase):
             ("C와 Arduino", "C", True),
             ("MySQL 인덱스", "SQL", False),
             ("Gemini API 호출부 구현", "Gemini API", True),
+            ("AWS(EC2, RDS) 배포", "AWS ECS", True),
+            ("EC2 · RDS 배포 담당", "AWS", True),
+            ("lambda 함수로 정렬", "AWS", False),
         ]
         for text, name, expected in cases:
             with self.subTest(text=text, name=name):
@@ -413,6 +436,12 @@ class LlmSkillsTest(unittest.TestCase):
         self.req = with_project(readme=self.README)
         self.by_eid = {c.eid: c for c in build_candidates(self.req)}
         self.own = eid("자바로 정산 API 구현", self.req)
+
+    def test_aws_service_skill_becomes_aws(self):
+        req = with_project(readme="# 모의 프로젝트\n- AWS ECS 배포 환경 구축")
+        by_eid = {c.eid: c for c in build_candidates(req)}
+        kept, _, _ = check_llm_skills([item("AWS ECS", eid("AWS ECS 배포 환경 구축", req))], by_eid)
+        self.assertEqual([s.name for s in kept], ["AWS"])
 
     def test_skill_needs_its_name_in_chosen_quote(self):
         kept, excluded, m = check_llm_skills([item("자바", self.own), item("Kafka", self.own)], self.by_eid)

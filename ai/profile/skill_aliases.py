@@ -22,9 +22,15 @@ SKILL_ALIASES: dict[str, list[str]] = {
     "TypeScript": ["TS"],
     "React": ["리액트"],
     "Spring Boot": ["스프링부트", "springboot"],
+    # AWS 하위 서비스는 AWS 하나로. "AWS EC2" · "AWS Lambda" 처럼 앞에 AWS 가 붙은 이름은 canonical_skill 이 묶는다.
+    # 맨 이름은 다른 뜻이 없는 것만 적는다 ("Lambda" 는 파이썬 lambda 와 헷갈려서 뺌)
+    "AWS": ["Amazon Web Services", "EC2", "ECS", "EKS", "ECR", "S3", "RDS", "ElastiCache", "Fargate", "CloudWatch",
+            "CloudFront", "DynamoDB"],
 }
 
 _SPACES = re.compile(r"\s+")
+# "AWS EC2" · "aws lambda" · "AWS-ECS" · "AWS(EC2)" 등. "AWSome" 처럼 붙은 영문은 아님
+_AWS_SERVICE = re.compile(r"(?i)aws(?![a-z0-9])\s*[-(/]?\s*\w")
 
 
 def skill_key(name: str) -> str:
@@ -40,8 +46,10 @@ _CANONICAL: dict[str, str] = {
 
 
 def canonical_skill(name: str) -> str:
-    """사전에 있으면 대표 이름, 없으면 앞뒤 공백만 뗀 원래 표기"""
+    """사전에 있으면 대표 이름, "AWS ○○"(AWS 하위 서비스)면 AWS, 없으면 앞뒤 공백만 뗀 원래 표기"""
     name = name.strip()
+    if _AWS_SERVICE.match(name):
+        return "AWS"
     return _CANONICAL.get(skill_key(name), name)
 
 
