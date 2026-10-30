@@ -72,7 +72,7 @@ class CandidatesTest(unittest.TestCase):
         self.assertEqual([c.eid for c in cands], [f"E{i}" for i in range(1, len(cands) + 1)])
         rows = [(c.ref_type, c.ref_id, c.label, c.quote) for c in cands]
         self.assertEqual(rows, [
-            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 제목", "모의 프로젝트"),
+            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 제목 · 팀 3명", "모의 프로젝트"),
             ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 역할", ROLE_NOTE),
             # README 첫 줄 "# 모의 프로젝트" 는 제목과 같아서 한 번만
             ("PROJECT", 9401, "프로젝트 '모의 프로젝트' README", README_SENTENCE),
@@ -487,10 +487,42 @@ class WordingTest(unittest.TestCase):
         self.assertEqual(self.reason("achievements", "Redis 도입으로 메시지 유실 0건", self.TOGETHER),
                          "원문의 참여 표현 함께 가 빠짐")
 
+    def test_project_title_shows_team_or_solo(self):
+        labels = {n: next(c.label for c in build_candidates(with_project(teamSize=n)) if c.label.endswith(tail))
+                  for n, tail in [(3, "팀 3명"), (1, "개인")]}
+        self.assertEqual(labels, {3: "프로젝트 '모의 프로젝트' 제목 · 팀 3명", 1: "프로젝트 '모의 프로젝트' 제목 · 개인"})
+
     def test_task_only_achievement_is_excluded_but_role_is_kept(self):
         self.assertEqual(self.reason("achievements", "알림 설정", "알림 설정"), "결과 · 수치 없이 작업만 있음")
         self.assertEqual(self.reason("achievements", "감정 일기 챗봇 제작", "모의 프로젝트"), "결과 · 수치 없이 작업만 있음")
         self.assertIsNone(self.reason("roles", "알림 설정", "알림 설정"))
+
+
+class AwardTest(unittest.TestCase):
+    AWARD = "교육과정 최종 발표 우수상"
+
+    def run_llm(self, text, team_size=3, quote=AWARD):
+        """README 에 수상 줄이 있는 요청으로 LLM 단계를 돌려 (남은 성과 text, 뺀 이유)"""
+        req = with_project(teamSize=team_size, readme=f"# 모의 프로젝트\n- {quote}")
+        with fake(achievements=[item(text, eid(quote, req))]):
+            result = llm_extract.extract_by_llm(req)
+        return [a.text for a in result.achievements], [x.reason for x in result.excluded]
+
+    def test_team_award_with_team_wording_is_kept(self):
+        self.assertEqual(self.run_llm("팀 프로젝트로 최종 발표 우수상 수상"), (["팀 프로젝트로 최종 발표 우수상 수상"], []))
+
+    def test_team_award_written_as_personal_is_excluded(self):
+        self.assertEqual(self.run_llm("최종 발표 우수상 수상"), ([], ["팀 수상인데 팀 표현이 빠짐"]))
+        self.assertEqual(self.run_llm("혼자 최종 발표 우수상 수상"), ([], ["원문에 없는 강한 표현 혼자"]))
+
+    def test_solo_project_award_needs_no_team_wording(self):
+        self.assertEqual(self.run_llm("최종 발표 우수상 수상", team_size=1), (["최종 발표 우수상 수상"], []))
+
+    def test_selection_and_adoption_are_not_task_only(self):
+        for text, quote in [("교내 공모전 본선작으로 선정", "교내 공모전 본선작으로 선정됨"),
+                            ("팀 규칙이 사내 표준으로 채택", "팀 규칙이 사내 표준으로 채택됨")]:
+            with self.subTest(text=text):
+                self.assertEqual(self.run_llm(text, team_size=1, quote=quote), ([text], []))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from common.llm import LLMError, generate_json
-from profile.evidence_check import CheckMetrics, Excluded, check_llm_items, check_llm_skills
+from profile.evidence_check import CheckMetrics, Excluded, check_llm_items, check_llm_skills, team_refs
 from profile.llm_models import LlmProfile
 from profile.models import ExtractRequest
 from profile.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
@@ -62,7 +62,9 @@ def extract_by_llm(req: ExtractRequest) -> LlmResult:
 
     by_eid = {c.eid: c for c in candidates}
     roles, role_out, role_metrics = check_llm_items("roles", generated.roles, by_eid)
-    achievements, ach_out, ach_metrics = check_llm_items("achievements", generated.achievements, by_eid)
+    achievements, ach_out, ach_metrics = check_llm_items(
+        "achievements", generated.achievements, by_eid, team_refs(req)
+    )
     skills, skill_out, skill_metrics = check_llm_skills(generated.skills, by_eid)
     excluded = role_out + ach_out + skill_out
     logger.info(

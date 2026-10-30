@@ -81,7 +81,9 @@ def build_candidates(req: ExtractRequest) -> list[Candidate]:
         title = mask_contacts(p.title.strip())
         name = f"프로젝트 '{title}'"
         if title:
-            raw.append(("PROJECT", p.item_id, f"{name} 제목", title))
+            # 팀 · 개인 프로젝트 표시: 팀으로 받은 상을 혼자 받은 것처럼 쓰지 않게
+            size = f" · 팀 {p.team_size}명" if (p.team_size or 0) > 1 else " · 개인" if p.team_size == 1 else ""
+            raw.append(("PROJECT", p.item_id, f"{name} 제목{size}", title))
         add_text("PROJECT", p.item_id, f"{name} 역할", p.role_note, "roleNote")
         add_text("PROJECT", p.item_id, f"{name} README", p.readme, "readme")
     for c in req.careers:

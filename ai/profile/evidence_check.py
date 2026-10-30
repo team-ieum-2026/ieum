@@ -22,6 +22,8 @@ STRONG_WORDS = ("주도", "총괄", "리드", "리더", "팀장", "전담", "단
 HEDGE_WORDS = ("참여", "함께", "보조")
 # 숫자도 결과도 없이 작업만 말하는 성과 ("챗봇 제작", "알림 설정"). 이런 문장은 역할 쪽이다
 _TASK_ONLY = re.compile(r"(구현|제작|설정|구성|개발|진행|작성|적용|담당)(했다|하였다|함|했음)?[.。]?$")
+# 외부 평가 결과 (수상 · 선정 · 채택). 수치가 없어도 성과로 인정한다. "대상"은 "직장인 12명 대상"과 헷갈려서 뺌
+_AWARD = re.compile(r"수상|선정|채택|입상|우승|우수상|장려상")
 # 팀 기술 목록 줄 ("Java, Spring Boot, JPA, MySQL"). 누가 썼는지 알 수 없어 skills 근거로 쓰지 않는다
 _TECH_LIST = re.compile(r"[A-Za-z0-9 .#+\-]+(?:\s*[,/·]\s*[A-Za-z0-9 .#+\-]+)+")
 
@@ -108,7 +110,7 @@ def numbers(text: str) -> set[str]:
 
 
 def check_llm_items(
-    kind: str, items: list[LlmItem], candidates: dict[str, Candidate]
+    kind: str, items: list[LlmItem], candidates: dict[str, Candidate], team_refs: AllowedRefs = frozenset()
 ) -> tuple[list[ProfileAchievement], list[Excluded], CheckMetrics]:
     """LLM 이 만든 roles · achievements 를 코드로 검증한다. (남은 항목 {text, evidence}, 뺀 항목과 이유, 지표)
 
@@ -116,7 +118,10 @@ def check_llm_items(
     2. text 안의 숫자는 고른 근거들의 quote 중 하나에 있어야 한다.
     3. 강한 표현(STRONG_WORDS)은 고른 근거들의 quote 중 하나에 있어야 한다.
     4. achievements 만: 고른 근거에 참여 표현(HEDGE_WORDS)이 있으면 text 에도 있어야 한다. 숫자 없이 작업만 말하면 뺀다.
+       수상 · 선정 · 채택은 숫자가 없어도 성과다. 단 팀 프로젝트(team_refs) 근거면 text 에 "팀"이 있어야 한다.
     5. eid → { refType, refId }. 같은 (refType, refId) 는 하나로 합친다 (예: 같은 프로젝트의 README 두 문장).
+
+    "팀"은 HEDGE_WORDS 에 넣지 않는다. 근거 문장에 흔해서("팀원들이 …", "팀 규칙으로 …") 정상 성과까지 빠진다. 수상에만 본다.
     """
     kept: list[ProfileAchievement] = []
     excluded: list[Excluded] = []
@@ -138,7 +143,7 @@ def check_llm_items(
             excluded.append(Excluded(kind, item.text, f"text 의 숫자 {', '.join(missing)} 가 고른 근거에 없음"))
             continue
         metrics.numbers_passed += bool(text_numbers)
-        reason = _wording_problem(kind, item.text, chosen, bool(text_numbers))
+        reason = _wording_problem(kind, item.text, chosen, bool(text_numbers), team_refs)
         if reason:
             excluded.append(Excluded(kind, item.text, reason))
             continue
@@ -149,7 +154,14 @@ def check_llm_items(
     return kept, excluded, metrics
 
 
-def _wording_problem(kind: str, text: str, chosen: list[Candidate], has_numbers: bool) -> str | None:
+def team_refs(req: ExtractRequest) -> AllowedRefs:
+    """팀 프로젝트(teamSize 2명 이상)의 (PROJECT, itemId)"""
+    return {("PROJECT", p.item_id) for p in req.projects if (p.team_size or 0) > 1}
+
+
+def _wording_problem(
+    kind: str, text: str, chosen: list[Candidate], has_numbers: bool, team: AllowedRefs
+) -> str | None:
     """표현 검사. 문제가 있으면 이유, 없으면 None"""
     strong = [w for w in STRONG_WORDS if w in text and not any(w in c.quote for c in chosen)]
     if strong:
@@ -159,6 +171,9 @@ def _wording_problem(kind: str, text: str, chosen: list[Candidate], has_numbers:
     hedges = [w for w in HEDGE_WORDS if any(w in c.quote for c in chosen)]
     if hedges and not any(w in text for w in HEDGE_WORDS):
         return f"원문의 참여 표현 {', '.join(hedges)} 가 빠짐"
+    if _AWARD.search(text):
+        by_team = any((c.ref_type, c.ref_id) in team or "팀" in c.quote for c in chosen)
+        return "팀 수상인데 팀 표현이 빠짐" if by_team and "팀" not in text else None
     if not has_numbers and _TASK_ONLY.search(text.strip()):
         return "결과 · 수치 없이 작업만 있음"
     return None
