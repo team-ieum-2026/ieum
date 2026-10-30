@@ -1,6 +1,6 @@
 # 주인: AI-B
 """근거 검증: 입력에 실제로 없는 근거는 지우고, 근거가 하나도 안 남은 항목은 뺀다.
-규칙 추출 결과(check_evidence)와 LLM 결과(check_llm_items, roles · achievements)에 쓴다.
+규칙 추출 결과(check_evidence)와 LLM 결과(check_llm_items: roles · achievements, check_llm_skills: skills)에 쓴다.
 """
 
 import re
@@ -8,13 +8,22 @@ from dataclasses import dataclass
 
 from profile.llm_models import LlmItem
 from profile.models import ExtractRequest
+from profile.skill_aliases import canonical_skill, mentions
 from profile.sources import Candidate
 from schemas import CompetencyProfile, EvidenceRef
-from schemas.profile import ProfileAchievement
+from schemas.profile import ProfileAchievement, ProfileSkill
 
 AllowedRefs = set[tuple[str, int]]
 
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
+# 원문에 없으면 쓰면 안 되는 강한 표현 (부풀리기)
+STRONG_WORDS = ("주도", "총괄", "리드", "리더", "팀장", "전담", "단독", "혼자")
+# 원문에 있으면 성과에서도 남겨야 하는 참여 정도 표현. "일부"는 "일부 메시지가…" 처럼 다른 뜻으로도 써서 프롬프트로만 다룬다
+HEDGE_WORDS = ("참여", "함께", "보조")
+# 숫자도 결과도 없이 작업만 말하는 성과 ("챗봇 제작", "알림 설정"). 이런 문장은 역할 쪽이다
+_TASK_ONLY = re.compile(r"(구현|제작|설정|구성|개발|진행|작성|적용|담당)(했다|하였다|함|했음)?[.。]?$")
+# 팀 기술 목록 줄 ("Java, Spring Boot, JPA, MySQL"). 누가 썼는지 알 수 없어 skills 근거로 쓰지 않는다
+_TECH_LIST = re.compile(r"[A-Za-z0-9 .#+\-]+(?:\s*[,/·]\s*[A-Za-z0-9 .#+\-]+)+")
 
 
 def allowed_refs(req: ExtractRequest) -> AllowedRefs:
@@ -23,6 +32,7 @@ def allowed_refs(req: ExtractRequest) -> AllowedRefs:
     refs.update(("PROJECT", p.item_id) for p in req.projects)
     refs.update(("CERTIFICATE", c.item_id) for c in req.certificates)
     refs.update(("EDUCATION", e.item_id) for e in req.education)
+    refs.update(("CAREER", c.item_id) for c in req.careers)
     refs.add(("COURSE", req.course.course_id))
     # 임시 규칙(AI-A 확인 전): 자기소개서는 student_cover_letter 의 PK 가 student_id 라서 refId = studentId
     if req.cover_letter is not None:
@@ -35,11 +45,14 @@ def _keep(evidence: list[EvidenceRef], allowed: AllowedRefs) -> list[EvidenceRef
 
 
 def check_evidence(profile: CompetencyProfile, allowed: AllowedRefs) -> CompetencyProfile:
-    """없는 근거를 지운 새 프로필을 돌려준다. 원래 profile 은 바꾸지 않는다."""
+    """없는 근거를 지운 새 프로필을 돌려준다. 원래 profile 은 바꾸지 않는다.
+
+    skills 중 처음부터 근거가 없는 것(수료생이 직접 적은 기술)은 남기고, 근거가 있었는데 다 지워진 것만 뺀다.
+    """
     skills = []
     for skill in profile.skills:
         evidence = _keep(skill.evidence, allowed)
-        if evidence:
+        if evidence or not skill.evidence:
             skills.append(skill.model_copy(update={"evidence": evidence}))
 
     achievements = []
@@ -55,7 +68,7 @@ def check_evidence(profile: CompetencyProfile, allowed: AllowedRefs) -> Competen
 class Excluded:
     """LLM 항목을 뺀 기록. 로그에는 kind · reason 만 남기고 text 는 남기지 않는다 (개인정보)."""
 
-    kind: str  # roles | achievements
+    kind: str  # roles | achievements | skills
     text: str
     reason: str
 
@@ -101,7 +114,9 @@ def check_llm_items(
 
     1. 후보에 없는 근거 번호(eid)는 지우고, 남은 근거가 0개면 뺀다.
     2. text 안의 숫자는 고른 근거들의 quote 중 하나에 있어야 한다.
-    3. eid → { refType, refId }. 같은 (refType, refId) 는 하나로 합친다 (예: 같은 프로젝트의 README 두 문장).
+    3. 강한 표현(STRONG_WORDS)은 고른 근거들의 quote 중 하나에 있어야 한다.
+    4. achievements 만: 고른 근거에 참여 표현(HEDGE_WORDS)이 있으면 text 에도 있어야 한다. 숫자 없이 작업만 말하면 뺀다.
+    5. eid → { refType, refId }. 같은 (refType, refId) 는 하나로 합친다 (예: 같은 프로젝트의 README 두 문장).
     """
     kept: list[ProfileAchievement] = []
     excluded: list[Excluded] = []
@@ -123,8 +138,56 @@ def check_llm_items(
             excluded.append(Excluded(kind, item.text, f"text 의 숫자 {', '.join(missing)} 가 고른 근거에 없음"))
             continue
         metrics.numbers_passed += bool(text_numbers)
+        reason = _wording_problem(kind, item.text, chosen, bool(text_numbers))
+        if reason:
+            excluded.append(Excluded(kind, item.text, reason))
+            continue
         refs = dict.fromkeys((c.ref_type, c.ref_id) for c in chosen)
         evidence = [EvidenceRef(ref_type=t, ref_id=i) for t, i in refs]
         kept.append(ProfileAchievement(text=item.text, evidence=evidence))
+    metrics.excluded = len(excluded)
+    return kept, excluded, metrics
+
+
+def _wording_problem(kind: str, text: str, chosen: list[Candidate], has_numbers: bool) -> str | None:
+    """표현 검사. 문제가 있으면 이유, 없으면 None"""
+    strong = [w for w in STRONG_WORDS if w in text and not any(w in c.quote for c in chosen)]
+    if strong:
+        return f"원문에 없는 강한 표현 {', '.join(strong)}"
+    if kind != "achievements":
+        return None
+    hedges = [w for w in HEDGE_WORDS if any(w in c.quote for c in chosen)]
+    if hedges and not any(w in text for w in HEDGE_WORDS):
+        return f"원문의 참여 표현 {', '.join(hedges)} 가 빠짐"
+    if not has_numbers and _TASK_ONLY.search(text.strip()):
+        return "결과 · 수치 없이 작업만 있음"
+    return None
+
+
+def check_llm_skills(
+    items: list[LlmItem], candidates: dict[str, Candidate]
+) -> tuple[list[ProfileSkill], list[Excluded], CheckMetrics]:
+    """LLM 이 고른 skills 를 코드로 검증한다. (남은 기술, 뺀 기술과 이유, 지표)
+
+    1. 후보에 없는 근거 번호는 지운다.
+    2. 고른 근거 중 quote 에 그 기술 이름(또는 별칭)이 실제로 나오는 것만 근거로 남긴다. 팀 기술 목록 줄은 근거가 아니다.
+    3. 남은 근거가 0개면 뺀다. text 는 대표 이름으로 바꾼다 ("자바" → "Java").
+    """
+    kept: list[ProfileSkill] = []
+    excluded: list[Excluded] = []
+    metrics = CheckMetrics(generated=len(items))
+    for item in items:
+        name = canonical_skill(item.text)
+        eids = list(dict.fromkeys(e.strip().upper() for e in item.evidence_ids))
+        chosen = [candidates[e] for e in eids if e in candidates]
+        metrics.evidence_ids += len(eids)
+        metrics.valid_evidence_ids += len(chosen)
+        named = [c for c in chosen if mentions(c.quote, name) and not _TECH_LIST.fullmatch(c.quote.strip())]
+        if not name or not named:
+            reason = "근거 없음" if not chosen else "기술 이름이 본인 작업 근거에 없음"
+            excluded.append(Excluded("skills", item.text, reason))
+            continue
+        refs = dict.fromkeys((c.ref_type, c.ref_id) for c in named)
+        kept.append(ProfileSkill(name=name, evidence=[EvidenceRef(ref_type=t, ref_id=i) for t, i in refs]))
     metrics.excluded = len(excluded)
     return kept, excluded, metrics

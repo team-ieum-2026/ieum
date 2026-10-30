@@ -15,3 +15,4 @@ class LlmItem(CamelModel):
 class LlmProfile(CamelModel):
     roles: list[LlmItem] = []
     achievements: list[LlmItem] = []
+    skills: list[LlmItem] = []  # text = 기술 이름 하나
