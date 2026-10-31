@@ -12,17 +12,19 @@ from unittest.mock import patch
 
 from common.llm import LLMError
 from profile import llm_extract
-from profile.evidence_check import check_llm_items
+from profile.evidence_check import allowed_refs, check_evidence, check_llm_items, check_llm_skills
 from profile.llm_models import LlmItem, LlmProfile
 from profile.models import ExtractRequest
 from profile.router import extract_profile
-from profile.rules import merge_skills
-from profile.skill_aliases import SKILL_ALIASES, canonical_skill
+from profile.rules import add_skills, own_skills
+from profile.skill_aliases import SKILL_ALIASES, canonical_skill, mentioned_skills, mentions
 from profile.sources import MAX_CANDIDATES, MAX_CHARS, MAX_CHUNK_CHARS, build_candidates, render_candidates, split_chunks
-from schemas import EvidenceRef
+from schemas import CompetencyProfile, EvidenceRef
+from schemas.profile import ProfileSkill
 
 SAMPLE = Path(__file__).parent.parent / "data" / "samples" / "profile_extract_request.json"
 PROJECT = {"refType": "PROJECT", "refId": 9401}
+CAREER_SENTENCE = "모의 REST API 유지보수 경험"
 README_SENTENCE = "Spring Boot와 MySQL로 REST API 5개를 구현했습니다."
 ROLE_NOTE = "백엔드 API 구현"
 LETTER = "2026-10-26T12:00:00+09:00"
@@ -48,8 +50,20 @@ def item(text, *eids) -> LlmItem:
     return LlmItem.model_validate({"text": text, "evidenceIds": list(eids)})
 
 
-def fake(roles=(), achievements=()):
-    return patch.object(llm_extract, "generate_json", return_value=LlmProfile(roles=list(roles), achievements=list(achievements)))
+def fake(roles=(), achievements=(), skills=()):
+    result = LlmProfile(roles=list(roles), achievements=list(achievements), skills=list(skills))
+    return patch.object(llm_extract, "generate_json", return_value=result)
+
+
+def with_project(**fields) -> ExtractRequest:
+    """샘플 프로젝트의 필드만 바꾼 요청"""
+    data = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    data["projects"][0].update(fields)
+    return ExtractRequest.model_validate(data)
+
+
+def ref(ref_type: str, ref_id: int) -> EvidenceRef:
+    return EvidenceRef(ref_type=ref_type, ref_id=ref_id)
 
 
 class CandidatesTest(unittest.TestCase):
@@ -58,10 +72,12 @@ class CandidatesTest(unittest.TestCase):
         self.assertEqual([c.eid for c in cands], [f"E{i}" for i in range(1, len(cands) + 1)])
         rows = [(c.ref_type, c.ref_id, c.label, c.quote) for c in cands]
         self.assertEqual(rows, [
-            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 제목", "모의 프로젝트"),
+            ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 제목 · 팀 3명", "모의 프로젝트"),
             ("PROJECT", 9401, "프로젝트 '모의 프로젝트' 역할", ROLE_NOTE),
             # README 첫 줄 "# 모의 프로젝트" 는 제목과 같아서 한 번만
             ("PROJECT", 9401, "프로젝트 '모의 프로젝트' README", README_SENTENCE),
+            ("CAREER", 9201, "경력 '모의 회사' 회사 · 직무", "모의 회사 · 모의 백엔드 인턴"),
+            ("CAREER", 9201, "경력 '모의 회사' 설명", CAREER_SENTENCE),
             ("COVER_LETTER", 9001, "자기소개서", "모의 자기소개서입니다."),
             ("COVER_LETTER", 9001, "자기소개서", "모의 프로젝트에서 REST API 5개를 구현했습니다."),
             ("CERTIFICATE", 9301, "자격증", "모의 자격증 / 모의 발급 기관"),
@@ -144,7 +160,7 @@ class MetricsTest(unittest.TestCase):
         readme, role = eid(README_SENTENCE), eid(ROLE_NOTE)
         items = [
             item("REST API 5개 구현", readme, readme.lower()),  # 통과 · 숫자 있음 · 같은 번호는 1개로 셈
-            item("백엔드 API 구현", "E99", role),                # 통과 · 숫자 없음 · 번호 2개 중 1개 유효
+            item("백엔드 API 오류 해결", "E99", role),           # 통과 · 숫자 없음 · 번호 2개 중 1개 유효
             item("데이터 분석", "E98"),                          # 제외: 번호가 후보에 없음
             item("REST API 50개 구현", readme),                 # 제외: 숫자 50 없음
         ]
@@ -183,7 +199,7 @@ class MetricsTest(unittest.TestCase):
         cases = [
             (patch.object(llm_extract, "generate_json", side_effect=LLMError("fail")), request(), "llm=FAILED"),
             (patch.object(llm_extract, "generate_json"),
-             request(projects=[], coverLetter=None), "llm=SKIPPED"),
+             request(projects=[], coverLetter=None, careers=[]), "llm=SKIPPED"),
         ]
         for mock, req, expected in cases:
             with self.subTest(expected=expected), mock, self.assertLogs("ieum.profile", level="INFO") as logs:
@@ -208,22 +224,66 @@ class SkillAliasTest(unittest.TestCase):
         for name in SKILL_ALIASES:
             self.assertEqual(canonical_skill(name), name)
 
+    def test_aws_services_map_to_aws(self):
+        for raw in ["AWS", "aws", "AWS EC2", "AWS ECS", "aws ecs", "AWS Lambda", "AWS-RDS", "AWS(EC2)", "EC2", "RDS",
+                    "s3", "ElastiCache", "Amazon Web Services"]:
+            with self.subTest(raw=raw):
+                self.assertEqual(canonical_skill(raw), "AWS")
+        for raw in ["Lambda", "AWSome", "Docker"]:
+            with self.subTest(raw=raw):
+                self.assertEqual(canonical_skill(raw), raw)
+
+    def test_aws_services_merge_into_one_skill(self):
+        skills = add_skills(
+            [ProfileSkill(name="AWS", evidence=[ref("PROJECT", 1)])],
+            [ProfileSkill(name="AWS EC2", evidence=[ref("PROJECT", 1), ref("COVER_LETTER", 5)]),
+             ProfileSkill(name="AWS ECS", evidence=[ref("PROJECT", 2)]), ProfileSkill(name="RDS", evidence=[])],
+        )
+        self.assertEqual(
+            [(s.name, [(e.ref_type, e.ref_id) for e in s.evidence]) for s in skills],
+            [("AWS", [("PROJECT", 1), ("COVER_LETTER", 5), ("PROJECT", 2)])],
+        )
+
     def test_unknown_name_keeps_original(self):
         self.assertEqual(canonical_skill("  Kafka "), "Kafka")
         self.assertEqual(canonical_skill("자바스크립트 엔진"), "자바스크립트 엔진")
 
-    def test_merge_uses_canonical_names(self):
-        data = json.loads(SAMPLE.read_text(encoding="utf-8"))
-        base = data["projects"][0]
-        data["projects"] = [
-            {**base, "itemId": 1, "techStack": ["자바", "springboot", "mysql", "Kafka"]},
-            {**base, "itemId": 2, "techStack": ["JAVA", "스프링 부트", "MySQL", "kafka", "JS"]},
-            {**base, "itemId": 3, "techStack": None},
-        ]
-        skills = merge_skills(ExtractRequest.model_validate(data))
+    def test_add_skills_uses_canonical_names(self):
+        skills = add_skills(
+            [ProfileSkill(name="자바", evidence=[ref("PROJECT", 1)]), ProfileSkill(name="Kafka", evidence=[])],
+            [ProfileSkill(name="JAVA", evidence=[ref("PROJECT", 1), ref("CAREER", 2)]),
+             ProfileSkill(name="스프링 부트", evidence=[ref("PROJECT", 2)]), ProfileSkill(name="kafka", evidence=[])],
+        )
         self.assertEqual(
-            [(s.name, [e.ref_id for e in s.evidence]) for s in skills],
-            [("Java", [1, 2]), ("Spring Boot", [1, 2]), ("MySQL", [1, 2]), ("Kafka", [1, 2]), ("JavaScript", [2])],
+            [(s.name, [(e.ref_type, e.ref_id) for e in s.evidence]) for s in skills],
+            [("Java", [("PROJECT", 1), ("CAREER", 2)]), ("Kafka", []), ("Spring Boot", [("PROJECT", 2)])],
+        )
+
+
+class MentionTest(unittest.TestCase):
+    def test_mentions(self):
+        cases = [
+            ("Java로 배치를 고쳤습니다", "Java", True),
+            ("JavaScript 화면", "Java", False),
+            ("자바스크립트 화면", "Java", False),
+            ("자바와 자바스크립트를 썼다", "Java", True),
+            ("SpringBoot 서버", "Spring Boot", True),
+            ("스프링부트로 API", "Spring Boot", True),
+            ("C# 게임", "C", False),
+            ("C와 Arduino", "C", True),
+            ("MySQL 인덱스", "SQL", False),
+            ("Gemini API 호출부 구현", "Gemini API", True),
+            ("AWS(EC2, RDS) 배포", "AWS ECS", True),
+            ("EC2 · RDS 배포 담당", "AWS", True),
+            ("lambda 함수로 정렬", "AWS", False),
+        ]
+        for text, name, expected in cases:
+            with self.subTest(text=text, name=name):
+                self.assertEqual(mentions(text, name), expected)
+
+    def test_mentioned_skills_keeps_order_and_dedupes(self):
+        self.assertEqual(
+            mentioned_skills("자바와 MySQL, java 로 구현", ["MySQL", "Java", "JAVA", "Redis"]), ["MySQL", "Java"]
         )
 
 
@@ -279,7 +339,7 @@ class ExtractByLlmTest(unittest.TestCase):
             llm_extract.extract_by_llm(request())
         prompt = llm.call_args.args[0]
         self.assertIn(f"{eid(README_SENTENCE)} | 프로젝트 '모의 프로젝트' README | {README_SENTENCE}", prompt)
-        self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v2")
+        self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v3")
 
     def test_temperature_is_zero(self):
         with fake() as llm:
@@ -294,7 +354,8 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(profile["roles"], ["백엔드 API 구현"])
         self.assertEqual(profile["achievements"], [{"text": "REST API 5개 구현", "evidence": [PROJECT]}])
         self.assertEqual(profile["certificates"], ["모의 자격증"])
-        self.assertEqual([s["name"] for s in profile["skills"]], ["Spring Boot", "MySQL"])
+        # 직접 적은 기술(Java · Spring Boot · MySQL). 역할 기록 · 경력에 기술 이름이 없어 근거는 빈 배열
+        self.assertEqual(profile["skills"], [{"name": n, "evidence": []} for n in ["Java", "Spring Boot", "MySQL"]])
         self.assertNotIn("quote", json.dumps(profile))
         self.assertNotIn("evidenceIds", json.dumps(profile))
 
@@ -302,13 +363,13 @@ class RouterTest(unittest.TestCase):
         data = json.loads(SAMPLE.read_text(encoding="utf-8"))
         for p in data["projects"]:
             p["readme"], p["roleNote"] = None, "  "
-        req = request(projects=data["projects"], coverLetter=None)
+        req = request(projects=data["projects"], coverLetter=None, careers=[])
         with patch.object(llm_extract, "generate_json") as llm:
             profile = asyncio.run(extract_profile(req))["data"]["profile"]
         llm.assert_not_called()
         self.assertEqual((profile["roles"], profile["achievements"]), ([], []))
         self.assertEqual(profile["certificates"], ["모의 자격증"])
-        self.assertEqual([s["name"] for s in profile["skills"]], ["Spring Boot", "MySQL"])
+        self.assertEqual([s["name"] for s in profile["skills"]], ["Java", "Spring Boot", "MySQL"])
 
     def test_llm_error_falls_back_to_rules_only(self):
         with patch.object(llm_extract, "generate_json", side_effect=LLMError("fail")):
@@ -316,7 +377,152 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(profile["roles"], [])
         self.assertEqual(profile["achievements"], [])
         self.assertEqual(profile["certificates"], ["모의 자격증"])
-        self.assertEqual(len(profile["skills"]), 2)
+        self.assertEqual(len(profile["skills"]), 3)
+
+
+class CareerTest(unittest.TestCase):
+    def test_career_is_allowed_ref(self):
+        self.assertIn(("CAREER", 9201), allowed_refs(request()))
+        self.assertNotIn(("CAREER", 9201), allowed_refs(request(careers=[])))
+
+    def test_achievement_from_career_keeps_career_evidence(self):
+        sentence = "조회 쿼리를 고쳐 화면 응답을 3초에서 1초로 줄였습니다."
+        career = {**request().careers[0].model_dump(by_alias=True), "description": sentence}
+        req = request(careers=[career])
+        with fake(achievements=[item("조회 응답 3초 → 1초 단축", eid(sentence, req))]):
+            profile = asyncio.run(extract_profile(req))["data"]["profile"]
+        self.assertEqual(profile["achievements"][0]["evidence"], [{"refType": "CAREER", "refId": 9201}])
+
+    def test_career_only_material_calls_llm(self):
+        with fake() as llm:
+            result = llm_extract.extract_by_llm(request(projects=[], coverLetter=None))
+        llm.assert_called_once()
+        self.assertEqual(result.status, "OK")
+        self.assertIn(CAREER_SENTENCE, llm.call_args.args[0])
+
+    def test_unknown_career_id_is_removed(self):
+        profile = CompetencyProfile(skills=[ProfileSkill(name="Java", evidence=[ref("CAREER", 9999)])])
+        self.assertEqual(check_evidence(profile, allowed_refs(request())).skills, [])
+
+
+class OwnSkillsTest(unittest.TestCase):
+    def test_team_stack_is_not_copied(self):
+        # 직접 적은 기술은 Java · Spring Boot · MySQL. 팀 스택의 Redis 는 본인 근거가 없어 빠진다
+        req = with_project(techStack=["Spring Boot", "MySQL", "Redis"], roleNote="백엔드 API 구현")
+        skills = own_skills(req)
+        self.assertEqual([s.name for s in skills], ["Java", "Spring Boot", "MySQL"])
+        self.assertTrue(all(s.evidence == [] for s in skills))
+
+    def test_role_note_and_career_mentions_add_evidence(self):
+        req = with_project(techStack=["Spring Boot", "Redis"], roleNote="Redis 캐시와 스프링부트 API 담당")
+        req.careers[0].description = "Java 배치 오류 대응"
+        skills = {s.name: [(e.ref_type, e.ref_id) for e in s.evidence] for s in own_skills(req)}
+        self.assertEqual(skills, {
+            "Java": [("CAREER", 9201)], "Spring Boot": [("PROJECT", 9401)], "MySQL": [], "Redis": [("PROJECT", 9401)],
+        })
+
+    def test_self_entered_skill_without_evidence_survives_check(self):
+        profile = CompetencyProfile(skills=[
+            ProfileSkill(name="Java", evidence=[]),                   # 직접 적은 기술 → 남김
+            ProfileSkill(name="Kafka", evidence=[ref("PROJECT", 1)]),  # 근거가 있었는데 다 지워짐 → 뺌
+        ])
+        self.assertEqual([s.name for s in check_evidence(profile, allowed_refs(request())).skills], ["Java"])
+
+
+class LlmSkillsTest(unittest.TestCase):
+    README = "# 모의 프로젝트\n## 내가 한 일\n- 자바로 정산 API 구현\n## 기술\n- Java, Spring Boot, Redis"
+
+    def setUp(self):
+        self.req = with_project(readme=self.README)
+        self.by_eid = {c.eid: c for c in build_candidates(self.req)}
+        self.own = eid("자바로 정산 API 구현", self.req)
+
+    def test_aws_service_skill_becomes_aws(self):
+        req = with_project(readme="# 모의 프로젝트\n- AWS ECS 배포 환경 구축")
+        by_eid = {c.eid: c for c in build_candidates(req)}
+        kept, _, _ = check_llm_skills([item("AWS ECS", eid("AWS ECS 배포 환경 구축", req))], by_eid)
+        self.assertEqual([s.name for s in kept], ["AWS"])
+
+    def test_skill_needs_its_name_in_chosen_quote(self):
+        kept, excluded, m = check_llm_skills([item("자바", self.own), item("Kafka", self.own)], self.by_eid)
+        self.assertEqual([(s.name, s.evidence) for s in kept], [("Java", [ref("PROJECT", 9401)])])
+        self.assertEqual([(x.text, x.reason) for x in excluded], [("Kafka", "기술 이름이 본인 작업 근거에 없음")])
+        self.assertEqual((m.generated, m.excluded), (2, 1))
+
+    def test_team_tech_list_line_is_not_evidence(self):
+        kept, excluded, _ = check_llm_skills([item("Redis", eid("Java, Spring Boot, Redis", self.req))], self.by_eid)
+        self.assertEqual(kept, [])
+        self.assertEqual(excluded[0].reason, "기술 이름이 본인 작업 근거에 없음")
+
+    def test_llm_skills_are_merged_into_rule_skills(self):
+        with fake(skills=[item("Java", self.own), item("Redis", "E99")]):
+            profile = asyncio.run(extract_profile(self.req))["data"]["profile"]
+        self.assertEqual(profile["skills"], [
+            {"name": "Java", "evidence": [PROJECT]},
+            {"name": "Spring Boot", "evidence": []},
+            {"name": "MySQL", "evidence": []},
+        ])
+
+
+class WordingTest(unittest.TestCase):
+    ROLE_NOTE = "백엔드 리드.\n메시지 유실 원인 분석 참여."
+    README = "# 모의 프로젝트\n- 팀원과 함께 Redis 중계 구조 도입, 메시지 유실 0건 확인\n- 알림 설정"
+    TOGETHER = "팀원과 함께 Redis 중계 구조 도입, 메시지 유실 0건 확인"
+
+    def setUp(self):
+        self.req = with_project(roleNote=self.ROLE_NOTE, readme=self.README)
+        self.by_eid = {c.eid: c for c in build_candidates(self.req)}
+
+    def reason(self, kind, text, *quotes):
+        _, excluded, _ = check_llm_items(kind, [item(text, *(eid(q, self.req) for q in quotes))], self.by_eid)
+        return excluded[0].reason if excluded else None
+
+    def test_strong_word_must_be_in_source(self):
+        self.assertIsNone(self.reason("roles", "백엔드 리드", "백엔드 리드."))
+        self.assertEqual(self.reason("roles", "메시지 유실 원인 분석 주도", "메시지 유실 원인 분석 참여."),
+                         "원문에 없는 강한 표현 주도")
+
+    def test_hedge_word_must_stay_in_achievement(self):
+        self.assertIsNone(self.reason("achievements", "팀원과 함께 Redis 도입, 메시지 유실 0건", self.TOGETHER))
+        self.assertEqual(self.reason("achievements", "Redis 도입으로 메시지 유실 0건", self.TOGETHER),
+                         "원문의 참여 표현 함께 가 빠짐")
+
+    def test_project_title_shows_team_or_solo(self):
+        labels = {n: next(c.label for c in build_candidates(with_project(teamSize=n)) if c.label.endswith(tail))
+                  for n, tail in [(3, "팀 3명"), (1, "개인")]}
+        self.assertEqual(labels, {3: "프로젝트 '모의 프로젝트' 제목 · 팀 3명", 1: "프로젝트 '모의 프로젝트' 제목 · 개인"})
+
+    def test_task_only_achievement_is_excluded_but_role_is_kept(self):
+        self.assertEqual(self.reason("achievements", "알림 설정", "알림 설정"), "결과 · 수치 없이 작업만 있음")
+        self.assertEqual(self.reason("achievements", "감정 일기 챗봇 제작", "모의 프로젝트"), "결과 · 수치 없이 작업만 있음")
+        self.assertIsNone(self.reason("roles", "알림 설정", "알림 설정"))
+
+
+class AwardTest(unittest.TestCase):
+    AWARD = "교육과정 최종 발표 우수상"
+
+    def run_llm(self, text, team_size=3, quote=AWARD):
+        """README 에 수상 줄이 있는 요청으로 LLM 단계를 돌려 (남은 성과 text, 뺀 이유)"""
+        req = with_project(teamSize=team_size, readme=f"# 모의 프로젝트\n- {quote}")
+        with fake(achievements=[item(text, eid(quote, req))]):
+            result = llm_extract.extract_by_llm(req)
+        return [a.text for a in result.achievements], [x.reason for x in result.excluded]
+
+    def test_team_award_with_team_wording_is_kept(self):
+        self.assertEqual(self.run_llm("팀 프로젝트로 최종 발표 우수상 수상"), (["팀 프로젝트로 최종 발표 우수상 수상"], []))
+
+    def test_team_award_written_as_personal_is_excluded(self):
+        self.assertEqual(self.run_llm("최종 발표 우수상 수상"), ([], ["팀 수상인데 팀 표현이 빠짐"]))
+        self.assertEqual(self.run_llm("혼자 최종 발표 우수상 수상"), ([], ["원문에 없는 강한 표현 혼자"]))
+
+    def test_solo_project_award_needs_no_team_wording(self):
+        self.assertEqual(self.run_llm("최종 발표 우수상 수상", team_size=1), (["최종 발표 우수상 수상"], []))
+
+    def test_selection_and_adoption_are_not_task_only(self):
+        for text, quote in [("교내 공모전 본선작으로 선정", "교내 공모전 본선작으로 선정됨"),
+                            ("팀 규칙이 사내 표준으로 채택", "팀 규칙이 사내 표준으로 채택됨")]:
+            with self.subTest(text=text):
+                self.assertEqual(self.run_llm(text, team_size=1, quote=quote), ([text], []))
 
 
 if __name__ == "__main__":
