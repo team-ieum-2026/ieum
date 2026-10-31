@@ -1,0 +1,110 @@
+{
+  "studentId": 3,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 9,
+    "evidence_ids": 28,
+    "valid_evidence_ids": 28,
+    "with_numbers": 1,
+    "numbers_passed": 1,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "프론트엔드 리드 · 화면 설계 및 공통 컴포넌트 구현",
+      "디자인 토큰 설계 및 컴포넌트 구현 · Storybook 문서화",
+      "웹 디자이너 · 홈페이지 및 랜딩 페이지 시안 제작과 화면 설계"
+    ],
+    "skills": [
+      {
+        "name": "React",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 202
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          }
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 202
+          }
+        ]
+      },
+      {
+        "name": "Storybook",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 202
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          }
+        ]
+      },
+      {
+        "name": "Figma",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 202
+          },
+          {
+            "refType": "CAREER",
+            "refId": 2031
+          }
+        ]
+      },
+      {
+        "name": "Lighthouse",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "Lighthouse 접근성 점수를 72점에서 95점으로 개선",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 103
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 3
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "웹디자인개발기능사",
+      "GTQ 1급"
+    ],
+    "desiredJob": "프론트엔드 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "dev",
+  "extractMs": 12419
+}

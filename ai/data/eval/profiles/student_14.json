@@ -1,0 +1,34 @@
+{
+  "studentId": 14,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 1,
+    "evidence_ids": 1,
+    "valid_evidence_ids": 1,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "프롬프트 작성"
+    ],
+    "skills": [
+      {
+        "name": "Python",
+        "evidence": []
+      },
+      {
+        "name": "OpenAI API",
+        "evidence": []
+      }
+    ],
+    "achievements": [],
+    "certificates": [],
+    "desiredJob": "AI 서비스 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "dev",
+  "extractMs": 8896
+}

@@ -1,0 +1,129 @@
+{
+  "studentId": 5,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 12,
+    "evidence_ids": 29,
+    "valid_evidence_ids": 29,
+    "with_numbers": 4,
+    "numbers_passed": 3,
+    "excluded": 1
+  },
+  "excludedReasons": [
+    "achievements:text 의 숫자 0 가 고른 근거에 없음"
+  ],
+  "profile": {
+    "roles": [
+      "모임 참여 기능(화면 · API) 구현, 정원 초과 버그 해결, 배포 담당",
+      "상품 정보 검증 및 MySQL 일괄 등록 Java 프로그램 개발",
+      "쇼핑몰 상품 등록 · 배너 교체 · 주문 문의 응대 및 업무 개선 도구 제작"
+    ],
+    "skills": [
+      {
+        "name": "Java",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 203
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 106
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 5
+          }
+        ]
+      },
+      {
+        "name": "React",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 106
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 5
+          }
+        ]
+      },
+      {
+        "name": "MySQL",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 106
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 203
+          }
+        ]
+      },
+      {
+        "name": "AWS",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 106
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 5
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "동시 신청 100건 테스트에서 정원 초과 0건 확인",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 106
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 5
+          }
+        ]
+      },
+      {
+        "text": "상품 등록 업무 주 4시간 절감",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 203
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 5
+          }
+        ]
+      },
+      {
+        "text": "팀 내 다른 운영 담당자 2명도 사용",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 203
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "정보처리산업기사"
+    ],
+    "desiredJob": "풀스택 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "dev",
+  "extractMs": 18016
+}

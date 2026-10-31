@@ -1,0 +1,149 @@
+{
+  "studentId": 15,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 12,
+    "evidence_ids": 32,
+    "valid_evidence_ids": 32,
+    "with_numbers": 2,
+    "numbers_passed": 2,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "인프라 담당 (배포 환경 구축 · CI/CD 파이프라인 구성 · 모니터링)",
+      "홈랩 서버 및 모니터링 환경 구성 · 운영",
+      "IT 헬프데스크 (사내 PC · 계정 장애 응대 및 리눅스 파일 서버 백업 점검)"
+    ],
+    "skills": [
+      {
+        "name": "AWS",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      },
+      {
+        "name": "Docker",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 117
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      },
+      {
+        "name": "Linux",
+        "evidence": [
+          {
+            "refType": "CAREER",
+            "refId": 2151
+          },
+          {
+            "refType": "PROJECT",
+            "refId": 117
+          }
+        ]
+      },
+      {
+        "name": "GitHub Actions",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": []
+      },
+      {
+        "name": "Redis",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      },
+      {
+        "name": "Prometheus",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 117
+          }
+        ]
+      },
+      {
+        "name": "Grafana",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 117
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "CI/CD 자동화를 통해 기존 수동 배포 대비 배포 시간 15분에서 3분으로 단축",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      },
+      {
+        "text": "백엔드 팀원과 함께 Redis Pub/Sub 구조 도입 후 부하 테스트 중 메시지 유실 0건 확인",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 116
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 15
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "리눅스마스터 2급",
+      "AWS Certified Solutions Architect – Associate"
+    ],
+    "desiredJob": "클라우드 · 인프라 엔지니어",
+    "preferredRegion": "서울, 경기"
+  },
+  "split": "dev",
+  "extractMs": 12359
+}
