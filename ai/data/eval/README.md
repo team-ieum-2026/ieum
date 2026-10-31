@@ -17,7 +17,9 @@
 
 ## eval_jobs.sql
 
-실행: `mysql -u <계정> -p ieum < ai/data/eval/eval_jobs.sql` (`db/schema.sql` · `db/seed.sql` 뒤). 빼기: `DELETE FROM job_posting WHERE source = 'EVAL';`
+실행: `mysql -u <계정> -p ieum < ai/data/eval/eval_jobs.sql` (`db/schema.sql` · `db/seed.sql` 뒤). 빼기: `DELETE FROM job_posting WHERE id BETWEEN 900001 AND 900150;`
+
+- 주의: `source = 'EVAL'` 로 지우면 AI-A 정답 · 함정 91건(id 900201 ~ 900291)까지 지워진다.
 
 - 칸 · 형식은 BE 배치(`SeoulJobParser` · `JobPostingMapper.upsert`)와 같다. 다시 실행해도 `ON DUPLICATE KEY UPDATE` 로 같은 id 를 덮어써 중복이 생기지 않는다.
 - `external_id` 는 seed 의 `'dev-501'` 처럼 `'eval-<id>'`. `raw` 는 API 원본이 없어 NULL.
