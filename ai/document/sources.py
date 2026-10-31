@@ -11,6 +11,7 @@ LLM 은 번호만 고르고, 인용(quote)은 코드가 이 후보에서 가져�
 """
 
 import logging
+import re
 from dataclasses import dataclass
 
 from profile.models import ExtractRequest
@@ -19,6 +20,13 @@ from schemas.company import CompanyInfo
 from schemas.draft import DraftRequest, JobPostingInput
 
 logger = logging.getLogger("ieum.document")
+
+# 문장에 넣을 회사 이름에서 뗄 법인 표기: "(주)온다랩" → "온다랩"
+_LEGAL_MARK = re.compile(r"\(주\)|㈜|\(유\)|주식회사|유한회사")
+
+
+def company_display_name(name: str) -> str:
+    return _LEGAL_MARK.sub("", name).strip() or name.strip()
 
 
 @dataclass(frozen=True)
@@ -91,7 +99,7 @@ def _company_sources(info: CompanyInfo | None) -> list[Source]:
             continue
         sources.append(Source(
             f"C{len(sources) + 1}", "COMPANY_INFO", info.company_info_id,
-            f"{info.company_name} {name}", quote.strip(), origin.url, origin.collected_at,
+            f"{company_display_name(info.company_name)} {name}", quote.strip(), origin.url, origin.collected_at,
         ))
     return sources
 
