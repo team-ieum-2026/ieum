@@ -26,7 +26,7 @@
 | BE | Spring Boot 3 · Java 17 · Gradle · MyBatis · Swagger(springdoc) |
 | AI | FastAPI · Python 3.11 · LLM Gemini로 시작(필요 시 Claude) · 임베딩 + 로컬 리랭커 |
 | DB | MySQL 8.0 (utf8mb4) |
-| 환경 | Docker 미사용 · 버전은 lock 파일 · Gradle Wrapper · `requirements.txt`로 고정 (AI 버전 고정은 11/1까지 AI-A) |
+| 환경 | Docker 미사용 · 버전은 lock 파일 · Gradle Wrapper · `requirements.txt`로 고정 (AI는 직접 쓰는 라이브러리만 고정, 실행 방법은 README) |
 
 ## 분담 원칙
 
