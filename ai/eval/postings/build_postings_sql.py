@@ -5,8 +5,7 @@
 형식은 AI-B 의 ai/data/eval/eval_jobs.sql (일반 공고 150건)과 같다.
 - id 900201~ 고정, source 'EVAL', external_id 'eval-<id>', raw NULL
 - content_hash = SHA-256(description) (BE SeoulJobParser 와 같은 계산)
-- job_code = application.yml it-job-codes 의 코드 (실제 공고와 형식을 맞추려고 채운다. BE 는 IT 직종 코드를 동기화할 때만 보고,
-  AI 색인은 is_active 만 보므로 SQL 로 넣은 공고는 job_code 와 상관없이 추천 후보에 들어간다)
+- job_code = application.yml it-job-codes 의 코드 (BE는 job_code를 보지 않아 비어 있어도 추천 후보에 들어감. 비IT 공고는 방해 공고로 사용)
 - 다시 실행해도 ON DUPLICATE KEY UPDATE 로 같은 id 를 덮어써 중복이 생기지 않는다
 """
 
