@@ -5,12 +5,12 @@ import { useCallback, useState } from "react";
 import { getCurrentRecommendations, getStudentName, refreshRecommendations } from "@/lib/api/student";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import StatusChip from "@/components/ui/StatusChip";
 import { ApiState, ActionError, StudentScreen } from "./ScreenParts";
 import { deadlineLabel, studentHref } from "./navigation";
-import { responseLabels } from "./labels";
 import { restoreResponse } from "./mockRecommendationResponses";
 import { errorMessage, useApi } from "./useApi";
+
+const responseBadgeLabels = { APPLY: "지원완료", HELP: "도움요청 완료", PASS: "pass" };
 
 export default function RecommendationsScreen({ studentId }: { studentId: number }) {
   const load = useCallback(async () => {
@@ -46,10 +46,9 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
         {!data.items.length && <Card><p className="text-sm text-ink-sub">관심 직무나 희망 지역이 바뀌었다면 내 프로필에서 수정해 주세요.</p><Link href={studentHref("/student/profile", studentId)} className="mt-3 inline-block text-sm font-bold text-primary">내 프로필 보기 →</Link></Card>}
         {data.items.map((item) => <Link key={item.itemId} href={studentHref(`/student/jobs/${item.itemId}`, studentId)} className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
           <Card className="space-y-3 hover:border-primary">
-            <div className="flex items-center justify-between gap-2"><span className={`inline-flex shrink-0 items-center rounded-md px-2 py-1 text-xs font-bold ${item.response === "APPLY" ? "bg-primary-tint text-primary-strong" : item.response === "PASS" ? "bg-danger-bg text-danger" : "bg-primary-soft text-primary-strong"}`}>{item.response === "APPLY" ? "지원완료" : item.response === "PASS" ? "pass" : `추천 ${item.rank}`}</span><span className={`text-[15px] font-bold ${item.job.dDay !== null && item.job.dDay <= 7 ? "text-warn-ink" : "text-ink-sub"}`}>{deadlineLabel(item.job.dDay)}{item.job.untilFilled && " · 채용 시 마감"}</span></div>
+            <div className="flex items-center justify-between gap-2"><span className={`inline-flex shrink-0 items-center rounded-md px-2 py-1 text-xs font-bold ${item.response === "PASS" ? "bg-pass-bg text-pass-ink" : item.response === "HELP" ? "bg-danger-bg text-danger" : item.response === "NONE" ? "bg-primary-soft text-primary-strong" : "bg-primary-tint text-primary-strong"}`}>{item.response === "NONE" ? `추천 ${item.rank}` : responseBadgeLabels[item.response]}</span><span className={`text-[15px] font-bold ${item.job.dDay !== null && item.job.dDay <= 7 ? "text-warn-ink" : "text-ink-sub"}`}>{deadlineLabel(item.job.dDay)}{item.job.untilFilled && " · 채용 시 마감"}</span></div>
             <div className="space-y-1"><p className="text-[13px] text-ink-sub">{item.job.companyName}</p><h2 className="text-[17px] font-bold">{item.job.title}</h2><p className="text-xs text-ink-sub">{item.job.location} · {item.job.employmentType} · {item.job.career}</p></div>
             <ul className="space-y-1 border-t border-line pt-3 text-[13px] leading-relaxed">{item.reasonSummary.slice(0, 2).map((reason) => <li key={reason} className="flex gap-2"><span aria-hidden="true" className="text-primary">✓</span>{reason}</li>)}</ul>
-            {item.response === "HELP" && <StatusChip tone="danger">{responseLabels[item.response]}</StatusChip>}
           </Card>
         </Link>)}
       </div>

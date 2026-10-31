@@ -3,7 +3,7 @@
 
 LLM 은 번호만 고르고, 인용(quote)은 코드가 이 후보에서 가져온다. 그래서 가짜 인용이 생길 수 없다.
 기본 정보의 이름 · 이메일 · githubUrl 은 넣지 않고, 본문 속 이메일 · 전화번호는 [연락처]로 가린다.
-careers 는 RefType 에 CAREER 가 없어(AI-A 확인 필요) 아직 넣지 않는다.
+경력은 refType CAREER, refId 는 경력 itemId(student_career.id)로 넣는다.
 """
 
 import logging
@@ -14,7 +14,7 @@ from profile.models import ExtractRequest
 
 logger = logging.getLogger("ieum.profile")
 
-# readme · 자기소개서 · roleNote 한 개당 나누기 전에 쓰는 최대 글자 수
+# readme · 자기소개서 · roleNote · 경력 설명 한 개당 나누기 전에 쓰는 최대 글자 수
 MAX_CHARS = 2000
 # 근거 후보 한 조각 최대 글자 수. 더 길면 이 길이로 끊는다
 MAX_CHUNK_CHARS = 300
@@ -81,9 +81,18 @@ def build_candidates(req: ExtractRequest) -> list[Candidate]:
         title = mask_contacts(p.title.strip())
         name = f"프로젝트 '{title}'"
         if title:
-            raw.append(("PROJECT", p.item_id, f"{name} 제목", title))
+            # 팀 · 개인 프로젝트 표시: 팀으로 받은 상을 혼자 받은 것처럼 쓰지 않게
+            size = f" · 팀 {p.team_size}명" if (p.team_size or 0) > 1 else " · 개인" if p.team_size == 1 else ""
+            raw.append(("PROJECT", p.item_id, f"{name} 제목{size}", title))
         add_text("PROJECT", p.item_id, f"{name} 역할", p.role_note, "roleNote")
         add_text("PROJECT", p.item_id, f"{name} README", p.readme, "readme")
+    for c in req.careers:
+        company = mask_contacts(c.company_name.strip())
+        name = f"경력 '{company}'"
+        header = " · ".join(x for x in [company, mask_contacts((c.position or "").strip())] if x)
+        if header:
+            raw.append(("CAREER", c.item_id, f"{name} 회사 · 직무", header))
+        add_text("CAREER", c.item_id, f"{name} 설명", c.description, "description")
     if req.cover_letter is not None:
         # 임시 규칙(AI-A 확인 전): COVER_LETTER 의 refId 는 studentId
         add_text("COVER_LETTER", req.student_id, "자기소개서", req.cover_letter.content, "content")

@@ -64,6 +64,24 @@ class GenerateJsonTest(unittest.TestCase):
         self.assertIn("desiredJob", config.response_json_schema["properties"])
         self.assertTrue(config.automatic_function_calling.disable)
 
+    def test_default_model_is_llm_model(self):
+        client = fake_client(VALID)
+        self.use(client)
+        llm.generate_json("프롬프트", CompetencyProfile)
+        self.assertEqual(client.models.generate_content.call_args.kwargs["model"], "test-model")
+
+    def test_model_override(self):
+        client = fake_client(VALID)
+        self.use(client)
+        llm.generate_json("프롬프트", CompetencyProfile, model="doc-model")
+        self.assertEqual(client.models.generate_content.call_args.kwargs["model"], "doc-model")
+
+    def test_empty_override_falls_back(self):
+        client = fake_client(VALID)
+        self.use(client)
+        llm.generate_json("프롬프트", CompetencyProfile, model="")
+        self.assertEqual(client.models.generate_content.call_args.kwargs["model"], "test-model")
+
     def test_api_error_raises_llm_error(self):
         client = MagicMock()
         client.models.generate_content.side_effect = RuntimeError("503")

@@ -38,7 +38,7 @@ export default function JobDetailScreen({ itemId, studentId }: { itemId: number;
   }
   return <StudentScreen>
     <ScreenHeader title="추천 공고" back={studentHref("/student", studentId)} />
-    <ApiState loading={loading} error={error} retry={reload} />
+    <ApiState loading={loading} error={error} retry={reload} notFoundHref={studentHref("/student", studentId)} notFoundLabel="맞춤 공고로" />
     {data && <>
       <div className="flex-1 space-y-5 px-5 pt-2 pb-6">
         <div className="space-y-2"><p className="text-[13px] text-ink-sub">{data.job.companyName}</p><h1 className="text-[21px] font-bold">{data.job.title}</h1>

@@ -70,12 +70,16 @@ test("기본 HTTP 서버는 시드 50명과 명세의 응답 구조를 반환한
 
 test("시드 기반 새 지원서 생성·편집·제출은 ID 충돌 없이 동작한다", () => {
   let clock = now; const model = new MockModel({ now: () => clock });
+  const expectedProjects = readSeed(now).student_project
+    .filter((project) => project.student_id === 1)
+    .map((project) => ({ itemId: `prj-${project.id}`, title: project.title, periodText: project.period_text, teamSize: project.team_size }));
   const dispatch = (path, method = "GET", body = {}) => model.dispatch(method, url(path), body);
   const batch = dispatch("/api/students/1/recommendations/current");
   const applied = dispatch(`/api/recommendation-items/${batch.items[0].itemId}/response`, "POST", { response: "APPLY" });
   assert.equal(applied.applicationId, 105); clock += 2300;
   const app = dispatch("/api/applications/105"); assert.equal(app.status, "DRAFT");
-  assert.equal(app.document.sections.find((s) => s.section === "PROJECTS").items.length, 2);
+  const projects = app.document.sections.find((s) => s.section === "PROJECTS").items;
+  assert.deepEqual(projects.map(({ itemId, title, periodText, teamSize }) => ({ itemId, title, periodText, teamSize })), expectedProjects);
   dispatch("/api/applications/105/document", "PATCH", { op: "ADD_ITEM", section: "CERTIFICATES", item: { name: "모의 자격증" }, saveToProfile: true });
   const added = dispatch("/api/students/1/profile").certificates.at(-1);
   assert.equal(added.issuer, null); assert.equal(added.acquiredOn, null);

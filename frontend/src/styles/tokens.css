@@ -31,6 +31,10 @@
   --color-danger: #b91c1c;
   --color-danger-bg: #fee2e2;
 
+  /* 공고 패스 상태 */
+  --color-pass-bg: #f3e8ff;
+  --color-pass-ink: #7e22ce;
+
   /* 코디네이터 화면 배경 */
   --color-coord-bg: #f1f5f9;
 }
