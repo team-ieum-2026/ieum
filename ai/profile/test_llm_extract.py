@@ -339,7 +339,7 @@ class ExtractByLlmTest(unittest.TestCase):
             llm_extract.extract_by_llm(request())
         prompt = llm.call_args.args[0]
         self.assertIn(f"{eid(README_SENTENCE)} | 프로젝트 '모의 프로젝트' README | {README_SENTENCE}", prompt)
-        self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v3")
+        self.assertEqual(llm.call_args.kwargs["prompt_version"], "profile-extract-v4")
 
     def test_temperature_is_zero(self):
         with fake() as llm:
@@ -496,6 +496,50 @@ class WordingTest(unittest.TestCase):
         self.assertEqual(self.reason("achievements", "알림 설정", "알림 설정"), "결과 · 수치 없이 작업만 있음")
         self.assertEqual(self.reason("achievements", "감정 일기 챗봇 제작", "모의 프로젝트"), "결과 · 수치 없이 작업만 있음")
         self.assertIsNone(self.reason("roles", "알림 설정", "알림 설정"))
+
+
+class RoleWordingTest(unittest.TestCase):
+    """역할의 일의 범위 표현(ROLE_RISK_WORDS)은 고른 근거 원문에 있어야 한다. 성과에는 보지 않는다."""
+
+    ROLE_NOTE = "백엔드 리드.\n화면 설계와 공통 컴포넌트 구현.\n결제 API 담당."
+    README = "# 모의 프로젝트\n- 주문 API 구현\n- 쿼리 개선으로 응답 1.2초에서 0.3초 단축"
+
+    def setUp(self):
+        self.req = with_project(roleNote=self.ROLE_NOTE, readme=self.README)
+        self.by_eid = {c.eid: c for c in build_candidates(self.req)}
+
+    def reason(self, kind, text, *quotes):
+        _, excluded, _ = check_llm_items(kind, [item(text, *(eid(q, self.req) for q in quotes))], self.by_eid)
+        return excluded[0].reason if excluded else None
+
+    def test_role_word_in_chosen_source_is_kept(self):
+        self.assertIsNone(self.reason("roles", "화면 설계 · 공통 컴포넌트 구현", "화면 설계와 공통 컴포넌트 구현."))
+
+    def test_role_word_missing_from_chosen_source_is_excluded(self):
+        self.assertEqual(self.reason("roles", "주문 API 설계 및 구현", "주문 API 구현"), "원문에 없는 역할 표현 설계")
+        # 같은 프로젝트의 다른 문장에 있어도, 그 역할이 고른 근거에 없으면 뺀다
+        self.assertEqual(self.reason("roles", "주문 API 기획 · 구축", "주문 API 구현", "화면 설계와 공통 컴포넌트 구현."),
+                         "원문에 없는 역할 표현 기획, 구축")
+
+    def test_achievements_are_not_checked_for_role_words(self):
+        self.assertIsNone(self.reason("achievements", "쿼리 최적화로 응답 1.2초 → 0.3초 단축",
+                                      "쿼리 개선으로 응답 1.2초에서 0.3초 단축"))
+
+    def test_strong_word_check_runs_first_and_is_not_duplicated(self):
+        self.assertEqual(self.reason("roles", "주문 API 주도", "주문 API 구현"), "원문에 없는 강한 표현 주도")
+        self.assertEqual(self.reason("roles", "주문 API 리드 · 설계", "주문 API 구현"), "원문에 없는 강한 표현 리드")
+        self.assertIsNone(self.reason("roles", "백엔드 리드 · 화면 설계", "백엔드 리드.", "화면 설계와 공통 컴포넌트 구현."))
+
+    def test_damdang_is_not_checked(self):
+        self.assertIsNone(self.reason("roles", "주문 API 담당", "주문 API 구현"))
+
+    def test_excluded_role_is_dropped_from_llm_result(self):
+        roles = [item("주문 API 설계 및 구현", eid("주문 API 구현", self.req)),
+                 item("화면 설계 · 공통 컴포넌트 구현", eid("화면 설계와 공통 컴포넌트 구현.", self.req))]
+        with fake(roles=roles):
+            result = llm_extract.extract_by_llm(self.req)
+        self.assertEqual(result.roles, ["화면 설계 · 공통 컴포넌트 구현"])
+        self.assertEqual([(x.kind, x.reason) for x in result.excluded], [("roles", "원문에 없는 역할 표현 설계")])
 
 
 class AwardTest(unittest.TestCase):
