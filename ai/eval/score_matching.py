@@ -10,7 +10,8 @@
 - --human-labels 없음 → 1차 수치: 정답표에 없는 카드는 "채점 불가"로 분모에서 빼고 개수만 따로 센다.
   --human-labels 있음 → 최종 수치: 정답표에 없는 카드를 사람 판정 점수로 채점해 분모에 넣는다. 같은 쌍이 둘 다 있으면 정답표 우선.
 - Precision@3 = 2점 카드 / 채점된 카드 · 명백 부적합률 = 0점 카드 / 채점된 카드. 비율마다 95% 신뢰구간(Wilson).
-- 맞는 공고가 없는 수료생(test 10번)은 2점이 아닌 카드가 1장이라도 나오면 실패 (METRICS.md). 카드 0장이면 통과.
+- 맞는 공고가 없는 수료생(NO_MATCH)은 2점이 아닌 카드가 1장이라도 나오면 실패 (METRICS.md). 카드 0장이면 통과.
+  test 는 통과 수만, dev 는 수료생별 통과 · 실패까지 출력한다.
   점수를 모르는 카드(채점 불가)는 2점으로 확인되지 않았으므로 실패로 본다.
 - dev: 수료생별 Top-3 · 카드별 점수 · 틀린 이유 후보(지역 시 · 도 · 학력 · 경력 칸, 그 외는 직무 · 기술)까지 출력.
 - test: 위 세 숫자만 출력. 수료생별 결과는 출력하지 않는다.
@@ -27,7 +28,8 @@ from pathlib import Path
 from rubric import POSTING_EDUCATION, max_degree, preferred_regions
 
 HERE = Path(__file__).parent
-NO_MATCH = {"test": [10]}  # 2점이 아닌 카드가 하나라도 나오면 실패인 수료생 (METRICS.md)
+# 맞는 공고가 없는 수료생. 2점이 아닌 카드가 하나라도 나오면 실패 (METRICS.md · AI-A 확정)
+NO_MATCH = {"test": [10, 17], "dev": [13]}
 
 
 def load_split() -> dict[str, list[int]]:
@@ -127,8 +129,12 @@ def score(runs_dir: Path, labels_path: Path, split_name: str, *, members: list[i
         out(f"  결과 파일 없는 수료생 {len(result['missingRuns'])}명")
     out(f"  Precision@3: {wilson(counts['score2'], counts['scored'])}")
     out(f"  명백 부적합률(0점): {wilson(counts['score0'], counts['scored'])}")
-    for sid, passed in result["noMatchPassed"].items():
-        out(f"  {sid}번(맞는 공고 없음): {'통과' if passed else '실패'} (카드 {len(runs[sid]['items'])}장 · 2점 아닌 카드 {no_match[sid]}장)")
+    if no_match:
+        passed_count = sum(result["noMatchPassed"].values())
+        out(f"  맞는 공고 없는 수료생 통과 {passed_count}/{len(no_match)}명")
+    if split_name == "dev":
+        for sid, passed in result["noMatchPassed"].items():
+            out(f"    {sid}번: {'통과' if passed else '실패'} (카드 {len(runs[sid]['items'])}장 · 2점 아닌 카드 {no_match[sid]}장)")
 
     if split_name == "dev":
         out(f"  2점 아닌 카드의 불충족 조건(결과 파일 기준): {dict(flag_counts) or '없음'}")
