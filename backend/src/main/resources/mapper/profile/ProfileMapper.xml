@@ -17,6 +17,13 @@
                 typeHandler="com.ieum.common.mybatis.JsonTypeHandler"/>
     </resultMap>
 
+    <select id="findStudentIdsWithoutCompetencyProfile" resultType="java.lang.Long">
+        SELECT s.id
+        FROM student s
+        WHERE NOT EXISTS (SELECT 1 FROM competency_profile cp WHERE cp.student_id = s.id)
+        ORDER BY s.id
+    </select>
+
     <select id="findStudent" resultMap="student">
         SELECT s.id AS student_id,
                s.name,
