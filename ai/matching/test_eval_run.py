@@ -99,6 +99,55 @@ class EvalRunTest(unittest.TestCase):
         self.assertNotIn("백엔드 개발자", printed)
         self.assertIn("1명 저장", printed)
 
+    def cached_run(self, cache: eval_run.ScoreCache, calls: dict, *, candidate_k: int | None = None) -> dict:
+        def embed(texts):
+            calls["embed"] += 1
+            return [[1.0, 0.0]]
+
+        def rerank(query, cands, top_k):
+            calls["rerank"] += len(cands)
+            return [(i, 0.9 - i * 0.1) for i in range(len(cands))][:top_k]
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            out_dir = eval_run.cmd_run(
+                "dev", "gold91", run_date="2026-10-31", students=[1], index_path=self.index_path,
+                profiles_dir=self.profiles, runs_dir=self.tmp / "runs", postings=POSTINGS, materials={1: MATERIAL},
+                embed_query=embed, rerank_fn=rerank, model_name="fake", warmup=lambda: None, cache=cache,
+                candidate_k=candidate_k,
+            )
+        return json.loads((out_dir / "student_1.json").read_text(encoding="utf-8"))
+
+    def test_cache_saves_then_reuses_without_calls(self) -> None:
+        path = self.tmp / "cache" / "scores.json"
+        calls = {"embed": 0, "rerank": 0}
+        first = self.cached_run(eval_run.ScoreCache(path, embedding_model="fake", reranker_model="fake-rr"), calls)
+        self.assertEqual(calls, {"embed": 1, "rerank": 2})
+        again = self.cached_run(eval_run.ScoreCache(path, embedding_model="fake", reranker_model="fake-rr", only=True), calls)
+        self.assertEqual(calls, {"embed": 1, "rerank": 2})  # 캐시만: 더 부르지 않음
+        self.assertEqual([c["jobPostingId"] for c in again["items"]], [c["jobPostingId"] for c in first["items"]])
+
+    def test_cache_only_stops_on_miss(self) -> None:
+        cache = eval_run.ScoreCache(self.tmp / "empty.json", embedding_model="fake", reranker_model="fake-rr", only=True)
+        with self.assertRaises(SystemExit):
+            self.cached_run(cache, {"embed": 0, "rerank": 0})
+
+    def test_cache_scores_only_new_pairs(self) -> None:
+        cache = eval_run.ScoreCache(self.tmp / "c.json", embedding_model="fake", reranker_model="fake-rr")
+        seen: list[int] = []
+        rerank = cache.reranker(lambda q, cands, top_k: (seen.append(len(cands)) or [(i, 0.5) for i in range(len(cands))]))
+        rerank("q", ["a", "b"], top_k=2)
+        ranked = rerank("q", ["a", "b", "c"], top_k=3)
+        self.assertEqual(seen, [2, 1])  # 두 번째에는 c 만 새로 점수
+        self.assertEqual(len(ranked), 3)
+
+    def test_candidate_k_is_applied_and_restored(self) -> None:
+        old = eval_run.config.CANDIDATE_K
+        self.cached_run(eval_run.ScoreCache(self.tmp / "k.json", embedding_model="fake", reranker_model="fake-rr"),
+                        {"embed": 0, "rerank": 0}, candidate_k=1)
+        summary = json.loads((self.tmp / "runs" / "2026-10-31" / "_run_dev.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["config"]["candidateK"], 1)
+        self.assertEqual(eval_run.config.CANDIDATE_K, old)
+
     def test_parse_logs(self) -> None:
         parsed = eval_run.parse_logs([
             "recommend done studentId=1 usable=2 candidates=2 reranked=2 passed=2 picked=2 "
