@@ -84,9 +84,12 @@ class CareerSection(CamelModel):
     items: list[CareerItem] = []
 
 
+MilitaryValue = Literal["SERVED", "NOT_SERVED", "EXEMPT", "NOT_APPLICABLE"]
+
+
 class MilitarySection(CamelModel):
     section: Literal["MILITARY"] = "MILITARY"
-    value: Literal["SERVED", "NOT_SERVED", "EXEMPT", "NOT_APPLICABLE"] | None = None
+    value: MilitaryValue | None = None
 
 
 class CertificateItem(CamelModel):
