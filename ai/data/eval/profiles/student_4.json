@@ -1,0 +1,88 @@
+{
+  "studentId": 4,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 8,
+    "evidence_ids": 17,
+    "valid_evidence_ids": 17,
+    "with_numbers": 2,
+    "numbers_passed": 2,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "검색 · 리랭크 파이프라인 구성 및 질의 API 구현, 평가 실험",
+      "데이터 정제 및 모델 비교"
+    ],
+    "skills": [
+      {
+        "name": "Python",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 104
+          }
+        ]
+      },
+      {
+        "name": "FastAPI",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 104
+          }
+        ]
+      },
+      {
+        "name": "LangChain",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 104
+          }
+        ]
+      },
+      {
+        "name": "scikit-learn",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 105
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "청크 크기 조정 및 리랭커 적용으로 정답률 61%에서 84%로 향상",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 104
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 4
+          }
+        ]
+      },
+      {
+        "text": "선형 회귀 대비 랜덤 포레스트 적용으로 MAE 182만 원에서 131만 원으로 개선",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 105
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "ADsP"
+    ],
+    "desiredJob": "AI 서비스 개발",
+    "preferredRegion": "서울, 경기"
+  },
+  "split": "test",
+  "extractMs": 11950
+}

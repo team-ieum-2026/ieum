@@ -1,0 +1,101 @@
+{
+  "studentId": 8,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 9,
+    "evidence_ids": 14,
+    "valid_evidence_ids": 14,
+    "with_numbers": 3,
+    "numbers_passed": 3,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "AI 파이프라인 리드 · STT 및 요약·액션 아이템 추출 파이프라인 설계와 validation·retry 로직 구현",
+      "FastAPI 업로드 API 및 Gemini API multimodal 호출·결과 파싱 구현"
+    ],
+    "skills": [
+      {
+        "name": "Python",
+        "evidence": []
+      },
+      {
+        "name": "FastAPI",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 204
+          }
+        ]
+      },
+      {
+        "name": "Gemini API",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 204
+          }
+        ]
+      },
+      {
+        "name": "Whisper",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 109
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 8
+          }
+        ]
+      },
+      {
+        "name": "pydantic",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 109
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "평가셋 기준 output format error 0건 달성(도입 전 50건 중 9건 실패)",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 109
+          }
+        ]
+      },
+      {
+        "text": "회의 50건 수기 교차 채점 기준 액션 아이템 추출 최종 정확도 88% 달성",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 109
+          }
+        ]
+      },
+      {
+        "text": "테스트 영수증 40장 중 35장에서 세 항목 모두 정확 추출",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 204
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "정보처리기사"
+    ],
+    "desiredJob": "AI 서비스 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "dev",
+  "extractMs": 10103
+}

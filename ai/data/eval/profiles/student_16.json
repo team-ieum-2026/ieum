@@ -1,0 +1,72 @@
+{
+  "studentId": 16,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 6,
+    "evidence_ids": 14,
+    "valid_evidence_ids": 14,
+    "with_numbers": 2,
+    "numbers_passed": 2,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "프론트엔드 개발 (AI 대기 화면 · 일정 편집 · 공유 링크)",
+      "오픈소스 UI 라이브러리 접근성 이슈 개선"
+    ],
+    "skills": [
+      {
+        "name": "React",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 209
+          }
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "evidence": []
+      },
+      {
+        "name": "React Query",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 118
+          }
+        ]
+      },
+      {
+        "name": "Gemini API",
+        "evidence": []
+      }
+    ],
+    "achievements": [
+      {
+        "text": "사용자 테스트 결과 확인 전 이탈률 40%(20명 중 8명)에서 15%(3명)로 감소",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 118
+          }
+        ]
+      },
+      {
+        "text": "접근성 개선 PR 2건 메인테이너 리뷰 거쳐 병합",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 209
+          }
+        ]
+      }
+    ],
+    "certificates": [],
+    "desiredJob": "프론트엔드 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "test",
+  "extractMs": 11317
+}

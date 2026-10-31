@@ -1,0 +1,106 @@
+{
+  "studentId": 20,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 9,
+    "evidence_ids": 20,
+    "valid_evidence_ids": 20,
+    "with_numbers": 1,
+    "numbers_passed": 1,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "RAG 파이프라인 · 답변 검증 단계 리드, Qdrant 색인 및 Docker Compose 개발 환경 구성",
+      "일정 비서 에이전트 구현 (흐름 그래프 구성 · 충돌 확인 분기 추가)",
+      "댓글 API 담당"
+    ],
+    "skills": [
+      {
+        "name": "Python",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 212
+          }
+        ]
+      },
+      {
+        "name": "FastAPI",
+        "evidence": []
+      },
+      {
+        "name": "LangGraph",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 212
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 20
+          }
+        ]
+      },
+      {
+        "name": "Qdrant",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 122
+          }
+        ]
+      },
+      {
+        "name": "Docker",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 122
+          }
+        ]
+      },
+      {
+        "name": "Docker Compose",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 122
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "답변 검증 단계 설계로 답변 근거 일치율 93% 달성",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 122
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 20
+          }
+        ]
+      },
+      {
+        "text": "교내 AI 해커톤 대상 수상",
+        "evidence": [
+          {
+            "refType": "COVER_LETTER",
+            "refId": 20
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "정보처리기사"
+    ],
+    "desiredJob": "AI 서비스 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "test",
+  "extractMs": 15199
+}

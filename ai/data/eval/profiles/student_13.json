@@ -1,0 +1,41 @@
+{
+  "studentId": 13,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 2,
+    "evidence_ids": 4,
+    "valid_evidence_ids": 4,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "입출고 API 담당",
+      "생산관리 (부품 생산 계획 수립 · 창고 재고 관리)"
+    ],
+    "skills": [
+      {
+        "name": "Java",
+        "evidence": []
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": []
+      },
+      {
+        "name": "MySQL",
+        "evidence": []
+      }
+    ],
+    "achievements": [],
+    "certificates": [
+      "정보처리기사"
+    ],
+    "desiredJob": "백엔드 개발",
+    "preferredRegion": "부산"
+  },
+  "split": "dev",
+  "extractMs": 10970
+}

@@ -1,0 +1,35 @@
+{
+  "studentId": 7,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 2,
+    "evidence_ids": 3,
+    "valid_evidence_ids": 3,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "화면 몇 개 제작",
+      "단행본 원고 교정 · 편집"
+    ],
+    "skills": [
+      {
+        "name": "Vue.js",
+        "evidence": []
+      },
+      {
+        "name": "JavaScript",
+        "evidence": []
+      }
+    ],
+    "achievements": [],
+    "certificates": [],
+    "desiredJob": "프론트엔드 개발",
+    "preferredRegion": "경기"
+  },
+  "split": "test",
+  "extractMs": 9427
+}
