@@ -16,6 +16,7 @@ from schemas.document import (
     CareerSection,
     CertificateItem,
     CertificatesSection,
+    DocumentSection,
     EducationItem,
     EducationSection,
     MilitarySection,
@@ -56,7 +57,7 @@ def _military(student: StudentMaterial) -> MilitarySection:
     return MilitarySection(value=cast(MilitaryValue, value))
 
 
-def registered_sections(student: StudentMaterial) -> dict[str, object]:
+def registered_sections(student: StudentMaterial) -> dict[str, DocumentSection]:
     """섹션 이름 → 섹션. 순서는 조립(service)에서 정한다"""
     b = student.basic
     c = student.course
