@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface ProfileMapper {
 
+    List<Long> findStudentIdsWithoutCompetencyProfile();
+
     ProfileData.Student findStudent(@Param("studentId") Long studentId);
 
     ProfileData.Student findCurrentStudent(@Param("studentId") Long studentId);

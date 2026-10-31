@@ -313,6 +313,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | 화면 | 메서드 · 경로 | 설명 | 흐름 |
 | --- | --- | --- | --- |
 | M8 | `GET /api/students/{studentId}/profile` | 등록 자료 전체 + 역량 프로필 | S1 · S2 |
+| - | `POST /api/admin/profiles/extract` | 역량 프로필이 없는 수료생만 순차 추출·저장 (개발용, 인증·요청 본문 없음). 기존 프로필은 건너뛰고 실패 후에도 계속. 응답 `data`: `targetCount`(시작 시 대상 수), `extractedCount`(실제 저장 수), `failedStudentIds`(실패 ID 배열), `extractedAt`(완료 시각, ISO 8601 서울). 실패한 대상은 재호출로 재시도. `AI_MOCK=false` 및 AI 서버 실행 후 사용 (INT-05 · INT-07) | S2 |
 | M8 | `POST /api/students/{studentId}/profile/items` | 프로필 섹션 항목 추가 | S1 → S2 |
 | M8 | `PATCH /api/students/{studentId}/profile/items/{itemId}` | 프로필 섹션 항목 수정 | S1 → S2 |
 | M8 | `DELETE /api/students/{studentId}/profile/items/{itemId}?section=` | 프로필 섹션 항목 삭제 | S1 → S2 |
