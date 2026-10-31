@@ -33,9 +33,15 @@ class SourcesTest(unittest.TestCase):
     def test_prefix_order(self):
         sources = build_sources(load_request())
         prefixes = "".join(s.eid[0] for s in sources)
-        self.assertRegex(prefixes, r"^E+J+C+$")
+        self.assertRegex(prefixes, r"^E+T+J+C+$")
         job = [s for s in sources if s.eid == "J1"][0]
         self.assertEqual((job.ref_type, job.ref_id, job.label), ("JOB_POSTING", 501, "공고 제목"))
+
+    def test_tech_source_per_project(self):
+        tech = [s for s in build_sources(load_request()) if s.eid.startswith("T")]
+        first = tech[0]
+        self.assertEqual((first.eid, first.ref_type, first.ref_id), ("T1", "PROJECT", 11))
+        self.assertEqual(first.quote, "Spring Boot, MySQL, React")
 
     def test_company_source_has_url(self):
         sources = company_sources(load_request())

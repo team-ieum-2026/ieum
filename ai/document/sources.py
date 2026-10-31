@@ -4,6 +4,8 @@
 LLM 은 번호만 고르고, 인용(quote)은 코드가 이 후보에서 가져온다. 그래서 가짜 인용이 생길 수 없다.
 번호 접두어로 출처를 나눈다 → 검증에서 "NOT_FOUND 인데 C 를 쓴 문장 제외" 같은 규칙을 쓰기 쉽다.
 - E: 수료생 자료. AI-B 프로필 추출의 build_candidates 를 그대로 쓴다 (연락처 가리기 · 팀 인원 표시 포함)
+- T: 프로젝트 기술 스택 (프로젝트마다 하나). build_candidates 에 없어서 따로 만든다.
+     없으면 공고 필수 기술(예: Spring Boot)을 근거와 함께 쓸 수 없다. 직접 입력한 skills 는 근거로 쓰지 않는다
 - J: 지원한 공고 (제목 · 본문)
 - C: 기업 정보 (인재상 · 핵심 가치 · 최근 이슈 항목마다 하나). 출처 URL 이 있는 항목만 넣는다
 """
@@ -35,6 +37,19 @@ def _student_sources(req: DraftRequest) -> list[Source]:
     # StudentMaterial 과 ExtractRequest 는 같은 모양이라 그대로 넘긴다. 번호 E1, E2 … 도 build_candidates 가 붙인다
     extract_req = ExtractRequest.model_validate(req.student.model_dump(by_alias=True))
     return [Source(c.eid, c.ref_type, c.ref_id, c.label, c.quote) for c in build_candidates(extract_req)]
+
+
+def _tech_sources(req: DraftRequest) -> list[Source]:
+    """기술 스택이 있는 프로젝트마다 T1... 하나. refType 은 PROJECT 라 서류 형식은 그대로다"""
+    sources: list[Source] = []
+    for p in req.student.projects:
+        techs = [mask_contacts(t.strip()) for t in (p.tech_stack or []) if t.strip()]
+        if techs:
+            title = mask_contacts(p.title.strip())
+            sources.append(Source(
+                f"T{len(sources) + 1}", "PROJECT", p.item_id, f"프로젝트 '{title}' 기술", ", ".join(techs),
+            ))
+    return sources
 
 
 def _job_sources(job: JobPostingInput) -> list[Source]:
@@ -82,7 +97,7 @@ def _company_sources(info: CompanyInfo | None) -> list[Source]:
 
 
 def build_sources(req: DraftRequest) -> list[Source]:
-    return _student_sources(req) + _job_sources(req.job) + _company_sources(req.company_info)
+    return _student_sources(req) + _tech_sources(req) + _job_sources(req.job) + _company_sources(req.company_info)
 
 
 def render_sources(sources: list[Source]) -> str:
