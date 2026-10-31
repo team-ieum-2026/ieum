@@ -5,11 +5,16 @@
     python -m matching.eval_run profiles [--dry-run]          # ① 20명 프로필 → ai/data/eval/profiles/student_<id>.json (있으면 건너뜀 · LLM)
     python -m matching.eval_run index [--dry-run]             # ② 색인 → ai/data/index/eval_pool379.json · eval_gold91.json (임베딩)
     python -m matching.eval_run run --split dev --index gold91  # ③ → ai/eval/runs/matching/<날짜>/student_<id>.json · _run_<split>.json
+    python -m matching.eval_run run --split dev --index gold91 --cache --candidate-k 50   # 첫 실행: 임베딩 · 리랭커 점수를 캐시에 저장
+    python -m matching.eval_run run --split dev --index gold91 --cache-only               # 그다음: 캐시로만 (Gemini · 리랭커 호출 없음)
 
 - 프로필은 /ai/profile/extract 와 같은 순서(규칙 → LLM → 근거 검사)로 한 번만 뽑아 파일로 고정한다 (LLM 결과가 실행마다 달라지지 않게).
 - gold91 색인은 pool379 색인에서 정답 · 함정 공고만 복사한다 (임베딩 다시 안 함).
 - test 수료생은 파일만 저장하고 화면에는 건수 · 형식 오류 · 시간만 출력한다.
 - items 마다 공고의 최소 학력 · 근무지 시 · 도 · 경력 칸을 같이 저장한다 (코드 필터와 루브릭 기준 차이 분석용).
+- 캐시(--cache): 검색어 임베딩과 리랭커 점수(검색어 · 공고 본문 쌍)를 ai/eval/runs/matching/_cache/ 에 저장하고 다시 쓴다 (커밋 안 됨).
+  후보 수 K 를 크게(--candidate-k 50) 한 번 받아 두면 그보다 작은 K 실험도 캐시로 된다.
+  --cache-only 는 캐시에 없는 값이 필요하면 호출하지 않고 멈춘다.
 """
 
 import argparse
@@ -51,6 +56,7 @@ INDEX_FILES = {
     "gold91": AI_ROOT / "data" / "index" / "eval_gold91.json",
 }
 RUNS_DIR = AI_ROOT / "eval" / "runs" / "matching"
+CACHE_FILE = RUNS_DIR / "_cache" / "scores.json"
 
 EMBED_BATCH = 100  # common.embedding.BATCH_SIZE 와 같게 (예상 호출 수 계산용)
 
@@ -301,6 +307,74 @@ def run_student(sid: int, profile_file: dict, material: dict | None, store: Inde
     }
 
 
+def _text_key(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+class ScoreCache:
+    """검색어 임베딩 · 리랭커 점수 캐시. 키는 글의 SHA-256 이라 프로필 · 공고 본문이 바뀌면 다시 계산한다.
+
+    { embedding: { 임베딩 모델: { 검색어 해시: vector } }, rerank: { 리랭커 모델: { 검색어 해시: { 공고 본문 해시: score } } } }
+    only=True 면 캐시에 없을 때 호출하지 않고 missed 를 남긴다 (cmd_run 이 멈춘다).
+    """
+
+    def __init__(self, path: Path, *, embedding_model: str, reranker_model: str, only: bool = False):
+        self.path = Path(path)
+        self.data = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
+        self.vectors = self.data.setdefault("embedding", {}).setdefault(embedding_model, {})
+        self.scores = self.data.setdefault("rerank", {}).setdefault(reranker_model, {})
+        self.only = only
+        self.missed = False
+        self.calls = {"embedding": 0, "rerankPairs": 0}
+
+    def _miss(self) -> None:
+        self.missed = True
+        raise RuntimeError("cache miss (--cache-only)")
+
+    def embedder(self, real: Any) -> Any:
+        def embed(texts):
+            vectors = []
+            for text in texts:
+                key = _text_key(text)
+                if key not in self.vectors:
+                    if self.only:
+                        self._miss()
+                    self.vectors[key] = [float(v) for v in real([text])[0]]
+                    self.calls["embedding"] += 1
+                    self.save()
+                vectors.append(self.vectors[key])
+            return vectors
+
+        return embed
+
+    def reranker(self, real: Any) -> Any:
+        def rerank(query, candidates, *, top_k=3):
+            known = self.scores.setdefault(_text_key(query), {})
+            keys = [_text_key(c) for c in candidates]
+            missing = [i for i, k in enumerate(keys) if k not in known]
+            if missing:
+                if self.only:
+                    self._miss()
+                for index, score in real(query, [candidates[i] for i in missing], top_k=len(missing)):
+                    known[keys[missing[index]]] = float(score)
+                self.calls["rerankPairs"] += len(missing)
+                self.save()
+            ranked = sorted(((i, known[k]) for i, k in enumerate(keys)), key=lambda x: (-x[1], x[0]))
+            return ranked[:top_k]
+
+        return rerank
+
+    def save(self) -> None:
+        write_json(self.path, self.data)
+
+
+def default_reranker_model() -> str:
+    from common.config import get_settings
+    from common.reranker import DEFAULT_MODEL
+
+    return get_settings().reranker_model or DEFAULT_MODEL
+
+
 def percentile(values: list[int], q: float) -> int | None:
     if not values:
         return None
@@ -312,7 +386,19 @@ def cmd_run(split_name: str, index_name: str, *, run_date: str | None = None, st
             index_path: Path | None = None, profiles_dir: Path = PROFILES_DIR, runs_dir: Path = RUNS_DIR,
             postings: dict[int, dict] | None = None, materials: dict[int, dict] | None = None,
             embed_query: Any = _DEFAULT, rerank_fn: Any = _DEFAULT, model_name: Any = _DEFAULT,
-            warmup: Any = _DEFAULT) -> Path:
+            warmup: Any = _DEFAULT, cache: ScoreCache | None = None, candidate_k: int | None = None) -> Path:
+    old_k = config.CANDIDATE_K
+    if candidate_k is not None:
+        config.CANDIDATE_K = candidate_k  # 이번 실행에만. 끝나면 되돌린다
+    try:
+        return _run(split_name, index_name, run_date, students, index_path, profiles_dir, runs_dir, postings, materials,
+                    embed_query, rerank_fn, model_name, warmup, cache)
+    finally:
+        config.CANDIDATE_K = old_k
+
+
+def _run(split_name, index_name, run_date, students, index_path, profiles_dir, runs_dir, postings, materials,
+         embed_query, rerank_fn, model_name, warmup, cache) -> Path:
     split = load_split()
     ids = students if students is not None else split[split_name]
     store = IndexStore(ensure_not_demo(index_path or INDEX_FILES[index_name]))
@@ -323,6 +409,14 @@ def cmd_run(split_name: str, index_name: str, *, run_date: str | None = None, st
     if materials is None:
         materials = {int(m["studentId"]): m for m in json.loads(MATERIALS_FILE.read_text(encoding="utf-8"))}
     out_dir = runs_dir / (run_date or date.today().isoformat())
+
+    if cache is not None:
+        from matching.recommend import default_query_embedder, default_reranker
+
+        embed_query = cache.embedder(default_query_embedder() if embed_query is _DEFAULT else embed_query)
+        rerank_fn = cache.reranker(default_reranker() if rerank_fn is _DEFAULT else rerank_fn)
+        if cache.only:
+            warmup = None  # 캐시로만 돌면 리랭커 모델을 불러오지 않는다
 
     # 리랭커 첫 로딩 시간은 따로 잰다 (그 뒤 추천 시간에는 모델 로딩이 들어가지 않음)
     warmup_ms = None
@@ -343,6 +437,8 @@ def cmd_run(split_name: str, index_name: str, *, run_date: str | None = None, st
             continue
         result = run_student(sid, json.loads(profile_path.read_text(encoding="utf-8")), materials.get(sid), store,
                              postings, embed_query=embed_query, rerank_fn=rerank_fn, model_name=model_name)
+        if cache is not None and cache.missed:
+            raise SystemExit(f"캐시에 없는 값이 필요해 멈췄어요 (student {sid}). --cache 로 먼저 한 번 실행하세요.")
         result = {**result, "split": split_name, "index": index_name}
         write_json(out_dir / f"student_{sid}.json", result)
         results.append(result)
@@ -364,11 +460,17 @@ def cmd_run(split_name: str, index_name: str, *, run_date: str | None = None, st
                    "meanMs": int(statistics.mean(times)) if times else None},
         "paths": {p: sum(r["path"] == p for r in results) for p in ("OK", "FALLBACK", "EMPTY")},
         "queryEmbeddingCalls": sum(r["timing"]["embedMs"] is not None for r in results),
+        # 캐시를 썼으면 실제로 부른 수 (임베딩 호출 · 리랭커가 새로 점수 매긴 쌍)
+        "cache": None if cache is None else {"only": cache.only, **cache.calls},
     }
     write_json(out_dir / f"_run_{split_name}.json", summary)
 
     print(f"{split_name} · {index_name}({len(entries)}건): {len(results)}명 저장 → {out_dir}")
-    print(f"  리랭커 로딩 {warmup_ms}ms · 1명당 p50 {summary['timing']['p50Ms']}ms · p95 {summary['timing']['p95Ms']}ms")
+    print(f"  리랭커 로딩 {warmup_ms}ms · 1명당 p50 {summary['timing']['p50Ms']}ms · p95 {summary['timing']['p95Ms']}ms"
+          f" · K={config.CANDIDATE_K}")
+    if cache is not None:
+        print(f"  캐시: 임베딩 호출 {cache.calls['embedding']}번 · 리랭커 새 쌍 {cache.calls['rerankPairs']}개"
+              + (" (캐시만)" if cache.only else ""))
     if missing:
         print(f"  프로필 없음 {len(missing)}명 (profiles 먼저 실행)")
     if split_name == "dev":
@@ -399,6 +501,9 @@ def main(argv: list[str] | None = None) -> None:
     r.add_argument("--split", choices=["dev", "test"], required=True)
     r.add_argument("--index", choices=sorted(INDEX_FILES), required=True)
     r.add_argument("--date", help="결과 폴더 이름 (기본: 오늘 YYYY-MM-DD)")
+    r.add_argument("--cache", action="store_true", help="임베딩 · 리랭커 점수를 캐시에 저장하고 다시 쓴다")
+    r.add_argument("--cache-only", action="store_true", help="캐시로만 실행 (없으면 멈춤, Gemini · 리랭커 호출 없음)")
+    r.add_argument("--candidate-k", type=int, help="리랭커 후보 수 (기본 config.CANDIDATE_K)")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
@@ -407,7 +512,11 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "index":
         cmd_index(args.dry_run)
     else:
-        cmd_run(args.split, args.index, run_date=args.date)
+        cache = None
+        if args.cache or args.cache_only:
+            cache = ScoreCache(CACHE_FILE, embedding_model=default_model_name() or "", reranker_model=default_reranker_model(),
+                               only=args.cache_only)
+        cmd_run(args.split, args.index, run_date=args.date, cache=cache, candidate_k=args.candidate_k)
 
 
 if __name__ == "__main__":
