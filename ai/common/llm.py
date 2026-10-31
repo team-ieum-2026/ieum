@@ -37,7 +37,11 @@ def _client() -> genai.Client:
     settings = get_settings()
     if not settings.gemini_api_key:
         raise LLMError("GEMINI_API_KEY 가 비어 있어요. ai/.env 를 확인하세요.")
-    return genai.Client(api_key=settings.gemini_api_key)
+    # 시간 제한이 없으면 Gemini 가 멈출 때 요청이 끝나지 않는다 (HttpOptions.timeout 은 밀리초)
+    return genai.Client(
+        api_key=settings.gemini_api_key,
+        http_options=types.HttpOptions(timeout=settings.llm_timeout_sec * 1000),
+    )
 
 
 def _model(model: str | None = None) -> str:

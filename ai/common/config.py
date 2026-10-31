@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     # 모델 이름은 .env.example 에 적힌 값을 쓴다 (AI-A 확정)
     llm_model: str = ""
     document_llm_model: str = ""  # 서류 생성 전용. 비우면 llm_model
+    # LLM 호출 1번의 시간 제한(초). 넘으면 LLMError → 라우터가 오류 응답. 서류 생성 p95 목표 60초 기준
+    llm_timeout_sec: int = 60
     embedding_model: str = ""
     reranker_model: str = ""
 

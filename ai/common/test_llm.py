@@ -108,6 +108,14 @@ class SettingsCheckTest(unittest.TestCase):
             with self.assertRaises(llm.LLMError):
                 llm._client()
 
+    def test_client_has_timeout(self):
+        llm._client.cache_clear()
+        self.addCleanup(llm._client.cache_clear)
+        settings = Settings(gemini_api_key="test", llm_model="test-model", llm_timeout_sec=30)
+        with patch.object(llm, "get_settings", return_value=settings), patch.object(llm.genai, "Client") as client:
+            llm._client()
+        self.assertEqual(client.call_args.kwargs["http_options"].timeout, 30_000)
+
 
 if __name__ == "__main__":
     unittest.main()
