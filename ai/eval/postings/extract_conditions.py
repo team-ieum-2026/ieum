@@ -23,7 +23,8 @@ from eval.model_compare import providers
 from schemas.base import CamelModel
 
 # v2: 기술의 "또는"을 묶음(options)으로, 두 직무를 함께 뽑는 공고는 직무군 2개까지
-PROMPT_VERSION = "external-conditions-v2"
+# v3: 루브릭 기준 3가지 추가 (분야 이름은 구체 기술 중 하나, 기술이 아닌 능력은 제외, "등"은 적힌 기술만)
+PROMPT_VERSION = "external-conditions-v3"
 
 AI_DIR = Path(__file__).resolve().parents[2]
 SOURCES = {
@@ -72,6 +73,12 @@ PROMPT = """아래 채용 공고에서 지원 조건을 뽑아라.
     표준 이름은 아래 목록에 같은 기술이 있으면 목록의 표기를 그대로 쓰고, 없으면 영문 공식 이름을 쓴다.
     목록: {vocabulary}
   - quote: 그 기술이 적힌 본문 구절을 그대로 복사한다.
+  필수 기술을 고를 때 지키는 기준:
+  - 기술 이름 대신 분야 이름으로 적은 필수 요건도 필수 기술이다. 그 분야의 대표 구체 기술들을 options 에 넣는다 (그중 하나만 있으면 된다).
+    예: "ML/DL 프레임워크 사용경험" → ["scikit-learn", "PyTorch", "TensorFlow"], "벡터 데이터베이스" → ["Qdrant", "Pinecone", "Chroma"],
+    "ORM 기반 데이터 접근" → ["JPA", "Hibernate"], "SQL 매퍼 프레임워크" → ["MyBatis"], "관계형 데이터베이스" → ["MySQL", "PostgreSQL", "Oracle"]
+  - 기술이 아닌 능력과 자격은 넣지 않는다. 예: 문서작성, 표계산, 프레젠테이션, 커뮤니케이션, 운전면허, 자격증, 전공, "프로그래밍 능력"처럼 기술을 특정하지 않은 말
+  - "Python 등"처럼 예시로 든 기술은 적힌 기술만 넣는다. "등"을 넓게 해석해 다른 기술을 더하지 않는다. 예: "프로그래밍 언어 사용 능력(Python 등)" → ["Python"]
 - bodyCareer: 본문에 적힌 경력 요건. 경력 n년 이상이면 경력, 신입이면 신입, 무관이면 관계없음, 없으면 "적혀 있지 않음"
 - bodyEducation: 본문에 적힌 학력 요건. 없으면 "적혀 있지 않음"
 
