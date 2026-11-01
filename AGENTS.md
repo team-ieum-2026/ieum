@@ -50,16 +50,12 @@
 
 | 폴더 · 파일 | 주인 |
 | --- | --- |
-| `frontend/src/app/page.tsx` (R0) | FE-A |
-| `frontend/src/app/student/` (M1~M5, M7, 하단 메뉴 layout) | FE-A |
-| `frontend/src/app/student/applications/[applicationId]/` (M6 · M6-1) | FE-B |
-| `frontend/src/app/student/profile/` (M8) | FE-B |
-| `frontend/src/app/coordinator/layout.tsx`, `coordinator/page.tsx` (C1), `coordinator/applications/` (C4) | FE-B |
-| `frontend/src/app/coordinator/students/` (C2 · C3) | FE-A |
-| `frontend/src/components/ui/`, `frontend/src/components/student/`, `frontend/src/styles/` (디자인 토큰) | FE-A |
-| `frontend/src/components/resume/`, `frontend/src/components/coordinator/` | FE-B |
-| `frontend/src/lib/api/student.ts`, `coordinatorStudents.ts` · `frontend/src/types/student.ts` | FE-A |
-| `frontend/src/lib/api/resume.ts`, `profile.ts`, `coordinatorReview.ts` · `frontend/src/types/resume.ts`, `profile.ts`, `coordinator.ts` | FE-B |
+| `frontend/src/app/page.tsx` (R0), `frontend/src/app/student/` 전체 (수료생 화면 M1~M8, 하단 메뉴 layout) | FE-A |
+| `frontend/src/app/coordinator/` 전체 (코디네이터 화면 C1~C4, 레이아웃 · 사이드바) | FE-B |
+| `frontend/src/components/ui/`, `components/student/`, `components/resume/`, `frontend/src/styles/` (디자인 토큰) | FE-A |
+| `frontend/src/components/coordinator/` | FE-B |
+| `frontend/src/lib/api/student.ts`, `resume.ts`, `profile.ts` · `frontend/src/types/student.ts`, `resume.ts`, `profile.ts` | FE-A |
+| `frontend/src/lib/api/coordinatorStudents.ts`, `coordinatorReview.ts` · `frontend/src/types/coordinator.ts` | FE-B |
 | `backend/.../common/` (응답 · 예외 · CORS · Jackson), `application.yml` | BE-A |
 | `backend/.../job/`, `recommendation/`, `application/`, `ai/` + 같은 이름의 `resources/mapper/` | BE-A |
 | `backend/.../profile/`, `helprequest/`, `status/`, `coordinator/`, `domain/`, `common/mybatis/` + 같은 이름의 `resources/mapper/` | BE-B |
@@ -74,8 +70,7 @@
 | 파일 | 주인 | 규칙 |
 | --- | --- | --- |
 | 디자인 토큰 · 공통 부품 `components/ui/` | FE-A | FE-B는 직접 고치지 않고 요청. 필요한 변형은 props로 추가 |
-| 하단 메뉴 (`app/student/layout.tsx`) | FE-A | M8 탭 추가도 FE-A가 처리 |
-| 코디네이터 레이아웃 · 사이드바 | FE-B | FE-A는 C2 · C3 화면만 작성 |
+| 서류 문서 부품 `components/resume/` · `types/resume.ts` (M6 · C4 공용) | FE-A | FE-B는 C4에서 가져다 쓰기만 하고, 변형이 필요하면 FE-A에 요청(props로 추가) |
 | FE API 함수 · 타입 | 위 표대로 도메인별 분리 | 한 파일에 둘이 쓰지 않음 |
 | BE 도메인 클래스 · DB 스키마 | BE-B | BE-A가 컬럼이 필요하면 BE-B에 요청. `application` 테이블은 BE-A가 생성 · 제출, BE-B가 승인 · 반려 · 전달만 변경 |
 | BE 공통 설정 · `application.yml` | BE-A | 설정 추가 시 PR 설명에 명시 |
