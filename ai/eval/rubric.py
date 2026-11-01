@@ -44,9 +44,19 @@ def norm(skill: str) -> str:
 
 
 def has_skill(required: str, student_skills: list[str]) -> bool:
+    """required 가 "ESP32|Arduino" 처럼 | 로 묶이면 그중 하나만 있어도 인정한다 (실제 공고의 "A 또는 B")"""
     owned = {norm(s) for s in student_skills}
-    key = norm(required)
-    return key in owned or bool(SKILL_ALIASES.get(key, set()) & owned)
+    for option in required.split("|"):
+        key = norm(option)
+        if key in owned or SKILL_ALIASES.get(key, set()) & owned:
+            return True
+    return False
+
+
+def families(posting: dict) -> set[str]:
+    """공고 직무군. 생성 공고는 하나(str), 두 직무를 함께 뽑는 실제 공고는 목록(list)"""
+    family = posting["family"]
+    return {family} if isinstance(family, str) else set(family)
 
 
 def max_degree(education: list[dict]) -> int:
@@ -61,9 +71,11 @@ def violations(student: dict, posting: dict) -> list[str]:
     """어긋난 조건 목록. 비어 있으면 루브릭 2점(적합).
 
     posting 은 명세 형식: family · career · education · location · required (필수 기술 목록)
+    - family 는 직무군 하나 또는 목록. 수료생 직무군이 그중 하나와 같으면 직무 일치
+    - required 의 한 항목이 "A|B" 면 둘 중 하나만 있어도 그 기술을 갖춘 것으로 본다
     """
     result = []
-    if DESIRED_JOB_FAMILY.get(student["desired_job"]) != posting["family"]:
+    if DESIRED_JOB_FAMILY.get(student["desired_job"]) not in families(posting):
         result.append("JOB")
     if posting["career"] == "경력":
         result.append("CAREER")

@@ -1,0 +1,698 @@
+{
+  "616": {
+    "family": [
+      "EMBEDDED"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "C|Python",
+      "Linux"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash,argon",
+      "career": "flash,argon",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "618": {
+    "family": [
+      "BE"
+    ],
+    "career": "경력",
+    "education": "대졸(2~3년)",
+    "required": [
+      "Java"
+    ],
+    "note": "본문에 경력 언급 없음. 정형 칸 '경력'을 따름 (LABELING.md 해석 사례집)",
+    "picked": {
+      "family": "flash,argon",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "626": {
+    "family": [
+      "BE"
+    ],
+    "career": "신입",
+    "education": "학력무관",
+    "required": [
+      "Databricks",
+      "AWS",
+      "Java",
+      "Python"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon",
+      "required": "flash,argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "629": {
+    "family": [
+      "NETWORK"
+    ],
+    "career": "관계없음",
+    "education": "대졸(2~3년)",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "632": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Linux|Unix",
+      "Oracle|MSSQL",
+      "MySQL"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "직접",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "642": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "644": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "대졸(2~3년)",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "657": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "경력",
+    "education": "대졸(2~3년)",
+    "required": [
+      "NAS",
+      "ERP"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "662": {
+    "family": [
+      "NETWORK"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "666": {
+    "family": [
+      "FULLSTACK"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash,argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "678": {
+    "family": [
+      "EMBEDDED"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "Linux"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "685": {
+    "family": [
+      "MOBILE"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "692": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "고졸",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "713": {
+    "family": [
+      "BE"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "C|C++",
+      "Python",
+      "JavaScript"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "714": {
+    "family": [
+      "AI"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash",
+      "required": "flash",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "715": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "대졸(2~3년)",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "직접",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "1389": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900001": {
+    "family": [
+      "AI"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon"
+    }
+  },
+  "900007": {
+    "family": [
+      "BE"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,argon",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900009": {
+    "family": [
+      "AI"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "OpenCV",
+      "scikit-learn|PyTorch|TensorFlow"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900016": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "MySQL|PostgreSQL|Oracle"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900027": {
+    "family": [
+      "BE"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "Node.js"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash,argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900030": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Linux",
+      "Git"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "직접",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900043": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "경력",
+    "education": "고졸",
+    "required": [
+      "MySQL|PostgreSQL|Oracle",
+      "Linux"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900045": {
+    "family": [
+      "FE"
+    ],
+    "career": "관계없음",
+    "education": "대졸(2~3년)",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900047": {
+    "family": [
+      "BE"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Spring"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900050": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900060": {
+    "family": [
+      "AI"
+    ],
+    "career": "신입",
+    "education": "학력무관",
+    "required": [
+      "Python",
+      "pandas|Numpy"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "직접",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900069": {
+    "family": [
+      "DATA"
+    ],
+    "career": "관계없음",
+    "education": "대졸(2~3년)",
+    "required": [
+      "MySQL|PostgreSQL|Oracle|SQL"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash",
+      "required": "argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900078": {
+    "family": [
+      "AI"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Python"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash,argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900087": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "신입",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900106": {
+    "family": [
+      "AI"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Python",
+      "scikit-learn|PyTorch|TensorFlow"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900108": {
+    "family": [
+      "BE"
+    ],
+    "career": "경력",
+    "education": "대졸(2~3년)",
+    "required": [
+      "Spring|Spring Boot"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "argon",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900113": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900118": {
+    "family": [
+      "INFRA"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Linux",
+      "SQL",
+      "MySQL|PostgreSQL|Oracle"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900120": {
+    "family": [
+      "AI"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "pandas|NumPy",
+      "scikit-learn|PyTorch|TensorFlow"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900127": {
+    "family": [
+      "BE"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "SQL"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900130": {
+    "family": [
+      "NETWORK"
+    ],
+    "career": "경력",
+    "education": "학력무관",
+    "required": [
+      "Linux"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900131": {
+    "family": [
+      "AI"
+    ],
+    "career": "신입",
+    "education": "학력무관",
+    "required": [
+      "scikit-learn|PyTorch|TensorFlow",
+      "Python"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "flash",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900138": {
+    "family": [
+      "FULLSTACK"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900140": {
+    "family": [
+      "OTHER"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [],
+    "note": "",
+    "picked": {
+      "family": "argon,gpt",
+      "required": "flash,argon,gpt",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  },
+  "900149": {
+    "family": [
+      "BE"
+    ],
+    "career": "관계없음",
+    "education": "학력무관",
+    "required": [
+      "Spring|Spring Boot"
+    ],
+    "note": "",
+    "picked": {
+      "family": "flash,argon,gpt",
+      "required": "직접",
+      "career": "flash,argon,gpt",
+      "education": "flash,argon,gpt"
+    }
+  }
+}
