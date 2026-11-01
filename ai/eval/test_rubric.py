@@ -42,6 +42,13 @@ class RubricTest(unittest.TestCase):
         # 묶음 안에서도 동의어(sql → MySQL)를 인정한다
         self.assertEqual(score(STUDENT, posting(required=["Oracle|SQL"])), 2)
 
+    def test_relational_db_and_sql_mapper_accept_each_other(self):
+        # test 검수 12, 45번: MyBatis 만 있는 수료생에게 MySQL 필수 공고
+        mybatis = {**STUDENT, "skills": ["Java", "Spring Boot", "MyBatis"]}
+        self.assertEqual(score(mybatis, posting(required=["Java", "MySQL"])), 2)
+        self.assertEqual(score(STUDENT, posting(required=["PostgreSQL"])), 2)
+        self.assertEqual(violations(mybatis, posting(required=["Oracle"])), ["SKILL"])  # 묶음에 없는 DB 는 그대로
+
     def test_two_families(self):
         self.assertEqual(score(STUDENT, posting(family=["EMBEDDED", "BE"])), 2)
         self.assertIn("JOB", violations(STUDENT, posting(family=["EMBEDDED", "FE"])))

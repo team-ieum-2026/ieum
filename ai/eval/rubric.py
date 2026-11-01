@@ -29,8 +29,11 @@ SKILL_ALIASES = {
     "spring": {"spring boot"},
     "스프링": {"spring boot"},
     "llm api": {"gemini api", "openai api"},
-    "sql": {"mysql", "postgresql"},
-    "rdbms": {"mysql", "postgresql"},
+    # 관계형 DB 와 SQL 매퍼는 서로 인정한다. 공고의 "MySQL" 은 보통 SQL 로 DB 를 다룬 경험을 뜻하고, MyBatis 는 SQL 을 직접 쓴다
+    "sql": {"mysql", "postgresql", "mybatis"},
+    "rdbms": {"mysql", "postgresql", "mybatis"},
+    "mysql": {"postgresql", "mybatis"},
+    "postgresql": {"mysql", "mybatis"},
     "javascript": {"typescript", "react", "vue.js", "next.js", "node.js"},
     "html/css": {"react", "vue.js", "next.js"},
     "c/c++": {"c"},
