@@ -15,6 +15,15 @@
       "familyQuote": "공정 및 프로세스를 최적화하는 인식/예측기반 AI 모델 개발",
       "requiredSkills": [
         {
+          "original": "AL/ML/DL 프레임워크",
+          "options": [
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
+          ],
+          "quote": "AL/ML/DL 프레임워크 사용경험"
+        },
+        {
           "original": "Python",
           "options": [
             "Python"
@@ -26,8 +35,8 @@
       "bodyEducation": "대졸(4년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "616": {
     "source": "REAL",
@@ -45,7 +54,7 @@
       "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [
         {
-          "original": "C/Python",
+          "original": "C/Python 언어",
           "options": [
             "C",
             "Python"
@@ -66,8 +75,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "617": {
     "source": "REAL",
@@ -80,9 +89,9 @@
     },
     "extracted": {
       "jobFamilies": [
-        "NETWORK"
+        "EMBEDDED"
       ],
-      "familyQuote": "[직무] 통신기술 개발자 및 통신망 운영 기술자",
+      "familyQuote": "서버프로그램 및 펌웨어 개발자",
       "requiredSkills": [
         {
           "original": "리눅스 - 우분투",
@@ -133,14 +142,21 @@
             "Arduino"
           ],
           "quote": "5. H/W : ESP32 or Aduino"
+        },
+        {
+          "original": "Restful API",
+          "options": [
+            "REST API"
+          ],
+          "quote": "6. etc : web service, Restful API,"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "618": {
     "source": "REAL",
@@ -169,8 +185,8 @@
       "bodyEducation": "대졸(2~3년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "619": {
     "source": "REAL",
@@ -185,7 +201,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "터빈 진동(TSI : Turbine Supervising Instrument) - AI System 개발 / 적용",
+      "familyQuote": "터빈 진동(TSI : Turbine Supervising Instrument) - AI System 개발 / 적용\n - 데이터 분석 알고리즘 개발\n - AI 활용 기능 및 알고리즘 설계 및 구현",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "대졸(4년)"
@@ -193,8 +209,8 @@
     "fieldBodyMismatch": [
       "education"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "621": {
     "source": "REAL",
@@ -209,14 +225,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "ERP 서버 시스템 운영 및 관리",
+      "familyQuote": "데이터베이스 운영·관리자, 정보시스템 운영자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "622": {
     "source": "REAL",
@@ -238,8 +254,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "623": {
     "source": "REAL",
@@ -261,36 +277,36 @@
           "options": [
             "C++"
           ],
-          "quote": "- C++,C#, Python, Arduino 사용  가능자"
+          "quote": "C++,C#, Python, Arduino 사용  가능자"
         },
         {
           "original": "C#",
           "options": [
             "C#"
           ],
-          "quote": "- C++,C#, Python, Arduino 사용  가능자"
+          "quote": "C++,C#, Python, Arduino 사용  가능자"
         },
         {
           "original": "Python",
           "options": [
             "Python"
           ],
-          "quote": "- C++,C#, Python, Arduino 사용  가능자"
+          "quote": "C++,C#, Python, Arduino 사용  가능자"
         },
         {
           "original": "Arduino",
           "options": [
             "Arduino"
           ],
-          "quote": "- C++,C#, Python, Arduino 사용  가능자"
+          "quote": "C++,C#, Python, Arduino 사용  가능자"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "624": {
     "source": "REAL",
@@ -312,43 +328,43 @@
           "options": [
             "C++"
           ],
-          "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
+          "quote": "필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
         {
           "original": "C#",
           "options": [
             "C#"
           ],
-          "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
+          "quote": "필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
         {
           "original": "WPF",
           "options": [
             "WPF"
           ],
-          "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
+          "quote": "필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
         {
           "original": "OpenCV",
           "options": [
             "OpenCV"
           ],
-          "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
+          "quote": "필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
         {
           "original": "MySQL / MSSQL",
           "options": [
             "MySQL",
-            "MSSQL"
+            "Microsoft SQL Server"
           ],
-          "quote": "* 필요 기술:  C#, WPF, MySQL / MSSQL, TCP/IP 등 Network"
+          "quote": "필요 기술:  C#, WPF, MySQL / MSSQL, TCP/IP 등 Network"
         },
         {
           "original": "TCP/IP",
           "options": [
             "TCP/IP"
           ],
-          "quote": "* 필요 기술:  C#, WPF, MySQL / MSSQL, TCP/IP 등 Network"
+          "quote": "필요 기술:  C#, WPF, MySQL / MSSQL, TCP/IP 등 Network"
         },
         {
           "original": "C / C++",
@@ -370,8 +386,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "625": {
     "source": "REAL",
@@ -392,8 +408,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "626": {
     "source": "REAL",
@@ -408,14 +424,43 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "Back End SW 개발자",
-      "requiredSkills": [],
+      "familyQuote": "AI 역량이 높은 Back End SW 개발자 채...",
+      "requiredSkills": [
+        {
+          "original": "Data Bricks",
+          "options": [
+            "Databricks"
+          ],
+          "quote": "- Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)"
+        },
+        {
+          "original": "AWS",
+          "options": [
+            "AWS"
+          ],
+          "quote": "- Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)"
+        },
+        {
+          "original": "Java",
+          "options": [
+            "Java"
+          ],
+          "quote": "- Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)"
+        },
+        {
+          "original": "Python",
+          "options": [
+            "Python"
+          ],
+          "quote": "- Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)"
+        }
+      ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "627": {
     "source": "REAL",
@@ -430,14 +475,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- AI 기반 자동화 시스템 구축 및 관리",
+      "familyQuote": "본 직무는 경영관리 업무의 효율성을 향상시키기 위해 AI 기술을 적용하는 데 중점을 두고 있습니다.",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "628": {
     "source": "REAL",
@@ -452,14 +497,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 데이터베이스 운영·관리자",
+      "familyQuote": "[직무] 데이터베이스 운영·관리자\n[내용] 전산 서버 네트워크 관리",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "629": {
     "source": "REAL",
@@ -474,14 +519,14 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "IT 보안 엔지니어 구인\n - 네트워크 부문 - 네트워크 방화벽, Anti-DDoS, IPS 관련",
+      "familyQuote": "네트워크 부문 - 네트워크 방화벽, Anti-DDoS, IPS 관련",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "630": {
     "source": "REAL",
@@ -517,8 +562,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "631": {
     "source": "REAL",
@@ -531,7 +576,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "AI"
+        "EMBEDDED"
       ],
       "familyQuote": "포지션: R&D 소프트웨어 엔지니어 (펌웨어 및 AI 알고리즘 개발)",
       "requiredSkills": [
@@ -551,15 +596,9 @@
           "quote": "Python 등 AI 알고리즘 개발에 필요한 언어 활용이 능숙하신 분"
         },
         {
-          "original": "TensorFlow",
+          "original": "TensorFlow, PyTorch",
           "options": [
-            "TensorFlow"
-          ],
-          "quote": "TensorFlow, PyTorch 등 딥러닝/머신러닝 프레임워크를 활용한 데이터 분석 모델링 경험이 있으신 분"
-        },
-        {
-          "original": "PyTorch",
-          "options": [
+            "TensorFlow",
             "PyTorch"
           ],
           "quote": "TensorFlow, PyTorch 등 딥러닝/머신러닝 프레임워크를 활용한 데이터 분석 모델링 경험이 있으신 분"
@@ -569,8 +608,8 @@
       "bodyEducation": "대졸(4년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "632": {
     "source": "REAL",
@@ -585,7 +624,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "IT 기술지원 전문가",
+      "familyQuote": "[직무] IT 기술지원 전문가",
       "requiredSkills": [
         {
           "original": "Linux/Unix",
@@ -596,10 +635,10 @@
           "quote": "Linux/Unix 기반 시스템 운영 및 커맨드 활용이 능숙하신 분"
         },
         {
-          "original": "Oracle, MSSQL, MySQL 등",
+          "original": "Oracle, MSSQL, MySQL 등 주요 DBMS",
           "options": [
             "Oracle",
-            "MSSQL",
+            "Microsoft SQL Server",
             "MySQL"
           ],
           "quote": "Oracle, MSSQL, MySQL 등 주요 DBMS의 구조 및 운영에 대한 실무 경험이 있으신 분"
@@ -609,8 +648,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "633": {
     "source": "REAL",
@@ -625,14 +664,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "백엔드 중심의 풀스택 개발자를 모십니다",
+      "familyQuote": "백엔드 중심의 플스텍 개발",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "634": {
     "source": "REAL",
@@ -653,8 +692,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "635": {
     "source": "REAL",
@@ -675,8 +714,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "636": {
     "source": "REAL",
@@ -705,8 +744,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "637": {
     "source": "REAL",
@@ -721,14 +760,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] IT 기술지원 전문가\n[내용] - 업무 : KT Cloud, LG U+ IDC (수도권) 내 설치되어 있는 원격 백업서비스 장비 유지보수",
+      "familyQuote": "KT Cloud, LG U+ IDC (수도권) 내 설치되어 있는 원격 백업서비스 장비 유지보수",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "638": {
     "source": "REAL",
@@ -743,14 +782,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "웹 서버 및 네트워크 관리",
+      "familyQuote": "정보시스템 운영자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "639": {
     "source": "REAL",
@@ -771,8 +810,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "640": {
     "source": "REAL",
@@ -793,8 +832,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "641": {
     "source": "REAL",
@@ -809,7 +848,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "시스템 소프트웨어 개발자",
+      "familyQuote": "[직무] 시스템 소프트웨어 개발자",
       "requiredSkills": [
         {
           "original": "C# 또는 .NET Framework",
@@ -817,14 +856,14 @@
             "C#",
             ".NET Framework"
           ],
-          "quote": "C# 또는 .NET Framework 환경에서의 개발 경력 보유자"
+          "quote": "- C# 또는 .NET Framework 환경에서의 개발 경력 보유자"
         },
         {
           "original": "Tekla Structures Open API",
           "options": [
             "Tekla Structures Open API"
           ],
-          "quote": "Tekla Structures Open API에 대한 이해도가 있거나 관련 API 활용 프로젝트 유경험자"
+          "quote": "- Tekla Structures Open API에 대한 이해도가 있거나 관련 API 활용 프로젝트 유경험자"
         }
       ],
       "bodyCareer": "경력",
@@ -833,8 +872,8 @@
     "fieldBodyMismatch": [
       "education"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "642": {
     "source": "REAL",
@@ -855,8 +894,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "643": {
     "source": "REAL",
@@ -900,8 +939,8 @@
       "bodyEducation": "학력무관"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "644": {
     "source": "REAL",
@@ -914,16 +953,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "EMBEDDED"
+        "AI"
       ],
-      "familyQuote": "[직무] 시스템 소프트웨어 개발자",
+      "familyQuote": "머신비젼시스템 S/W개발자(2명):  S/W 개발 및 사후관리 및 영상처리 알고리즘 개발",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "645": {
     "source": "REAL",
@@ -959,8 +998,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "646": {
     "source": "REAL",
@@ -981,8 +1020,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "647": {
     "source": "REAL",
@@ -1003,8 +1042,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "648": {
     "source": "REAL",
@@ -1025,8 +1064,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "649": {
     "source": "REAL",
@@ -1041,7 +1080,7 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "[직무] 모바일 애플리케이션 프로그래머(앱·어플 개발)",
+      "familyQuote": "모바일 애플리케이션 프로그래머(앱·어플 개발)",
       "requiredSkills": [
         {
           "original": "TypeScript",
@@ -1058,14 +1097,12 @@
           "quote": "Git으로 협업해 보신 분"
         }
       ],
-      "bodyCareer": "신입",
+      "bodyCareer": "관계없음",
       "bodyEducation": "학력무관"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "fieldBodyMismatch": [],
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "650": {
     "source": "REAL",
@@ -1086,8 +1123,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "651": {
     "source": "REAL",
@@ -1102,14 +1139,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "[직무] 시스템 소프트웨어 개발자",
+      "familyQuote": "시스템 소프트웨어 개발자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "652": {
     "source": "REAL",
@@ -1124,14 +1161,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "시스템 소프트웨어 개발자(프로그래머)",
+      "familyQuote": "[직무] 시스템 소프트웨어 개발자(프로그래머)",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "653": {
     "source": "REAL",
@@ -1146,14 +1183,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 데이터 설계 및 프로그래머",
+      "familyQuote": "데이터 설계 및 프로그래머",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "654": {
     "source": "REAL",
@@ -1174,8 +1211,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "655": {
     "source": "REAL",
@@ -1190,14 +1227,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 데이터 설계 및 프로그래머",
+      "familyQuote": "[내용] 자동화기계(반도체) 설계 모집",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "656": {
     "source": "REAL",
@@ -1218,8 +1255,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "657": {
     "source": "REAL",
@@ -1234,14 +1271,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "IT Engineer - 서버 및 NAS 스토리지 시스템 관리, ERP구축 등",
+      "familyQuote": "근무 내용 : IT Engineer - 서버 및 NAS 스토리지 시스템 관리, ERP구축 등",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "658": {
     "source": "REAL",
@@ -1256,12 +1293,18 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "[직무] 시스템 소프트웨어 개발자(프로그래머)",
+      "familyQuote": "로봇 자동화 제어 시스템 SW 엔지니어",
       "requiredSkills": [
         {
-          "original": "C# / .NET Framework 또는 .NET Core",
+          "original": "C#",
           "options": [
-            "C#",
+            "C#"
+          ],
+          "quote": "C# / .NET Framework 또는 .NET Core 실무 개발 역량"
+        },
+        {
+          "original": ".NET Framework 또는 .NET Core",
+          "options": [
             ".NET Framework",
             ".NET Core"
           ],
@@ -1280,8 +1323,8 @@
       "bodyEducation": "대졸(4년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "659": {
     "source": "REAL",
@@ -1302,8 +1345,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "660": {
     "source": "REAL",
@@ -1341,8 +1384,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "661": {
     "source": "REAL",
@@ -1420,8 +1463,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "662": {
     "source": "REAL",
@@ -1442,8 +1485,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "663": {
     "source": "REAL",
@@ -1458,14 +1501,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 웹 운영자(홈페이지 관리자)",
+      "familyQuote": "웹 운영자(홈페이지 관리자)",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "664": {
     "source": "REAL",
@@ -1483,26 +1526,20 @@
       "familyQuote": "[직무] 시스템 소프트웨어 개발자(프로그래머)",
       "requiredSkills": [
         {
-          "original": "C#",
+          "original": "C#/WPF",
           "options": [
-            "C#"
-          ],
-          "quote": "- 경력: C#/WPF 개발 실무 경력 2년 이상"
-        },
-        {
-          "original": "WPF",
-          "options": [
+            "C#",
             "WPF"
           ],
-          "quote": "- 경력: C#/WPF 개발 실무 경력 2년 이상"
+          "quote": "경력: C#/WPF 개발 실무 경력 2년 이상"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "대졸(4년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "665": {
     "source": "REAL",
@@ -1519,12 +1556,12 @@
       ],
       "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "666": {
     "source": "REAL",
@@ -1545,8 +1582,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "667": {
     "source": "REAL",
@@ -1561,7 +1598,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "지원분야 :레이저사업부 설계팀 (FRAME ,소제관,판금) PART",
+      "familyQuote": "지원분야 :레이저사업부 설계팀 (FRAME ,소제관,판금) PART  1명",
       "requiredSkills": [
         {
           "original": "렌텍",
@@ -1575,8 +1612,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "668": {
     "source": "REAL",
@@ -1597,8 +1634,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "669": {
     "source": "REAL",
@@ -1614,21 +1651,13 @@
         "OTHER"
       ],
       "familyQuote": "금형 제품설계 정규직사원 채용합니다.",
-      "requiredSkills": [
-        {
-          "original": "카티아(catia)",
-          "options": [
-            "CATIA"
-          ],
-          "quote": "활용 프로그램은 카티아(catia) 입니다"
-        }
-      ],
+      "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "670": {
     "source": "REAL",
@@ -1649,8 +1678,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "671": {
     "source": "REAL",
@@ -1665,14 +1694,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "STM32계열 MCU 기반 검출장치 제어보드 개발 및 펌웨어 작성",
+      "familyQuote": "임베디드 시스템 엔지니어 모집",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "672": {
     "source": "REAL",
@@ -1687,14 +1716,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "정보보안 / 시스템·네트워크 관리 / 보안솔루션 설치 및 유지보수",
+      "familyQuote": "정보보안 / 시스템·네트워크 관리 / 보안솔루션 설치 및 유지보수 (신입)",
       "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "673": {
     "source": "REAL",
@@ -1709,14 +1738,14 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "기타 네트워크 및 정보 보안 전문가(디지털 포렌식 전문가 등)",
+      "familyQuote": "정보보안및 네트워크 서버관리",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "674": {
     "source": "REAL",
@@ -1739,8 +1768,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "675": {
     "source": "REAL",
@@ -1755,14 +1784,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "서버, 네트워크 운영관리",
+      "familyQuote": "2. 시스템 서버 관제\n       -시스템 모티터링 / 장애처리\n       -서버, 네트워크 운영관리",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "676": {
     "source": "REAL",
@@ -1777,7 +1806,7 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "- 제어 S/W개발",
+      "familyQuote": "제어 S/W개발",
       "requiredSkills": [
         {
           "original": "C/C++",
@@ -1806,8 +1835,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "677": {
     "source": "REAL",
@@ -1828,8 +1857,8 @@
       "bodyEducation": "대졸(2~3년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "678": {
     "source": "REAL",
@@ -1850,8 +1879,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "679": {
     "source": "REAL",
@@ -1864,9 +1893,9 @@
     },
     "extracted": {
       "jobFamilies": [
-        "BE"
+        "EMBEDDED"
       ],
-      "familyQuote": "Backend 또는 Server SW 개발 경험",
+      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [
         {
           "original": "Python/Java/C#",
@@ -1876,6 +1905,15 @@
             "C#"
           ],
           "quote": "Python/Java/C# 등 서버 프로그래밍 가능자"
+        },
+        {
+          "original": "관계형 DB",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "관계형 DB 또는 데이터 처리 경험"
         },
         {
           "original": "Linux/Windows Server",
@@ -1890,8 +1928,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "680": {
     "source": "REAL",
@@ -1906,22 +1944,31 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "병원 ERP 시스템 개발 및 유지보수 (.NET 개발자/ 개발 매니저 / ERP전문가)",
+      "familyQuote": "■ 담당직무: 병원 ERP 시스템 개발 및 유지보수 (.NET 개발자/ 개발 매니저 / ERP전문가)",
       "requiredSkills": [
         {
-          "original": "SQL",
+          "original": "RDBMS",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "3) 기술: 기본적인 RDBMS 설계 및 SQL Query 활용 역량 보유자"
+        },
+        {
+          "original": "SQL Query",
           "options": [
             "SQL"
           ],
-          "quote": "기본적인 RDBMS 설계 및 SQL Query 활용 역량 보유자"
+          "quote": "3) 기술: 기본적인 RDBMS 설계 및 SQL Query 활용 역량 보유자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "대졸(2~3년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "681": {
     "source": "REAL",
@@ -1942,8 +1989,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "682": {
     "source": "REAL",
@@ -1958,14 +2005,14 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "네트워크 엔지니어 - 공유기,스위치,라우터,컴버터,  CCTV카메라등",
+      "familyQuote": "[직무] 기타 네트워크 및 정보 보안 전문가(디지털 포렌식 전문가 등)",
       "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "683": {
     "source": "REAL",
@@ -1986,8 +2033,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "685": {
     "source": "REAL",
@@ -2008,8 +2055,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "686": {
     "source": "REAL",
@@ -2052,8 +2099,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "690": {
     "source": "REAL",
@@ -2074,8 +2121,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "692": {
     "source": "REAL",
@@ -2090,14 +2137,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "2. PLC Logic 프로그램 구현 및 구축",
+      "familyQuote": "PLC Logic 프로그램 구현 및 구축",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "693": {
     "source": "REAL",
@@ -2112,10 +2159,10 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 기타 컴퓨터 시스템 및 소프트웨어 전문가(IT 테스터 및 IT QA 전문가 등)",
+      "familyQuote": "서비스 운영 · QA · 품질관리 경력자 채용",
       "requiredSkills": [
         {
-          "original": "Jira",
+          "original": "Jira 또는 이와 유사한 이슈관리 도구",
           "options": [
             "Jira"
           ],
@@ -2126,8 +2173,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "694": {
     "source": "REAL",
@@ -2142,14 +2189,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "Local LLM 기반 제조AI 개발 기술자 및 연구원, 풀스택 개발자",
+      "familyQuote": "능력 있는 풀스택 개발자를 찾고 있습니다. 본 직무는 제조AI 플랫폼의 백엔드와 프론트엔드 개발을 담당하며",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "695": {
     "source": "REAL",
@@ -2170,8 +2217,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "696": {
     "source": "REAL",
@@ -2188,12 +2235,12 @@
       ],
       "familyQuote": "[직무] 웹 개발자",
       "requiredSkills": [],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "697": {
     "source": "REAL",
@@ -2209,14 +2256,14 @@
         "INFRA",
         "NETWORK"
       ],
-      "familyQuote": "시스템 엔지니어, 네트워크 엔지니어 구인",
+      "familyQuote": "[내용] 시스템 엔지니어, 네트워크 엔지니어 구인",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "698": {
     "source": "REAL",
@@ -2254,8 +2301,8 @@
     "fieldBodyMismatch": [
       "education"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "699": {
     "source": "REAL",
@@ -2270,14 +2317,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "모집직종:시스템소프트웨어개발자(1명)",
+      "familyQuote": "[직무] 응용 소프트웨어 개발자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "700": {
     "source": "REAL",
@@ -2292,7 +2339,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "RAG, 하이브리드 검색, AI Agent를 설계하고 검색 품질을 지표로 끌어올리는 LLM 엔지니어를 찾습니다.",
+      "familyQuote": "논문·특허·실험노트 등 소재 R&D 문서를 대상으로 RAG, 하이브리드 검색, AI Agent를 설계하고 검색 품질을 지표로 끌어올리는 LLM 엔지니어를 찾습니다.",
       "requiredSkills": [
         {
           "original": "Python",
@@ -2334,8 +2381,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "701": {
     "source": "REAL",
@@ -2350,7 +2397,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "- 자동차 부품 사출금형 설계및 관리자",
+      "familyQuote": "자동차 부품 사출금형 설계및 관리자",
       "requiredSkills": [
         {
           "original": "UG",
@@ -2378,8 +2425,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "702": {
     "source": "REAL",
@@ -2400,8 +2447,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "703": {
     "source": "REAL",
@@ -2416,14 +2463,14 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "네트워크, 방화벽 장비 설치 및 유지보수(Fortinet, Paloalto Networks, Cisco, Alcatel-Lucent, Aruba, Ubiquiti)",
+      "familyQuote": "기술팀 방화벽/인터넷·네트워크 외 경력직 채용",
       "requiredSkills": [],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "704": {
     "source": "REAL",
@@ -2444,8 +2491,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "705": {
     "source": "REAL",
@@ -2467,29 +2514,29 @@
           "options": [
             "Go"
           ],
-          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
         },
         {
           "original": "LevelDB",
           "options": [
             "LevelDB"
           ],
-          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "대졸(4년)"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "706": {
     "source": "REAL",
@@ -2504,14 +2551,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[내용] 소프트웨어 테스트 : 온라인/모바일 플랫폼/E-Commercs (전자상거래)/금융/임베디드 소프트웨어 등 )",
+      "familyQuote": "[직무] 시스템 소프트웨어 개발자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "707": {
     "source": "REAL",
@@ -2526,14 +2573,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "- 모집직종 : 소프트웨어 테스터",
+      "familyQuote": "모집직종 : 소프트웨어 테스터",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "709": {
     "source": "REAL",
@@ -2554,8 +2601,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "710": {
     "source": "REAL",
@@ -2594,7 +2641,7 @@
           "quote": "C#, C++, .NET 기반 프로그램 개발 경험"
         },
         {
-          "original": "SQL",
+          "original": "데이터베이스(SQL)",
           "options": [
             "SQL"
           ],
@@ -2614,8 +2661,8 @@
     "fieldBodyMismatch": [
       "education"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "711": {
     "source": "REAL",
@@ -2630,14 +2677,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "(신입/경력) AI솔루션 개발자 채용",
+      "familyQuote": "AI솔루션 개발자 채용",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "712": {
     "source": "REAL",
@@ -2662,11 +2709,20 @@
           "quote": "Tableau를 활용한 대시보드 제작 경험이 있으신 분"
         },
         {
+          "original": "관계형 데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "관계형 데이터베이스 및 SQL의 기본 개념을 이해하시는 분"
+        },
+        {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "관계형 데이터베이스 및 SQL의 기본 개념을 이해하시는 분"
+          "quote": "SQL을 활용한 데이터 조회·집계가 가능하신 분"
         }
       ],
       "bodyCareer": "관계없음",
@@ -2675,8 +2731,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "713": {
     "source": "REAL",
@@ -2697,8 +2753,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "714": {
     "source": "REAL",
@@ -2713,14 +2769,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "AI 활용 시스템·웹 개발자 모집",
+      "familyQuote": "에이블링크랩 AI 활용 시스템·웹 개발자 모집",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "학력무관"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "715": {
     "source": "REAL",
@@ -2733,7 +2789,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "INFRA"
+        "EMBEDDED"
       ],
       "familyQuote": "[직무] 시스템 소프트웨어 개발자",
       "requiredSkills": [],
@@ -2741,8 +2797,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "716": {
     "source": "REAL",
@@ -2757,7 +2813,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "형상 AI 모델 개발 및 튜닝",
+      "familyQuote": "CAD 데이터 기반 AI 튜닝 엔지니어 채용",
       "requiredSkills": [
         {
           "original": "PyTorch",
@@ -2771,8 +2827,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "717": {
     "source": "REAL",
@@ -2787,14 +2843,14 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "통신기술 개발자 및 통신망 운영 기술자",
+      "familyQuote": "[직무] 통신기술 개발자 및 통신망 운영 기술자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "828": {
     "source": "REAL",
@@ -2823,8 +2879,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "835": {
     "source": "REAL",
@@ -2860,8 +2916,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "842": {
     "source": "REAL",
@@ -2895,7 +2951,7 @@
         {
           "original": "GPT",
           "options": [
-            "GPT"
+            "ChatGPT"
           ],
           "quote": "포토샵, 캔바, GPT 등 기본적인 디자인 툴 활용이 능숙하신 분"
         }
@@ -2904,8 +2960,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "846": {
     "source": "REAL",
@@ -2920,14 +2976,14 @@
       "jobFamilies": [
         "DESIGN"
       ],
-      "familyQuote": "[직무] 웹 디자이너",
+      "familyQuote": "웹 디자이너",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "849": {
     "source": "REAL",
@@ -2970,8 +3026,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "856": {
     "source": "REAL",
@@ -2991,21 +3047,21 @@
         {
           "original": "Photoshop",
           "options": [
-            "Photoshop"
+            "Adobe Photoshop"
           ],
           "quote": "ㆍPhotoshop, Illustrator 등 디자인 프로그램 활용 가능자"
         },
         {
           "original": "Illustrator",
           "options": [
-            "Illustrator"
+            "Adobe Illustrator"
           ],
           "quote": "ㆍPhotoshop, Illustrator 등 디자인 프로그램 활용 가능자"
         },
         {
           "original": "Premiere Pro",
           "options": [
-            "Premiere Pro"
+            "Adobe Premiere Pro"
           ],
           "quote": "ㆍPremiere Pro 등 영상 편집 프로그램 활용 가능자"
         }
@@ -3014,8 +3070,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "861": {
     "source": "REAL",
@@ -3035,14 +3091,14 @@
         {
           "original": "포토샵",
           "options": [
-            "Photoshop"
+            "Adobe Photoshop"
           ],
           "quote": "[필요 역량] 기타(포토샵, 일러스트레이션, 캡컷, GPT, HTML)"
         },
         {
           "original": "일러스트레이션",
           "options": [
-            "Illustrator"
+            "Adobe Illustrator"
           ],
           "quote": "[필요 역량] 기타(포토샵, 일러스트레이션, 캡컷, GPT, HTML)"
         },
@@ -3072,8 +3128,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "865": {
     "source": "REAL",
@@ -3094,8 +3150,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "867": {
     "source": "REAL",
@@ -3116,8 +3172,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "870": {
     "source": "REAL",
@@ -3138,8 +3194,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "878": {
     "source": "REAL",
@@ -3160,8 +3216,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "881": {
     "source": "REAL",
@@ -3197,8 +3253,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "884": {
     "source": "REAL",
@@ -3227,8 +3283,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "890": {
     "source": "REAL",
@@ -3243,14 +3299,14 @@
       "jobFamilies": [
         "DESIGN"
       ],
-      "familyQuote": "웹 디자이너",
+      "familyQuote": "[직무] 웹 디자이너",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "896": {
     "source": "REAL",
@@ -3280,8 +3336,8 @@
       "bodyEducation": "고졸"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "898": {
     "source": "REAL",
@@ -3304,8 +3360,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "899": {
     "source": "REAL",
@@ -3327,22 +3383,22 @@
           "options": [
             "Photoshop"
           ],
-          "quote": "Photoshop, Illustrator 등 디자인 프로그램 활용"
+          "quote": "[필요 역량] 기타(Photoshop, Illustrator 등 디자인 프로그램 활용)"
         },
         {
           "original": "Illustrator",
           "options": [
             "Illustrator"
           ],
-          "quote": "Photoshop, Illustrator 등 디자인 프로그램 활용"
+          "quote": "[필요 역량] 기타(Photoshop, Illustrator 등 디자인 프로그램 활용)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900": {
     "source": "REAL",
@@ -3363,8 +3419,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "902": {
     "source": "REAL",
@@ -3385,8 +3441,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "904": {
     "source": "REAL",
@@ -3407,8 +3463,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "905": {
     "source": "REAL",
@@ -3429,8 +3485,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "915": {
     "source": "REAL",
@@ -3452,15 +3508,15 @@
           "options": [
             "Figma"
           ],
-          "quote": "- Figma를 쓸 수 있는 분"
+          "quote": "Figma를 쓸 수 있는 분"
         }
       ],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "916": {
     "source": "REAL",
@@ -3480,24 +3536,24 @@
         {
           "original": "포토샵",
           "options": [
-            "Photoshop"
+            "Adobe Photoshop"
           ],
-          "quote": "- 포토샵, 일러스트레이터 (필수)"
+          "quote": "포토샵, 일러스트레이터 (필수)"
         },
         {
           "original": "일러스트레이터",
           "options": [
-            "Illustrator"
+            "Adobe Illustrator"
           ],
-          "quote": "- 포토샵, 일러스트레이터 (필수)"
+          "quote": "포토샵, 일러스트레이터 (필수)"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "920": {
     "source": "REAL",
@@ -3517,17 +3573,17 @@
         {
           "original": "포토샵",
           "options": [
-            "Adobe Photoshop"
+            "Photoshop"
           ],
           "quote": "-포토샵 가능한 분"
         }
       ],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "934": {
     "source": "REAL",
@@ -3558,8 +3614,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "935": {
     "source": "REAL",
@@ -3580,8 +3636,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "936": {
     "source": "REAL",
@@ -3617,8 +3673,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "939": {
     "source": "REAL",
@@ -3639,8 +3695,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "946": {
     "source": "REAL",
@@ -3676,8 +3732,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "948": {
     "source": "REAL",
@@ -3698,8 +3754,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "953": {
     "source": "REAL",
@@ -3720,8 +3776,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "957": {
     "source": "REAL",
@@ -3757,8 +3813,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "958": {
     "source": "REAL",
@@ -3779,8 +3835,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "959": {
     "source": "REAL",
@@ -3801,8 +3857,8 @@
       "bodyEducation": "학력무관"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "961": {
     "source": "REAL",
@@ -3823,8 +3879,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "962": {
     "source": "REAL",
@@ -3839,7 +3895,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "1. 응용소프트웨어 개발자\nA. React 프로젝트 개발 경력자\nB. Backend 개발, Data/DB 응용 개발 경력 - python 기반 환경 모델링",
+      "familyQuote": "A. React 프로젝트 개발 경력자 B. Backend 개발, Data/DB 응용 개발 경력 - python 기반 환경 모델링",
       "requiredSkills": [
         {
           "original": "React",
@@ -3861,14 +3917,22 @@
             "C++"
           ],
           "quote": "기술 역량: * C++ 언어에 대한 깊은 이해와 실무 활용 능력을 갖추신 분"
+        },
+        {
+          "original": "C/C++",
+          "options": [
+            "C",
+            "C++"
+          ],
+          "quote": "SW 설계 및 개발 능력 ( C/C++ )"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "963": {
     "source": "REAL",
@@ -3889,8 +3953,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "964": {
     "source": "REAL",
@@ -3911,8 +3975,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "965": {
     "source": "REAL",
@@ -3933,8 +3997,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "1383": {
     "source": "REAL",
@@ -3949,14 +4013,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[내용] 서버, 스토리지 엔지니어",
+      "familyQuote": "서버, 스토리지 엔지니어",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "1388": {
     "source": "REAL",
@@ -3977,8 +4041,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "1389": {
     "source": "REAL",
@@ -3999,8 +4063,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900001": {
     "source": "GENERAL",
@@ -4021,8 +4085,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900002": {
     "source": "GENERAL",
@@ -4043,8 +4107,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900003": {
     "source": "GENERAL",
@@ -4066,7 +4130,7 @@
           "options": [
             "SQL"
           ],
-          "quote": "SQL 작성 가능자"
+          "quote": "ㆍ SQL 작성 가능자"
         },
         {
           "original": "JavaScript 또는 TypeScript",
@@ -4074,22 +4138,22 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "JavaScript 또는 TypeScript 사용 가능자"
+          "quote": "ㆍ JavaScript 또는 TypeScript 사용 가능자"
         },
         {
           "original": "Node.js",
           "options": [
             "Node.js"
           ],
-          "quote": "Node.js 개발 경험"
+          "quote": "ㆍ Node.js 개발 경험"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900004": {
     "source": "GENERAL",
@@ -4104,7 +4168,7 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "[직무] 모바일 애플리케이션 프로그래머(앱·어플 개발)",
+      "familyQuote": "모바일 애플리케이션 프로그래머(앱·어플 개발)",
       "requiredSkills": [
         {
           "original": "React Native",
@@ -4118,8 +4182,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900005": {
     "source": "GENERAL",
@@ -4140,8 +4204,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900006": {
     "source": "GENERAL",
@@ -4177,8 +4241,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900007": {
     "source": "GENERAL",
@@ -4199,8 +4263,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900008": {
     "source": "GENERAL",
@@ -4218,6 +4282,14 @@
       "familyQuote": "AI 서비스 개발자 채용",
       "requiredSkills": [
         {
+          "original": "LLM API",
+          "options": [
+            "OpenAI API",
+            "Gemini API"
+          ],
+          "quote": "LLM API 사용 경험 또는 관심"
+        },
+        {
           "original": "REST API",
           "options": [
             "REST API"
@@ -4229,8 +4301,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900009": {
     "source": "GENERAL",
@@ -4251,8 +4323,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900010": {
     "source": "GENERAL",
@@ -4273,8 +4345,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900011": {
     "source": "GENERAL",
@@ -4296,7 +4368,7 @@
           "options": [
             "SQL"
           ],
-          "quote": "SQL 작성 가능자"
+          "quote": "- SQL 작성 가능자"
         },
         {
           "original": "JavaScript 또는 TypeScript",
@@ -4304,15 +4376,15 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "JavaScript 또는 TypeScript 사용 가능자"
+          "quote": "- JavaScript 또는 TypeScript 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900012": {
     "source": "GENERAL",
@@ -4333,8 +4405,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900013": {
     "source": "GENERAL",
@@ -4349,14 +4421,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "기타 컴퓨터 시스템 및 소프트웨어 전문가(IT 테스터 및 IT QA 전문가 등)",
+      "familyQuote": "[직무] 기타 컴퓨터 시스템 및 소프트웨어 전문가(IT 테스터 및 IT QA 전문가 등)",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900014": {
     "source": "GENERAL",
@@ -4371,7 +4443,7 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "웹 접근성 점검 및 수정\n* 고객사 홈페이지 화면 제작",
+      "familyQuote": "고객사 홈페이지 화면 제작",
       "requiredSkills": [
         {
           "original": "HTML",
@@ -4406,8 +4478,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900015": {
     "source": "GENERAL",
@@ -4428,8 +4500,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900016": {
     "source": "GENERAL",
@@ -4442,16 +4514,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "DATA"
+        "INFRA"
       ],
-      "familyQuote": "[직무] 데이터베이스 운영·관리자",
+      "familyQuote": "데이터베이스 운영·관리자",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900017": {
     "source": "GENERAL",
@@ -4464,7 +4536,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "DATA"
+        "INFRA"
       ],
       "familyQuote": "[직무] 데이터베이스 운영·관리자",
       "requiredSkills": [
@@ -4473,22 +4545,22 @@
           "options": [
             "SQL"
           ],
-          "quote": "SQL 활용 가능자"
+          "quote": "· SQL 활용 가능자"
         },
         {
           "original": "리눅스",
           "options": [
             "Linux"
           ],
-          "quote": "리눅스 기본 명령어 사용 가능자"
+          "quote": "· 리눅스 기본 명령어 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900018": {
     "source": "GENERAL",
@@ -4509,8 +4581,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900019": {
     "source": "GENERAL",
@@ -4531,8 +4603,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900020": {
     "source": "GENERAL",
@@ -4555,22 +4627,22 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "- JavaScript 또는 TypeScript 사용 가능자"
+          "quote": "JavaScript 또는 TypeScript 사용 가능자"
         },
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "- Git 사용 경험"
+          "quote": "Git 사용 경험"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900021": {
     "source": "GENERAL",
@@ -4613,8 +4685,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900022": {
     "source": "GENERAL",
@@ -4629,14 +4701,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "정보시스템 운영자",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900023": {
     "source": "GENERAL",
@@ -4657,8 +4729,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900024": {
     "source": "GENERAL",
@@ -4679,8 +4751,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900025": {
     "source": "GENERAL",
@@ -4709,8 +4781,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900026": {
     "source": "GENERAL",
@@ -4761,8 +4833,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900027": {
     "source": "GENERAL",
@@ -4777,22 +4849,22 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "Node.js 서버 개발자를 충원합니다.",
+      "familyQuote": "Node.js 서버 개발자를 충원합니다",
       "requiredSkills": [
         {
           "original": "Node.js",
           "options": [
             "Node.js"
           ],
-          "quote": "Node.js 서버 개발자를 충원합니다."
+          "quote": "Node.js 서버 개발자를 충원합니다"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900028": {
     "source": "GENERAL",
@@ -4813,8 +4885,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900029": {
     "source": "GENERAL",
@@ -4835,8 +4907,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900030": {
     "source": "GENERAL",
@@ -4851,7 +4923,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "서버 및 네트워크 장비 운영",
       "requiredSkills": [
         {
           "original": "윈도우 서버",
@@ -4872,8 +4944,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900031": {
     "source": "GENERAL",
@@ -4902,8 +4974,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900032": {
     "source": "GENERAL",
@@ -4918,14 +4990,14 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "고객사 프로젝트에 참여할 서버 개발 인력을 찾습니다.",
+      "familyQuote": "서버 개발 인력을 찾습니다.",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900033": {
     "source": "GENERAL",
@@ -4940,14 +5012,14 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "자사 웹 서비스 화면 개발",
+      "familyQuote": "Vue 기반 관리자 화면 개발자",
       "requiredSkills": [
         {
           "original": "TypeScript",
           "options": [
             "TypeScript"
           ],
-          "quote": "TypeScript 사용 경험"
+          "quote": "ㆍ TypeScript 사용 경험"
         },
         {
           "original": "React 또는 Vue",
@@ -4955,15 +5027,15 @@
             "React",
             "Vue.js"
           ],
-          "quote": "React 또는 Vue 사용 경험"
+          "quote": "ㆍ React 또는 Vue 사용 경험"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900034": {
     "source": "GENERAL",
@@ -4978,22 +5050,22 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "백엔드 중심 풀스택 개발자",
+      "familyQuote": "[제목] 백엔드 중심 풀스택 개발자",
       "requiredSkills": [
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "Git 사용 경험"
+          "quote": "* Git 사용 경험"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900035": {
     "source": "GENERAL",
@@ -5015,29 +5087,29 @@
           "options": [
             "HTML"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "· HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "CSS",
           "options": [
             "CSS"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "· HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "· HTML, CSS, JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900036": {
     "source": "GENERAL",
@@ -5058,8 +5130,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900037": {
     "source": "GENERAL",
@@ -5074,22 +5146,22 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "모바일 애플리케이션 프로그래머(앱·어플 개발)",
+      "familyQuote": "[직무] 모바일 애플리케이션 프로그래머(앱·어플 개발)",
       "requiredSkills": [
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "JavaScript 사용 가능자"
+          "quote": "* JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900038": {
     "source": "GENERAL",
@@ -5110,8 +5182,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900039": {
     "source": "GENERAL",
@@ -5141,8 +5213,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900040": {
     "source": "GENERAL",
@@ -5157,14 +5229,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "[제목] 신사업 풀스택 개발자 모집",
+      "familyQuote": "신사업 풀스택 개발자 모집",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900041": {
     "source": "GENERAL",
@@ -5179,14 +5251,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "사내 AI 챗봇 개발자 모집",
+      "familyQuote": "LLM 기반 서비스 기능 개발",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900042": {
     "source": "GENERAL",
@@ -5207,8 +5279,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900043": {
     "source": "GENERAL",
@@ -5223,22 +5295,22 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "데이터베이스 운영·관리자",
+      "familyQuote": "[직무] 데이터베이스 운영·관리자",
       "requiredSkills": [
         {
           "original": "리눅스",
           "options": [
             "Linux"
           ],
-          "quote": "리눅스 기본 명령어 사용 가능자"
+          "quote": "- 리눅스 기본 명령어 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900044": {
     "source": "GENERAL",
@@ -5256,16 +5328,9 @@
       "familyQuote": "웹 서비스 백엔드 개발",
       "requiredSkills": [
         {
-          "original": "REST API",
-          "options": [
-            "REST API"
-          ],
-          "quote": "REST API 개념 이해"
-        },
-        {
           "original": "Spring 프레임워크",
           "options": [
-            "Spring"
+            "Spring Boot"
           ],
           "quote": "Spring 프레임워크 사용 경험"
         }
@@ -5274,8 +5339,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900045": {
     "source": "GENERAL",
@@ -5296,8 +5361,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900046": {
     "source": "GENERAL",
@@ -5312,7 +5377,7 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "데이터 분석 및 리포트 담당 구인",
+      "familyQuote": "[제목] 데이터 분석 및 리포트 담당 구인",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -5326,8 +5391,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900047": {
     "source": "GENERAL",
@@ -5347,24 +5412,17 @@
         {
           "original": "Spring 프레임워크",
           "options": [
-            "Spring Framework"
+            "Spring"
           ],
-          "quote": "· Spring 프레임워크 사용 경험"
-        },
-        {
-          "original": "REST API",
-          "options": [
-            "REST API"
-          ],
-          "quote": "· REST API 개념 이해"
+          "quote": "Spring 프레임워크 사용 경험"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900048": {
     "source": "GENERAL",
@@ -5379,14 +5437,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "웹 솔루션을 개발하고 운영할 분을 찾습니다. 고객사 요청을 받아 화면과 서버 기능을 함께 고치고",
+      "familyQuote": "고객사 요청을 받아 화면과 서버 기능을 함께 고치고",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900049": {
     "source": "GENERAL",
@@ -5407,8 +5465,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900050": {
     "source": "GENERAL",
@@ -5423,14 +5481,14 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "회사의 주문 · 정산 · 재고 업무를 처리하는 시스템을 운영하고 개선할 개발자를 찾습니다. 현업 부서의 요청을 받아 기능을 고치고, 매일 도는 배치 작업을 관리합니다.",
+      "familyQuote": "회사의 주문 · 정산 · 재고 업무를 처리하는 시스템을 운영하고 개선할 개발자를 찾습니다.",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900051": {
     "source": "GENERAL",
@@ -5445,7 +5503,7 @@
       "jobFamilies": [
         "DESIGN"
       ],
-      "familyQuote": "웹 디자이너",
+      "familyQuote": "[직무] 웹 디자이너",
       "requiredSkills": [
         {
           "original": "피그마",
@@ -5459,8 +5517,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900052": {
     "source": "GENERAL",
@@ -5503,8 +5561,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900053": {
     "source": "GENERAL",
@@ -5524,14 +5582,14 @@
         {
           "original": "포토샵",
           "options": [
-            "Photoshop"
+            "Adobe Photoshop"
           ],
           "quote": "포토샵과 일러스트를 다룰 수 있으면 지원 가능합니다."
         },
         {
           "original": "일러스트",
           "options": [
-            "Illustrator"
+            "Adobe Illustrator"
           ],
           "quote": "포토샵과 일러스트를 다룰 수 있으면 지원 가능합니다."
         }
@@ -5540,8 +5598,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900054": {
     "source": "GENERAL",
@@ -5556,36 +5614,36 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "홈페이지 퍼블리셔 모집",
+      "familyQuote": "반응형 웹 퍼블리싱",
       "requiredSkills": [
         {
           "original": "HTML",
           "options": [
             "HTML"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "- HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "CSS",
           "options": [
             "CSS"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "- HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "HTML, CSS, JavaScript 사용 가능자"
+          "quote": "- HTML, CSS, JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900055": {
     "source": "GENERAL",
@@ -5605,7 +5663,7 @@
         {
           "original": "Spring 프레임워크",
           "options": [
-            "Spring"
+            "Spring Framework"
           ],
           "quote": "Spring 프레임워크 사용 경험"
         }
@@ -5614,8 +5672,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900056": {
     "source": "GENERAL",
@@ -5652,8 +5710,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900057": {
     "source": "GENERAL",
@@ -5689,8 +5747,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900058": {
     "source": "GENERAL",
@@ -5705,14 +5763,14 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "사내에서 쓰는 주문 관리 프로그램을 새로 만들고 있어 서버 쪽을 맡아 줄 분을 모십니다.",
+      "familyQuote": "서버 쪽을 맡아 줄 분을 모십니다.",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900059": {
     "source": "GENERAL",
@@ -5727,14 +5785,22 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "웹 서비스 백엔드 개발",
-      "requiredSkills": [],
+      "familyQuote": "자사 서비스의 API 서버를 담당할 개발자를 모집합니다.",
+      "requiredSkills": [
+        {
+          "original": "JAVA",
+          "options": [
+            "Java"
+          ],
+          "quote": "사용 언어는 JAVA 이고"
+        }
+      ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900060": {
     "source": "GENERAL",
@@ -5749,14 +5815,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "AI 모델 학습 및 성능 평가",
+      "familyQuote": "- AI 모델 학습 및 성능 평가",
       "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900061": {
     "source": "GENERAL",
@@ -5772,13 +5838,23 @@
         "DATA"
       ],
       "familyQuote": "[직무] 데이터 설계 및 프로그래머",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "데이터베이스 기본 이해"
+        }
+      ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900062": {
     "source": "GENERAL",
@@ -5800,8 +5876,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900063": {
     "source": "GENERAL",
@@ -5822,8 +5898,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900064": {
     "source": "GENERAL",
@@ -5845,15 +5921,15 @@
           "options": [
             "Windows Server"
           ],
-          "quote": "ㆍ 윈도우 서버 기본 이해"
+          "quote": "윈도우 서버 기본 이해"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900065": {
     "source": "GENERAL",
@@ -5868,7 +5944,7 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "[직무] 네트워크 시스템 개발자",
+      "familyQuote": "네트워크 시스템 개발자",
       "requiredSkills": [
         {
           "original": "윈도우 서버",
@@ -5882,8 +5958,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900066": {
     "source": "GENERAL",
@@ -5904,8 +5980,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900067": {
     "source": "GENERAL",
@@ -5927,15 +6003,15 @@
           "options": [
             "SQL"
           ],
-          "quote": "- SQL 작성 가능자"
+          "quote": "SQL 작성 가능자"
         }
       ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900068": {
     "source": "GENERAL",
@@ -5958,22 +6034,22 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "· JavaScript 또는 TypeScript 사용 가능자"
+          "quote": "JavaScript 또는 TypeScript 사용 가능자"
         },
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "· Git 사용 경험"
+          "quote": "Git 사용 경험"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900069": {
     "source": "GENERAL",
@@ -5986,16 +6062,26 @@
     },
     "extracted": {
       "jobFamilies": [
-        "INFRA"
+        "DATA"
       ],
       "familyQuote": "[직무] 데이터베이스 운영·관리자",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "* 데이터베이스 기본 이해"
+        }
+      ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900070": {
     "source": "GENERAL",
@@ -6010,14 +6096,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900071": {
     "source": "GENERAL",
@@ -6032,14 +6118,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900072": {
     "source": "GENERAL",
@@ -6054,14 +6140,16 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "웹 서비스 서버 개발 및 유지보수",
+      "familyQuote": "웹 서비스 백엔드 개발 (신입/경력)",
       "requiredSkills": [],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "fieldBodyMismatch": [
+      "career"
+    ],
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900073": {
     "source": "GENERAL",
@@ -6082,8 +6170,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900074": {
     "source": "GENERAL",
@@ -6096,7 +6184,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "BE"
+        "FULLSTACK"
       ],
       "familyQuote": "[직무] 웹 개발자",
       "requiredSkills": [
@@ -6112,8 +6200,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900075": {
     "source": "GENERAL",
@@ -6134,8 +6222,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900076": {
     "source": "GENERAL",
@@ -6150,22 +6238,22 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "기타(Git 사용 경험)"
+          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),표계산 (스프레드시트 활용)  ,기타(Git 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900077": {
     "source": "GENERAL",
@@ -6197,8 +6285,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900078": {
     "source": "GENERAL",
@@ -6213,7 +6301,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "LLM 응용 서비스 개발자 구인",
+      "familyQuote": "[제목] LLM 응용 서비스 개발자 구인",
       "requiredSkills": [
         {
           "original": "파이썬",
@@ -6227,8 +6315,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900079": {
     "source": "GENERAL",
@@ -6249,8 +6337,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900080": {
     "source": "GENERAL",
@@ -6279,8 +6367,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900081": {
     "source": "GENERAL",
@@ -6295,7 +6383,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "웹 화면과 서버 개발 경험이 모두 있는 분",
+      "familyQuote": "웹 개발자(프론트 · 백엔드) 모집",
       "requiredSkills": [
         {
           "original": "JAVA 또는 JavaScript",
@@ -6303,22 +6391,22 @@
             "Java",
             "JavaScript"
           ],
-          "quote": "- JAVA 또는 JavaScript 사용 가능자"
+          "quote": "JAVA 또는 JavaScript 사용 가능자"
         },
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "- SQL 작성 가능자"
+          "quote": "SQL 작성 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900082": {
     "source": "GENERAL",
@@ -6339,8 +6427,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900083": {
     "source": "GENERAL",
@@ -6362,15 +6450,15 @@
           "options": [
             "Figma"
           ],
-          "quote": "피그마 사용 가능자"
+          "quote": "ㆍ 피그마 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900084": {
     "source": "GENERAL",
@@ -6391,8 +6479,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900085": {
     "source": "GENERAL",
@@ -6422,8 +6510,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900086": {
     "source": "GENERAL",
@@ -6444,8 +6532,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900087": {
     "source": "GENERAL",
@@ -6458,7 +6546,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "INFRA"
+        "OTHER"
       ],
       "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
@@ -6466,8 +6554,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900088": {
     "source": "GENERAL",
@@ -6488,8 +6576,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900089": {
     "source": "GENERAL",
@@ -6510,8 +6598,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900090": {
     "source": "GENERAL",
@@ -6540,8 +6628,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900091": {
     "source": "GENERAL",
@@ -6563,15 +6651,15 @@
           "options": [
             "Windows Server"
           ],
-          "quote": "ㆍ 윈도우 서버 기본 이해"
+          "quote": "윈도우 서버 기본 이해"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900092": {
     "source": "GENERAL",
@@ -6601,8 +6689,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900093": {
     "source": "GENERAL",
@@ -6623,8 +6711,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900094": {
     "source": "GENERAL",
@@ -6645,8 +6733,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900095": {
     "source": "GENERAL",
@@ -6661,7 +6749,7 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "모바일 앱 개발자(React Native)",
+      "familyQuote": "[제목] 모바일 앱 개발자(React Native) 채...",
       "requiredSkills": [
         {
           "original": "React 또는 React Native",
@@ -6690,8 +6778,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900096": {
     "source": "GENERAL",
@@ -6728,8 +6816,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900097": {
     "source": "GENERAL",
@@ -6750,8 +6838,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900098": {
     "source": "GENERAL",
@@ -6802,8 +6890,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900099": {
     "source": "GENERAL",
@@ -6826,22 +6914,15 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "JavaScript 또는 TypeScript 사용 가능자"
-        },
-        {
-          "original": "REST API",
-          "options": [
-            "REST API"
-          ],
-          "quote": "REST API 개념 이해"
+          "quote": "- JavaScript 또는 TypeScript 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900100": {
     "source": "GENERAL",
@@ -6870,8 +6951,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900101": {
     "source": "GENERAL",
@@ -6891,24 +6972,24 @@
         {
           "original": "포토샵",
           "options": [
-            "Photoshop"
+            "Adobe Photoshop"
           ],
-          "quote": "포토샵, 일러스트 사용 가능자"
+          "quote": "- 포토샵, 일러스트 사용 가능자"
         },
         {
           "original": "일러스트",
           "options": [
-            "Illustrator"
+            "Adobe Illustrator"
           ],
-          "quote": "포토샵, 일러스트 사용 가능자"
+          "quote": "- 포토샵, 일러스트 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900102": {
     "source": "GENERAL",
@@ -6929,8 +7010,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900103": {
     "source": "GENERAL",
@@ -6951,8 +7032,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900104": {
     "source": "GENERAL",
@@ -6973,8 +7054,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900105": {
     "source": "GENERAL",
@@ -6995,8 +7076,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900106": {
     "source": "GENERAL",
@@ -7018,15 +7099,15 @@
           "options": [
             "Python"
           ],
-          "quote": "* 파이썬 활용 가능자"
+          "quote": "파이썬 활용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900107": {
     "source": "GENERAL",
@@ -7047,8 +7128,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900108": {
     "source": "GENERAL",
@@ -7063,12 +7144,12 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "SI 프로젝트 서버 개발 인력",
+      "familyQuote": "[제목] [결빛페이먼츠] SI 프로젝트 서버 개발 인력...",
       "requiredSkills": [
         {
           "original": "Spring 프레임워크",
           "options": [
-            "Spring Framework"
+            "Spring Boot"
           ],
           "quote": "- Spring 프레임워크 사용 경험"
         }
@@ -7077,8 +7158,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900109": {
     "source": "GENERAL",
@@ -7099,8 +7180,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900110": {
     "source": "GENERAL",
@@ -7113,7 +7194,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "NETWORK"
+        "OTHER"
       ],
       "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
@@ -7121,8 +7202,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900111": {
     "source": "GENERAL",
@@ -7137,14 +7218,14 @@
       "jobFamilies": [
         "DATA"
       ],
-      "familyQuote": "[직무] 데이터 설계 및 프로그래머",
+      "familyQuote": "데이터 엔지니어 채용",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900112": {
     "source": "GENERAL",
@@ -7180,8 +7261,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900113": {
     "source": "GENERAL",
@@ -7202,8 +7283,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900114": {
     "source": "GENERAL",
@@ -7224,8 +7305,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900115": {
     "source": "GENERAL",
@@ -7238,16 +7319,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "OTHER"
+        "NETWORK"
       ],
-      "familyQuote": "[직무] IT 기술지원 전문가",
+      "familyQuote": "사내 네트워크 점검",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900116": {
     "source": "GENERAL",
@@ -7268,8 +7349,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900117": {
     "source": "GENERAL",
@@ -7284,36 +7365,36 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "· 반응형 웹 퍼블리싱",
+      "familyQuote": "반응형 웹 퍼블리싱",
       "requiredSkills": [
         {
           "original": "HTML",
           "options": [
             "HTML"
           ],
-          "quote": "· HTML, CSS, JavaScript 사용 가능자"
+          "quote": "HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "CSS",
           "options": [
             "CSS"
           ],
-          "quote": "· HTML, CSS, JavaScript 사용 가능자"
+          "quote": "HTML, CSS, JavaScript 사용 가능자"
         },
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "· HTML, CSS, JavaScript 사용 가능자"
+          "quote": "HTML, CSS, JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900118": {
     "source": "GENERAL",
@@ -7326,9 +7407,9 @@
     },
     "extracted": {
       "jobFamilies": [
-        "DATA"
+        "INFRA"
       ],
-      "familyQuote": "[직무] 데이터베이스 운영·관리자",
+      "familyQuote": "데이터베이스 운영·관리자",
       "requiredSkills": [
         {
           "original": "리눅스",
@@ -7349,8 +7430,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900119": {
     "source": "GENERAL",
@@ -7371,8 +7452,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900120": {
     "source": "GENERAL",
@@ -7393,8 +7474,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900121": {
     "source": "GENERAL",
@@ -7430,8 +7511,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900122": {
     "source": "GENERAL",
@@ -7452,8 +7533,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900123": {
     "source": "GENERAL",
@@ -7468,14 +7549,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "[내용] 클라우드 인프라 운영 및 장애 대응",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900124": {
     "source": "GENERAL",
@@ -7496,8 +7577,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900125": {
     "source": "GENERAL",
@@ -7526,8 +7607,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900126": {
     "source": "GENERAL",
@@ -7542,14 +7623,14 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "고객사 홈페이지와 관리자 화면을 개발할 분을 모십니다. 퍼블리싱부터 기능 개발까지 함께 하며",
+      "familyQuote": "[가람누리홀딩스] UI 개발자(퍼블리싱 포함)...",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900127": {
     "source": "GENERAL",
@@ -7562,7 +7643,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "FULLSTACK"
+        "BE"
       ],
       "familyQuote": "[직무] 웹 개발자",
       "requiredSkills": [
@@ -7571,15 +7652,15 @@
           "options": [
             "SQL"
           ],
-          "quote": "SQL 작성 가능자"
+          "quote": "* SQL 작성 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900128": {
     "source": "GENERAL",
@@ -7609,8 +7690,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900129": {
     "source": "GENERAL",
@@ -7627,12 +7708,14 @@
       ],
       "familyQuote": "클라우드 인프라 운영 및 장애 대응",
       "requiredSkills": [],
-      "bodyCareer": "관계없음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "fieldBodyMismatch": [
+      "career"
+    ],
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900130": {
     "source": "GENERAL",
@@ -7647,22 +7730,22 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "[직무] 정보보안 전문가",
+      "familyQuote": "보안 장비 구축 엔지니어",
       "requiredSkills": [
         {
           "original": "리눅스",
           "options": [
             "Linux"
           ],
-          "quote": "- 리눅스 기본 명령어 사용 가능자"
+          "quote": "리눅스 기본 명령어 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900131": {
     "source": "GENERAL",
@@ -7677,22 +7760,31 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- AI 모델 학습 및 성능 평가",
+      "familyQuote": "AI 모델 학습 및 성능 평가",
       "requiredSkills": [
+        {
+          "original": "머신러닝 / 딥러닝",
+          "options": [
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
+          ],
+          "quote": "머신러닝 / 딥러닝 기본 이해"
+        },
         {
           "original": "파이썬",
           "options": [
             "Python"
           ],
-          "quote": "- 파이썬 활용 가능자"
+          "quote": "파이썬 활용 가능자"
         }
       ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900132": {
     "source": "GENERAL",
@@ -7705,16 +7797,17 @@
     },
     "extracted": {
       "jobFamilies": [
-        "FE"
+        "FE",
+        "PUBLISHER"
       ],
-      "familyQuote": "[직무] 웹 개발자(웹 엔지니어·웹 프로그래머)",
+      "familyQuote": "웹 퍼블리셔 · 프론트엔드 개발자 모집",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900133": {
     "source": "GENERAL",
@@ -7735,8 +7828,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900134": {
     "source": "GENERAL",
@@ -7751,7 +7844,7 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "매출 데이터 분석 담당자",
+      "familyQuote": "통계 분석 및 결과 정리",
       "requiredSkills": [
         {
           "original": "파이썬 또는 R",
@@ -7759,22 +7852,22 @@
             "Python",
             "R"
           ],
-          "quote": "- 파이썬 또는 R 사용 가능자"
+          "quote": "파이썬 또는 R 사용 가능자"
         },
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "- SQL 활용 가능자"
+          "quote": "SQL 활용 가능자"
         }
       ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900135": {
     "source": "GENERAL",
@@ -7789,14 +7882,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "웹 운영자(홈페이지 관리자)",
+      "familyQuote": "[직무] 웹 운영자(홈페이지 관리자)",
       "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900136": {
     "source": "GENERAL",
@@ -7825,8 +7918,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900137": {
     "source": "GENERAL",
@@ -7849,8 +7942,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900138": {
     "source": "GENERAL",
@@ -7863,16 +7956,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "FULLSTACK"
+        "BE"
       ],
-      "familyQuote": "웹 서비스 개발 및 운영 담당자",
+      "familyQuote": "[제목] 웹 서비스 개발 및 운영 담당자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900139": {
     "source": "GENERAL",
@@ -7895,22 +7988,22 @@
             "Python",
             "R"
           ],
-          "quote": "ㆍ 파이썬 또는 R 사용 가능자"
+          "quote": "파이썬 또는 R 사용 가능자"
         },
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "ㆍ SQL 활용 가능자"
+          "quote": "SQL 활용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900140": {
     "source": "GENERAL",
@@ -7931,8 +8024,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900141": {
     "source": "GENERAL",
@@ -7953,8 +8046,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900142": {
     "source": "GENERAL",
@@ -7969,14 +8062,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 통계·데이터 관련 사무원",
+      "familyQuote": "통계·데이터 관련 사무원",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900143": {
     "source": "GENERAL",
@@ -7991,22 +8084,22 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [
         {
           "original": "C#",
           "options": [
             "C#"
           ],
-          "quote": "* C# 기반 윈도우 프로그램 개발 가능자"
+          "quote": "C# 기반 윈도우 프로그램 개발 가능자"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900144": {
     "source": "GENERAL",
@@ -8042,8 +8135,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900145": {
     "source": "GENERAL",
@@ -8056,9 +8149,9 @@
     },
     "extracted": {
       "jobFamilies": [
-        "FULLSTACK"
+        "BE"
       ],
-      "familyQuote": "[제목] 자사 솔루션 웹 개발자 모집",
+      "familyQuote": "자사 솔루션 웹 개발자 모집",
       "requiredSkills": [
         {
           "original": "Git",
@@ -8079,8 +8172,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900146": {
     "source": "GENERAL",
@@ -8123,8 +8216,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900147": {
     "source": "GENERAL",
@@ -8145,8 +8238,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900148": {
     "source": "GENERAL",
@@ -8161,7 +8254,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "클라우드 엔지니어",
+      "familyQuote": "고객사 서버를 클라우드로 옮기는 프로젝트가 늘어 인력을 충원합니다. 구축 이후 운영과 점검도 함께 맡게 됩니다.",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
@@ -8169,8 +8262,8 @@
     "fieldBodyMismatch": [
       "career"
     ],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900149": {
     "source": "GENERAL",
@@ -8192,22 +8285,22 @@
           "options": [
             "Git"
           ],
-          "quote": "Git 사용 경험"
+          "quote": "ㆍ Git 사용 경험"
         },
         {
           "original": "Spring 프레임워크",
           "options": [
-            "Spring Framework"
+            "Spring"
           ],
-          "quote": "Spring 프레임워크 사용 경험"
+          "quote": "ㆍ Spring 프레임워크 사용 경험"
         }
       ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900150": {
     "source": "GENERAL",
@@ -8228,8 +8321,8 @@
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
-    "promptVersion": "external-conditions-v2",
-    "model": "gemini-3.8-flash"
+    "model": "gemini-3.8-flash",
+    "promptVersion": "external-conditions-v3"
   },
   "900201": {
     "source": "GENERATED",
@@ -8244,28 +8337,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "AI 상담 서비스 서버 API 개발",
+      "familyQuote": "백엔드 개발자 (AI 상담 서비스팀) 신입",
       "requiredSkills": [
         {
           "original": "Java",
           "options": [
             "Java"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8273,7 +8366,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900202": {
     "source": "GENERATED",
@@ -8288,7 +8381,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "교육 플랫폼 서버 개발자",
+      "familyQuote": "온라인 강의 수강 · 진도 관리 API 개발 업무",
       "requiredSkills": [
         {
           "original": "Java",
@@ -8317,7 +8410,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900203": {
     "source": "GENERATED",
@@ -8332,7 +8425,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "[내용] 모바일 앱용 REST API 개발",
+      "familyQuote": "API 서버 개발자 채용",
       "requiredSkills": [
         {
           "original": "스프링 부트",
@@ -8342,9 +8435,10 @@
           "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(스프링 부트, ORM 기반 데이터 접근 사용 경험)"
         },
         {
-          "original": "ORM",
+          "original": "ORM 기반 데이터 접근",
           "options": [
-            "ORM"
+            "JPA",
+            "Hibernate"
           ],
           "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(스프링 부트, ORM 기반 데이터 접근 사용 경험)"
         }
@@ -8354,7 +8448,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900204": {
     "source": "GENERATED",
@@ -8369,7 +8463,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "백엔드 개발자 (Spring)",
+      "familyQuote": "- B2B 협업 솔루션 서버 개발",
       "requiredSkills": [
         {
           "original": "Java",
@@ -8398,7 +8492,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900205": {
     "source": "GENERATED",
@@ -8413,28 +8507,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "백엔드 개발자 신입 채용",
+      "familyQuote": "[제목] 백엔드 개발자 신입 채용",
       "requiredSkills": [
         {
           "original": "Go",
           "options": [
             "Go"
           ],
-          "quote": "Go · gRPC · PostgreSQL 사용 가능자"
+          "quote": "ㆍ Go · gRPC · PostgreSQL 사용 가능자"
         },
         {
           "original": "gRPC",
           "options": [
             "gRPC"
           ],
-          "quote": "Go · gRPC · PostgreSQL 사용 가능자"
+          "quote": "ㆍ Go · gRPC · PostgreSQL 사용 가능자"
         },
         {
           "original": "PostgreSQL",
           "options": [
             "PostgreSQL"
           ],
-          "quote": "Go · gRPC · PostgreSQL 사용 가능자"
+          "quote": "ㆍ Go · gRPC · PostgreSQL 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8442,7 +8536,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900206": {
     "source": "GENERATED",
@@ -8486,7 +8580,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900207": {
     "source": "GENERATED",
@@ -8508,21 +8602,21 @@
           "options": [
             "Java"
           ],
-          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자, 신입 지원 가능, 4년제 대학 졸업 이상"
+          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자"
         },
         {
           "original": "Spring",
           "options": [
-            "Spring"
+            "Spring Boot"
           ],
-          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자, 신입 지원 가능, 4년제 대학 졸업 이상"
+          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자"
         },
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자, 신입 지원 가능, 4년제 대학 졸업 이상"
+          "quote": "지원 자격 : Java · Spring · SQL 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8530,7 +8624,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900208": {
     "source": "GENERATED",
@@ -8552,14 +8646,23 @@
           "options": [
             "Java"
           ],
-          "quote": "자바"
+          "quote": "기타(자바, 스프링 프레임워크, 관계형 데이터베이스 사용 경험)"
         },
         {
           "original": "스프링 프레임워크",
           "options": [
             "Spring Framework"
           ],
-          "quote": "스프링 프레임워크"
+          "quote": "기타(자바, 스프링 프레임워크, 관계형 데이터베이스 사용 경험)"
+        },
+        {
+          "original": "관계형 데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "기타(자바, 스프링 프레임워크, 관계형 데이터베이스 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -8567,7 +8670,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900209": {
     "source": "GENERATED",
@@ -8589,21 +8692,21 @@
           "options": [
             "Java"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "- Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "- Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "- Java · Spring Boot · MySQL 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
@@ -8611,7 +8714,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900210": {
     "source": "GENERATED",
@@ -8633,21 +8736,21 @@
           "options": [
             "Node.js"
           ],
-          "quote": "Node.js · TypeScript · NestJS 사용 가능자"
+          "quote": "ㆍ Node.js · TypeScript · NestJS 사용 가능자"
         },
         {
           "original": "TypeScript",
           "options": [
             "TypeScript"
           ],
-          "quote": "Node.js · TypeScript · NestJS 사용 가능자"
+          "quote": "ㆍ Node.js · TypeScript · NestJS 사용 가능자"
         },
         {
           "original": "NestJS",
           "options": [
             "NestJS"
           ],
-          "quote": "Node.js · TypeScript · NestJS 사용 가능자"
+          "quote": "ㆍ Node.js · TypeScript · NestJS 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8655,7 +8758,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900211": {
     "source": "GENERATED",
@@ -8670,21 +8773,21 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "프론트엔드 개발자",
+      "familyQuote": "프론트엔드 개발자 (디자인 시스템)",
       "requiredSkills": [
         {
           "original": "React",
           "options": [
             "React"
           ],
-          "quote": "· React · TypeScript 사용 가능자"
+          "quote": "React · TypeScript 사용 가능자"
         },
         {
           "original": "TypeScript",
           "options": [
             "TypeScript"
           ],
-          "quote": "· React · TypeScript 사용 가능자"
+          "quote": "React · TypeScript 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8692,7 +8795,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900212": {
     "source": "GENERATED",
@@ -8714,21 +8817,21 @@
           "options": [
             "React"
           ],
-          "quote": "React · TypeScript · JavaScript 사용 가능자"
+          "quote": "지원 자격 : React · TypeScript · JavaScript 사용 가능자"
         },
         {
           "original": "TypeScript",
           "options": [
             "TypeScript"
           ],
-          "quote": "React · TypeScript · JavaScript 사용 가능자"
+          "quote": "지원 자격 : React · TypeScript · JavaScript 사용 가능자"
         },
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "React · TypeScript · JavaScript 사용 가능자"
+          "quote": "지원 자격 : React · TypeScript · JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -8736,7 +8839,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900213": {
     "source": "GENERATED",
@@ -8773,7 +8876,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900214": {
     "source": "GENERATED",
@@ -8795,14 +8898,14 @@
           "options": [
             "Figma"
           ],
-          "quote": "Figma · Photoshop 사용 가능자"
+          "quote": "- Figma · Photoshop 사용 가능자"
         },
         {
           "original": "Photoshop",
           "options": [
             "Photoshop"
           ],
-          "quote": "Figma · Photoshop 사용 가능자"
+          "quote": "- Figma · Photoshop 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -8810,7 +8913,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900215": {
     "source": "GENERATED",
@@ -8825,7 +8928,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "서비스 웹 화면 개발",
+      "familyQuote": "프론트엔드 개발자 채용",
       "requiredSkills": [
         {
           "original": "Vue.js",
@@ -8837,7 +8940,7 @@
         {
           "original": "Nuxt",
           "options": [
-            "Nuxt"
+            "Nuxt.js"
           ],
           "quote": "Vue.js · Nuxt · JavaScript 사용 가능자"
         },
@@ -8854,7 +8957,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900216": {
     "source": "GENERATED",
@@ -8869,7 +8972,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[제목] LLM 응용 서비스 개발자 (신입)",
+      "familyQuote": "LLM 응용 서비스 개발자",
       "requiredSkills": [
         {
           "original": "Python",
@@ -8891,7 +8994,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900217": {
     "source": "GENERATED",
@@ -8906,7 +9009,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "추천 모델 서빙 API 개발 업무를 함께할 분을 찾습니다.",
+      "familyQuote": "AI 서비스 개발 (Python)",
       "requiredSkills": [
         {
           "original": "Python",
@@ -8928,7 +9031,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900218": {
     "source": "GENERATED",
@@ -8943,21 +9046,21 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "도시 데이터 예측 모델 개발",
+      "familyQuote": "[내용] 도시 데이터 예측 모델 개발",
       "requiredSkills": [
         {
           "original": "파이썬",
           "options": [
             "Python"
           ],
-          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험)"
+          "quote": "파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험"
         },
         {
           "original": "사이킷런",
           "options": [
             "scikit-learn"
           ],
-          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험)"
+          "quote": "파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -8965,7 +9068,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900219": {
     "source": "GENERATED",
@@ -9002,7 +9105,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900220": {
     "source": "GENERATED",
@@ -9017,7 +9120,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "LLM 엔지니어",
+      "familyQuote": "LLM 기반 서비스 설계 및 리딩",
       "requiredSkills": [
         {
           "original": "Python",
@@ -9046,7 +9149,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900221": {
     "source": "GENERATED",
@@ -9061,28 +9164,28 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "쇼핑몰 웹 개발자 (풀스택)",
+      "familyQuote": "[제목] 쇼핑몰 웹 개발자 (풀스택)",
       "requiredSkills": [
         {
           "original": "Java",
           "options": [
             "Java"
           ],
-          "quote": "Java · Spring Boot · React 사용 가능자"
+          "quote": "· Java · Spring Boot · React 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "Java · Spring Boot · React 사용 가능자"
+          "quote": "· Java · Spring Boot · React 사용 가능자"
         },
         {
           "original": "React",
           "options": [
             "React"
           ],
-          "quote": "Java · Spring Boot · React 사용 가능자"
+          "quote": "· Java · Spring Boot · React 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -9090,7 +9193,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900222": {
     "source": "GENERATED",
@@ -9136,7 +9239,7 @@
       "career"
     ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900223": {
     "source": "GENERATED",
@@ -9151,21 +9254,21 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "[직무] 웹 개발자\n[내용] 신규 웹 서비스 화면과 API 개발",
+      "familyQuote": "[제목] 풀스택 개발자 모집",
       "requiredSkills": [
         {
           "original": "리액트",
           "options": [
             "React"
           ],
-          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(리액트, 자바 기반 서버 사용 경험)"
+          "quote": "기타(리액트, 자바 기반 서버 사용 경험)"
         },
         {
           "original": "자바",
           "options": [
             "Java"
           ],
-          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(리액트, 자바 기반 서버 사용 경험)"
+          "quote": "기타(리액트, 자바 기반 서버 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -9173,7 +9276,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900224": {
     "source": "GENERATED",
@@ -9188,7 +9291,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "풀스택 개발자 (신입)",
+      "familyQuote": "[제목] 풀스택 개발자 (신입)",
       "requiredSkills": [
         {
           "original": "Java",
@@ -9217,7 +9320,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900225": {
     "source": "GENERATED",
@@ -9261,7 +9364,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900226": {
     "source": "GENERATED",
@@ -9298,7 +9401,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900227": {
     "source": "GENERATED",
@@ -9335,7 +9438,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900228": {
     "source": "GENERATED",
@@ -9374,7 +9477,7 @@
       "career"
     ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900229": {
     "source": "GENERATED",
@@ -9389,21 +9492,21 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "백엔드 개발자",
+      "familyQuote": "[제목] 백엔드 개발자",
       "requiredSkills": [
         {
           "original": "Java",
           "options": [
             "Java"
           ],
-          "quote": "- Java · Spring Boot 사용 가능자"
+          "quote": "Java · Spring Boot 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "- Java · Spring Boot 사용 가능자"
+          "quote": "Java · Spring Boot 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -9411,7 +9514,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900230": {
     "source": "GENERATED",
@@ -9426,7 +9529,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "Java · Spring Boot 사용 가능자",
+      "familyQuote": "Java 개발자",
       "requiredSkills": [
         {
           "original": "Java",
@@ -9448,7 +9551,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900231": {
     "source": "GENERATED",
@@ -9485,7 +9588,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900232": {
     "source": "GENERATED",
@@ -9500,7 +9603,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "웹 화면 개발자",
+      "familyQuote": "공공기관 홈페이지 화면 개발 업무를 함께할 분을 찾습니다.",
       "requiredSkills": [
         {
           "original": "JavaScript",
@@ -9523,7 +9626,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900233": {
     "source": "GENERATED",
@@ -9560,7 +9663,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900234": {
     "source": "GENERATED",
@@ -9582,14 +9685,14 @@
           "options": [
             "Vue.js"
           ],
-          "quote": "- Vue.js · JavaScript 사용 가능자"
+          "quote": "Vue.js · JavaScript 사용 가능자"
         },
         {
           "original": "JavaScript",
           "options": [
             "JavaScript"
           ],
-          "quote": "- Vue.js · JavaScript 사용 가능자"
+          "quote": "Vue.js · JavaScript 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -9597,7 +9700,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900235": {
     "source": "GENERATED",
@@ -9634,7 +9737,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900236": {
     "source": "GENERATED",
@@ -9649,7 +9752,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "LLM 호출 서버 운영",
+      "familyQuote": "LLM 서비스 개발자",
       "requiredSkills": [
         {
           "original": "Python",
@@ -9671,7 +9774,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900237": {
     "source": "GENERATED",
@@ -9693,14 +9796,15 @@
           "options": [
             "Python"
           ],
-          "quote": "지원 자격 : Python · LLM API 사용 가능자, 경력 무관"
+          "quote": "Python · LLM API 사용 가능자"
         },
         {
           "original": "LLM API",
           "options": [
-            "LLM API"
+            "OpenAI API",
+            "Gemini API"
           ],
-          "quote": "지원 자격 : Python · LLM API 사용 가능자, 경력 무관"
+          "quote": "Python · LLM API 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -9708,7 +9812,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900238": {
     "source": "GENERATED",
@@ -9723,21 +9827,21 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[내용] 메일 자동 분류 서버 개발",
+      "familyQuote": "AI 메일 분류 서버 개발",
       "requiredSkills": [
         {
           "original": "파이썬",
           "options": [
             "Python"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(파이썬, 구글 생성형 AI API 사용 경험)"
+          "quote": "기타(파이썬, 구글 생성형 AI API 사용 경험)"
         },
         {
           "original": "구글 생성형 AI API",
           "options": [
             "Gemini API"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(파이썬, 구글 생성형 AI API 사용 경험)"
+          "quote": "기타(파이썬, 구글 생성형 AI API 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -9745,7 +9849,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900239": {
     "source": "GENERATED",
@@ -9760,21 +9864,21 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[제목] MLOps 엔지니어",
+      "familyQuote": "MLOps 엔지니어",
       "requiredSkills": [
         {
           "original": "Python",
           "options": [
             "Python"
           ],
-          "quote": "- Python · FastAPI 사용 가능자"
+          "quote": "Python · FastAPI 사용 가능자"
         },
         {
           "original": "FastAPI",
           "options": [
             "FastAPI"
           ],
-          "quote": "- Python · FastAPI 사용 가능자"
+          "quote": "Python · FastAPI 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
@@ -9782,7 +9886,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900240": {
     "source": "GENERATED",
@@ -9826,7 +9930,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900241": {
     "source": "GENERATED",
@@ -9841,7 +9945,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "병원 예약 서비스 백엔드 개발 (신입)",
+      "familyQuote": "병원 예약 서비스 백엔드 개발",
       "requiredSkills": [
         {
           "original": "Java",
@@ -9870,7 +9974,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900242": {
     "source": "GENERATED",
@@ -9892,14 +9996,14 @@
           "options": [
             "Java"
           ],
-          "quote": "지원 자격 : Java · MyBatis 사용 가능자"
+          "quote": "지원 자격 : Java · MyBatis 사용 가능자, 경력 무관"
         },
         {
           "original": "MyBatis",
           "options": [
             "MyBatis"
           ],
-          "quote": "지원 자격 : Java · MyBatis 사용 가능자"
+          "quote": "지원 자격 : Java · MyBatis 사용 가능자, 경력 무관"
         }
       ],
       "bodyCareer": "관계없음",
@@ -9907,7 +10011,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900243": {
     "source": "GENERATED",
@@ -9922,21 +10026,21 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "고객사 서비스 서버 개발",
+      "familyQuote": "서버 개발자 (신입)",
       "requiredSkills": [
         {
           "original": "스프링 부트",
           "options": [
             "Spring Boot"
           ],
-          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
+          "quote": "기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
         },
         {
           "original": "인메모리 캐시(레디스)",
           "options": [
             "Redis"
           ],
-          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
+          "quote": "기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
         }
       ],
       "bodyCareer": "신입",
@@ -9944,7 +10048,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900244": {
     "source": "GENERATED",
@@ -9988,7 +10092,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900245": {
     "source": "GENERATED",
@@ -10027,14 +10131,12 @@
           "quote": "Java · Spring Boot · MyBatis 사용 가능자"
         }
       ],
-      "bodyCareer": "관계없음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
+    "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900246": {
     "source": "GENERATED",
@@ -10071,7 +10173,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900247": {
     "source": "GENERATED",
@@ -10110,7 +10212,7 @@
       "career"
     ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900248": {
     "source": "GENERATED",
@@ -10147,7 +10249,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900249": {
     "source": "GENERATED",
@@ -10184,7 +10286,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900250": {
     "source": "GENERATED",
@@ -10221,7 +10323,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900251": {
     "source": "GENERATED",
@@ -10253,14 +10355,12 @@
           "quote": "· React Native · TypeScript 사용 가능자"
         }
       ],
-      "bodyCareer": "관계없음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
+    "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900252": {
     "source": "GENERATED",
@@ -10282,21 +10382,21 @@
           "options": [
             "Next.js"
           ],
-          "quote": "지원 자격 : Next.js · React · TypeScript 사용 가능자, 관련 경력 3년 이상"
+          "quote": "Next.js · React · TypeScript 사용 가능자"
         },
         {
           "original": "React",
           "options": [
             "React"
           ],
-          "quote": "지원 자격 : Next.js · React · TypeScript 사용 가능자, 관련 경력 3년 이상"
+          "quote": "Next.js · React · TypeScript 사용 가능자"
         },
         {
           "original": "TypeScript",
           "options": [
             "TypeScript"
           ],
-          "quote": "지원 자격 : Next.js · React · TypeScript 사용 가능자, 관련 경력 3년 이상"
+          "quote": "Next.js · React · TypeScript 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
@@ -10304,7 +10404,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900253": {
     "source": "GENERATED",
@@ -10348,7 +10448,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900254": {
     "source": "GENERATED",
@@ -10392,7 +10492,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900255": {
     "source": "GENERATED",
@@ -10407,7 +10507,7 @@
       "jobFamilies": [
         "DATA"
       ],
-      "familyQuote": "[직무] 데이터 설계 및 프로그래머",
+      "familyQuote": "주니어 데이터 엔지니어",
       "requiredSkills": [
         {
           "original": "파이썬",
@@ -10417,7 +10517,7 @@
           "quote": "ㆍ 파이썬 · 워크플로 스케줄러(에어플로) 사용 가능자"
         },
         {
-          "original": "에어플로",
+          "original": "워크플로 스케줄러(에어플로)",
           "options": [
             "Airflow"
           ],
@@ -10431,7 +10531,7 @@
       "career"
     ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900256": {
     "source": "GENERATED",
@@ -10446,28 +10546,28 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "데이터 분석가",
+      "familyQuote": "데이터 분석가 (신입)",
       "requiredSkills": [
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "· SQL · Python · Tableau 사용 가능자"
+          "quote": "SQL · Python · Tableau 사용 가능자"
         },
         {
           "original": "Python",
           "options": [
             "Python"
           ],
-          "quote": "· SQL · Python · Tableau 사용 가능자"
+          "quote": "SQL · Python · Tableau 사용 가능자"
         },
         {
           "original": "Tableau",
           "options": [
             "Tableau"
           ],
-          "quote": "· SQL · Python · Tableau 사용 가능자"
+          "quote": "SQL · Python · Tableau 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -10475,7 +10575,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900257": {
     "source": "GENERATED",
@@ -10502,14 +10602,14 @@
         {
           "original": "Spark",
           "options": [
-            "Apache Spark"
+            "Spark"
           ],
           "quote": "Scala · Spark · Kafka 사용 가능자"
         },
         {
           "original": "Kafka",
           "options": [
-            "Apache Kafka"
+            "Kafka"
           ],
           "quote": "Scala · Spark · Kafka 사용 가능자"
         }
@@ -10519,7 +10619,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900258": {
     "source": "GENERATED",
@@ -10563,7 +10663,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900259": {
     "source": "GENERATED",
@@ -10607,7 +10707,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900260": {
     "source": "GENERATED",
@@ -10644,7 +10744,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900261": {
     "source": "GENERATED",
@@ -10671,7 +10771,8 @@
         {
           "original": "LLM API",
           "options": [
-            "LLM API"
+            "OpenAI API",
+            "Gemini API"
           ],
           "quote": "· Python · LLM API 사용 가능자"
         }
@@ -10681,7 +10782,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900262": {
     "source": "GENERATED",
@@ -10696,7 +10797,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "AI 기능 API 개발 업무를 함께할 분을 찾습니다.",
+      "familyQuote": "AI 서비스 개발자",
       "requiredSkills": [
         {
           "original": "파이썬",
@@ -10713,12 +10814,14 @@
           "quote": "지원 자격 : 파이썬 · GPT API 사용 가능자, 신입 지원 가능"
         }
       ],
-      "bodyCareer": "신입",
+      "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [],
+    "fieldBodyMismatch": [
+      "career"
+    ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900263": {
     "source": "GENERATED",
@@ -10733,7 +10836,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[내용] 언어 모델 미세 조정 실험 - 석사 학위 이상",
+      "familyQuote": "언어 모델 미세 조정 실험",
       "requiredSkills": [
         {
           "original": "Python",
@@ -10755,7 +10858,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900264": {
     "source": "GENERATED",
@@ -10792,7 +10895,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900265": {
     "source": "GENERATED",
@@ -10807,7 +10910,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "클라우드 운영 엔지니어 (신입)",
       "requiredSkills": [
         {
           "original": "AWS",
@@ -10836,7 +10939,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900266": {
     "source": "GENERATED",
@@ -10851,7 +10954,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "DevOps 엔지니어 (주니어)",
+      "familyQuote": "[제목] DevOps 엔지니어 (주니어)",
       "requiredSkills": [
         {
           "original": "Docker",
@@ -10873,7 +10976,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900267": {
     "source": "GENERATED",
@@ -10888,12 +10991,20 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "정보시스템 운영자",
       "requiredSkills": [
         {
           "original": "리눅스",
           "options": [
             "Linux"
+          ],
+          "quote": "리눅스 · 컨테이너 기술 사용 가능자"
+        },
+        {
+          "original": "컨테이너 기술",
+          "options": [
+            "Docker",
+            "Kubernetes"
           ],
           "quote": "리눅스 · 컨테이너 기술 사용 가능자"
         }
@@ -10903,7 +11014,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900268": {
     "source": "GENERATED",
@@ -10919,13 +11030,22 @@
         "NETWORK"
       ],
       "familyQuote": "[직무] 네트워크 관리자",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "L2/L3 스위치",
+          "options": [
+            "L2 Switch",
+            "L3 Switch"
+          ],
+          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(CCNP, L2/L3 스위치 사용 경험)"
+        }
+      ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900269": {
     "source": "GENERATED",
@@ -10940,7 +11060,7 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "[직무] 정보시스템 운영자",
+      "familyQuote": "[제목] 클라우드 엔지니어",
       "requiredSkills": [
         {
           "original": "AWS",
@@ -10969,7 +11089,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900270": {
     "source": "GENERATED",
@@ -11006,7 +11126,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900271": {
     "source": "GENERATED",
@@ -11050,7 +11170,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900272": {
     "source": "GENERATED",
@@ -11065,7 +11185,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "고객사 웹 화면 개발 업무를 함께할 분을 찾습니다.",
+      "familyQuote": "[제목] 웹 프론트엔드 개발자",
       "requiredSkills": [
         {
           "original": "리액트",
@@ -11082,14 +11202,12 @@
           "quote": "지원 자격 : 리액트 · 타입스크립트 사용 가능자, 신입 지원 가능"
         }
       ],
-      "bodyCareer": "관계없음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
+    "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900273": {
     "source": "GENERATED",
@@ -11104,7 +11222,7 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "[내용] 디자인 시안 HTML/CSS 퍼블리싱",
+      "familyQuote": "[제목] 웹 퍼블리셔 (신입)",
       "requiredSkills": [
         {
           "original": "HTML/CSS",
@@ -11112,22 +11230,22 @@
             "HTML",
             "CSS"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(HTML/CSS, jQuery 사용 경험)"
+          "quote": "기타(HTML/CSS, jQuery 사용 경험)"
         },
         {
           "original": "jQuery",
           "options": [
             "jQuery"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(HTML/CSS, jQuery 사용 경험)"
+          "quote": "기타(HTML/CSS, jQuery 사용 경험)"
         }
       ],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900274": {
     "source": "GENERATED",
@@ -11164,7 +11282,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900275": {
     "source": "GENERATED",
@@ -11196,14 +11314,12 @@
           "quote": "Java · Spring Boot 사용 가능자"
         }
       ],
-      "bodyCareer": "관계없음",
+      "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
+    "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900276": {
     "source": "GENERATED",
@@ -11218,7 +11334,7 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [
         {
           "original": "C",
@@ -11233,7 +11349,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900277": {
     "source": "GENERATED",
@@ -11248,7 +11364,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "해외 고객용 리포트 서비스 API 개발 업무를 함께할 분을 찾습니다.",
+      "familyQuote": "글로벌 서비스 백엔드 개발 (신입)",
       "requiredSkills": [
         {
           "original": "Java",
@@ -11270,7 +11386,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900278": {
     "source": "GENERATED",
@@ -11292,21 +11408,21 @@
           "options": [
             "Java"
           ],
-          "quote": "기타(Java, Spring Boot, MyBatis 사용 경험)"
+          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(Java, Spring Boot, MyBatis 사용 경험)"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "기타(Java, Spring Boot, MyBatis 사용 경험)"
+          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(Java, Spring Boot, MyBatis 사용 경험)"
         },
         {
           "original": "MyBatis",
           "options": [
             "MyBatis"
           ],
-          "quote": "기타(Java, Spring Boot, MyBatis 사용 경험)"
+          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(Java, Spring Boot, MyBatis 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -11314,7 +11430,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900279": {
     "source": "GENERATED",
@@ -11329,12 +11445,19 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "회계 솔루션 서버 개발",
+      "familyQuote": "- 전표 처리 서버 기능 개발",
       "requiredSkills": [
         {
           "original": "자바",
           "options": [
             "Java"
+          ],
+          "quote": "- 자바 · SQL 매퍼 프레임워크 사용 가능자"
+        },
+        {
+          "original": "SQL 매퍼 프레임워크",
+          "options": [
+            "MyBatis"
           ],
           "quote": "- 자바 · SQL 매퍼 프레임워크 사용 가능자"
         }
@@ -11344,7 +11467,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900280": {
     "source": "GENERATED",
@@ -11359,28 +11482,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "웹 서비스 서버 개발",
+      "familyQuote": "백엔드 개발자 (Python)",
       "requiredSkills": [
         {
           "original": "Python",
           "options": [
             "Python"
           ],
-          "quote": "ㆍ Python · Django · PostgreSQL 사용 가능자"
+          "quote": "Python · Django · PostgreSQL 사용 가능자"
         },
         {
           "original": "Django",
           "options": [
             "Django"
           ],
-          "quote": "ㆍ Python · Django · PostgreSQL 사용 가능자"
+          "quote": "Python · Django · PostgreSQL 사용 가능자"
         },
         {
           "original": "PostgreSQL",
           "options": [
             "PostgreSQL"
           ],
-          "quote": "ㆍ Python · Django · PostgreSQL 사용 가능자"
+          "quote": "Python · Django · PostgreSQL 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -11390,7 +11513,7 @@
       "career"
     ],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900281": {
     "source": "GENERATED",
@@ -11434,7 +11557,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900282": {
     "source": "GENERATED",
@@ -11449,21 +11572,21 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "[직무] 웹 개발자",
+      "familyQuote": "웹 개발자 (React · Node.js)",
       "requiredSkills": [
         {
           "original": "React",
           "options": [
             "React"
           ],
-          "quote": "React · Node.js 사용 가능자"
+          "quote": "지원 자격 : React · Node.js 사용 가능자, 경력 무관"
         },
         {
           "original": "Node.js",
           "options": [
             "Node.js"
           ],
-          "quote": "React · Node.js 사용 가능자"
+          "quote": "지원 자격 : React · Node.js 사용 가능자, 경력 무관"
         }
       ],
       "bodyCareer": "관계없음",
@@ -11471,7 +11594,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900283": {
     "source": "GENERATED",
@@ -11508,7 +11631,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900284": {
     "source": "GENERATED",
@@ -11530,14 +11653,14 @@
           "options": [
             "React"
           ],
-          "quote": "- 리액트 · 노드 기반 서버 사용 가능자"
+          "quote": "리액트 · 노드 기반 서버 사용 가능자"
         },
         {
           "original": "노드",
           "options": [
             "Node.js"
           ],
-          "quote": "- 리액트 · 노드 기반 서버 사용 가능자"
+          "quote": "리액트 · 노드 기반 서버 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -11545,7 +11668,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900285": {
     "source": "GENERATED",
@@ -11560,7 +11683,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "풀스택 개발자",
+      "familyQuote": "[제목] 풀스택 개발자",
       "requiredSkills": [
         {
           "original": "React",
@@ -11582,7 +11705,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900286": {
     "source": "GENERATED",
@@ -11597,7 +11720,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "[제목] 풀스택 개발자 (React · Node)",
+      "familyQuote": "풀스택 개발자 (React · Node)",
       "requiredSkills": [
         {
           "original": "React",
@@ -11619,7 +11742,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900287": {
     "source": "GENERATED",
@@ -11656,7 +11779,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900288": {
     "source": "GENERATED",
@@ -11671,7 +11794,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "[직무] 응용 소프트웨어 개발자",
+      "familyQuote": "그룹사 문서 검색 서비스 구축",
       "requiredSkills": [
         {
           "original": "Python",
@@ -11693,7 +11816,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900289": {
     "source": "GENERATED",
@@ -11708,7 +11831,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[제목] AI 서비스 개발",
+      "familyQuote": "데이터 질의 챗봇 개발",
       "requiredSkills": [
         {
           "original": "파이썬",
@@ -11720,7 +11843,9 @@
         {
           "original": "벡터 데이터베이스",
           "options": [
-            "Vector Database"
+            "Qdrant",
+            "Pinecone",
+            "Chroma"
           ],
           "quote": "- 파이썬 · 벡터 데이터베이스 사용 가능자"
         }
@@ -11730,7 +11855,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900290": {
     "source": "GENERATED",
@@ -11745,28 +11870,28 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "불량 검사 영상 인식 모델 개발",
+      "familyQuote": "[제목] AI 개발자 (컴퓨터 비전)",
       "requiredSkills": [
         {
           "original": "PyTorch",
           "options": [
             "PyTorch"
           ],
-          "quote": "ㆍ PyTorch · OpenCV · C++ 사용 가능자"
+          "quote": "PyTorch · OpenCV · C++ 사용 가능자"
         },
         {
           "original": "OpenCV",
           "options": [
             "OpenCV"
           ],
-          "quote": "ㆍ PyTorch · OpenCV · C++ 사용 가능자"
+          "quote": "PyTorch · OpenCV · C++ 사용 가능자"
         },
         {
           "original": "C++",
           "options": [
             "C++"
           ],
-          "quote": "ㆍ PyTorch · OpenCV · C++ 사용 가능자"
+          "quote": "PyTorch · OpenCV · C++ 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -11774,7 +11899,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900291": {
     "source": "GENERATED",
@@ -11789,28 +11914,28 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "LLM 에이전트 개발",
+      "familyQuote": "[제목] LLM 에이전트 개발",
       "requiredSkills": [
         {
           "original": "Python",
           "options": [
             "Python"
           ],
-          "quote": "Python · LangGraph · FastAPI 사용 가능자"
+          "quote": "· Python · LangGraph · FastAPI 사용 가능자"
         },
         {
           "original": "LangGraph",
           "options": [
             "LangGraph"
           ],
-          "quote": "Python · LangGraph · FastAPI 사용 가능자"
+          "quote": "· Python · LangGraph · FastAPI 사용 가능자"
         },
         {
           "original": "FastAPI",
           "options": [
             "FastAPI"
           ],
-          "quote": "Python · LangGraph · FastAPI 사용 가능자"
+          "quote": "· Python · LangGraph · FastAPI 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
@@ -11818,6 +11943,6 @@
     },
     "fieldBodyMismatch": [],
     "model": "gemini-3.8-flash",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   }
 }

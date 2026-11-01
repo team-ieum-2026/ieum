@@ -6,24 +6,12 @@
   ],
   "generatedCheck": {
     "pairs": 1820,
-    "same": 1802,
-    "spec2_vote2": 105,
-    "spec2_vote_not2": 11,
+    "same": 1804,
+    "spec2_vote2": 109,
+    "spec2_vote_not2": 7,
     "spec_not2_vote2": 0
   },
   "generatedDisagree": {
-    "900203": [
-      {
-        "student": 1,
-        "spec": 2,
-        "vote": 1
-      },
-      {
-        "student": 2,
-        "spec": 2,
-        "vote": 1
-      }
-    ],
     "900208": [
       {
         "student": 1,
@@ -48,13 +36,6 @@
         "vote": 1
       }
     ],
-    "900267": [
-      {
-        "student": 15,
-        "spec": 2,
-        "vote": 1
-      }
-    ],
     "900288": [
       {
         "student": 4,
@@ -71,99 +52,50 @@
         "spec": 2,
         "vote": 0
       }
-    ],
-    "900289": [
-      {
-        "student": 20,
-        "spec": 2,
-        "vote": 1
-      }
     ]
   },
   "externalDisagree": {
-    "613": [
+    "626": [
       {
         "student": 4,
         "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
         }
       },
       {
         "student": 8,
         "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
         }
       },
       {
         "student": 14,
         "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
         }
       },
       {
         "student": 20,
         "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
         }
       }
     ],
-    "619": [
+    "629": [
       {
-        "student": 4,
+        "student": 15,
         "scores": {
-          "gemini-3.8-flash": 2,
+          "gemini-3.8-flash": 0,
           "gemini-4-argon": 2,
           "gpt-6.1-sol": 0
-        }
-      }
-    ],
-    "626": [
-      {
-        "student": 1,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
-        }
-      },
-      {
-        "student": 2,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
-        }
-      },
-      {
-        "student": 6,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
-        }
-      },
-      {
-        "student": 9,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
-        }
-      },
-      {
-        "student": 18,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
         }
       }
     ],
@@ -177,23 +109,13 @@
         }
       }
     ],
-    "662": [
-      {
-        "student": 15,
-        "scores": {
-          "gemini-3.8-flash": 0,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 2
-        }
-      }
-    ],
-    "683": [
+    "644": [
       {
         "student": 4,
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       },
       {
@@ -201,7 +123,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       },
       {
@@ -209,7 +131,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       },
       {
@@ -217,15 +139,25 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       }
     ],
-    "694": [
+    "662": [
       {
-        "student": 4,
+        "student": 15,
         "scores": {
           "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "666": [
+      {
+        "student": 5,
+        "scores": {
+          "gemini-3.8-flash": 2,
           "gemini-4-argon": 2,
           "gpt-6.1-sol": 0
         }
@@ -237,14 +169,6 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
-        }
-      },
-      {
-        "student": 5,
-        "scores": {
-          "gemini-3.8-flash": 0,
-          "gemini-4-argon": 2,
           "gpt-6.1-sol": 0
         }
       },
@@ -253,7 +177,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       },
       {
@@ -261,7 +185,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
-          "gpt-6.1-sol": 2
+          "gpt-6.1-sol": 0
         }
       },
       {
@@ -269,7 +193,67 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "715": [
+      {
+        "student": 15,
+        "scores": {
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
           "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 17,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900007": [
+      {
+        "student": 1,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 2,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 6,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 9,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 18,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
         }
       }
     ],
@@ -279,7 +263,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 2,
-          "gpt-6.1-sol": 0
+          "gpt-6.1-sol": 1
         }
       },
       {
@@ -323,7 +307,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 2,
-          "gpt-6.1-sol": 0
+          "gpt-6.1-sol": 1
         }
       },
       {
@@ -365,19 +349,9 @@
       {
         "student": 15,
         "scores": {
-          "gemini-3.8-flash": 2,
+          "gemini-3.8-flash": 0,
           "gemini-4-argon": 2,
           "gpt-6.1-sol": 0
-        }
-      }
-    ],
-    "900106": [
-      {
-        "student": 4,
-        "scores": {
-          "gemini-3.8-flash": 2,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
         }
       }
     ],
@@ -387,7 +361,7 @@
         "scores": {
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 2,
-          "gpt-6.1-sol": 0
+          "gpt-6.1-sol": 1
         }
       }
     ],
@@ -398,16 +372,6 @@
           "gemini-3.8-flash": 2,
           "gemini-4-argon": 0,
           "gpt-6.1-sol": 0
-        }
-      }
-    ],
-    "900144": [
-      {
-        "student": 4,
-        "scores": {
-          "gemini-3.8-flash": 1,
-          "gemini-4-argon": 2,
-          "gpt-6.1-sol": 1
         }
       }
     ]

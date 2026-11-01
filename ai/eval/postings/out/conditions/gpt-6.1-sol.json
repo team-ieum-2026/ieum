@@ -15,11 +15,11 @@
       "familyQuote": "공정 및 프로세스를 최적화하는 인식/예측기반 AI 모델 개발",
       "requiredSkills": [
         {
-          "original": "AL/ML/DL",
+          "original": "AL/ML/DL 프레임워크 사용경험",
           "options": [
-            "AL",
-            "ML",
-            "DL"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
           "quote": "- AL/ML/DL 프레임워크 사용경험"
         },
@@ -31,12 +31,14 @@
           "quote": "- 일정이상의 프로그래밍 언어 사용 능력(Python 등)"
         }
       ],
-      "bodyCareer": "신입",
+      "bodyCareer": "관계없음",
       "bodyEducation": "대졸(4년)"
     },
-    "fieldBodyMismatch": [],
+    "fieldBodyMismatch": [
+      "career"
+    ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "616": {
     "source": "REAL",
@@ -67,6 +69,13 @@
             "Linux"
           ],
           "quote": "- C/Python 언어, 리눅스 기반 개발 경험"
+        },
+        {
+          "original": "임베디드 시스템",
+          "options": [
+            "Embedded Systems"
+          ],
+          "quote": "- 임베디드 시스템 개발 경험"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -74,7 +83,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "617": {
     "source": "REAL",
@@ -92,16 +101,9 @@
       "familyQuote": "통신기술 개발자 및 통신망 운영 기술자",
       "requiredSkills": [
         {
-          "original": "리눅스",
+          "original": "리눅스 - 우분투",
           "options": [
             "Linux"
-          ],
-          "quote": "1. OS : 리눅스 - 우분투"
-        },
-        {
-          "original": "우분투",
-          "options": [
-            "Ubuntu"
           ],
           "quote": "1. OS : 리눅스 - 우분투"
         },
@@ -151,14 +153,14 @@
         {
           "original": "web service",
           "options": [
-            "Web Service"
+            "Web Services"
           ],
           "quote": "6. etc : web service, Restful API,"
         },
         {
           "original": "Restful API",
           "options": [
-            "RESTful API"
+            "REST API"
           ],
           "quote": "6. etc : web service, Restful API,"
         }
@@ -168,7 +170,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "618": {
     "source": "REAL",
@@ -198,7 +200,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "619": {
     "source": "REAL",
@@ -213,23 +215,8 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "터빈 진동(TSI : Turbine Supervising Instrument) - AI System 개발 / 적용",
-      "requiredSkills": [
-        {
-          "original": "Hwp",
-          "options": [
-            "Hancom Hangul"
-          ],
-          "quote": "2. 문서작성(Hwp, MS Office) 및 컴퓨터 활용 능력 우수자"
-        },
-        {
-          "original": "MS Office",
-          "options": [
-            "Microsoft Office"
-          ],
-          "quote": "2. 문서작성(Hwp, MS Office) 및 컴퓨터 활용 능력 우수자"
-        }
-      ],
+      "familyQuote": "2. 터빈 진동(TSI : Turbine Supervising Instrument) - AI System 개발 / 적용\n - 데이터 분석 알고리즘 개발\n - AI 활용 기능 및 알고리즘 설계 및 구현",
+      "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "대졸(4년)"
     },
@@ -237,7 +224,7 @@
       "education"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "621": {
     "source": "REAL",
@@ -252,14 +239,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "- ERP 서버 시스템 운영 및 관리\r\n- AWS 등 클라우드 환경 운영 및 유지보수",
+      "familyQuote": "- ERP 서버 시스템 운영 및 관리\n- AWS 등 클라우드 환경 운영 및 유지보수",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "622": {
     "source": "REAL",
@@ -282,7 +269,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "623": {
     "source": "REAL",
@@ -333,7 +320,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "624": {
     "source": "REAL",
@@ -367,7 +354,7 @@
         {
           "original": "WPF",
           "options": [
-            "WPF"
+            "Windows Presentation Foundation"
           ],
           "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
@@ -381,7 +368,7 @@
         {
           "original": "영상처리",
           "options": [
-            "Image Processing"
+            "OpenCV"
           ],
           "quote": "* 필요 기술:  C++, C#,WPF, OpenCV 및 영상처리"
         },
@@ -421,7 +408,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "625": {
     "source": "REAL",
@@ -443,7 +430,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "626": {
     "source": "REAL",
@@ -456,7 +443,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "BE"
+        "AI"
       ],
       "familyQuote": "- Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)",
       "requiredSkills": [],
@@ -465,7 +452,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "627": {
     "source": "REAL",
@@ -480,14 +467,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- AI 기반 자동화 시스템 구축 및 관리",
+      "familyQuote": "AI 기반 자동화 시스템 구축 및 관리",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "628": {
     "source": "REAL",
@@ -509,7 +496,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "629": {
     "source": "REAL",
@@ -531,7 +518,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "630": {
     "source": "REAL",
@@ -546,21 +533,35 @@
       "jobFamilies": [
         "NETWORK"
       ],
-      "familyQuote": "방화벽과 네트워크 보안 관련 기본 이해 및 배경 지식이 있으신 분",
+      "familyQuote": "- 방화벽과 네트워크 보안 관련 기본 이해 및 배경 지식이 있으신 분",
       "requiredSkills": [
+        {
+          "original": "네트워크 보안",
+          "options": [
+            "Network Security"
+          ],
+          "quote": "- 네트워크 보안 관련 배경지식이 있으신 분"
+        },
         {
           "original": "Linux",
           "options": [
             "Linux"
           ],
-          "quote": "Linux, Windows의 운영체제 구축 경험이 있으신 분"
+          "quote": "- Linux, Windows의 운영체제 구축 경험이 있으신 분"
         },
         {
           "original": "Windows",
           "options": [
             "Windows"
           ],
-          "quote": "Linux, Windows의 운영체제 구축 경험이 있으신 분"
+          "quote": "- Linux, Windows의 운영체제 구축 경험이 있으신 분"
+        },
+        {
+          "original": "방화벽",
+          "options": [
+            "Firewall"
+          ],
+          "quote": "- 방화벽과 네트워크 보안 관련 기본 이해 및 배경 지식이 있으신 분"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -568,7 +569,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "631": {
     "source": "REAL",
@@ -620,7 +621,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "632": {
     "source": "REAL",
@@ -693,7 +694,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "633": {
     "source": "REAL",
@@ -708,14 +709,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "- 백엔드 중심의 플스텍 개발",
+      "familyQuote": "- 프론트엔드와 백엔드 기술을 활용한 솔루션 개발",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "634": {
     "source": "REAL",
@@ -737,7 +738,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "635": {
     "source": "REAL",
@@ -752,14 +753,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "기업 프로젝트 운영과 고객사 관리 업무를 담당하게 됩니다.",
+      "familyQuote": "AI 음성·Voice IP 사업 운영 및 B2B 프로젝트 지원",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "636": {
     "source": "REAL",
@@ -777,9 +778,17 @@
       "familyQuote": "광케이블·자가통신망 설계 및 기술 담당(공사관리 포함)",
       "requiredSkills": [
         {
+          "original": "네트워크",
+          "options": [
+            "TCP/IP",
+            "Ethernet"
+          ],
+          "quote": "- 광케이블 및 자가통신망 구성에 필요한 네트워크 기본 이해"
+        },
+        {
           "original": "OTDR",
           "options": [
-            "OTDR"
+            "Optical Time-Domain Reflectometer"
           ],
           "quote": "- OTDR 및 광파워미터 측정 결과 분석 능력"
         },
@@ -796,13 +805,6 @@
             "AutoCAD"
           ],
           "quote": "- AutoCAD를 활용한 통신공사 도면 작성 및 수정 능력"
-        },
-        {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "- 엑셀을 활용한 물량산출 및 설계내역서 작성 능력"
         }
       ],
       "bodyCareer": "경력",
@@ -810,7 +812,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "637": {
     "source": "REAL",
@@ -832,7 +834,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "638": {
     "source": "REAL",
@@ -854,7 +856,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "639": {
     "source": "REAL",
@@ -876,7 +878,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "640": {
     "source": "REAL",
@@ -898,7 +900,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "641": {
     "source": "REAL",
@@ -913,7 +915,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "Tekla Structures Open API를 활용한 서드파티 프로그램 및 플러그인 개발",
+      "familyQuote": "[직무] 시스템 소프트웨어 개발자",
       "requiredSkills": [
         {
           "original": "C# 또는 .NET Framework",
@@ -921,22 +923,22 @@
             "C#",
             ".NET Framework"
           ],
-          "quote": "C# 또는 .NET Framework 환경에서의 개발 경력 보유자"
+          "quote": "- C# 또는 .NET Framework 환경에서의 개발 경력 보유자"
         },
         {
           "original": "Tekla Structures Open API",
           "options": [
             "Tekla Structures Open API"
           ],
-          "quote": "Tekla Structures Open API에 대한 이해도가 있거나 관련 API 활용 프로젝트 유경험자"
+          "quote": "- Tekla Structures Open API에 대한 이해도가 있거나 관련 API 활용 프로젝트 유경험자"
         },
         {
           "original": "CAD/BIM",
           "options": [
-            "CAD",
-            "BIM"
+            "AutoCAD",
+            "Autodesk Revit"
           ],
-          "quote": "CAD/BIM 데이터 구조 및 기하학적 연산에 대한 기본 지식 보유자"
+          "quote": "- CAD/BIM 데이터 구조 및 기하학적 연산에 대한 기본 지식 보유자"
         }
       ],
       "bodyCareer": "경력",
@@ -946,7 +948,7 @@
       "education"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "642": {
     "source": "REAL",
@@ -961,14 +963,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[내용] 원격 및 현장 장애 처리 / 헬프데스크 업무 전반",
+      "familyQuote": "[직무] IT 기술지원 전문가",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "643": {
     "source": "REAL",
@@ -986,10 +988,16 @@
       "familyQuote": "상황에 따라 개발이 아닌 Auth보안(부분개발) 및 DB보안(보안) 등의 보안솔루션 관련된 엔지니어링 혹은 보안 업무만 수행하실 수도 있습니다.",
       "requiredSkills": [
         {
-          "original": "Linux / Oracle",
+          "original": "Linux",
           "options": [
-            "Linux",
-            "Oracle Database"
+            "Linux"
+          ],
+          "quote": "- Linux / Oracle / 네트워크 등의 이해도가 빠르신 분"
+        },
+        {
+          "original": "Oracle",
+          "options": [
+            "Oracle"
           ],
           "quote": "- Linux / Oracle / 네트워크 등의 이해도가 빠르신 분"
         },
@@ -997,7 +1005,7 @@
           "original": "Java/JSP",
           "options": [
             "Java",
-            "JavaServer Pages"
+            "Jakarta Server Pages"
           ],
           "quote": "- Java/JSP 개발 가능 / IT전반지식(DB/Web/WAS/Network/Linux 등)"
         }
@@ -1007,7 +1015,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "644": {
     "source": "REAL",
@@ -1029,7 +1037,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "645": {
     "source": "REAL",
@@ -1051,14 +1059,14 @@
           "options": [
             "Linux"
           ],
-          "quote": "- Linux, Windows의 운영체제 구축 경험이 있으신 분"
+          "quote": "Linux, Windows의 운영체제 구축 경험이 있으신 분"
         },
         {
           "original": "Windows",
           "options": [
             "Windows"
           ],
-          "quote": "- Linux, Windows의 운영체제 구축 경험이 있으신 분"
+          "quote": "Linux, Windows의 운영체제 구축 경험이 있으신 분"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -1066,7 +1074,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "646": {
     "source": "REAL",
@@ -1088,7 +1096,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "647": {
     "source": "REAL",
@@ -1110,7 +1118,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "648": {
     "source": "REAL",
@@ -1126,35 +1134,13 @@
         "OTHER"
       ],
       "familyQuote": "º 모집직무: 서비스·기술기획, R&D, 웹운영관리",
-      "requiredSkills": [
-        {
-          "original": "PPT",
-          "options": [
-            "Microsoft PowerPoint"
-          ],
-          "quote": "º PPT, Excel, Notion 등을 활용하여 기술 검토 내용 문서화"
-        },
-        {
-          "original": "Excel",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "º PPT, Excel, Notion 등을 활용하여 기술 검토 내용 문서화"
-        },
-        {
-          "original": "Notion",
-          "options": [
-            "Notion"
-          ],
-          "quote": "º PPT, Excel, Notion 등을 활용하여 기술 검토 내용 문서화"
-        }
-      ],
+      "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "649": {
     "source": "REAL",
@@ -1169,7 +1155,7 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "모바일 애플리케이션 프로그래머(앱·어플 개발)",
+      "familyQuote": "[직무] 모바일 애플리케이션 프로그래머(앱·어플 개발)",
       "requiredSkills": [
         {
           "original": "TypeScript",
@@ -1200,7 +1186,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "650": {
     "source": "REAL",
@@ -1222,7 +1208,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "651": {
     "source": "REAL",
@@ -1244,7 +1230,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "652": {
     "source": "REAL",
@@ -1266,7 +1252,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "653": {
     "source": "REAL",
@@ -1281,14 +1267,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "CAD CAM(2D,3D)",
+      "familyQuote": "[직무] 데이터 설계 및 프로그래머\n[내용] CAD CAM(2D,3D)",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "654": {
     "source": "REAL",
@@ -1310,7 +1296,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "655": {
     "source": "REAL",
@@ -1332,7 +1318,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "656": {
     "source": "REAL",
@@ -1347,14 +1333,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "응용 소프트웨어 개발자",
+      "familyQuote": "[직무] 응용 소프트웨어 개발자",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "657": {
     "source": "REAL",
@@ -1372,14 +1358,14 @@
       "familyQuote": "▣ 근무 내용 : IT Engineer - 서버 및 NAS 스토리지 시스템 관리, ERP구축 등",
       "requiredSkills": [
         {
-          "original": "NAS",
+          "original": "NAS 서버 시스템 관리",
           "options": [
             "NAS"
           ],
           "quote": "* NAS 서버 시스템 관리, ERP구축 유경험자"
         },
         {
-          "original": "ERP",
+          "original": "ERP구축",
           "options": [
             "ERP"
           ],
@@ -1391,7 +1377,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "658": {
     "source": "REAL",
@@ -1445,7 +1431,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "659": {
     "source": "REAL",
@@ -1467,7 +1453,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "660": {
     "source": "REAL",
@@ -1503,7 +1489,7 @@
           "options": [
             "STMicroelectronics",
             "Atmel",
-            "Microchip"
+            "Microchip Technology"
           ],
           "quote": "- st / atmel / microchip 유경험자"
         }
@@ -1513,7 +1499,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "661": {
     "source": "REAL",
@@ -1592,6 +1578,14 @@
             "JavaScript"
           ],
           "quote": "ㆍHTML, CSS, JavaScript를 이해하고 개발해 본 경험이 있는 분"
+        },
+        {
+          "original": "AI 개발도구",
+          "options": [
+            "GitHub Copilot",
+            "Cursor"
+          ],
+          "quote": "ㆍAI 개발도구를 실무에 적극 활용하여 일의 능률의 높일 수 있는 분"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -1599,7 +1593,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "662": {
     "source": "REAL",
@@ -1612,16 +1606,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "INFRA"
+        "NETWORK"
       ],
-      "familyQuote": "？ 서버 운영 및 최적화",
+      "familyQuote": "VPN, 방화벽  구축 및 기술지원",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "663": {
     "source": "REAL",
@@ -1636,14 +1630,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "홈페이지, 스마트스토어 관리",
+      "familyQuote": "[직무] 웹 운영자(홈페이지 관리자)",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "664": {
     "source": "REAL",
@@ -1666,7 +1660,7 @@
             "C#",
             "Windows Presentation Foundation"
           ],
-          "quote": "- 경력: C#/WPF 개발 실무 경력 2년 이상"
+          "quote": "경력: C#/WPF 개발 실무 경력 2년 이상"
         }
       ],
       "bodyCareer": "경력",
@@ -1674,7 +1668,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "665": {
     "source": "REAL",
@@ -1689,14 +1683,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "정보보호 및 서버, 네트워크, 보안장비 취약점 진단, 정보보안 인증 획득 지원",
+      "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "666": {
     "source": "REAL",
@@ -1712,13 +1706,22 @@
         "FULLSTACK"
       ],
       "familyQuote": "웹 서비스 풀스택 구현 역량",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "AI 코딩 도구",
+          "options": [
+            "GitHub Copilot",
+            "Cursor"
+          ],
+          "quote": "AI 코딩 도구를 일상적으로 쓰고, 그 결과물을 스스로 검증하며, AI로 일하는 방식 자체를 개선해 본 분"
+        }
+      ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "667": {
     "source": "REAL",
@@ -1748,7 +1751,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "668": {
     "source": "REAL",
@@ -1761,16 +1764,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "EMBEDDED"
+        "OTHER"
       ],
-      "familyQuote": "IoT, Embedded, Automotive 시스템 리버스 엔지니어링",
+      "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "669": {
     "source": "REAL",
@@ -1792,7 +1795,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "670": {
     "source": "REAL",
@@ -1805,7 +1808,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "OTHER"
+        "EMBEDDED"
       ],
       "familyQuote": "PLC 설계 · HMI·SCADA 화면 · 데이터 수집·통신 연동 · 현장 시운전",
       "requiredSkills": [],
@@ -1814,7 +1817,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "671": {
     "source": "REAL",
@@ -1836,7 +1839,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "672": {
     "source": "REAL",
@@ -1858,7 +1861,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "673": {
     "source": "REAL",
@@ -1880,7 +1883,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "674": {
     "source": "REAL",
@@ -1904,7 +1907,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "675": {
     "source": "REAL",
@@ -1928,7 +1931,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "676": {
     "source": "REAL",
@@ -1943,7 +1946,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "ㆍ비전 검사 장비\n  - 제어 S/W개발\n  - 검사 S/W 개발",
+      "familyQuote": "응용 소프트웨어 개발자",
       "requiredSkills": [
         {
           "original": "C/C++",
@@ -1956,7 +1959,7 @@
         {
           "original": "VisualC++",
           "options": [
-            "Visual C++"
+            "Microsoft Visual C++"
           ],
           "quote": "ㆍC/C++, VisualC++, C#사용 경험자"
         },
@@ -1973,7 +1976,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "677": {
     "source": "REAL",
@@ -1995,7 +1998,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "678": {
     "source": "REAL",
@@ -2010,14 +2013,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "679": {
     "source": "REAL",
@@ -2051,6 +2054,23 @@
           "quote": "REST API 및 네트워크 프로그래밍 경험"
         },
         {
+          "original": "네트워크 프로그래밍",
+          "options": [
+            "Socket API",
+            "TCP/IP"
+          ],
+          "quote": "REST API 및 네트워크 프로그래밍 경험"
+        },
+        {
+          "original": "관계형 DB",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "관계형 DB 또는 데이터 처리 경험"
+        },
+        {
           "original": "Linux/Windows Server",
           "options": [
             "Linux",
@@ -2059,12 +2079,12 @@
           "quote": "Linux/Windows Server 환경 개발 경험"
         }
       ],
-      "bodyCareer": "적혀 있지 않음",
+      "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "680": {
     "source": "REAL",
@@ -2084,7 +2104,9 @@
         {
           "original": "RDBMS",
           "options": [
-            "RDBMS"
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
           ],
           "quote": "3) 기술: 기본적인 RDBMS 설계 및 SQL Query 활용 역량 보유자"
         },
@@ -2101,7 +2123,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "681": {
     "source": "REAL",
@@ -2123,7 +2145,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "682": {
     "source": "REAL",
@@ -2145,7 +2167,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "683": {
     "source": "REAL",
@@ -2167,7 +2189,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "685": {
     "source": "REAL",
@@ -2189,7 +2211,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "686": {
     "source": "REAL",
@@ -2204,7 +2226,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "Windows FORMS 기반 데스크톱, 애플리케이션 개발",
+      "familyQuote": "Windows FORMS 기반 데스크톱, 애플리케이션 개발이해도가 높으신분",
       "requiredSkills": [
         {
           "original": "VB.NET",
@@ -2233,7 +2255,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "690": {
     "source": "REAL",
@@ -2255,7 +2277,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "692": {
     "source": "REAL",
@@ -2270,14 +2292,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "1. 상용 S/W 프로그램을 이용한 HMI 제작 및 구축\r\n  2. PLC Logic 프로그램 구현 및 구축\r\n  3. 시스템 설계 및 구축",
+      "familyQuote": "산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "693": {
     "source": "REAL",
@@ -2292,7 +2314,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "모집 직무\n\n서비스 운영·QA 매니저 / 서비스 운영 PL / 제품 운영·품질관리",
+      "familyQuote": "서비스 운영·QA 매니저 / 서비스 운영 PL / 제품 운영·품질관리",
       "requiredSkills": [
         {
           "original": "Jira",
@@ -2307,7 +2329,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "694": {
     "source": "REAL",
@@ -2329,7 +2351,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "695": {
     "source": "REAL",
@@ -2351,7 +2373,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "696": {
     "source": "REAL",
@@ -2364,7 +2386,7 @@
     },
     "extracted": {
       "jobFamilies": [
-        "OTHER"
+        "FULLSTACK"
       ],
       "familyQuote": "[직무] 웹 개발자",
       "requiredSkills": [],
@@ -2373,7 +2395,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "697": {
     "source": "REAL",
@@ -2388,14 +2410,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "시스템 유지보수 수행하기,기술 문의 대응하기",
+      "familyQuote": "[IT기술지원 > 시스템 유지보수관리]\n시스템 유지보수 수행하기,기술 문의 대응하기",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "698": {
     "source": "REAL",
@@ -2434,7 +2456,7 @@
       "education"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "699": {
     "source": "REAL",
@@ -2456,7 +2478,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "700": {
     "source": "REAL",
@@ -2473,6 +2495,16 @@
       ],
       "familyQuote": "논문·특허·실험노트 등 소재 R&D 문서를 대상으로 RAG, 하이브리드 검색, AI Agent를 설계하고 검색 품질을 지표로 끌어올리는 LLM 엔지니어를 찾습니다.",
       "requiredSkills": [
+        {
+          "original": "LLM·RAG·검색 시스템 또는 NLP(자연어처리)",
+          "options": [
+            "LLM",
+            "RAG",
+            "Information Retrieval",
+            "NLP"
+          ],
+          "quote": "LLM·RAG·검색 시스템 또는 NLP(자연어처리) 개발 경력 3년 이상 (석사 과정 연구 경력 포함)"
+        },
         {
           "original": "Python",
           "options": [
@@ -2509,23 +2541,9 @@
           "quote": "LangChain·LlamaIndex 사용을 넘어 RAG·검색 파이프라인을 직접 설계하고, 정량 지표로 병목을 찾아 개선해 본 경험"
         },
         {
-          "original": "RAG",
-          "options": [
-            "RAG"
-          ],
-          "quote": "LangChain·LlamaIndex 사용을 넘어 RAG·검색 파이프라인을 직접 설계하고, 정량 지표로 병목을 찾아 개선해 본 경험"
-        },
-        {
           "original": "Transformer",
           "options": [
             "Transformer"
-          ],
-          "quote": "Transformer 구조와 LLM 작동 원리에 대한 이해"
-        },
-        {
-          "original": "LLM",
-          "options": [
-            "LLM"
           ],
           "quote": "Transformer 구조와 LLM 작동 원리에 대한 이해"
         }
@@ -2535,7 +2553,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "701": {
     "source": "REAL",
@@ -2550,28 +2568,28 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "자동차 부품 사출금형 설계및 관리자",
+      "familyQuote": "- 자동차 부품 사출금형 설계및 관리자",
       "requiredSkills": [
         {
           "original": "UG",
           "options": [
             "Siemens NX"
           ],
-          "quote": "UG, VISI, AUTO CAD를 사용하시는 분"
+          "quote": "-. UG, VISI, AUTO CAD를 사용하시는 분"
         },
         {
           "original": "VISI",
           "options": [
             "VISI"
           ],
-          "quote": "UG, VISI, AUTO CAD를 사용하시는 분"
+          "quote": "-. UG, VISI, AUTO CAD를 사용하시는 분"
         },
         {
           "original": "AUTO CAD",
           "options": [
             "AutoCAD"
           ],
-          "quote": "UG, VISI, AUTO CAD를 사용하시는 분"
+          "quote": "-. UG, VISI, AUTO CAD를 사용하시는 분"
         }
       ],
       "bodyCareer": "경력",
@@ -2579,7 +2597,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "702": {
     "source": "REAL",
@@ -2601,7 +2619,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "703": {
     "source": "REAL",
@@ -2623,7 +2641,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "704": {
     "source": "REAL",
@@ -2638,14 +2656,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "Windows용 응용프로그램 개발",
+      "familyQuote": "- Windows용 응용프로그램 개발",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "705": {
     "source": "REAL",
@@ -2660,28 +2678,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "Go+MySQL+LevelDB 기반 서비스 개발 경험",
+      "familyQuote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험",
       "requiredSkills": [
         {
           "original": "Go",
           "options": [
             "Go"
           ],
-          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
         },
         {
           "original": "LevelDB",
           "options": [
             "LevelDB"
           ],
-          "quote": "Go+MySQL+LevelDB 기반 서비스 개발 경험"
+          "quote": "- Go+MySQL+LevelDB 기반 서비스 개발 경험"
         }
       ],
       "bodyCareer": "경력",
@@ -2689,7 +2707,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "706": {
     "source": "REAL",
@@ -2711,7 +2729,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "707": {
     "source": "REAL",
@@ -2733,7 +2751,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "709": {
     "source": "REAL",
@@ -2755,7 +2773,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "710": {
     "source": "REAL",
@@ -2770,7 +2788,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "※ 반도체/ 디스플레이/ 진공/ ALD 장비 - PC SW엔지니어 채용※",
+      "familyQuote": "반도체/ 디스플레이/ 진공/ ALD 장비 - PC SW엔지니어 채용",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "대졸(4년)"
@@ -2779,7 +2797,7 @@
       "education"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "711": {
     "source": "REAL",
@@ -2794,14 +2812,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- 업무 프로세스 자동화를 위한 AI 알고리즘 개발 및 구현",
+      "familyQuote": "본 채용은 기업 고객의 니즈를 충족하는 차별화된 AI 시스템을 개발하고 구현하는 주요 역할을 담당합니다.",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "712": {
     "source": "REAL",
@@ -2816,7 +2834,7 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "Tableau 개발 또는 관련 BI 업무 경력 2년 이상이신 분",
+      "familyQuote": "데이터 분석 및 시각화에 관심과 이해가 있으신 분",
       "requiredSkills": [
         {
           "original": "Tableau",
@@ -2824,6 +2842,15 @@
             "Tableau"
           ],
           "quote": "Tableau를 활용한 대시보드 제작 경험이 있으신 분"
+        },
+        {
+          "original": "관계형 데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "관계형 데이터베이스 및 SQL의 기본 개념을 이해하시는 분"
         },
         {
           "original": "SQL",
@@ -2840,7 +2867,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "713": {
     "source": "REAL",
@@ -2862,7 +2889,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "714": {
     "source": "REAL",
@@ -2875,16 +2902,25 @@
     },
     "extracted": {
       "jobFamilies": [
-        "AI"
+        "FULLSTACK"
       ],
       "familyQuote": "- 생성형 AI를 활용한 웹사이트 및 업무 시스템 개발",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "생성형 AI 개발 도구",
+          "options": [
+            "Claude Code",
+            "Codex"
+          ],
+          "quote": "- 생성형 AI 개발 도구에 대한 이해와 활용 경험"
+        }
+      ],
       "bodyCareer": "관계없음",
       "bodyEducation": "학력무관"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "715": {
     "source": "REAL",
@@ -2899,14 +2935,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "* 주 업무는 컴퓨터 관련 업무, 컴퓨터 하드웨어 서비스, 소프트웨어 서비스,  설치 등 다만  이것 만 하지 않음  장비 서비스는 기본 업무로 해야함.",
+      "familyQuote": "주 업무는 컴퓨터 관련 업무, 컴퓨터 하드웨어 서비스, 소프트웨어 서비스,  설치 등 다만  이것 만 하지 않음  장비 서비스는 기본 업무로 해야함.",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "716": {
     "source": "REAL",
@@ -2921,14 +2957,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- 형상 AI 모델 개발 및 튜닝",
+      "familyQuote": "형상 AI 모델 개발 및 튜닝",
       "requiredSkills": [
         {
           "original": "PyTorch",
           "options": [
             "PyTorch"
           ],
-          "quote": "- PyTorch 등 딥러닝 프레임워크 활용 경험 2년 이상 (또는 이에 준하는 연구 경험)"
+          "quote": "PyTorch 등 딥러닝 프레임워크 활용 경험 2년 이상 (또는 이에 준하는 연구 경험)"
         }
       ],
       "bodyCareer": "경력",
@@ -2936,7 +2972,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "717": {
     "source": "REAL",
@@ -2958,7 +2994,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "828": {
     "source": "REAL",
@@ -2992,19 +3028,17 @@
         {
           "original": "스마트스토어",
           "options": [
-            "Naver Smart Store"
+            "NAVER Smart Store"
           ],
           "quote": "카페24 및 스마트스토어 운영 경험이 있으신 분"
         }
       ],
-      "bodyCareer": "경력",
+      "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
-    "fieldBodyMismatch": [
-      "career"
-    ],
+    "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "835": {
     "source": "REAL",
@@ -3041,7 +3075,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "842": {
     "source": "REAL",
@@ -3085,7 +3119,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "846": {
     "source": "REAL",
@@ -3107,7 +3141,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "849": {
     "source": "REAL",
@@ -3122,7 +3156,7 @@
       "jobFamilies": [
         "DESIGN"
       ],
-      "familyQuote": "[직무] 웹 디자이너",
+      "familyQuote": "쇼핑몰 및 브랜드 웹사이트 디자인",
       "requiredSkills": [
         {
           "original": "포토샵",
@@ -3151,7 +3185,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "856": {
     "source": "REAL",
@@ -3195,7 +3229,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "861": {
     "source": "REAL",
@@ -3253,7 +3287,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "865": {
     "source": "REAL",
@@ -3275,7 +3309,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "867": {
     "source": "REAL",
@@ -3297,7 +3331,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "870": {
     "source": "REAL",
@@ -3319,7 +3353,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "878": {
     "source": "REAL",
@@ -3341,7 +3375,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "881": {
     "source": "REAL",
@@ -3378,7 +3412,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "884": {
     "source": "REAL",
@@ -3398,7 +3432,7 @@
         {
           "original": "캐드",
           "options": [
-            "CAD"
+            "AutoCAD"
           ],
           "quote": "캐드 가능한자"
         }
@@ -3408,7 +3442,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "890": {
     "source": "REAL",
@@ -3430,7 +3464,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "896": {
     "source": "REAL",
@@ -3461,7 +3495,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "898": {
     "source": "REAL",
@@ -3485,7 +3519,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "899": {
     "source": "REAL",
@@ -3522,7 +3556,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900": {
     "source": "REAL",
@@ -3544,7 +3578,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "902": {
     "source": "REAL",
@@ -3568,7 +3602,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "904": {
     "source": "REAL",
@@ -3590,7 +3624,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "905": {
     "source": "REAL",
@@ -3612,7 +3646,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "915": {
     "source": "REAL",
@@ -3642,7 +3676,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "916": {
     "source": "REAL",
@@ -3679,7 +3713,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "920": {
     "source": "REAL",
@@ -3702,27 +3736,6 @@
             "Adobe Photoshop"
           ],
           "quote": "-포토샵 가능한 분"
-        },
-        {
-          "original": "일러스트",
-          "options": [
-            "Adobe Illustrator"
-          ],
-          "quote": "[자격증] (기타: 포토샵, 일러스트, 사뱡넷활용가능, 엑셀)"
-        },
-        {
-          "original": "사뱡넷",
-          "options": [
-            "Sabangnet"
-          ],
-          "quote": "[자격증] (기타: 포토샵, 일러스트, 사뱡넷활용가능, 엑셀)"
-        },
-        {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "[자격증] (기타: 포토샵, 일러스트, 사뱡넷활용가능, 엑셀)"
         }
       ],
       "bodyCareer": "경력",
@@ -3730,7 +3743,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "934": {
     "source": "REAL",
@@ -3762,7 +3775,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "935": {
     "source": "REAL",
@@ -3784,7 +3797,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "936": {
     "source": "REAL",
@@ -3821,7 +3834,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "939": {
     "source": "REAL",
@@ -3843,7 +3856,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "946": {
     "source": "REAL",
@@ -3880,7 +3893,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "948": {
     "source": "REAL",
@@ -3895,14 +3908,14 @@
       "jobFamilies": [
         "DESIGN"
       ],
-      "familyQuote": "[직무] 웹 디자이너",
+      "familyQuote": "[모집직무]\n웹 디자이너",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "953": {
     "source": "REAL",
@@ -3924,7 +3937,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "957": {
     "source": "REAL",
@@ -3940,13 +3953,28 @@
         "DESIGN"
       ],
       "familyQuote": "[직무] 웹 디자이너",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "포토샵",
+          "options": [
+            "Adobe Photoshop"
+          ],
+          "quote": "？？포토샵,？일러스트？사용가능자？/？영상편집？&？제작？가능자？우대"
+        },
+        {
+          "original": "일러스트",
+          "options": [
+            "Adobe Illustrator"
+          ],
+          "quote": "？？포토샵,？일러스트？사용가능자？/？영상편집？&？제작？가능자？우대"
+        }
+      ],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "958": {
     "source": "REAL",
@@ -3968,7 +3996,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "959": {
     "source": "REAL",
@@ -3990,7 +4018,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "961": {
     "source": "REAL",
@@ -4012,7 +4040,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "962": {
     "source": "REAL",
@@ -4064,7 +4092,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "963": {
     "source": "REAL",
@@ -4086,7 +4114,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "964": {
     "source": "REAL",
@@ -4108,7 +4136,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "965": {
     "source": "REAL",
@@ -4130,7 +4158,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "1383": {
     "source": "REAL",
@@ -4152,7 +4180,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "1388": {
     "source": "REAL",
@@ -4174,7 +4202,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "1389": {
     "source": "REAL",
@@ -4196,7 +4224,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900001": {
     "source": "GENERAL",
@@ -4220,7 +4248,7 @@
       "education"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900002": {
     "source": "GENERAL",
@@ -4242,7 +4270,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900003": {
     "source": "GENERAL",
@@ -4257,7 +4285,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "ㆍ DB 설계 및 쿼리 작성",
+      "familyQuote": "ㆍ 서비스 장애 대응 및 로그 확인<br/>ㆍ DB 설계 및 쿼리 작성",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -4287,7 +4315,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900004": {
     "source": "GENERAL",
@@ -4302,14 +4330,22 @@
       "jobFamilies": [
         "MOBILE"
       ],
-      "familyQuote": "모바일 애플리케이션 프로그래머(앱·어플 개발)",
-      "requiredSkills": [],
+      "familyQuote": "자사 앱의 화면을 React Native 로 개발할 분을 찾습니다.",
+      "requiredSkills": [
+        {
+          "original": "React Native",
+          "options": [
+            "React Native"
+          ],
+          "quote": "자사 앱의 화면을 React Native 로 개발할 분을 찾습니다."
+        }
+      ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900005": {
     "source": "GENERAL",
@@ -4331,7 +4367,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900006": {
     "source": "GENERAL",
@@ -4368,7 +4404,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900007": {
     "source": "GENERAL",
@@ -4381,16 +4417,16 @@
     },
     "extracted": {
       "jobFamilies": [
-        "BE"
+        "OTHER"
       ],
-      "familyQuote": "회사의 주문 · 정산 · 재고 업무를 처리하는 시스템을 운영하고 개선할 개발자를 찾습니다. 현업 부서의 요청을 받아 기능을 고치고, 매일 도는 배치 작업을 관리합니다.",
+      "familyQuote": "범용 응용 소프트웨어 프로그래머(ERP,정보처리,재무관리 등)",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900008": {
     "source": "GENERAL",
@@ -4405,21 +4441,22 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- 생성형 AI 를 활용한 서비스 기능 개발",
+      "familyQuote": "생성형 AI 를 활용한 서비스 기능 개발",
       "requiredSkills": [
         {
           "original": "LLM API",
           "options": [
-            "LLM API"
+            "OpenAI API",
+            "Gemini API"
           ],
-          "quote": "- LLM API 사용 경험 또는 관심"
+          "quote": "LLM API 사용 경험 또는 관심"
         },
         {
           "original": "REST API",
           "options": [
             "REST API"
           ],
-          "quote": "- REST API 개발 경험"
+          "quote": "REST API 개발 경험"
         }
       ],
       "bodyCareer": "관계없음",
@@ -4427,7 +4464,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900009": {
     "source": "GENERAL",
@@ -4447,15 +4484,16 @@
         {
           "original": "영상 처리",
           "options": [
-            "Image Processing"
+            "OpenCV"
           ],
           "quote": "- 영상 처리 기초 지식"
         },
         {
           "original": "머신러닝 / 딥러닝",
           "options": [
-            "Machine Learning",
-            "Deep Learning"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
           "quote": "- 머신러닝 / 딥러닝 기본 이해"
         }
@@ -4465,7 +4503,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900010": {
     "source": "GENERAL",
@@ -4487,7 +4525,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900011": {
     "source": "GENERAL",
@@ -4525,7 +4563,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900012": {
     "source": "GENERAL",
@@ -4547,7 +4585,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900013": {
     "source": "GENERAL",
@@ -4569,7 +4607,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900014": {
     "source": "GENERAL",
@@ -4620,7 +4658,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900015": {
     "source": "GENERAL",
@@ -4642,7 +4680,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900016": {
     "source": "GENERAL",
@@ -4658,13 +4696,23 @@
         "INFRA"
       ],
       "familyQuote": "데이터베이스 운영·관리자",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "데이터베이스 기본 이해"
+        }
+      ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900017": {
     "source": "GENERAL",
@@ -4701,7 +4749,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900018": {
     "source": "GENERAL",
@@ -4717,21 +4765,13 @@
         "OTHER"
       ],
       "familyQuote": "[직무] 웹 운영자(홈페이지 관리자)",
-      "requiredSkills": [
-        {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "- 엑셀 사용 가능자"
-        }
-      ],
+      "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900019": {
     "source": "GENERAL",
@@ -4753,7 +4793,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900020": {
     "source": "GENERAL",
@@ -4776,21 +4816,21 @@
             "JavaScript",
             "TypeScript"
           ],
-          "quote": "- JavaScript 또는 TypeScript 사용 가능자"
+          "quote": "JavaScript 또는 TypeScript 사용 가능자"
         },
         {
           "original": "REST API",
           "options": [
             "REST API"
           ],
-          "quote": "- REST API 개념 이해"
+          "quote": "REST API 개념 이해"
         },
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "- Git 사용 경험"
+          "quote": "Git 사용 경험"
         }
       ],
       "bodyCareer": "관계없음",
@@ -4798,7 +4838,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900021": {
     "source": "GENERAL",
@@ -4813,28 +4853,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "자사 웹 서비스 API 개발 및 유지보수",
+      "familyQuote": "* 자사 웹 서비스 API 개발 및 유지보수",
       "requiredSkills": [
         {
           "original": "JAVA",
           "options": [
             "Java"
           ],
-          "quote": "JAVA 기반 웹 개발 가능자"
+          "quote": "* JAVA 기반 웹 개발 가능자"
         },
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "Git 사용 경험"
+          "quote": "* Git 사용 경험"
         },
         {
           "original": "Spring 프레임워크",
           "options": [
             "Spring Framework"
           ],
-          "quote": "Spring 프레임워크 사용 경험"
+          "quote": "* Spring 프레임워크 사용 경험"
         }
       ],
       "bodyCareer": "경력",
@@ -4842,7 +4882,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900022": {
     "source": "GENERAL",
@@ -4857,14 +4897,14 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "서버 · 네트워크 운영",
+      "familyQuote": "[내용] 서버 · 네트워크 운영",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900023": {
     "source": "GENERAL",
@@ -4886,7 +4926,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900024": {
     "source": "GENERAL",
@@ -4901,14 +4941,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "보안 관제원",
+      "familyQuote": "[직무] 보안 관제원",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900025": {
     "source": "GENERAL",
@@ -4926,6 +4966,15 @@
       "familyQuote": "IT 기술지원 전문가",
       "requiredSkills": [
         {
+          "original": "OS",
+          "options": [
+            "Windows",
+            "Linux",
+            "macOS"
+          ],
+          "quote": "· PC 조립 및 OS 설치 가능자"
+        },
+        {
           "original": "윈도우 서버",
           "options": [
             "Windows Server"
@@ -4938,7 +4987,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900026": {
     "source": "GENERAL",
@@ -4990,7 +5039,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900027": {
     "source": "GENERAL",
@@ -5012,7 +5061,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900028": {
     "source": "GENERAL",
@@ -5034,7 +5083,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900029": {
     "source": "GENERAL",
@@ -5056,7 +5105,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900030": {
     "source": "GENERAL",
@@ -5071,21 +5120,28 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "- 서버 및 네트워크 장비 운영",
+      "familyQuote": "서버 및 네트워크 장비 운영",
       "requiredSkills": [
         {
           "original": "윈도우 서버",
           "options": [
             "Windows Server"
           ],
-          "quote": "- 윈도우 서버 사용 경험"
+          "quote": "윈도우 서버 사용 경험"
         },
         {
           "original": "리눅스",
           "options": [
             "Linux"
           ],
-          "quote": "- 리눅스 기본 명령어 사용 가능자"
+          "quote": "리눅스 기본 명령어 사용 가능자"
+        },
+        {
+          "original": "Git",
+          "options": [
+            "Git"
+          ],
+          "quote": "기타(Git 사용 경험)"
         }
       ],
       "bodyCareer": "관계없음",
@@ -5093,7 +5149,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900031": {
     "source": "GENERAL",
@@ -5108,14 +5164,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "· 웹 서비스 화면 및 서버 개발",
+      "familyQuote": "웹 서비스 화면 및 서버 개발",
       "requiredSkills": [
         {
           "original": "Git",
           "options": [
             "Git"
           ],
-          "quote": "· Git 사용 경험"
+          "quote": "Git 사용 경험"
         }
       ],
       "bodyCareer": "신입",
@@ -5123,7 +5179,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900032": {
     "source": "GENERAL",
@@ -5145,7 +5201,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900033": {
     "source": "GENERAL",
@@ -5160,7 +5216,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "ㆍ 자사 웹 서비스 화면 개발",
+      "familyQuote": "ㆍ 자사 웹 서비스 화면 개발\nㆍ 관리자 페이지 화면 개발 및 유지보수",
       "requiredSkills": [
         {
           "original": "TypeScript",
@@ -5183,7 +5239,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900034": {
     "source": "GENERAL",
@@ -5213,7 +5269,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900035": {
     "source": "GENERAL",
@@ -5257,7 +5313,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900036": {
     "source": "GENERAL",
@@ -5279,7 +5335,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900037": {
     "source": "GENERAL",
@@ -5309,7 +5365,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900038": {
     "source": "GENERAL",
@@ -5331,7 +5387,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900039": {
     "source": "GENERAL",
@@ -5353,7 +5409,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900040": {
     "source": "GENERAL",
@@ -5375,7 +5431,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900041": {
     "source": "GENERAL",
@@ -5397,7 +5453,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900042": {
     "source": "GENERAL",
@@ -5412,14 +5468,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "생성형 AI 를 활용한 사내 서비스를 개발합니다. 문서 요약, 검색, 질의응답 기능을 만들고 품질을 평가하는 업무를 맡게 됩니다.",
+      "familyQuote": "생성형 AI 를 활용한 사내 서비스를 개발합니다.",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900043": {
     "source": "GENERAL",
@@ -5437,6 +5493,15 @@
       "familyQuote": "데이터베이스 운영·관리자",
       "requiredSkills": [
         {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "데이터베이스 기본 이해"
+        },
+        {
           "original": "리눅스",
           "options": [
             "Linux"
@@ -5449,7 +5514,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900044": {
     "source": "GENERAL",
@@ -5474,7 +5539,7 @@
           "quote": "· REST API 개념 이해"
         },
         {
-          "original": "Spring",
+          "original": "Spring 프레임워크",
           "options": [
             "Spring Framework"
           ],
@@ -5486,7 +5551,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900045": {
     "source": "GENERAL",
@@ -5508,7 +5573,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900046": {
     "source": "GENERAL",
@@ -5526,13 +5591,6 @@
       "familyQuote": "ㆍ 매출 · 고객 데이터 분석 및 보고서 작성",
       "requiredSkills": [
         {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "ㆍ 엑셀 등 표계산 능숙자"
-        },
-        {
           "original": "SQL",
           "options": [
             "SQL"
@@ -5545,7 +5603,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900047": {
     "source": "GENERAL",
@@ -5582,7 +5640,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900048": {
     "source": "GENERAL",
@@ -5597,14 +5655,14 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "자사 웹 솔루션을 개발하고 운영할 분을 찾습니다. 고객사 요청을 받아 화면과 서버 기능을 함께 고치고, 배포와 오류 대응까지 맡습니다.",
+      "familyQuote": "고객사 요청을 받아 화면과 서버 기능을 함께 고치고, 배포와 오류 대응까지 맡습니다.",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900049": {
     "source": "GENERAL",
@@ -5626,7 +5684,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900050": {
     "source": "GENERAL",
@@ -5648,7 +5706,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900051": {
     "source": "GENERAL",
@@ -5670,7 +5728,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900052": {
     "source": "GENERAL",
@@ -5714,7 +5772,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900053": {
     "source": "GENERAL",
@@ -5751,7 +5809,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900054": {
     "source": "GENERAL",
@@ -5766,7 +5824,7 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "- 반응형 웹 퍼블리싱\n- 홈페이지 화면 유지보수",
+      "familyQuote": "- 반응형 웹 퍼블리싱",
       "requiredSkills": [
         {
           "original": "HTML",
@@ -5795,7 +5853,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900055": {
     "source": "GENERAL",
@@ -5825,7 +5883,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900056": {
     "source": "GENERAL",
@@ -5840,7 +5898,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "- 웹 서비스 화면 및 서버 개발",
+      "familyQuote": "웹 서비스 화면 및 서버 개발",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -5863,7 +5921,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900057": {
     "source": "GENERAL",
@@ -5900,7 +5958,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900058": {
     "source": "GENERAL",
@@ -5922,7 +5980,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900059": {
     "source": "GENERAL",
@@ -5944,7 +6002,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900060": {
     "source": "GENERAL",
@@ -5959,20 +6017,22 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- AI 모델 학습 및 성능 평가",
+      "familyQuote": "AI 모델 학습 및 성능 평가",
       "requiredSkills": [
         {
           "original": "머신러닝 / 딥러닝",
           "options": [
-            "Machine Learning",
-            "Deep Learning"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
           "quote": "- 머신러닝 / 딥러닝 기본 이해"
         },
         {
           "original": "데이터 전처리",
           "options": [
-            "Data Preprocessing"
+            "pandas",
+            "NumPy"
           ],
           "quote": "- 데이터 전처리 경험"
         }
@@ -5982,7 +6042,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900061": {
     "source": "GENERAL",
@@ -5998,13 +6058,23 @@
         "DATA"
       ],
       "familyQuote": "- 수집 · 적재 배치 작업 개발 및 운영\n- 분석용 데이터 마트 설계",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "- 데이터베이스 기본 이해"
+        }
+      ],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900062": {
     "source": "GENERAL",
@@ -6019,14 +6089,14 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "홈페이지 화면 유지보수",
+      "familyQuote": "[직무] 웹 개발자\n[내용] 홈페이지 화면 유지보수",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900063": {
     "source": "GENERAL",
@@ -6048,7 +6118,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900064": {
     "source": "GENERAL",
@@ -6071,6 +6141,21 @@
             "Windows Server"
           ],
           "quote": "ㆍ 윈도우 서버 기본 이해"
+        },
+        {
+          "original": "OS",
+          "options": [
+            "Windows",
+            "Linux"
+          ],
+          "quote": "ㆍ PC 조립 및 OS 설치 가능자"
+        },
+        {
+          "original": "네트워크",
+          "options": [
+            "TCP/IP"
+          ],
+          "quote": "ㆍ 네트워크 기초 이해"
         }
       ],
       "bodyCareer": "관계없음",
@@ -6078,7 +6163,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900065": {
     "source": "GENERAL",
@@ -6091,10 +6176,17 @@
     },
     "extracted": {
       "jobFamilies": [
-        "INFRA"
+        "NETWORK"
       ],
-      "familyQuote": "· 시스템 모니터링 및 점검 보고\n· 백업 및 장애 대응\n· 서버 및 네트워크 장비 운영\n· 보안 패치 및 계정 관리",
+      "familyQuote": "[직무] 네트워크 시스템 개발자",
       "requiredSkills": [
+        {
+          "original": "네트워크",
+          "options": [
+            "TCP/IP"
+          ],
+          "quote": "· 네트워크 기초 지식"
+        },
         {
           "original": "윈도우 서버",
           "options": [
@@ -6108,7 +6200,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900066": {
     "source": "GENERAL",
@@ -6123,14 +6215,14 @@
       "jobFamilies": [
         "PUBLISHER"
       ],
-      "familyQuote": "디자인 시안을 받아 웹 표준에 맞게 화면을 만드는 퍼블리셔를 찾습니다. 반응형 작업과 웹 접근성 점검이 주된 업무입니다.",
+      "familyQuote": "디자인 시안을 받아 웹 표준에 맞게 화면을 만드는 퍼블리셔를 찾습니다.",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900067": {
     "source": "GENERAL",
@@ -6160,7 +6252,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900068": {
     "source": "GENERAL",
@@ -6198,7 +6290,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900069": {
     "source": "GENERAL",
@@ -6213,14 +6305,24 @@
       "jobFamilies": [
         "INFRA"
       ],
-      "familyQuote": "데이터베이스 운영·관리자",
-      "requiredSkills": [],
+      "familyQuote": "[직무] 데이터베이스 운영·관리자",
+      "requiredSkills": [
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "* 데이터베이스 기본 이해"
+        }
+      ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900070": {
     "source": "GENERAL",
@@ -6242,7 +6344,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900071": {
     "source": "GENERAL",
@@ -6264,7 +6366,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900072": {
     "source": "GENERAL",
@@ -6286,7 +6388,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900073": {
     "source": "GENERAL",
@@ -6308,7 +6410,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900074": {
     "source": "GENERAL",
@@ -6323,7 +6425,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "· 기존 솔루션 기능 개선\n· 서비스 배포 및 운영\n· 고객사 요청 기능 개발\n· 관리자 페이지 개발",
+      "familyQuote": "[직무] 웹 개발자",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -6338,7 +6440,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900075": {
     "source": "GENERAL",
@@ -6354,21 +6456,13 @@
         "OTHER"
       ],
       "familyQuote": "기타 컴퓨터 시스템 및 소프트웨어 전문가(IT 테스터 및 IT QA 전문가 등)",
-      "requiredSkills": [
-        {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "ㆍ 엑셀 사용 가능자"
-        }
-      ],
+      "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900076": {
     "source": "GENERAL",
@@ -6390,7 +6484,7 @@
           "options": [
             "Git"
           ],
-          "quote": "기타(Git 사용 경험)"
+          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),표계산 (스프레드시트 활용)  ,기타(Git 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -6398,7 +6492,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900077": {
     "source": "GENERAL",
@@ -6431,7 +6525,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900078": {
     "source": "GENERAL",
@@ -6468,7 +6562,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900079": {
     "source": "GENERAL",
@@ -6490,7 +6584,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900080": {
     "source": "GENERAL",
@@ -6505,7 +6599,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "* 배치 프로그램 개발 및 운영\n* 현업 부서 요청 사항 반영\n* 업무 프로그램 유지보수 및 기능 추가\n* 주문 · 정산 시스템 개발 및 운영",
+      "familyQuote": "* 배치 프로그램 개발 및 운영",
       "requiredSkills": [
         {
           "original": "JAVA",
@@ -6520,7 +6614,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900081": {
     "source": "GENERAL",
@@ -6558,7 +6652,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900082": {
     "source": "GENERAL",
@@ -6580,7 +6674,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900083": {
     "source": "GENERAL",
@@ -6610,7 +6704,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900084": {
     "source": "GENERAL",
@@ -6632,7 +6726,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900085": {
     "source": "GENERAL",
@@ -6663,7 +6757,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900086": {
     "source": "GENERAL",
@@ -6678,14 +6772,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "보안 관제 센터에서 침입 탐지 이벤트를 확인하고 대응할 요원을 모집합니다.",
+      "familyQuote": "[직무] 정보보안 전문가",
       "requiredSkills": [],
       "bodyCareer": "신입",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900087": {
     "source": "GENERAL",
@@ -6707,7 +6801,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900088": {
     "source": "GENERAL",
@@ -6729,7 +6823,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900089": {
     "source": "GENERAL",
@@ -6751,7 +6845,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900090": {
     "source": "GENERAL",
@@ -6781,7 +6875,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900091": {
     "source": "GENERAL",
@@ -6794,9 +6888,9 @@
     },
     "extracted": {
       "jobFamilies": [
-        "OTHER"
+        "INFRA"
       ],
-      "familyQuote": "IT 기술지원 전문가",
+      "familyQuote": "ㆍ 전산 자산 관리\nㆍ 사내 PC 및 프린터 장애 처리\nㆍ 소프트웨어 설치 및 계정 관리",
       "requiredSkills": [
         {
           "original": "윈도우 서버",
@@ -6811,7 +6905,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900092": {
     "source": "GENERAL",
@@ -6842,7 +6936,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900093": {
     "source": "GENERAL",
@@ -6858,13 +6952,29 @@
         "OTHER"
       ],
       "familyQuote": "[직무] IT 기술지원 전문가",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "네트워크 기초 이해",
+          "options": [
+            "TCP/IP"
+          ],
+          "quote": "- 네트워크 기초 이해"
+        },
+        {
+          "original": "OS 설치",
+          "options": [
+            "Windows",
+            "Linux"
+          ],
+          "quote": "- PC 조립 및 OS 설치 가능자"
+        }
+      ],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900094": {
     "source": "GENERAL",
@@ -6879,14 +6989,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "감시카메라 및 보안장치 설치·수리원",
+      "familyQuote": "[직무] 감시카메라 및 보안장치 설치·수리원",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900095": {
     "source": "GENERAL",
@@ -6931,7 +7041,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900096": {
     "source": "GENERAL",
@@ -6946,7 +7056,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "모바일 앱 서버 API 개발",
+      "familyQuote": "* 모바일 앱 서버 API 개발",
       "requiredSkills": [
         {
           "original": "JavaScript 또는 TypeScript",
@@ -6969,7 +7079,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900097": {
     "source": "GENERAL",
@@ -6984,14 +7094,14 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "AI 기술을 실제 서비스에 붙이는 일을 함께 할 분을 찾습니다. 모델을 처음부터 만드는 것보다 이미 있는 언어 모델을 골라 업무 데이터에 맞추는 일이 많습니다.",
+      "familyQuote": "AI 기술을 실제 서비스에 붙이는 일을 함께 할 분을 찾습니다.",
       "requiredSkills": [],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900098": {
     "source": "GENERAL",
@@ -7043,7 +7153,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900099": {
     "source": "GENERAL",
@@ -7081,7 +7191,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900100": {
     "source": "GENERAL",
@@ -7096,7 +7206,7 @@
       "jobFamilies": [
         "DATA"
       ],
-      "familyQuote": "[직무] 데이터 설계 및 프로그래머",
+      "familyQuote": "ㆍ 데이터 품질 점검\nㆍ 외부 공공데이터 연동",
       "requiredSkills": [
         {
           "original": "파이썬",
@@ -7111,7 +7221,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900101": {
     "source": "GENERAL",
@@ -7148,33 +7258,11 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900102": {
     "source": "GENERAL",
     "title": "패키지 여행 상품 개발 MD 모집",
-    "jobCategory": "여행 상품 개발자",
-    "fields": {
-      "career": "관계없음",
-      "education": "학력무관",
-      "location": "서울 중구"
-    },
-    "extracted": {
-      "jobFamilies": [
-        "OTHER"
-      ],
-      "familyQuote": "ㆍ 여행 상품 기획 및 일정 구성",
-      "requiredSkills": [],
-      "bodyCareer": "관계없음",
-      "bodyEducation": "적혀 있지 않음"
-    },
-    "fieldBodyMismatch": [],
-    "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
-  },
-  "900103": {
-    "source": "GENERAL",
-    "title": "[솔빛여행] 여행 상품 기획 담당자 채용",
     "jobCategory": "여행 상품 개발자",
     "fields": {
       "career": "관계없음",
@@ -7192,7 +7280,29 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
+  },
+  "900103": {
+    "source": "GENERAL",
+    "title": "[솔빛여행] 여행 상품 기획 담당자 채용",
+    "jobCategory": "여행 상품 개발자",
+    "fields": {
+      "career": "관계없음",
+      "education": "학력무관",
+      "location": "서울 중구"
+    },
+    "extracted": {
+      "jobFamilies": [
+        "OTHER"
+      ],
+      "familyQuote": "여행 상품 개발자",
+      "requiredSkills": [],
+      "bodyCareer": "관계없음",
+      "bodyEducation": "적혀 있지 않음"
+    },
+    "fieldBodyMismatch": [],
+    "model": "gpt-6.1-sol",
+    "promptVersion": "external-conditions-v3"
   },
   "900104": {
     "source": "GENERAL",
@@ -7214,7 +7324,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900105": {
     "source": "GENERAL",
@@ -7229,14 +7339,14 @@
       "jobFamilies": [
         "EMBEDDED"
       ],
-      "familyQuote": "펌웨어 및 임베디드 소프트웨어 프로그래머",
+      "familyQuote": "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900106": {
     "source": "GENERAL",
@@ -7263,8 +7373,9 @@
         {
           "original": "머신러닝 / 딥러닝",
           "options": [
-            "Machine Learning",
-            "Deep Learning"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
           "quote": "* 머신러닝 / 딥러닝 기본 이해"
         }
@@ -7274,7 +7385,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900107": {
     "source": "GENERAL",
@@ -7289,14 +7400,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "감시카메라 및 보안장치 설치·수리원",
+      "familyQuote": "[직무] 감시카메라 및 보안장치 설치·수리원",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900108": {
     "source": "GENERAL",
@@ -7326,7 +7437,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900109": {
     "source": "GENERAL",
@@ -7348,7 +7459,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900110": {
     "source": "GENERAL",
@@ -7370,7 +7481,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900111": {
     "source": "GENERAL",
@@ -7392,7 +7503,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900112": {
     "source": "GENERAL",
@@ -7407,7 +7518,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "- 주문 · 정산 시스템 개발 및 운영\n- 사내 그룹웨어 기능 개선\n- 배치 프로그램 개발 및 운영",
+      "familyQuote": "- 주문 · 정산 시스템 개발 및 운영",
       "requiredSkills": [
         {
           "original": "JAVA",
@@ -7429,7 +7540,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900113": {
     "source": "GENERAL",
@@ -7451,7 +7562,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900114": {
     "source": "GENERAL",
@@ -7473,7 +7584,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900115": {
     "source": "GENERAL",
@@ -7489,13 +7600,31 @@
         "OTHER"
       ],
       "familyQuote": "[직무] IT 기술지원 전문가",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "OS",
+          "options": [
+            "Windows",
+            "Linux",
+            "macOS"
+          ],
+          "quote": "ㆍ PC 조립 및 OS 설치 가능자"
+        },
+        {
+          "original": "네트워크",
+          "options": [
+            "TCP/IP",
+            "Ethernet"
+          ],
+          "quote": "ㆍ 네트워크 기초 이해"
+        }
+      ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900116": {
     "source": "GENERAL",
@@ -7510,14 +7639,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 통계·데이터 관련 사무원",
+      "familyQuote": "[직무] 통계·데이터 관련 사무원\n[내용] 자료 입력 및 통계표 작성",
       "requiredSkills": [],
       "bodyCareer": "적혀 있지 않음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900117": {
     "source": "GENERAL",
@@ -7561,7 +7690,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900118": {
     "source": "GENERAL",
@@ -7591,6 +7720,15 @@
             "SQL"
           ],
           "quote": "· SQL 활용 가능자"
+        },
+        {
+          "original": "데이터베이스",
+          "options": [
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
+          ],
+          "quote": "· 데이터베이스 기본 이해"
         }
       ],
       "bodyCareer": "관계없음",
@@ -7598,7 +7736,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900119": {
     "source": "GENERAL",
@@ -7620,7 +7758,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900120": {
     "source": "GENERAL",
@@ -7638,10 +7776,19 @@
       "familyQuote": "AI 모델 학습 및 성능 평가",
       "requiredSkills": [
         {
+          "original": "데이터 전처리",
+          "options": [
+            "pandas",
+            "NumPy"
+          ],
+          "quote": "ㆍ 데이터 전처리 경험"
+        },
+        {
           "original": "머신러닝 / 딥러닝",
           "options": [
-            "Machine Learning",
-            "Deep Learning"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
           "quote": "ㆍ 머신러닝 / 딥러닝 기본 이해"
         }
@@ -7651,7 +7798,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900121": {
     "source": "GENERAL",
@@ -7666,7 +7813,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "· 주문 · 정산 시스템 개발 및 운영",
+      "familyQuote": "· 주문 · 정산 시스템 개발 및 운영\n· 배치 프로그램 개발 및 운영",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -7688,7 +7835,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900122": {
     "source": "GENERAL",
@@ -7710,7 +7857,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900123": {
     "source": "GENERAL",
@@ -7732,7 +7879,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900124": {
     "source": "GENERAL",
@@ -7754,7 +7901,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900125": {
     "source": "GENERAL",
@@ -7784,7 +7931,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900126": {
     "source": "GENERAL",
@@ -7806,7 +7953,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900127": {
     "source": "GENERAL",
@@ -7836,7 +7983,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900128": {
     "source": "GENERAL",
@@ -7851,7 +7998,7 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "· 매출 · 고객 데이터 분석 및 보고서 작성",
+      "familyQuote": "매출 · 고객 데이터 분석 및 보고서 작성",
       "requiredSkills": [
         {
           "original": "파이썬 또는 R",
@@ -7867,7 +8014,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900129": {
     "source": "GENERAL",
@@ -7889,7 +8036,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900130": {
     "source": "GENERAL",
@@ -7919,7 +8066,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900131": {
     "source": "GENERAL",
@@ -7934,29 +8081,31 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "AI 모델 학습 및 성능 평가",
+      "familyQuote": "- AI 모델 학습 및 성능 평가",
       "requiredSkills": [
         {
           "original": "머신러닝 / 딥러닝",
           "options": [
-            "Machine Learning",
-            "Deep Learning"
+            "scikit-learn",
+            "PyTorch",
+            "TensorFlow"
           ],
-          "quote": "머신러닝 / 딥러닝 기본 이해"
+          "quote": "- 머신러닝 / 딥러닝 기본 이해"
         },
         {
           "original": "파이썬",
           "options": [
             "Python"
           ],
-          "quote": "파이썬 활용 가능자"
+          "quote": "- 파이썬 활용 가능자"
         },
         {
           "original": "데이터 전처리",
           "options": [
-            "Data Preprocessing"
+            "pandas",
+            "NumPy"
           ],
-          "quote": "데이터 전처리 경험"
+          "quote": "- 데이터 전처리 경험"
         }
       ],
       "bodyCareer": "신입",
@@ -7964,7 +8113,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900132": {
     "source": "GENERAL",
@@ -7986,7 +8135,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900133": {
     "source": "GENERAL",
@@ -8008,7 +8157,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900134": {
     "source": "GENERAL",
@@ -8046,7 +8195,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900135": {
     "source": "GENERAL",
@@ -8068,7 +8217,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900136": {
     "source": "GENERAL",
@@ -8098,7 +8247,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900137": {
     "source": "GENERAL",
@@ -8114,7 +8263,15 @@
         "NETWORK"
       ],
       "familyQuote": "기타 네트워크 및 정보 보안 전문가(디지털 포렌식 전문가 등)",
-      "requiredSkills": [],
+      "requiredSkills": [
+        {
+          "original": "네트워크",
+          "options": [
+            "TCP/IP"
+          ],
+          "quote": "· 네트워크 기본 지식 보유자"
+        }
+      ],
       "bodyCareer": "경력",
       "bodyEducation": "적혀 있지 않음"
     },
@@ -8122,7 +8279,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900138": {
     "source": "GENERAL",
@@ -8144,7 +8301,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900139": {
     "source": "GENERAL",
@@ -8167,14 +8324,14 @@
             "Python",
             "R"
           ],
-          "quote": "ㆍ 파이썬 또는 R 사용 가능자"
+          "quote": "파이썬 또는 R 사용 가능자"
         },
         {
           "original": "SQL",
           "options": [
             "SQL"
           ],
-          "quote": "ㆍ SQL 활용 가능자"
+          "quote": "SQL 활용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -8182,7 +8339,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900140": {
     "source": "GENERAL",
@@ -8197,14 +8354,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] IT 기술지원 전문가",
+      "familyQuote": "IT 기술지원 전문가",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900141": {
     "source": "GENERAL",
@@ -8226,7 +8383,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900142": {
     "source": "GENERAL",
@@ -8242,28 +8399,13 @@
         "OTHER"
       ],
       "familyQuote": "통계·데이터 관련 사무원",
-      "requiredSkills": [
-        {
-          "original": "엑셀",
-          "options": [
-            "Microsoft Excel"
-          ],
-          "quote": "엑셀 사용 가능자"
-        },
-        {
-          "original": "한글",
-          "options": [
-            "Hancom Hangul"
-          ],
-          "quote": "한글 문서 작성 가능자"
-        }
-      ],
+      "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900143": {
     "source": "GENERAL",
@@ -8293,7 +8435,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900144": {
     "source": "GENERAL",
@@ -8308,7 +8450,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- 생성형 AI 를 활용한 서비스 기능 개발",
+      "familyQuote": "생성형 AI 를 활용한 서비스 기능 개발",
       "requiredSkills": [
         {
           "original": "REST API",
@@ -8330,7 +8472,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900145": {
     "source": "GENERAL",
@@ -8345,7 +8487,7 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "응용 소프트웨어 개발자",
+      "familyQuote": "[직무] 응용 소프트웨어 개발자",
       "requiredSkills": [
         {
           "original": "Git",
@@ -8367,7 +8509,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900146": {
     "source": "GENERAL",
@@ -8411,7 +8553,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900147": {
     "source": "GENERAL",
@@ -8426,14 +8568,14 @@
       "jobFamilies": [
         "OTHER"
       ],
-      "familyQuote": "[직무] 보안 관제원",
+      "familyQuote": "보안 관제원",
       "requiredSkills": [],
       "bodyCareer": "관계없음",
       "bodyEducation": "적혀 있지 않음"
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900148": {
     "source": "GENERAL",
@@ -8457,7 +8599,7 @@
       "career"
     ],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900149": {
     "source": "GENERAL",
@@ -8501,7 +8643,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900150": {
     "source": "GENERAL",
@@ -8523,7 +8665,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900201": {
     "source": "GENERATED",
@@ -8545,21 +8687,21 @@
           "options": [
             "Java"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8567,7 +8709,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900202": {
     "source": "GENERATED",
@@ -8611,7 +8753,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900203": {
     "source": "GENERATED",
@@ -8633,14 +8775,15 @@
           "options": [
             "Spring Boot"
           ],
-          "quote": "스프링 부트, ORM 기반 데이터 접근 사용 경험"
+          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(스프링 부트, ORM 기반 데이터 접근 사용 경험)"
         },
         {
-          "original": "ORM",
+          "original": "ORM 기반 데이터 접근",
           "options": [
-            "ORM"
+            "JPA",
+            "Hibernate"
           ],
-          "quote": "스프링 부트, ORM 기반 데이터 접근 사용 경험"
+          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(스프링 부트, ORM 기반 데이터 접근 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -8648,7 +8791,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900204": {
     "source": "GENERATED",
@@ -8692,7 +8835,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900205": {
     "source": "GENERATED",
@@ -8736,7 +8879,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900206": {
     "source": "GENERATED",
@@ -8751,28 +8894,28 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "· 가맹점 결제 · 정산 서버 개발",
+      "familyQuote": "가맹점 결제 · 정산 서버 개발",
       "requiredSkills": [
         {
           "original": "Java",
           "options": [
             "Java"
           ],
-          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "Spring Boot",
           "options": [
             "Spring Boot"
           ],
-          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "Java · Spring Boot · MySQL 사용 가능자"
         },
         {
           "original": "MySQL",
           "options": [
             "MySQL"
           ],
-          "quote": "· Java · Spring Boot · MySQL 사용 가능자"
+          "quote": "Java · Spring Boot · MySQL 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -8780,7 +8923,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900207": {
     "source": "GENERATED",
@@ -8824,7 +8967,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900208": {
     "source": "GENERATED",
@@ -8842,13 +8985,6 @@
       "familyQuote": "입출고 · 배차 관리 시스템 서버 개발",
       "requiredSkills": [
         {
-          "original": "표계산 (스프레드시트 활용)",
-          "options": [
-            "Spreadsheet"
-          ],
-          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(자바, 스프링 프레임워크, 관계형 데이터베이스 사용 경험)"
-        },
-        {
           "original": "자바",
           "options": [
             "Java"
@@ -8865,7 +9001,9 @@
         {
           "original": "관계형 데이터베이스",
           "options": [
-            "Relational Database"
+            "MySQL",
+            "PostgreSQL",
+            "Oracle"
           ],
           "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(자바, 스프링 프레임워크, 관계형 데이터베이스 사용 경험)"
         }
@@ -8875,7 +9013,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900209": {
     "source": "GENERATED",
@@ -8919,7 +9057,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900210": {
     "source": "GENERATED",
@@ -8934,7 +9072,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "ㆍ 프로모션 기능 서버 개발",
+      "familyQuote": "ㆍ 상품 · 주문 API 개발\nㆍ 프로모션 기능 서버 개발",
       "requiredSkills": [
         {
           "original": "Node.js",
@@ -8963,7 +9101,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900211": {
     "source": "GENERATED",
@@ -9000,7 +9138,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900212": {
     "source": "GENERATED",
@@ -9044,7 +9182,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900213": {
     "source": "GENERATED",
@@ -9059,7 +9197,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "고객사 웹 서비스 화면 개발",
+      "familyQuote": "[내용] 고객사 웹 서비스 화면 개발",
       "requiredSkills": [
         {
           "original": "리액트",
@@ -9081,7 +9219,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900214": {
     "source": "GENERATED",
@@ -9103,14 +9241,14 @@
           "options": [
             "Figma"
           ],
-          "quote": "- Figma · Photoshop 사용 가능자"
+          "quote": "Figma · Photoshop 사용 가능자"
         },
         {
           "original": "Photoshop",
           "options": [
             "Adobe Photoshop"
           ],
-          "quote": "- Figma · Photoshop 사용 가능자"
+          "quote": "Figma · Photoshop 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -9118,7 +9256,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900215": {
     "source": "GENERATED",
@@ -9162,7 +9300,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900216": {
     "source": "GENERATED",
@@ -9199,7 +9337,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900217": {
     "source": "GENERATED",
@@ -9236,7 +9374,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900218": {
     "source": "GENERATED",
@@ -9258,14 +9396,14 @@
           "options": [
             "Python"
           ],
-          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험)"
+          "quote": "파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험"
         },
         {
           "original": "사이킷런",
           "options": [
             "scikit-learn"
           ],
-          "quote": "[필요 역량] 프레젠테이션 프로그램 활용,기타(파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험)"
+          "quote": "파이썬, 사이킷런 등 머신러닝 라이브러리 사용 경험"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -9273,7 +9411,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900219": {
     "source": "GENERATED",
@@ -9310,7 +9448,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900220": {
     "source": "GENERATED",
@@ -9325,7 +9463,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "LLM 기반 서비스 설계 및 리딩",
+      "familyQuote": "ㆍ LLM 기반 서비스 설계 및 리딩",
       "requiredSkills": [
         {
           "original": "Python",
@@ -9354,7 +9492,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900221": {
     "source": "GENERATED",
@@ -9398,7 +9536,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900222": {
     "source": "GENERATED",
@@ -9442,7 +9580,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900223": {
     "source": "GENERATED",
@@ -9457,7 +9595,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "신규 웹 서비스 화면과 API 개발",
+      "familyQuote": "[내용] 신규 웹 서비스 화면과 API 개발",
       "requiredSkills": [
         {
           "original": "리액트",
@@ -9479,7 +9617,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900224": {
     "source": "GENERATED",
@@ -9523,7 +9661,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900225": {
     "source": "GENERATED",
@@ -9567,7 +9705,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900226": {
     "source": "GENERATED",
@@ -9604,7 +9742,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900227": {
     "source": "GENERATED",
@@ -9619,7 +9757,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "지원 자격 : Java · Spring 사용 가능자, 신입 지원 가능",
+      "familyQuote": "운영 중인 웹 서비스 오류 수정 업무를 함께할 분을 찾습니다.",
       "requiredSkills": [
         {
           "original": "Java",
@@ -9641,7 +9779,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900228": {
     "source": "GENERATED",
@@ -9663,14 +9801,14 @@
           "options": [
             "Java"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(자바, 스프링 기반 웹 개발 사용 경험)"
+          "quote": "자바, 스프링 기반 웹 개발 사용 경험"
         },
         {
           "original": "스프링",
           "options": [
             "Spring Framework"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(자바, 스프링 기반 웹 개발 사용 경험)"
+          "quote": "자바, 스프링 기반 웹 개발 사용 경험"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -9678,7 +9816,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900229": {
     "source": "GENERATED",
@@ -9715,7 +9853,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900230": {
     "source": "GENERATED",
@@ -9752,7 +9890,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900231": {
     "source": "GENERATED",
@@ -9789,7 +9927,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900232": {
     "source": "GENERATED",
@@ -9827,7 +9965,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900233": {
     "source": "GENERATED",
@@ -9842,7 +9980,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "[내용] 배송 현황 대시보드 화면 개발",
+      "familyQuote": "배송 현황 대시보드 화면 개발",
       "requiredSkills": [
         {
           "original": "뷰 프레임워크",
@@ -9864,7 +10002,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900234": {
     "source": "GENERATED",
@@ -9879,7 +10017,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "- 광고 랜딩 페이지 개발",
+      "familyQuote": "- 광고 랜딩 페이지 개발<br>- 캠페인 화면 유지보수",
       "requiredSkills": [
         {
           "original": "Vue.js",
@@ -9901,7 +10039,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900235": {
     "source": "GENERATED",
@@ -9938,7 +10076,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900236": {
     "source": "GENERATED",
@@ -9975,7 +10113,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900237": {
     "source": "GENERATED",
@@ -10002,7 +10140,8 @@
         {
           "original": "LLM API",
           "options": [
-            "LLM API"
+            "OpenAI API",
+            "Gemini API"
           ],
           "quote": "지원 자격 : Python · LLM API 사용 가능자, 경력 무관"
         }
@@ -10012,7 +10151,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900238": {
     "source": "GENERATED",
@@ -10027,21 +10166,21 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "[내용] 메일 자동 분류 서버 개발",
+      "familyQuote": "메일 자동 분류 서버 개발",
       "requiredSkills": [
         {
           "original": "파이썬",
           "options": [
             "Python"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(파이썬, 구글 생성형 AI API 사용 경험)"
+          "quote": "기타(파이썬, 구글 생성형 AI API 사용 경험)"
         },
         {
           "original": "구글 생성형 AI API",
           "options": [
             "Gemini API"
           ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(파이썬, 구글 생성형 AI API 사용 경험)"
+          "quote": "기타(파이썬, 구글 생성형 AI API 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -10049,7 +10188,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900239": {
     "source": "GENERATED",
@@ -10064,7 +10203,7 @@
       "jobFamilies": [
         "AI"
       ],
-      "familyQuote": "- 모델 학습 · 배포 파이프라인 운영",
+      "familyQuote": "- 모델 학습 · 배포 파이프라인 운영<br>- 추론 서버 성능 관리",
       "requiredSkills": [
         {
           "original": "Python",
@@ -10086,7 +10225,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900240": {
     "source": "GENERATED",
@@ -10130,7 +10269,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900241": {
     "source": "GENERATED",
@@ -10174,7 +10313,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900242": {
     "source": "GENERATED",
@@ -10211,7 +10350,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900243": {
     "source": "GENERATED",
@@ -10233,14 +10372,14 @@
           "options": [
             "Spring Boot"
           ],
-          "quote": "기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
+          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
         },
         {
-          "original": "레디스",
+          "original": "인메모리 캐시(레디스)",
           "options": [
             "Redis"
           ],
-          "quote": "기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
+          "quote": "[필요 역량] 표계산 (스프레드시트 활용),기타(스프링 부트, 인메모리 캐시(레디스) 사용 경험)"
         }
       ],
       "bodyCareer": "적혀 있지 않음",
@@ -10248,7 +10387,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900244": {
     "source": "GENERATED",
@@ -10292,7 +10431,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900245": {
     "source": "GENERATED",
@@ -10336,7 +10475,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900246": {
     "source": "GENERATED",
@@ -10373,7 +10512,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900247": {
     "source": "GENERATED",
@@ -10410,7 +10549,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900248": {
     "source": "GENERATED",
@@ -10425,7 +10564,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "[내용] 공동 편집 화면 개발",
+      "familyQuote": "공동 편집 화면 개발",
       "requiredSkills": [
         {
           "original": "React",
@@ -10447,7 +10586,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900249": {
     "source": "GENERATED",
@@ -10484,7 +10623,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900250": {
     "source": "GENERATED",
@@ -10521,7 +10660,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900251": {
     "source": "GENERATED",
@@ -10558,7 +10697,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900252": {
     "source": "GENERATED",
@@ -10602,7 +10741,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900253": {
     "source": "GENERATED",
@@ -10646,7 +10785,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900254": {
     "source": "GENERATED",
@@ -10690,7 +10829,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900255": {
     "source": "GENERATED",
@@ -10727,7 +10866,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900256": {
     "source": "GENERATED",
@@ -10742,7 +10881,7 @@
       "jobFamilies": [
         "ANALYST"
       ],
-      "familyQuote": "· 매출 · 고객 데이터 분석 보고서 작성",
+      "familyQuote": "· 매출 · 고객 데이터 분석 보고서 작성\n· 경영진 보고용 대시보드 작성",
       "requiredSkills": [
         {
           "original": "SQL",
@@ -10771,7 +10910,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900257": {
     "source": "GENERATED",
@@ -10815,7 +10954,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900258": {
     "source": "GENERATED",
@@ -10859,7 +10998,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900259": {
     "source": "GENERATED",
@@ -10903,7 +11042,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900260": {
     "source": "GENERATED",
@@ -10940,7 +11079,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900261": {
     "source": "GENERATED",
@@ -10967,7 +11106,8 @@
         {
           "original": "LLM API",
           "options": [
-            "LLM API"
+            "OpenAI API",
+            "Gemini API"
           ],
           "quote": "· Python · LLM API 사용 가능자"
         }
@@ -10977,7 +11117,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900262": {
     "source": "GENERATED",
@@ -11014,7 +11154,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900263": {
     "source": "GENERATED",
@@ -11051,7 +11191,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900264": {
     "source": "GENERATED",
@@ -11073,14 +11213,14 @@
           "options": [
             "Python"
           ],
-          "quote": "- Python · OpenAI API 사용 가능자"
+          "quote": "Python · OpenAI API 사용 가능자"
         },
         {
           "original": "OpenAI API",
           "options": [
             "OpenAI API"
           ],
-          "quote": "- Python · OpenAI API 사용 가능자"
+          "quote": "Python · OpenAI API 사용 가능자"
         }
       ],
       "bodyCareer": "경력",
@@ -11088,7 +11228,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900265": {
     "source": "GENERATED",
@@ -11132,7 +11272,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900266": {
     "source": "GENERATED",
@@ -11169,7 +11309,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900267": {
     "source": "GENERATED",
@@ -11194,9 +11334,9 @@
           "quote": "지원 자격 : 리눅스 · 컨테이너 기술 사용 가능자, 신입 지원 가능"
         },
         {
-          "original": "컨테이너",
+          "original": "컨테이너 기술",
           "options": [
-            "Container"
+            "Docker"
           ],
           "quote": "지원 자격 : 리눅스 · 컨테이너 기술 사용 가능자, 신입 지원 가능"
         }
@@ -11206,7 +11346,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900268": {
     "source": "GENERATED",
@@ -11224,13 +11364,6 @@
       "familyQuote": "[직무] 네트워크 관리자",
       "requiredSkills": [
         {
-          "original": "CCNP",
-          "options": [
-            "Cisco Certified Network Professional"
-          ],
-          "quote": "[필요 역량] 문서작성 (워드프로세스 활용),기타(CCNP, L2/L3 스위치 사용 경험)"
-        },
-        {
           "original": "L2/L3 스위치",
           "options": [
             "Layer 2 Switch",
@@ -11244,7 +11377,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900269": {
     "source": "GENERATED",
@@ -11288,7 +11421,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900270": {
     "source": "GENERATED",
@@ -11325,7 +11458,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900271": {
     "source": "GENERATED",
@@ -11369,7 +11502,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900272": {
     "source": "GENERATED",
@@ -11406,7 +11539,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900273": {
     "source": "GENERATED",
@@ -11444,7 +11577,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900274": {
     "source": "GENERATED",
@@ -11459,7 +11592,7 @@
       "jobFamilies": [
         "FE"
       ],
-      "familyQuote": "- 기업용 관리 화면 개발<br>- 레거시 화면 이전",
+      "familyQuote": "- 기업용 관리 화면 개발",
       "requiredSkills": [
         {
           "original": "Angular",
@@ -11481,7 +11614,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900275": {
     "source": "GENERATED",
@@ -11518,7 +11651,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900276": {
     "source": "GENERATED",
@@ -11548,7 +11681,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900277": {
     "source": "GENERATED",
@@ -11585,7 +11718,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900278": {
     "source": "GENERATED",
@@ -11629,7 +11762,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900279": {
     "source": "GENERATED",
@@ -11651,14 +11784,14 @@
           "options": [
             "Java"
           ],
-          "quote": "- 자바 · SQL 매퍼 프레임워크 사용 가능자"
+          "quote": "자바 · SQL 매퍼 프레임워크 사용 가능자"
         },
         {
           "original": "SQL 매퍼 프레임워크",
           "options": [
-            "SQL Mapper Framework"
+            "MyBatis"
           ],
-          "quote": "- 자바 · SQL 매퍼 프레임워크 사용 가능자"
+          "quote": "자바 · SQL 매퍼 프레임워크 사용 가능자"
         }
       ],
       "bodyCareer": "신입",
@@ -11666,7 +11799,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900280": {
     "source": "GENERATED",
@@ -11681,7 +11814,7 @@
       "jobFamilies": [
         "BE"
       ],
-      "familyQuote": "ㆍ 웹 서비스 서버 개발",
+      "familyQuote": "웹 서비스 서버 개발",
       "requiredSkills": [
         {
           "original": "Python",
@@ -11710,7 +11843,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900281": {
     "source": "GENERATED",
@@ -11754,7 +11887,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900282": {
     "source": "GENERATED",
@@ -11769,7 +11902,7 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "지원 자격 : React · Node.js 사용 가능자, 경력 무관",
+      "familyQuote": "매장 예약 · 주문 웹 개발 업무를 함께할 분을 찾습니다.",
       "requiredSkills": [
         {
           "original": "React",
@@ -11791,7 +11924,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900283": {
     "source": "GENERATED",
@@ -11828,7 +11961,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900284": {
     "source": "GENERATED",
@@ -11843,21 +11976,21 @@
       "jobFamilies": [
         "FULLSTACK"
       ],
-      "familyQuote": "- 리액트 · 노드 기반 서버 사용 가능자",
+      "familyQuote": "리액트 · 노드 기반 서버 사용 가능자",
       "requiredSkills": [
         {
           "original": "리액트",
           "options": [
             "React"
           ],
-          "quote": "- 리액트 · 노드 기반 서버 사용 가능자"
+          "quote": "리액트 · 노드 기반 서버 사용 가능자"
         },
         {
           "original": "노드",
           "options": [
             "Node.js"
           ],
-          "quote": "- 리액트 · 노드 기반 서버 사용 가능자"
+          "quote": "리액트 · 노드 기반 서버 사용 가능자"
         }
       ],
       "bodyCareer": "관계없음",
@@ -11865,7 +11998,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900285": {
     "source": "GENERATED",
@@ -11902,7 +12035,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900286": {
     "source": "GENERATED",
@@ -11939,7 +12072,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900287": {
     "source": "GENERATED",
@@ -11976,7 +12109,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900288": {
     "source": "GENERATED",
@@ -12013,7 +12146,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900289": {
     "source": "GENERATED",
@@ -12040,7 +12173,9 @@
         {
           "original": "벡터 데이터베이스",
           "options": [
-            "Vector Database"
+            "Qdrant",
+            "Pinecone",
+            "Chroma"
           ],
           "quote": "- 파이썬 · 벡터 데이터베이스 사용 가능자"
         }
@@ -12050,7 +12185,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900290": {
     "source": "GENERATED",
@@ -12094,7 +12229,7 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   },
   "900291": {
     "source": "GENERATED",
@@ -12138,6 +12273,6 @@
     },
     "fieldBodyMismatch": [],
     "model": "gpt-6.1-sol",
-    "promptVersion": "external-conditions-v2"
+    "promptVersion": "external-conditions-v3"
   }
 }
