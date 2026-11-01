@@ -67,9 +67,11 @@ interface C4DocumentSummaryProps {
   document: ApplicationDocument;
   selectedSentenceId: string | null;
   onSelectSentence: (sentence: Sentence) => void;
+  /** false 면 이력서 항목만 (11/1 개편: 자기소개서는 C4 본문에서 문서 형태로 따로 보여 준다) */
+  showCover?: boolean;
 }
 
-export default function C4DocumentSummary({ document, selectedSentenceId, onSelectSentence }: C4DocumentSummaryProps) {
+export default function C4DocumentSummary({ document, selectedSentenceId, onSelectSentence, showCover = true }: C4DocumentSummaryProps) {
   const find = <N extends DocumentSection["section"]>(name: N) =>
     document.sections.find((s): s is Extract<DocumentSection, { section: N }> => s.section === name);
   const markers = coverLetterMarkers(document);
@@ -99,9 +101,10 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
 
   return (
     // 정보는 짧게, 여백은 넉넉하게 (읽기 편한 문서). 한 화면 맞춤보다 가독성 우선
-    <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface px-7 py-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold">이력서</h2>
+    <div className={`flex flex-col gap-5 ${showCover ? "rounded-2xl border border-line bg-surface px-7 py-6" : ""}`}>
+      <div className={`flex items-center ${showCover ? "justify-between" : "justify-end"}`}>
+        {/* 이력서 항목만 볼 때는 C4 패널 머리에 제목이 있다 */}
+        {showCover && <h2 className="text-base font-bold">이력서</h2>}
         <span className="flex items-center gap-1">
           <SourceTag source="AI" />
           <SourceTag source="REGISTERED" label="등록 자료" />
@@ -219,7 +222,7 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
         )}
       </dl>
 
-      {cover && (
+      {showCover && cover && (
         <section aria-label="자기소개서" className="flex flex-col gap-4 border-t border-line pt-6">
           <h2 className="text-base font-bold">자기소개서</h2>
           {document.companyInfoStatus !== "FOUND" && (

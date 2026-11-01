@@ -1,15 +1,18 @@
 "use client";
-// 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08). 서류 전체 + 선택 문장 근거 + 검증 요약 + 반려 · 승인 · 전달 완료
-// API: docs/API.md 2-3. 승인 SUBMITTED → APPROVED, 반려 { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
-// 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다. 왼쪽 서류는 C4 전용 요약(C4DocumentSummary), 근거는 FE-B-01 EvidencePanel.
+// 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08, 11/1 개편 목업 documentPage()). API: docs/API.md 2-3.
+// 승인 SUBMITTED → APPROVED, 수정 요청(=반려) { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
+// 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다.
+// 화면: 위(목록으로 · 제목 · 상태 · 5단계) / 가운데 왼쪽 '자기소개서 전체'(문서 형태, 문장 단위 근거 상태) · 오른쪽 '문장 근거'(각자 안에서 스크롤)
+//       / 아래 검토 행동 막대(항상 보임). 이력서 9개 항목은 왼쪽 '이력서 항목' 탭으로 옮겼다.
+// 목업의 AI 초안 원문 · 수료생 수정 이유 · 문장별 코디네이터 판단 저장은 API 에 없어서 만들지 않는다.
 // document 가 null(GENERATING · FAILED · 본문 없음)이면 서류 · 근거 · 검증 요약 대신 안내를 보이고 승인 · 전달을 끈다.
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import C4DocumentSummary, { coverLetterMarkers, userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
+import C4DocumentSummary, { userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { Badge, Icon, btn } from "@/components/coordinator/CoordUi";
-import { docLabels, docTone } from "@/components/coordinator/coordLabels";
-import EvidencePanel from "@/components/resume/EvidencePanel";
+import { docLabels, docTone, type CoordTone } from "@/components/coordinator/coordLabels";
+import { toDate } from "@/components/resume/resumeLabels";
 import { ApiError } from "@/lib/api/client";
 import {
   approveApplication,
@@ -18,70 +21,53 @@ import {
   rejectApplication,
 } from "@/lib/api/coordinatorReview";
 import type { CoordinatorApplication } from "@/types/coordinator";
-import type { Sentence } from "@/types/resume";
+import type { ApplicationDocument, Sentence } from "@/types/resume";
 import type { ApplicationStatus, CompanyInfoStatus } from "@/types/student";
 
 type Action = "APPROVE" | "REJECT" | "DELIVER";
 
-const ACTION: Record<Action, { title: string; description: string; confirm: string; done: string }> = {
+// 버튼 · 확인 창 문구는 실제로 하는 일만 말한다 (기업 전달 · 수료생 연락은 이음 밖에서 한다)
+const ACTION: Record<Action, { button: string; title: string; description: string; confirm: string; done: string }> = {
   APPROVE: {
+    button: "검토 승인",
     title: "이 서류를 승인할까요?",
-    description: "승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 전달은 \"전달 완료로 변경\"으로 따로 기록해요.",
-    confirm: "승인",
-    done: "승인했어요. 기업에 전달한 뒤 \"전달 완료로 변경\"을 눌러 주세요.",
+    description: "검토 결과를 '승인'으로 기록해요. 기업 전달은 이음 밖에서 하고, 전달한 뒤 '전달 완료로 표시'를 눌러 주세요.",
+    confirm: "검토 승인",
+    done: "승인했어요. 기업에 전달한 뒤 '전달 완료로 표시'를 눌러 주세요.",
   },
   REJECT: {
-    title: "이 서류를 반려할까요?",
-    description: "반려하면 수료생에게 직접 연락해 보완할 점을 알려 주세요. 아래 메모는 기록으로 남아요.",
-    confirm: "반려",
-    done: "반려했어요. 수료생에게 연락해 보완할 점을 알려 주세요.",
+    button: "수정 요청 기록",
+    title: "수정 요청을 기록할까요?",
+    description: "서류 상태가 '수정 요청'으로 바뀌어요. 이음이 수료생에게 자동으로 알리지 않으니 보완할 점을 직접 연락해 주세요. 아래 메모는 상담 기록에도 남아요.",
+    confirm: "수정 요청 기록",
+    done: "수정 요청을 기록했어요. 수료생에게 직접 연락해 보완할 점을 알려 주세요.",
   },
   DELIVER: {
-    title: "전달 완료로 바꿀까요?",
+    button: "전달 완료로 표시",
+    title: "전달 완료로 표시할까요?",
     description: "기관 추천으로 기업에 전달했을 때 눌러 주세요. 이음에서 실제로 보내지는 않아요.",
-    confirm: "전달 완료",
-    done: "전달 완료로 바꿨어요. 수료생 지원 현황에도 반영돼요.",
+    confirm: "전달 완료로 표시",
+    done: "전달 완료로 표시했어요. 수료생 지원 현황에도 반영돼요.",
   },
 };
 
 /** 버튼이 켜지는 상태 (docs/API.md 2-3 상태 전이) */
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
 
-/** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료. 상태 이름 · 색은 coordLabels(코디네이터 전용) */
+/** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료 */
 const STEPS = ["AI 초안", "수료생 확인", "코디네이터 검토", "승인", "전달 완료"];
-const STAGE: Record<ApplicationStatus, number> = {
-  GENERATING: 0,
-  FAILED: 0,
-  DRAFT: 1,
-  REJECTED: 1,
-  SUBMITTED: 2,
-  APPROVED: 3,
-  DELIVERED: 4,
-};
+const STAGE: Record<ApplicationStatus, number> = { GENERATING: 0, FAILED: 0, DRAFT: 1, REJECTED: 1, SUBMITTED: 2, APPROVED: 3, DELIVERED: 4 };
 
-function Steps({ status }: { status: ApplicationStatus }) {
-  const stage = STAGE[status];
-  return (
-    <ol className="flex items-center gap-[5px]" aria-label="서류 진행 단계">
-      {STEPS.map((label, i) => (
-        <li
-          key={label}
-          aria-current={i === stage ? "step" : undefined}
-          className={`flex flex-1 items-center gap-[7px] rounded-[7px] px-[11px] py-[9px] text-[11px] ${
-            i === stage
-              ? "bg-(--coord-forest) text-(--coord-surface)"
-              : i < stage
-                ? "bg-(--coord-green-soft) text-(--coord-green)"
-                : "bg-(--coord-gray-soft) text-(--coord-muted)"
-          }`}
-        >
-          <span className="grid size-[18px] place-items-center rounded-full border border-current text-[10px]">{i < stage ? "✓" : i + 1}</span>
-          {label}
-        </li>
-      ))}
-    </ol>
-  );
-}
+/** 아래 행동 막대 왼쪽 설명 (현재 서버 상태 기준) */
+const STATUS_GUIDE: Record<ApplicationStatus, [string, string]> = {
+  SUBMITTED: ["코디네이터 검토 단계예요", "자기소개서 전체와 문장 근거를 확인한 뒤 승인하거나 수정을 요청하세요."],
+  APPROVED: ["승인 완료 · 기관 추천 전달 대기", "기업 전달은 이음 밖에서 하고, 전달한 뒤 상태만 기록해요."],
+  REJECTED: ["수정 요청을 기록했어요", "수료생이 고쳐서 다시 제출하면 검토 대기로 돌아와요."],
+  DELIVERED: ["기관 추천 전달 완료", "이 서류의 검토 · 전달이 끝났어요."],
+  DRAFT: ["수료생이 초안을 확인하고 있어요", "수료생이 검토를 요청하면 여기서 승인할 수 있어요."],
+  GENERATING: ["서류를 만들고 있어요", "만들어지면 수료생이 확인한 뒤 검토를 요청해요."],
+  FAILED: ["서류를 만들지 못했어요", "수료생이 서류를 다시 만들면 여기서 검토할 수 있어요."],
+};
 
 const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
   FOUND: "기업 정보 확인",
@@ -89,12 +75,33 @@ const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
   NOT_FOUND: "공고 외 정보 확인 불가",
 };
 
+/** 문장 근거 상태: AI+근거 = 근거 연결 · USER = 수료생 직접 작성 · AI+근거 없음 = 근거 확인 필요 */
+type SentenceState = "linked" | "user" | "weak";
+const sentenceState = (s: Sentence): SentenceState => (s.source === "USER" ? "user" : s.evidence.length > 0 ? "linked" : "weak");
+const STATE_BADGE: Record<SentenceState, [string, CoordTone]> = {
+  linked: ["원본 근거 연결", "green"],
+  user: ["수료생 직접 작성", "blue"],
+  weak: ["근거 확인 필요", "red"],
+};
+const STATE_CHECK: Record<SentenceState, string> = {
+  linked: "등록된 자료 · 기업 정보의 해당 항목과 문장을 연결했어요.",
+  user: "수료생이 직접 쓰거나 고친 문장이라 AI 근거 점검 대상이 아니에요. 필요하면 원본 자료와 함께 확인해 주세요.",
+  weak: "연결할 자료를 찾지 못했어요. 거짓으로 확정하지 않고 담당자 확인 대상으로 남겼어요.",
+};
+
+/** 자기소개서 문장 (없으면 빈 배열) */
+const coverSentences = (document: ApplicationDocument | null): Sentence[] => {
+  const cover = document?.sections.find((s) => s.section === "COVER_LETTER");
+  return cover?.section === "COVER_LETTER" ? cover.sentences : [];
+};
+
 export default function ApplicationReviewScreen({ applicationId }: { applicationId: number }) {
   const [detail, setDetail] = useState<CoordinatorApplication | null>(null);
   // notFound(404)면 다시 불러와도 같으므로 "다시 시도"를 숨긴다
   const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [selected, setSelected] = useState<Sentence | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"cover" | "resume">("cover");
   const [confirming, setConfirming] = useState<Action | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -124,9 +131,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
 
   if (!detail) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-sm text-ink-sub">
-        <p>{loadError?.message ?? "서류를 불러오는 중이에요…"}</p>
-        {loadError?.notFound && <p className="text-xs text-ink-muted">주소의 지원서 번호를 확인하거나 서류 검토 목록에서 다시 골라 주세요.</p>}
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-sm text-(--coord-muted)">
+        <p role={loadError ? "alert" : "status"}>{loadError?.message ?? "서류를 불러오는 중이에요…"}</p>
+        {loadError?.notFound && <p className="text-xs">주소의 지원서 번호를 확인하거나 서류 검토 목록에서 다시 골라 주세요.</p>}
         {loadError && (
           <div className="flex gap-4">
             {!loadError.notFound && (
@@ -136,12 +143,12 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                   setLoadError(null);
                   setReloadKey((k) => k + 1);
                 }}
-                className="font-bold text-primary"
+                className="font-bold text-(--coord-green)"
               >
                 다시 시도
               </button>
             )}
-            <Link href="/coordinator/applications" className={`font-bold ${loadError.notFound ? "text-primary" : "text-ink-sub"}`}>
+            <Link href="/coordinator/applications" className="font-bold text-(--coord-green)">
               서류 검토 목록으로
             </Link>
           </div>
@@ -153,6 +160,12 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const { status, student, job, verification } = detail;
   // GENERATING · FAILED 이거나 본문이 없으면 null (docs/API.md 2-2). 형식이 깨진 서류도 빈 서류로 보고 멈추지 않게 (M6 와 같은 방식)
   const document = detail.document && Array.isArray(detail.document.sections) ? detail.document : null;
+  const sentences = coverSentences(document);
+  // 처음엔 첫 문장의 근거를 보여 준다 (목업처럼 오른쪽 패널이 비어 있지 않게)
+  const selectedIndex = Math.max(0, sentences.findIndex((s) => s.sentenceId === selectedId));
+  const selected = sentences[selectedIndex] ?? null;
+  const counts = { linked: 0, user: 0, weak: 0 };
+  sentences.forEach((s) => (counts[sentenceState(s)] += 1));
 
   const closeConfirm = () => {
     if (busy) return;
@@ -198,7 +211,6 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const aiValue = !hasAi
     ? "없음"
     : `${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`;
-  const markers = document ? coverLetterMarkers(document) : new Map<string, string>();
   // 종류별 합이 서버의 userEditedCount 와 같을 때만 나눠 보여 준다 (다르면 서버 총합만)
   const edits = document ? userEditBreakdown(document) : [];
   const editsTotal = edits.reduce((sum, e) => sum + e.count, 0);
@@ -206,71 +218,159 @@ export default function ApplicationReviewScreen({ applicationId }: { application
     edits.length > 0 && editsTotal === verification.userEditedCount
       ? edits.map((e) => `${e.label} ${e.count}`).join(" · ")
       : `${verification.userEditedCount}개`;
+  const [guideTitle, guideText] = STATUS_GUIDE[status];
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* 11/1 개편 목업: 목록으로 돌아가기 · 제목 · 상태 이름표(코디네이터 이름) · 수료생 정보 · 진행 단계 */}
-      <header className="flex flex-col gap-4">
-        <Link href="/coordinator/applications" className="inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
+    // 목업처럼 화면 높이에 맞춰 고정: 위 머리 · 가운데 두 패널(각자 스크롤) · 아래 행동 막대 (상단 막대 60 + 위아래 여백 70)
+    <div className="flex min-h-[640px] flex-col lg:h-[calc(100vh-130px)]">
+      <header className="shrink-0">
+        <Link href="/coordinator/applications" className="mb-[18px] inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
           <Icon name="back" className="size-4" /> 서류 검토 목록
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[27px] leading-[1.3] font-bold tracking-[-1px]">{student.name} 님의 지원서류</h1>
-            {/* C4 API 에 제출 시각 · 마감일이 없어서 날짜는 표시하지 않는다 */}
+            {/* C4 API 에 제출 시각 · 버전 · 마감일이 없어서 날짜는 표시하지 않는다 */}
             <p className="mt-2 text-[13px] text-(--coord-muted)">
               {job.companyName} · {job.title}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Badge tone={docTone[status]}>{docLabels[status]}</Badge>
-            <Link href={`/coordinator/students/${student.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+            <Link href={`/coordinator/students/${student.studentId}`} className={`${btn.base} ${btn.outline}`}>
               수료생 정보
             </Link>
           </div>
         </div>
-        <Steps status={status} />
+        <ol className="my-5 flex items-center gap-[5px]" aria-label="서류 진행 단계">
+          {STEPS.map((label, i) => {
+            const stage = STAGE[status];
+            return (
+              <li
+                key={label}
+                aria-current={i === stage ? "step" : undefined}
+                className={`flex flex-1 items-center gap-[7px] rounded-[7px] px-[11px] py-[9px] text-[11px] ${
+                  i === stage
+                    ? "bg-(--coord-forest) text-(--coord-surface)"
+                    : i < stage
+                      ? "bg-(--coord-green-soft) text-(--coord-green)"
+                      : "bg-(--coord-gray-soft) text-(--coord-muted)"
+                }`}
+              >
+                <span className="grid size-[18px] place-items-center rounded-full border border-current text-[10px]">{i < stage ? "✓" : i + 1}</span>
+                {label}
+              </li>
+            );
+          })}
+        </ol>
       </header>
 
-      {/* 왼쪽 서류는 페이지와 함께 세로로 스크롤, 오른쪽 패널은 화면에 붙어 근거 · 버튼이 계속 보이게 */}
-      <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-6">
-        {document ? (
-          <C4DocumentSummary
-            document={document}
-            selectedSentenceId={selected?.sentenceId ?? null}
-            onSelectSentence={setSelected}
-          />
-        ) : (
-          <NoDocument status={status} onReload={() => setReloadKey((k) => k + 1)} />
-        )}
-
-        {/* 상단 막대(60px) 아래에 붙어 근거 · 승인 버튼이 항상 보이게 */}
-        <aside className="sticky top-[80px] flex max-h-[calc(100vh-100px)] flex-col gap-3 overflow-y-auto">
-          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
-            <h2 className="text-[15px] font-bold">선택한 문장의 근거</h2>
-            {!document ? (
-              <p className="text-[13px] text-ink-muted">서류가 없어 확인할 근거가 없어요.</p>
-            ) : (
-              <>
-                {selected && <p className="rounded-lg bg-coord-bg px-3 py-2 text-[13px] leading-relaxed">{selected.text}</p>}
-                <EvidencePanel sentence={selected} bare marker={selected ? markers.get(selected.sentenceId) : undefined} />
-              </>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)] gap-5">
+        {/* 왼쪽: 자기소개서 전체 (이력서 항목은 탭) */}
+        <section aria-label="지원서류" className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
+            <div>
+              <h2 className="text-[15px] font-bold">{tab === "cover" ? "자기소개서 전체" : "이력서 항목"}</h2>
+              <p className="mt-1 text-[11px] text-(--coord-muted)">
+                {tab === "cover" ? "문장을 누르면 오른쪽에서 근거와 출처를 확인해요." : "수료생 등록 자료와 AI가 정리한 이력서 항목이에요."}
+              </p>
+            </div>
+            {document && (
+              <div role="tablist" aria-label="서류 보기" className="flex gap-1">
+                {(
+                  [
+                    ["cover", "자기소개서"],
+                    ["resume", "이력서 항목"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === key}
+                    onClick={() => setTab(key)}
+                    className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
+                      tab === key ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             )}
+          </div>
+          {!document ? (
+            <NoDocument status={status} onReload={() => setReloadKey((k) => k + 1)} />
+          ) : tab === "resume" ? (
+            <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6">
+              <C4DocumentSummary document={document} selectedSentenceId={null} onSelectSentence={() => {}} showCover={false} />
+            </div>
+          ) : (
+            <>
+              <div className="flex shrink-0 flex-wrap items-center gap-[9px] border-b border-(--coord-line) px-5 py-3">
+                <Badge tone="green">근거 연결 {counts.linked}</Badge>
+                <Badge tone="blue">수료생 직접 작성 {counts.user}</Badge>
+                {counts.weak > 0 && <Badge tone="red">근거 확인 필요 {counts.weak}</Badge>}
+                <span className="text-xs text-(--coord-muted)">문장 색상 + 상태로 구분</span>
+              </div>
+              <article className="min-h-0 flex-1 overflow-y-auto px-[34px] py-[30px]">
+                <span className="text-[10px] tracking-[2px] text-(--coord-muted)">APPLICATION LETTER · {job.companyName}</span>
+                <h2 className="mt-1.5 mb-2 text-2xl font-bold">자기소개서</h2>
+                <p className="text-xs text-(--coord-muted)">
+                  {student.name}　|　{job.title} 지원
+                </p>
+                <div className="my-[22px] border-t-2 border-(--coord-forest)" />
+                {document.companyInfoStatus !== "FOUND" && (
+                  <p className="mb-5 rounded-lg border border-(--coord-attention-line) bg-(--coord-attention-soft) px-3.5 py-2.5 text-xs leading-[1.7] text-(--coord-attention)">
+                    <b>{COMPANY_INFO_LABEL[document.companyInfoStatus]}</b>
+                    {document.companyInfoNote && ` · ${document.companyInfoNote}`}
+                  </p>
+                )}
+                {sentences.length === 0 ? (
+                  <p className="text-[13px] text-(--coord-muted)">이 서류에는 자기소개서 문장이 없어요. 이력서 항목 탭에서 나머지 내용을 확인해 주세요.</p>
+                ) : (
+                  <p className="text-sm leading-[2.1] break-keep">
+                    {sentences.map((s, i) => (
+                      <CoverSentence key={s.sentenceId} sentence={s} index={i} selected={i === selectedIndex} onSelect={() => setSelectedId(s.sentenceId)} />
+                    ))}
+                  </p>
+                )}
+                {verification.excludedSentenceCount > 0 && (
+                  <p className="mt-6 rounded-lg bg-(--coord-head) px-3.5 py-2.5 text-xs text-(--coord-muted)">
+                    AI가 근거를 찾지 못해 초안에서 제외한 문장 {verification.excludedSentenceCount}개
+                  </p>
+                )}
+              </article>
+            </>
+          )}
+        </section>
+
+        {/* 오른쪽: 선택한 문장의 근거 + 문서 전체 검증 요약 */}
+        <aside aria-label="문장 근거와 검증 요약" className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+          <section aria-label="문장 근거" className="shrink-0 overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
+            <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
+              <h2 className="text-[15px] font-bold">문장 근거 · 출처</h2>
+              {selected && <Badge tone="blue">문장 {selectedIndex + 1}</Badge>}
+            </div>
+            <div className="p-[22px]" aria-live="polite">
+              {!document ? (
+                <p className="text-[13px] text-(--coord-muted)">서류가 없어 확인할 근거가 없어요.</p>
+              ) : !selected ? (
+                <p className="text-[13px] text-(--coord-muted)">자기소개서 문장이 없어 확인할 근거가 없어요.</p>
+              ) : (
+                <SentenceEvidence sentence={selected} />
+              )}
+            </div>
           </section>
 
-          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
-            <h2 className="text-[15px] font-bold">검증 요약</h2>
+          <section aria-label="문서 전체 검증 요약" className="shrink-0 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-4 py-3.5">
+            <h2 className="text-[13px] font-bold">이 문서에서 확인할 것</h2>
             {/* 서류가 없으면 서버 요약이 0개 · NOT_FOUND 로 오므로 "확인 불가"처럼 보이지 않게 숫자 대신 안내만 */}
             {!document ? (
-              <p className="text-[13px] text-ink-muted">서류가 없어 검증할 내용이 없어요.</p>
+              <p className="mt-2 text-xs text-(--coord-muted)">서류가 없어 검증할 내용이 없어요.</p>
             ) : (
-              <dl className="flex flex-col gap-1.5 text-[13px]">
-                <SummaryRow
-                  label="AI 문장"
-                  value={aiValue}
-                  note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."}
-                  warn={hasAi && !allAiLinked}
-                />
+              <dl className="mt-2 flex flex-col gap-1.5 text-xs">
+                <SummaryRow label="AI 문장" value={aiValue} note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."} warn={hasAi && !allAiLinked} />
                 <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
                 <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
                 <SummaryRow
@@ -281,51 +381,49 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                 />
               </dl>
             )}
-          </section>
-
-          <section className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
-            {/* 처리 결과는 버튼 바로 위에 (왼쪽 서류 높이가 밀리지 않게) */}
-            {doneMessage ? (
-              <p role="status" className="flex flex-col gap-1 rounded-xl bg-primary-tint px-3 py-2.5 text-[13px] font-bold text-primary-strong">
-                {doneMessage}
-                <Link href="/coordinator/applications" className="w-fit text-xs underline underline-offset-2">
-                  서류 검토 목록으로 돌아가기
-                </Link>
-              </p>
-            ) : (
-              <p className="text-xs leading-relaxed text-ink-sub">
-                {!document && status === ALLOWED.REJECT
-                  ? "서류 본문이 없어 승인할 수 없어요. 반려하고 수료생에게 연락해 주세요."
-                  : "승인하면 기관 추천으로 기업에 전달할 준비가 돼요. 반려하면 수료생에게 직접 연락해 주세요."}
-              </p>
-            )}
-            {/* 서버는 상태만 보지만, 빈 서류를 추천 · 전달하지 않도록 승인 · 전달은 서류가 있을 때만 켠다. 반려는 연락을 위해 상태만 본다 */}
-            <button
-              type="button"
-              disabled={status !== ALLOWED.APPROVE || !document}
-              onClick={() => setConfirming("APPROVE")}
-              className="min-h-10 rounded-xl bg-primary text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted"
-            >
-              승인 · 기관 추천으로 전달
-            </button>
-            <button
-              type="button"
-              disabled={status !== ALLOWED.REJECT}
-              onClick={() => setConfirming("REJECT")}
-              className="min-h-10 rounded-xl border-[1.5px] border-danger bg-surface text-sm font-bold text-danger disabled:border-line disabled:text-ink-muted"
-            >
-              반려 · 수료생에게 연락
-            </button>
-            <button
-              type="button"
-              disabled={status !== ALLOWED.DELIVER || !document}
-              onClick={() => setConfirming("DELIVER")}
-              className="min-h-10 rounded-xl border-[1.5px] border-primary bg-surface text-sm font-bold text-primary disabled:border-line disabled:text-ink-muted"
-            >
-              전달 완료로 변경 (승인 후)
-            </button>
+            <p className="mt-2.5 text-[11px] text-(--coord-muted)">AI 점검은 원본 자료와의 연결 여부예요. 사실의 진위와 추천 여부는 코디네이터가 최종 판단해요.</p>
           </section>
         </aside>
+      </div>
+
+      {/* 아래 검토 행동 막대: 현재 서버 상태에 맞는 버튼만 */}
+      <div className="mt-5 flex shrink-0 items-center justify-between gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-[18px] py-3.5 shadow-[0_-5px_20px_rgb(0_0_0/0.03)]">
+        {doneMessage ? (
+          <div role="status">
+            <b className="text-[13px] text-(--coord-green-ink)">{doneMessage}</b>
+            <Link href="/coordinator/applications" className="mt-0.5 block text-[11px] text-(--coord-muted) underline underline-offset-2">
+              서류 검토 목록으로 돌아가기
+            </Link>
+          </div>
+        ) : (
+          <div>
+            <b className="text-[13px]">
+              {!document && status === "SUBMITTED" ? "서류 본문이 없어 승인할 수 없어요" : counts.weak > 0 && status === "SUBMITTED" ? `근거 확인이 필요한 문장 ${counts.weak}개` : guideTitle}
+            </b>
+            <p className="mt-0.5 text-[11px] text-(--coord-muted)">
+              {!document && status === "SUBMITTED" ? "수정 요청을 기록하고 수료생에게 연락해 주세요." : guideText}
+            </p>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          {status === ALLOWED.REJECT && (
+            <button type="button" onClick={() => setConfirming("REJECT")} className={`${btn.base} ${btn.danger} px-4 py-2.5 text-sm`}>
+              {ACTION.REJECT.button}
+            </button>
+          )}
+          {status === ALLOWED.APPROVE && (
+            // 서버는 상태만 보지만, 빈 서류를 승인하지 않도록 서류가 있을 때만 켠다
+            <button type="button" disabled={!document} onClick={() => setConfirming("APPROVE")} className={`${btn.base} ${btn.primary} px-4 py-2.5 text-sm`}>
+              {ACTION.APPROVE.button}
+            </button>
+          )}
+          {status === ALLOWED.DELIVER && (
+            <button type="button" disabled={!document} onClick={() => setConfirming("DELIVER")} className={`${btn.base} ${btn.primary} px-4 py-2.5 text-sm`}>
+              {ACTION.DELIVER.button}
+            </button>
+          )}
+          {status !== "SUBMITTED" && status !== "APPROVED" && <Badge tone={docTone[status]}>{docLabels[status]}</Badge>}
+        </div>
       </div>
 
       {confirming && (
@@ -341,20 +439,89 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           onClose={closeConfirm}
         >
           {confirming === "REJECT" && (
-            <label className="flex flex-col gap-1 text-xs text-ink-sub">
+            <label className="flex flex-col gap-1 text-xs text-(--coord-muted)">
               보완할 점 (필수)
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={4}
                 placeholder="예: 자기소개서 2문단의 수치 근거를 README와 맞춰 주세요"
-                className="resize-none rounded-[10px] border-[1.5px] border-line p-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-primary"
+                className="resize-none rounded-[10px] border-[1.5px] border-(--coord-line) p-3 text-sm text-(--coord-ink) focus-visible:outline-2 focus-visible:outline-(--coord-green)"
               />
             </label>
           )}
         </ConfirmDialog>
       )}
     </div>
+  );
+}
+
+/** 자기소개서 한 문장 (목업 .sentence): 근거 연결 · 수료생 직접 작성(파랑) · 근거 확인 필요(빨강 점선) */
+function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sentence; index: number; selected: boolean; onSelect: () => void }) {
+  const state = sentenceState(sentence);
+  const look =
+    state === "user"
+      ? "bg-(--coord-blue-soft) text-(--coord-blue) border-b border-(--coord-blue)"
+      : state === "weak"
+        ? "bg-(--coord-red-soft) text-(--coord-red) border-b border-dashed border-(--coord-red)"
+        : "hover:bg-(--coord-tint) hover:shadow-[0_0_0_1px_var(--coord-tint-line)]";
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        aria-label={`문장 ${index + 1}: ${STATE_BADGE[state][0]}`}
+        className={`inline rounded-[3px] px-[3px] py-0.5 text-left leading-[inherit] whitespace-normal ${look} ${
+          selected ? "outline-2 outline-offset-2 outline-(--coord-green)" : ""
+        }`}
+      >
+        {sentence.text}
+      </button>{" "}
+    </>
+  );
+}
+
+/** 오른쪽 '문장 근거 · 출처' 본문 (목업 .evidence-block). 원본 근거 · 출처 → AI 점검 결과 */
+function SentenceEvidence({ sentence }: { sentence: Sentence }) {
+  const state = sentenceState(sentence);
+  const [label, tone] = STATE_BADGE[state];
+  return (
+    <>
+      <Badge tone={tone}>{label}</Badge>
+      <p className="mt-3 text-[13px] leading-[1.8] font-semibold">{sentence.text}</p>
+      <div className="border-b border-(--coord-line) py-[15px]">
+        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">01　원본 근거 · 출처</h3>
+        {sentence.evidence.length === 0 ? (
+          <p className="text-xs leading-[1.8] text-(--coord-muted)">
+            {state === "user" ? "직접 입력한 문장이라 연결된 근거가 없어요." : "연결된 근거가 없어요."}
+          </p>
+        ) : (
+          <ol className="flex flex-col gap-3">
+            {sentence.evidence.map((ev, i) => (
+              <li key={`${ev.refType}-${ev.refId}-${i}`}>
+                <p className="text-xs font-semibold">{ev.label}</p>
+                <blockquote className="mt-2 border-l-3 border-(--coord-chart-total) bg-(--coord-tint) px-3 py-2.5 text-xs leading-[1.8]">{ev.quote}</blockquote>
+                {(ev.url || ev.collectedAt) && (
+                  <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-(--coord-muted)">
+                    {ev.url && (
+                      <a href={ev.url} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                        출처 열기
+                      </a>
+                    )}
+                    {ev.collectedAt && <span>{toDate(ev.collectedAt)} 수집</span>}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+      <div className="pt-[15px]">
+        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">02　AI 점검 결과</h3>
+        <p className="text-xs leading-[1.8]">{STATE_CHECK[state]}</p>
+      </div>
+    </>
   );
 }
 
@@ -367,11 +534,11 @@ function NoDocument({ status, onReload }: { status: ApplicationStatus; onReload:
         ? ["서류를 만들지 못했어요.", "수료생이 서류를 다시 만들면 여기서 검토할 수 있어요."]
         : ["서류 본문이 없어요.", "지원서는 있지만 저장된 서류가 없어요. 필요하면 수료생에게 연락해 주세요."];
   return (
-    <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-surface px-7 py-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-7 py-10 text-center">
       <p className="text-[15px] font-bold">{title}</p>
-      <p className="text-[13px] text-ink-sub">{description}</p>
+      <p className="text-[13px] text-(--coord-muted)">{description}</p>
       {status === "GENERATING" && (
-        <button type="button" onClick={onReload} className="mt-2 text-sm font-bold text-primary">
+        <button type="button" onClick={onReload} className="mt-2 text-sm font-bold text-(--coord-green)">
           다시 불러오기
         </button>
       )}
@@ -379,24 +546,14 @@ function NoDocument({ status, onReload }: { status: ApplicationStatus; onReload:
   );
 }
 
-function SummaryRow({
-  label,
-  value,
-  note = null,
-  warn = false,
-}: {
-  label: string;
-  value: string;
-  note?: string | null;
-  warn?: boolean;
-}) {
+function SummaryRow({ label, value, note = null, warn = false }: { label: string; value: string; note?: string | null; warn?: boolean }) {
   return (
-    <div className="flex flex-col gap-0.5 border-b border-line pb-1.5 last:border-b-0 last:pb-0">
+    <div className="flex flex-col gap-0.5 border-b border-(--coord-tint-line) pb-1.5 last:border-b-0 last:pb-0">
       <div className="flex justify-between gap-2">
-        <dt className="text-ink-sub">{label}</dt>
-        <dd className={`text-right font-bold ${warn ? "text-warn-ink" : "text-ink"}`}>{value}</dd>
+        <dt className="text-(--coord-muted)">{label}</dt>
+        <dd className={`text-right font-bold ${warn ? "text-(--coord-orange)" : ""}`}>{value}</dd>
       </div>
-      {note && <dd className="text-xs text-ink-muted">{note}</dd>}
+      {note && <dd className="text-[11px] text-(--coord-muted)">{note}</dd>}
     </div>
   );
 }
@@ -440,7 +597,7 @@ function ConfirmDialog({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-ink/50" onClick={onClose}>
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-(--coord-forest)/40 backdrop-blur-[3px]" onClick={onClose}>
       <div
         ref={panelRef}
         role="dialog"
@@ -448,25 +605,20 @@ function ConfirmDialog({
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[440px] flex-col gap-3 rounded-2xl bg-surface p-6 outline-none"
+        className="flex w-[480px] flex-col gap-3 rounded-[14px] border border-(--coord-line) bg-(--coord-surface) p-6 outline-none"
       >
-        <h2 id={titleId} className="text-lg font-bold">
+        <h2 id={titleId} className="text-[19px] font-bold">
           {title}
         </h2>
-        <p className="text-[13px] leading-relaxed text-ink-sub">{description}</p>
+        <p className="text-[13px] leading-[1.8] text-(--coord-muted)">{description}</p>
         {children}
         {error && (
-          <p role="alert" className="text-[13px] text-danger">
+          <p role="alert" className="text-[13px] text-(--coord-red)">
             {error}
           </p>
         )}
         <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="min-h-11 flex-1 rounded-xl border border-line bg-surface text-sm font-bold text-ink"
-          >
+          <button type="button" onClick={onClose} disabled={busy} className={`${btn.base} ${btn.outline} flex-1 py-3 text-sm`}>
             취소
           </button>
           <button
@@ -474,7 +626,7 @@ function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy || confirmDisabled}
             aria-busy={busy}
-            className={`min-h-11 flex-1 rounded-xl text-sm font-bold text-surface disabled:bg-line disabled:text-ink-muted ${danger ? "bg-danger" : "bg-primary"}`}
+            className={`${btn.base} ${danger ? "border-(--coord-red) bg-(--coord-red) text-(--coord-surface)" : btn.primary} flex-1 py-3 text-sm`}
           >
             {confirmLabel}
           </button>
