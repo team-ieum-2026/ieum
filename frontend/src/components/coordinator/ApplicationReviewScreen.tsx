@@ -7,9 +7,9 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import C4DocumentSummary, { coverLetterMarkers, userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
+import { Badge, Icon, btn } from "@/components/coordinator/CoordUi";
+import { docLabels, docTone } from "@/components/coordinator/coordLabels";
 import EvidencePanel from "@/components/resume/EvidencePanel";
-import { applicationLabels } from "@/components/student/labels";
-import StatusChip from "@/components/ui/StatusChip";
 import { ApiError } from "@/lib/api/client";
 import {
   approveApplication,
@@ -47,17 +47,41 @@ const ACTION: Record<Action, { title: string; description: string; confirm: stri
 /** 버튼이 켜지는 상태 (docs/API.md 2-3 상태 전이) */
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
 
-/** 코디네이터 입장 상태 이름: 제출된 서류는 "검토 대기", 나머지는 기존 지원서 상태 라벨(FE-A labels) 그대로 */
-const STATUS_LABEL: Record<ApplicationStatus, string> = { ...applicationLabels, SUBMITTED: "검토 대기" };
-const STATUS_TONE: Record<ApplicationStatus, "neutral" | "success" | "warning" | "danger"> = {
-  GENERATING: "neutral",
-  DRAFT: "neutral",
-  SUBMITTED: "warning",
-  APPROVED: "success",
-  DELIVERED: "success",
-  REJECTED: "danger",
-  FAILED: "danger",
+/** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료. 상태 이름 · 색은 coordLabels(코디네이터 전용) */
+const STEPS = ["AI 초안", "수료생 확인", "코디네이터 검토", "승인", "전달 완료"];
+const STAGE: Record<ApplicationStatus, number> = {
+  GENERATING: 0,
+  FAILED: 0,
+  DRAFT: 1,
+  REJECTED: 1,
+  SUBMITTED: 2,
+  APPROVED: 3,
+  DELIVERED: 4,
 };
+
+function Steps({ status }: { status: ApplicationStatus }) {
+  const stage = STAGE[status];
+  return (
+    <ol className="flex items-center gap-[5px]" aria-label="서류 진행 단계">
+      {STEPS.map((label, i) => (
+        <li
+          key={label}
+          aria-current={i === stage ? "step" : undefined}
+          className={`flex flex-1 items-center gap-[7px] rounded-[7px] px-[11px] py-[9px] text-[11px] ${
+            i === stage
+              ? "bg-(--coord-forest) text-(--coord-surface)"
+              : i < stage
+                ? "bg-(--coord-green-soft) text-(--coord-green)"
+                : "bg-(--coord-gray-soft) text-(--coord-muted)"
+          }`}
+        >
+          <span className="grid size-[18px] place-items-center rounded-full border border-current text-[10px]">{i < stage ? "✓" : i + 1}</span>
+          {label}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
   FOUND: "기업 정보 확인",
@@ -102,7 +126,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-sm text-ink-sub">
         <p>{loadError?.message ?? "서류를 불러오는 중이에요…"}</p>
-        {loadError?.notFound && <p className="text-xs text-ink-muted">주소의 지원서 번호를 확인하거나 대시보드에서 다시 골라 주세요.</p>}
+        {loadError?.notFound && <p className="text-xs text-ink-muted">주소의 지원서 번호를 확인하거나 서류 검토 목록에서 다시 골라 주세요.</p>}
         {loadError && (
           <div className="flex gap-4">
             {!loadError.notFound && (
@@ -117,8 +141,8 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                 다시 시도
               </button>
             )}
-            <Link href="/coordinator" className={`font-bold ${loadError.notFound ? "text-primary" : "text-ink-sub"}`}>
-              대시보드로
+            <Link href="/coordinator/applications" className={`font-bold ${loadError.notFound ? "text-primary" : "text-ink-sub"}`}>
+              서류 검토 목록으로
             </Link>
           </div>
         )}
@@ -185,25 +209,27 @@ export default function ApplicationReviewScreen({ applicationId }: { application
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="flex items-center gap-1.5 text-xs text-ink-sub">
-            <Link href="/coordinator" className="font-bold hover:text-ink">
-              ← 대시보드
+      {/* 11/1 개편 목업: 목록으로 돌아가기 · 제목 · 상태 이름표(코디네이터 이름) · 수료생 정보 · 진행 단계 */}
+      <header className="flex flex-col gap-4">
+        <Link href="/coordinator/applications" className="inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
+          <Icon name="back" className="size-4" /> 서류 검토 목록
+        </Link>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[27px] leading-[1.3] font-bold tracking-[-1px]">{student.name} 님의 지원서류</h1>
+            {/* C4 API 에 제출 시각 · 마감일이 없어서 날짜는 표시하지 않는다 */}
+            <p className="mt-2 text-[13px] text-(--coord-muted)">
+              {job.companyName} · {job.title}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge tone={docTone[status]}>{docLabels[status]}</Badge>
+            <Link href={`/coordinator/students/${student.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+              수료생 정보
             </Link>
-            <span aria-hidden="true">·</span>
-            {/* C4 API 에 제출 시각이 없어서 날짜는 표시하지 않는다 */}
-            <span>서류 검토</span>
-          </p>
-          <h1 className="text-[22px] font-bold">
-            <Link href={`/coordinator/students/${student.studentId}`} className="underline-offset-4 hover:underline">
-              {student.name}
-            </Link>{" "}
-            → {job.companyName} {job.title}
-          </h1>
+          </div>
         </div>
-        {/* 목업처럼 제목 오른쪽 위 상태 배지 (실제 status 기준) */}
-        <StatusChip tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusChip>
+        <Steps status={status} />
       </header>
 
       {/* 왼쪽 서류는 페이지와 함께 세로로 스크롤, 오른쪽 패널은 화면에 붙어 근거 · 버튼이 계속 보이게 */}
@@ -218,7 +244,8 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           <NoDocument status={status} onReload={() => setReloadKey((k) => k + 1)} />
         )}
 
-        <aside className="sticky top-6 flex max-h-[calc(100vh-48px)] flex-col gap-3 overflow-y-auto">
+        {/* 상단 막대(60px) 아래에 붙어 근거 · 승인 버튼이 항상 보이게 */}
+        <aside className="sticky top-[80px] flex max-h-[calc(100vh-100px)] flex-col gap-3 overflow-y-auto">
           <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-[15px] font-bold">선택한 문장의 근거</h2>
             {!document ? (
@@ -261,8 +288,8 @@ export default function ApplicationReviewScreen({ applicationId }: { application
             {doneMessage ? (
               <p role="status" className="flex flex-col gap-1 rounded-xl bg-primary-tint px-3 py-2.5 text-[13px] font-bold text-primary-strong">
                 {doneMessage}
-                <Link href="/coordinator" className="w-fit text-xs underline underline-offset-2">
-                  대시보드로 돌아가기
+                <Link href="/coordinator/applications" className="w-fit text-xs underline underline-offset-2">
+                  서류 검토 목록으로 돌아가기
                 </Link>
               </p>
             ) : (

@@ -1,0 +1,55 @@
+/* 주인: FE-B — 코디네이터 전용 디자인 토큰 (11/1 코디네이터 개편, 목업 ieum-coordinator-mockup_v6).
+ * 공통 토큰(styles/tokens.css · FE-A)은 고치지 않고, 목업에서 새로 쓰거나 코디네이터에서만 다르게 쓰는 색만 둔다.
+ * .coord-root(코디네이터 레이아웃) 안에서만 적용된다. :root 를 덮어쓰지 않으므로 수료생 화면 · 공통 부품에는 영향이 없다.
+ * 화면에서는 Tailwind 의 변수 문법으로 쓴다: bg-(--coord-forest), text-(--coord-muted), border-(--coord-line) */
+.coord-root {
+  /* 바탕 · 글자 · 선 */
+  --coord-page: #f4f6f3;
+  --coord-surface: var(--color-surface);
+  --coord-ink: #193329;
+  --coord-muted: #6d7d74;
+  --coord-line: #dfe6df;
+  --coord-line-soft: #edf0eb;
+  --coord-head: #f8faf6;
+  --coord-hover: #f1f7ed;
+
+  /* 주 색 */
+  --coord-forest: #123f32;
+  --coord-green: #16734e;
+  --coord-green-soft: #e6f3e8;
+  --coord-green-ink: #196844;
+  --coord-lime: #c9efaa;
+  --coord-tint: #eff5e9;
+  --coord-tint-line: #d6e2ce;
+
+  /* 사이드바 글자 */
+  --coord-side-ink: #c5d6ca;
+  --coord-side-muted: #83a193;
+
+  /* 상태 이름표 (주황 · 빨강 · 파랑 · 회색) */
+  --coord-orange: #94601f;
+  --coord-orange-soft: #fbf0dc;
+  --coord-red: #ac4939;
+  --coord-red-soft: #fbeae5;
+  --coord-blue: #37649a;
+  --coord-blue-soft: #eaf0fb;
+  --coord-gray: #627168;
+  --coord-gray-soft: #edf0ed;
+
+  /* 확인 필요 안내 상자 */
+  --coord-attention: #7b5816;
+  --coord-attention-soft: #fff9e8;
+  --coord-attention-line: #e9d89c;
+
+  /* 관리 상태 막대 · 도넛 · 링 (취업 완료 · 구직 중 · 도움 필요 · 추가 확인 필요) */
+  --coord-chart-employed: #3f9a6a;
+  --coord-chart-seeking: #5b86bd;
+  --coord-chart-help: #cf6b58;
+  --coord-chart-check: #e0a94f;
+  --coord-chart-total: #8cc5a3;
+  --coord-chart-track: #dae5d3;
+
+  background: var(--coord-page);
+  color: var(--coord-ink);
+  letter-spacing: -0.3px;
+}
