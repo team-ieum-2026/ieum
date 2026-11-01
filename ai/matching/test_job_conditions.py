@@ -56,6 +56,17 @@ class RequiredSkillsTest(unittest.TestCase):
         self.assertEqual(jc.required_skills("<ul><li>자격요건</li><li>Python 사용 가능자</li></ul><div>우대: Docker</div>"),
                          ["Python"])
 
+    def test_angular_is_a_required_skill(self):
+        html = ("[공고] 프론트엔드 개발자 (Angular)\n[내용] <p><b>■ 자격요건</b></p>"
+                "<p>- Angular · TypeScript 사용 가능자<br>- 신입 지원 가능</p><p><b>■ 우대사항</b></p><p>- RxJS</p>")
+        self.assertCountEqual(jc.required_skills(html), ["Angular", "TypeScript"])
+        self.assertTrue(jc.missing_required(html, ["React", "TypeScript"]))  # Angular 가 없어 뒤로
+        self.assertFalse(jc.missing_required(html, ["Angular", "TypeScript"]))
+        self.assertEqual(jc.required_skills("자격요건\n- AngularJS 유지보수 경험"), ["Angular"])
+
+    def test_angular_korean_spelling(self):
+        self.assertCountEqual(jc.required_skills("< 자격요건 >\nㆍ 앵귤러 · 타입스크립트 사용 가능자"), ["Angular", "TypeScript"])
+
     def test_plain_line_body_is_unchanged(self):
         plain = "[내용] < 담당업무 >\nㆍ API 개발\n< 자격요건 >\nㆍ Java · MySQL 사용 가능자\n< 우대사항 >\nㆍ Redis"
         self.assertEqual(jc.required_text(plain), "ㆍ Java · MySQL 사용 가능자")  # "< 자격요건 >" 은 태그로 보지 않음

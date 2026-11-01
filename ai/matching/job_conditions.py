@@ -19,6 +19,7 @@ TECH: dict[str, list[str]] = {
     "Docker": ["Docker", "도커"], "Kubernetes": ["Kubernetes", "쿠버네티스", "k8s"], "AWS": ["AWS"],
     "Linux": ["Linux", "리눅스"], "Python": ["Python", "파이썬"], "JavaScript": ["JavaScript", "자바스크립트", "JS"],
     "TypeScript": ["TypeScript", "타입스크립트"], "React": ["React", "리액트"], "Vue.js": ["Vue.js", "Vue", "뷰"],
+    "Angular": ["Angular", "AngularJS", "Angular.js", "앵귤러"],
     "Next.js": ["Next.js", "NextJS"], "Node.js": ["Node.js", "NodeJS", "노드"], "FastAPI": ["FastAPI"],
     "Django": ["Django"], "Flask": ["Flask"], "Gemini API": ["Gemini API", "Gemini"], "OpenAI API": ["OpenAI API", "OpenAI"],
     "LLM API": ["LLM API"], "LangChain": ["LangChain"], "LangGraph": ["LangGraph"], "Whisper": ["Whisper"],
