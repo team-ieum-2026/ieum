@@ -201,10 +201,16 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
         </button>
       </div>
       <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-[9px]">
+        {/* 실제로 이동할 행동이 있을 때만 '다음 행동', 없으면 서버 상태 근거를 '현재 진행 상태'로 보여 준다 */}
         <div>
-          <span className="text-[11px] font-bold tracking-[1.4px] text-(--coord-green)">NEXT ACTION</span>
-          <h3 className="mt-[5px] text-[15px] font-bold">{s.reason ?? manageLabels[s.status]}</h3>
-          <p className="mt-[5px] text-xs text-(--coord-muted)">{s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 앱 응답` : "앱 응답 기록 없음"}</p>
+          <span className="text-[11px] font-bold tracking-[1.4px] text-(--coord-green)">{next ? "NEXT ACTION · 다음 행동" : "현재 진행 상태"}</span>
+          <h3 className="mt-[5px] text-[15px] font-bold">
+            {next ? (next.text === "서류 검토" ? "검토 대기 서류를 확인해 주세요" : "접수된 도움 요청을 확인해 주세요") : (s.reason ?? manageLabels[s.status])}
+          </h3>
+          <p className="mt-[5px] text-xs text-(--coord-muted)">
+            {next && s.reason ? `${s.reason} · ` : ""}
+            {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 앱 응답` : "앱 응답 기록 없음"}
+          </p>
         </div>
         {next && (
           <Link href={next.href} className={`${btn.base} ${btn.primary} px-4 py-3 text-sm`}>

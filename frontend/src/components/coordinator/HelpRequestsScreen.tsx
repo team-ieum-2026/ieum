@@ -107,8 +107,9 @@ export default function HelpRequestsScreen() {
           </Link>
         </p>
       )}
-      <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(330px,1fr)] items-start gap-5">
-        <Panel label="접수된 도움 요청">
+      {/* 목업처럼 화면 높이에 맞추고 목록 · 상세가 각자 안에서 스크롤 (상단 막대 60 + 여백 70 + 제목 · 안내 약 150) */}
+      <div className="grid min-h-[480px] grid-cols-[minmax(0,1.35fr)_minmax(330px,1fr)] gap-5 lg:h-[calc(100vh-290px)]">
+        <Panel label="접수된 도움 요청" className="flex min-h-0 flex-col">
           <div className="flex flex-wrap items-center gap-2.5 border-b border-(--coord-line) px-5 py-4">
             <span className="text-[11px] font-bold text-(--coord-muted)">선호 연락</span>
             <div className="flex flex-wrap gap-1" role="group" aria-label="선호 연락 필터">
@@ -133,7 +134,7 @@ export default function HelpRequestsScreen() {
               {list.length === 0 ? "접수된 도움 요청이 없어요." : "이 조건의 요청이 없어요."}
             </p>
           ) : (
-            <ul>
+            <ul className="min-h-0 flex-1 overflow-y-auto">
               {filtered.map((r) => {
                 const active = r.helpRequestId === selected?.helpRequestId;
                 return (
@@ -164,7 +165,7 @@ export default function HelpRequestsScreen() {
             </ul>
           )}
         </Panel>
-        <Panel label="요청 상세" className="sticky top-[80px]">
+        <Panel label="요청 상세" className="min-h-0 overflow-y-auto">
           {selected ? (
             <>
               <div className="border-b border-(--coord-line-soft) px-[22px] py-5">

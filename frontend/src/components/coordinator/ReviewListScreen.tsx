@@ -42,12 +42,14 @@ export default function ReviewListScreen() {
           }}
         />
       ) : (
-        <Panel label="검토 대기 서류">
-          <div className="flex items-center gap-2 border-b border-(--coord-line) px-5 py-4">
+        // 목업처럼 표 카드가 화면 높이를 채우고 안내 문구는 카드 아래쪽에 붙는다 (표가 길면 표 안에서 스크롤)
+        <Panel label="검토 대기 서류" className="flex min-h-[420px] flex-col lg:h-[calc(100vh-234px)]">
+          <div className="flex shrink-0 items-center gap-2 border-b border-(--coord-line) px-5 py-4">
             <span className="rounded-[7px] bg-(--coord-green-soft) px-3.5 py-2 text-xs font-semibold text-(--coord-forest)">
               검토 대기 <b className="ml-1 text-[10px]">{items.length}</b>
             </span>
           </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
           <table className="w-full table-fixed border-collapse text-left text-xs">
             <caption className="sr-only">검토 대기 서류: 수료생, 지원 공고, 제출일자, 검토 상태</caption>
             <thead className="bg-(--coord-head) text-[11px] text-(--coord-muted)">
@@ -85,7 +87,8 @@ export default function ReviewListScreen() {
             </tbody>
           </table>
           {items.length === 0 && <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">검토할 서류가 없어요.</p>}
-          <p className="p-[22px] text-xs text-(--coord-muted)">
+          </div>
+          <p className="shrink-0 p-[22px] text-xs text-(--coord-muted)">
             AI 점검은 원본 자료와의 연결 여부예요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
           </p>
         </Panel>

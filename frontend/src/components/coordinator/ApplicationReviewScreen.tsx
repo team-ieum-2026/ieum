@@ -78,13 +78,17 @@ const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
 /** 문장 근거 상태: AI+근거 = 근거 연결 · USER = 수료생 직접 작성 · AI+근거 없음 = 근거 확인 필요 */
 type SentenceState = "linked" | "user" | "weak";
 const sentenceState = (s: Sentence): SentenceState => (s.source === "USER" ? "user" : s.evidence.length > 0 ? "linked" : "weak");
+// '근거 자료 연결'은 문장이 참고한 원본 기록이 있다는 뜻이지, 문장의 표현 · 해석까지 모두 검증됐다는 뜻이 아니다
 const STATE_BADGE: Record<SentenceState, [string, CoordTone]> = {
-  linked: ["원본 근거 연결", "green"],
+  linked: ["근거 자료 연결", "green"],
   user: ["수료생 직접 작성", "blue"],
   weak: ["근거 확인 필요", "red"],
 };
+/** 선택한 문장 위 제목: 누가 쓴 문장인지 */
+const STATE_WRITER: Record<SentenceState, string> = { linked: "AI가 작성한 문장", user: "수료생이 쓰거나 고친 문장", weak: "AI가 작성한 문장" };
 const STATE_CHECK: Record<SentenceState, string> = {
-  linked: "등록된 자료 · 기업 정보의 해당 항목과 문장을 연결했어요.",
+  linked:
+    "AI가 위 원본 기록을 바탕으로 쓴 문장이에요. 원본에 있는 사실과, AI가 덧붙인 해석 · 표현(성과 수치 · 역할 범위 · 평가)이 같은 범위인지 비교해 확인해 주세요. 근거 연결은 사실 전체가 검증됐다는 뜻이 아니에요.",
   user: "수료생이 직접 쓰거나 고친 문장이라 AI 근거 점검 대상이 아니에요. 필요하면 원본 자료와 함께 확인해 주세요.",
   weak: "연결할 자료를 찾지 못했어요. 거짓으로 확정하지 않고 담당자 확인 대상으로 남겼어요.",
 };
@@ -308,7 +312,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           ) : (
             <>
               <div className="flex shrink-0 flex-wrap items-center gap-[9px] border-b border-(--coord-line) px-5 py-3">
-                <Badge tone="green">근거 연결 {counts.linked}</Badge>
+                <Badge tone="green">근거 자료 연결 {counts.linked}</Badge>
                 <Badge tone="blue">수료생 직접 작성 {counts.user}</Badge>
                 {counts.weak > 0 && <Badge tone="red">근거 확인 필요 {counts.weak}</Badge>}
                 <span className="text-xs text-(--coord-muted)">문장 색상 + 상태로 구분</span>
@@ -489,9 +493,10 @@ function SentenceEvidence({ sentence }: { sentence: Sentence }) {
   return (
     <>
       <Badge tone={tone}>{label}</Badge>
-      <p className="mt-3 text-[13px] leading-[1.8] font-semibold">{sentence.text}</p>
+      <h3 className="mt-3 text-[11px] text-(--coord-muted)">{STATE_WRITER[state]}</h3>
+      <p className="mt-1 text-[13px] leading-[1.8] font-semibold">{sentence.text}</p>
       <div className="border-b border-(--coord-line) py-[15px]">
-        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">01　원본 근거 · 출처</h3>
+        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">01　원본 기록 · 출처 (등록 자료 · 기업 정보 원문)</h3>
         {sentence.evidence.length === 0 ? (
           <p className="text-xs leading-[1.8] text-(--coord-muted)">
             {state === "user" ? "직접 입력한 문장이라 연결된 근거가 없어요." : "연결된 근거가 없어요."}
@@ -518,7 +523,7 @@ function SentenceEvidence({ sentence }: { sentence: Sentence }) {
         )}
       </div>
       <div className="pt-[15px]">
-        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">02　AI 점검 결과</h3>
+        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">02　AI 점검 결과 · 확인할 점</h3>
         <p className="text-xs leading-[1.8]">{STATE_CHECK[state]}</p>
       </div>
     </>

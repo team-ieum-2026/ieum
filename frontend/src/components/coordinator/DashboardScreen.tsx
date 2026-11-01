@@ -92,7 +92,8 @@ export default function DashboardScreen() {
         title="오늘의 업무"
         description="요청의 맥락을 확인하고, 필요한 지원부터 이어가세요."
         action={
-          <span className="rounded-[7px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-xs">
+          <span className="inline-flex items-center gap-2 rounded-[7px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-xs">
+            <Icon name="calendar" className="size-4" />
             {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
           </span>
         }
@@ -305,7 +306,7 @@ function ManagementCard({ data }: { data: Dashboard }) {
         </div>
       )}
       {MANAGE_ORDER.map((s) => (
-        <Link key={s} href={`/coordinator/students?status=${s}`} className="flex h-[46px] w-full items-center rounded-md hover:bg-(--coord-hover)">
+        <Link key={s} href={`/coordinator/students?status=${s}`} className="flex h-[44px] w-full items-center rounded-md hover:bg-(--coord-hover)">
           <Badge tone={manageTone[s]}>{manageLabels[s]}</Badge>
           <b className="ml-auto flex items-center gap-2 text-[13px]">
             {counts[s]}명
