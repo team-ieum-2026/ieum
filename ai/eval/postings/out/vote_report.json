@@ -1,0 +1,416 @@
+{
+  "models": [
+    "gemini-3.8-flash",
+    "gemini-4-argon",
+    "gpt-6.1-sol"
+  ],
+  "generatedCheck": {
+    "pairs": 1820,
+    "same": 1802,
+    "spec2_vote2": 105,
+    "spec2_vote_not2": 11,
+    "spec_not2_vote2": 0
+  },
+  "generatedDisagree": {
+    "900203": [
+      {
+        "student": 1,
+        "spec": 2,
+        "vote": 1
+      },
+      {
+        "student": 2,
+        "spec": 2,
+        "vote": 1
+      }
+    ],
+    "900208": [
+      {
+        "student": 1,
+        "spec": 2,
+        "vote": 1
+      },
+      {
+        "student": 2,
+        "spec": 2,
+        "vote": 1
+      },
+      {
+        "student": 9,
+        "spec": 2,
+        "vote": 1
+      }
+    ],
+    "900232": [
+      {
+        "student": 7,
+        "spec": 2,
+        "vote": 1
+      }
+    ],
+    "900267": [
+      {
+        "student": 15,
+        "spec": 2,
+        "vote": 1
+      }
+    ],
+    "900288": [
+      {
+        "student": 4,
+        "spec": 2,
+        "vote": 0
+      },
+      {
+        "student": 8,
+        "spec": 2,
+        "vote": 0
+      },
+      {
+        "student": 20,
+        "spec": 2,
+        "vote": 0
+      }
+    ],
+    "900289": [
+      {
+        "student": 20,
+        "spec": 2,
+        "vote": 1
+      }
+    ]
+  },
+  "externalDisagree": {
+    "613": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      },
+      {
+        "student": 8,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      },
+      {
+        "student": 14,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      },
+      {
+        "student": 20,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      }
+    ],
+    "619": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "626": [
+      {
+        "student": 1,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 2,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 6,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 9,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 18,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      }
+    ],
+    "642": [
+      {
+        "student": 15,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "662": [
+      {
+        "student": 15,
+        "scores": {
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 2
+        }
+      }
+    ],
+    "683": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 8,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 14,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 20,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      }
+    ],
+    "694": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "714": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 5,
+        "scores": {
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 8,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 14,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      },
+      {
+        "student": 20,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 2
+        }
+      }
+    ],
+    "900009": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 8,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 14,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 20,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900045": [
+      {
+        "student": 7,
+        "scores": {
+          "gemini-3.8-flash": 0,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900060": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 8,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 14,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      },
+      {
+        "student": 20,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900078": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      }
+    ],
+    "900087": [
+      {
+        "student": 15,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900106": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      }
+    ],
+    "900131": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900140": [
+      {
+        "student": 15,
+        "scores": {
+          "gemini-3.8-flash": 2,
+          "gemini-4-argon": 0,
+          "gpt-6.1-sol": 0
+        }
+      }
+    ],
+    "900144": [
+      {
+        "student": 4,
+        "scores": {
+          "gemini-3.8-flash": 1,
+          "gemini-4-argon": 2,
+          "gpt-6.1-sol": 1
+        }
+      }
+    ]
+  },
+  "fixed": []
+}
