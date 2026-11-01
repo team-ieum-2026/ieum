@@ -106,14 +106,19 @@ class ScoreTest(unittest.TestCase):
         self.assertTrue(result["noMatchPassed"][10])  # METRICS.md: 2점이 아닌 카드가 나와야 실패
         self.assertIn("통과 1/1명", printed)
 
-    def test_no_match_17_with_partial_card_fails(self) -> None:
+    def test_17_is_scored_as_a_regular_student(self) -> None:
         self.write_run(10, [])
         self.write_run(17, [card(701, 1), card(702, 2)])  # 701 은 부분 적합(1점)
         self.labels.write_text("student_id,job_posting_id,score\n17,701,1\n17,702,2\n", encoding="utf-8")
         result, printed = self.run_score("test", [10, 17])
-        self.assertEqual(result["noMatchPassed"], {10: True, 17: False})
-        self.assertIn("맞는 공고 없는 수료생 통과 1/2명", printed)
+        self.assertEqual(result["noMatchPassed"], {10: True})  # 17번은 NO_MATCH 가 아님
+        self.assertEqual((result["scored"], result["score2"], result["score1"], result["score0"]), (2, 1, 1, 0))
+        self.assertIn("1/2 = 50%", printed)  # Precision@3 에 17번 카드가 들어감
+        self.assertIn("0/2 = 0%", printed)  # 명백 부적합률도
+        self.assertIn("맞는 공고 없는 수료생 통과 1/1명", printed)
         self.assertNotIn("17번", printed)
+        self.assertNotIn("701", printed)
+        self.assertNotIn("공고70", printed)
 
     def test_dev_shows_no_match_student_13(self) -> None:
         self.write_run(13, [])
