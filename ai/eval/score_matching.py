@@ -29,7 +29,8 @@ from rubric import POSTING_EDUCATION, max_degree, preferred_regions
 
 HERE = Path(__file__).parent
 # 맞는 공고가 없는 수료생. 2점이 아닌 카드가 하나라도 나오면 실패 (METRICS.md · AI-A 확정)
-NO_MATCH = {"test": [10, 17], "dev": [13]}
+# 17번은 일반 채점 (11/1 AI-A 요청으로 NO_MATCH 에서 뺌)
+NO_MATCH = {"test": [10], "dev": [13]}
 
 
 def load_split() -> dict[str, list[int]]:

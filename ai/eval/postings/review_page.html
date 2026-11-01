@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공고 검수</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #fff; --line: #e3e3de; --text: #1f1f1d; --muted: #6b6b66;
+    --flash: #2563eb; --argon: #d97706; --gpt: #059669; --mine: #7c3aed;
+    --flash-bg: #dbeafe; --argon-bg: #fde68a; --gpt-bg: #bbf7d0; --multi-bg: #e9d5ff;
+    --ok: #059669; --warn: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.55 -apple-system, "Apple SD Gothic Neo", sans-serif; color: var(--text); background: var(--bg); }
+  .app { display: grid; grid-template-columns: 240px 1fr 460px; height: 100vh; }
+  aside, main, section { overflow-y: auto; }
+  aside { border-right: 1px solid var(--line); background: var(--panel); }
+  aside h2 { font-size: 12px; color: var(--muted); margin: 14px 12px 6px; }
+  .progress { padding: 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .item { padding: 7px 12px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; border-left: 3px solid transparent; }
+  .item:hover { background: var(--bg); }
+  .item.active { background: var(--bg); border-left-color: var(--mine); }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
+  .item.done .dot { background: var(--ok); }
+  .item .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  main { padding: 20px 24px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  .meta { color: var(--muted); margin-bottom: 12px; }
+  .legend span { display: inline-block; padding: 0 6px; border-radius: 4px; margin-right: 6px; font-size: 12px; }
+  .body { white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-top: 8px; }
+  mark { border-radius: 3px; padding: 0 1px; }
+  .m1 { background: var(--flash-bg); } .m2 { background: var(--argon-bg); } .m4 { background: var(--gpt-bg); }
+  .m3, .m5, .m6, .m7 { background: var(--multi-bg); }
+  section { border-left: 1px solid var(--line); background: var(--panel); padding: 16px; }
+  .cond { border-bottom: 1px solid var(--line); padding: 10px 0; }
+  .cond h3 { font-size: 13px; margin: 0 0 6px; display: flex; justify-content: space-between; }
+  .cond h3 .agree { color: var(--muted); font-weight: 400; }
+  .opt { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 4px; cursor: pointer; }
+  .opt:hover { border-color: var(--muted); }
+  .opt.sel { border-color: var(--mine); background: #f5f0ff; }
+  .opt .who { font-size: 12px; font-weight: 600; min-width: 92px; }
+  .opt .val { flex: 1; }
+  .opt .q { color: var(--muted); font-size: 12px; display: block; }
+  .stu { border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 12px; }
+  .stu-head { display: flex; justify-content: space-between; font-size: 13px; }
+  .stu-skills { color: var(--muted); margin: 2px 0 4px; }
+  .why { display: flex; gap: 6px; } .why .who { min-width: 92px; font-weight: 600; }
+  .mine-why { border-top: 1px dashed var(--line); margin-top: 3px; padding-top: 3px; }
+  .who .mine { color: var(--mine); }
+  .mine-score { font-weight: 700; } .mine-score.two { color: var(--ok); }
+  .missing ul { margin: 4px 0; padding-left: 18px; font-size: 12px; }
+  b.flash, .who .flash { color: var(--flash); } b.argon { color: var(--argon); } b.gpt { color: var(--gpt); }
+  .who .flash { color: var(--flash); } .who .argon { color: var(--argon); } .who .gpt { color: var(--gpt); }
+  .custom input[type=text] { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+  .fams { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+  select { font: inherit; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 6px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 4px; text-align: center; }
+  td.s { text-align: left; color: var(--muted); }
+  td.two { font-weight: 700; color: var(--ok); }
+  th.mine, td.mine { background: #f5f0ff; }
+  textarea { width: 100%; height: 50px; font: inherit; border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; }
+  button { font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+  button.primary { background: var(--mine); color: #fff; border-color: var(--mine); flex: 1; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .saved { color: var(--ok); font-size: 12px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="list"></aside>
+  <main id="main"></main>
+  <section id="panel"></section>
+</div>
+<script>
+const MODELS = ["flash", "argon", "gpt"];
+const BIT = { flash: 1, argon: 2, gpt: 4 };
+const FAMILIES = ["BE", "FE", "FULLSTACK", "AI", "DATA", "INFRA", "GAME", "EMBEDDED", "DESIGN", "MOBILE", "ANALYST", "PUBLISHER", "NETWORK", "OTHER"];
+const CONDS = [
+  { key: "family", label: "직무군" },
+  { key: "required", label: "필수 기술" },
+  { key: "career", label: "경력" },
+  { key: "education", label: "학력" },
+];
+let DATA, idx = 0, choice = {}, note = "", modelScores = {}, myScores = null;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const show = (key, v) => key === "family" ? v.join(", ") : key === "required" ? (v.length ? v.join(", ").replaceAll("|", " 또는 ") : "없음") : v;
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const cur = () => DATA.postings[idx];
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  return res.json();
+}
+
+// 모델별 값을 같은 값끼리 묶는다: [{value, models: [...]}]
+function groups(p, key) {
+  const out = [];
+  for (const m of MODELS) {
+    const v = p.models[m].posting[key];
+    const g = out.find(g => same(g.value, v));
+    g ? g.models.push(m) : out.push({ value: v, models: [m] });
+  }
+  return out;
+}
+
+function initChoice(p) {
+  const fix = DATA.fixes[p.id];
+  choice = {};
+  note = fix?.note || "";
+  for (const { key } of CONDS) {
+    const gs = groups(p, key);
+    if (fix && key in fix) {
+      const g = gs.find(g => same(g.value, fix[key]));
+      choice[key] = g ? { models: g.models, value: g.value } : { custom: true, value: fix[key] };
+    } else {
+      const major = gs.find(g => g.models.length >= 2);
+      choice[key] = major ? { models: major.models, value: major.value } : null;
+    }
+  }
+}
+
+function myPosting(p) {
+  if (CONDS.some(c => !choice[c.key])) return null;
+  const base = p.models.flash.posting;
+  return { ...base, ...Object.fromEntries(CONDS.map(c => [c.key, choice[c.key].value])) };
+}
+
+// 공백을 지운 본문에서 구절을 찾아 원래 본문의 [시작, 끝]을 돌려준다 (줄바꿈이 다르게 옮겨진 구절도 찾게)
+function locate(text, q) {
+  const keep = [];
+  let flat = "";
+  for (let i = 0; i < text.length; i++) if (!/\s/.test(text[i])) { keep.push(i); flat += text[i]; }
+  const at = flat.indexOf(q.replace(/\s+/g, ""));
+  if (at < 0 || !q.trim()) return null;
+  return [keep[at], keep[at + q.replace(/\s+/g, "").length - 1] + 1];
+}
+
+// 본문에서 모델별 근거 구절의 위치를 칠한다. 본문에 없는 구절(제목, 여러 줄을 합친 구절)은 따로 모은다
+function highlight(p) {
+  const text = p.description;
+  const mask = new Uint8Array(text.length);
+  const tips = Array.from({ length: text.length }, () => new Set());
+  const missing = [];
+  for (const m of MODELS) {
+    const e = p.models[m].extracted;
+    const quotes = [[e.familyQuote, `직무군 ${e.jobFamilies.join(", ")}`], ...e.requiredSkills.map(s => [s.quote, `기술 ${s.options.join(" 또는 ")}`])];
+    for (const [q, what] of quotes) {
+      if (!q) continue;
+      const span = locate(text, q);
+      if (!span) { missing.push(`<li><b class="${m}">${m}</b> ${esc(what)}: "${esc(q)}"${p.title.includes(q.trim().replace(/\.\.\.$/, "")) ? " (제목)" : ""}</li>`); continue; }
+      for (let i = span[0]; i < span[1]; i++) { mask[i] |= BIT[m]; tips[i].add(`${m}: ${what}`); }
+    }
+  }
+  highlight.missing = missing;
+  let html = "", i = 0;
+  while (i < text.length) {
+    let j = i;
+    while (j < text.length && mask[j] === mask[i]) j++;
+    const chunk = esc(text.slice(i, j));
+    html += mask[i] ? `<mark class="m${mask[i]}" title="${esc([...tips[i]].join("\n"))}">${chunk}</mark>` : chunk;
+    i = j;
+  }
+  return html;
+}
+
+function renderList() {
+  const done = DATA.postings.filter(p => DATA.fixes[p.id]).length;
+  let html = `<div class="progress">${done} / ${DATA.postings.length} 판정</div>`;
+  let part = "";
+  DATA.postings.forEach((p, i) => {
+    if (p.part !== part) { part = p.part; html += `<h2>${part === "1부" ? "1부. 2점인지가 갈림 (우선)" : "2부. 1점과 0점 사이만 갈림"}</h2>`; }
+    html += `<div class="item ${i === idx ? "active" : ""} ${DATA.fixes[p.id] ? "done" : ""}" onclick="go(${i})"><span class="dot"></span><span class="t">${p.id} ${esc(p.title)}</span></div>`;
+  });
+  document.getElementById("list").innerHTML = html;
+  document.querySelector(".item.active")?.scrollIntoView({ block: "nearest" });
+}
+
+function renderMain() {
+  const p = cur();
+  document.getElementById("main").innerHTML = `
+    <h1>${p.id} ${esc(p.title)}</h1>
+    <div class="meta">${p.source} 공고 · 직종 칸 ${esc(p.jobCategory)} · 경력 칸 ${p.career} · 학력 칸 ${p.education} · 근무지 ${esc(p.location)}</div>
+    <div class="legend">근거 구절: <span class="m1">flash</span><span class="m2">argon</span><span class="m4">gpt</span><span class="m3">여러 모델</span> (마우스를 올리면 무엇을 뽑았는지 보여요)</div>
+    ${(() => { const body = highlight(p); const miss = highlight.missing;
+      return (miss.length ? `<details open class="missing"><summary>본문에 그대로 없는 근거 ${miss.length}개</summary><ul>${miss.join("")}</ul></details>` : "") + `<div class="body">${body}</div>`; })()}`;
+}
+
+function optHtml(key, g, selected) {
+  const p = cur();
+  const quotes = g.models.map(m => {
+    const e = p.models[m].extracted;
+    if (key === "family") return e.familyQuote;
+    if (key === "required") return e.requiredSkills.map(s => `${s.options.join("/")}: ${s.quote}`).join("\n");
+    return "";
+  }).filter(Boolean);
+  const q = quotes.length ? `<span class="q">${esc(quotes[0]).replaceAll("\n", "<br>")}</span>` : "";
+  return `<div class="opt ${selected ? "sel" : ""}" onclick='pick("${key}", ${JSON.stringify(g.models)})'>
+    <span class="who">${g.models.map(m => `<span class="${m}">${m}</span>`).join(" ")}</span>
+    <span class="val">${esc(show(key, g.value))}${q}</span></div>`;
+}
+
+function customHtml(key) {
+  const c = choice[key];
+  const v = c?.custom ? c.value : null;
+  if (key === "family") {
+    const sel = v || [];
+    return `<div class="fams">${FAMILIES.map(f => `<label><input type="checkbox" ${sel.includes(f) ? "checked" : ""} onchange="setFamily()" value="${f}" class="fam"> ${f}</label>`).join("")}</div>`;
+  }
+  if (key === "required")
+    return `<input type="text" id="custom-required" placeholder="쉼표로 구분, 둘 중 하나는 또는 (예: Java, C 또는 Python). 비우면 없음" value="${v ? esc(v.join(", ").replaceAll("|", " 또는 ")) : ""}" onchange="setRequired(this.value)">`;
+  const opts = key === "career" ? ["신입", "경력", "관계없음"] : DATA.educations;
+  return `<select onchange='setCustom("${key}", this.value)'><option value="">직접 고르기</option>${opts.map(o => `<option ${v === o ? "selected" : ""}>${o}</option>`).join("")}</select>`;
+}
+
+function renderPanel() {
+  const p = cur();
+  let html = "";
+  for (const { key, label } of CONDS) {
+    const gs = groups(p, key);
+    const c = choice[key];
+    const agree = gs.length === 1;
+    html += `<div class="cond"><h3>${label}<span class="agree">${agree ? "세 모델 일치" : ""}</span></h3>`;
+    html += gs.map(g => optHtml(key, g, c && !c.custom && same(c.models, g.models))).join("");
+    html += `<details class="custom" ${c?.custom ? "open" : ""}><summary>${agree ? "틀렸으면" : "셋 다 틀렸으면"} 직접 입력</summary>${customHtml(key)}</details>`;
+    html += `</div>`;
+  }
+  html += `<div class="cond"><h3>수료생별 점수와 이유<span class="agree">갈린 수료생과 내 판정이 2점인 수료생</span></h3>${scoreTable(p)}</div>`;
+  html += `<textarea id="note" placeholder="메모 (왜 이렇게 정했는지)">${esc(note)}</textarea>`;
+  html += `<div class="actions"><button class="primary" onclick="save()">저장하고 다음 (Enter)</button>${DATA.fixes[p.id] ? `<button onclick="unsave()">판정 취소</button>` : ""}</div>`;
+  html += `<div class="hint">단축키: 1 flash, 2 argon, 3 gpt 값으로 모두 고르기 · ↑↓ 공고 이동 · Enter 저장${DATA.fixes[p.id] ? ` · <span class="saved">저장된 공고</span>` : ""}</div>`;
+  document.getElementById("panel").innerHTML = html;
+  document.getElementById("note").oninput = e => { note = e.target.value; };
+}
+
+const COND_NAME = { JOB: "직무 다름", CAREER: "경력 요구", EDU: "학력 부족", REGION: "지역 밖", SKILL: "기술 부족" };
+
+// 점수의 이유: "0점: 직무 다름(BE), 기술 부족(없음: Java)"
+function reason(r, posting, s) {
+  if (!r) return "-";
+  if (!r.violations.length) return `${r.score}점: 모든 조건 충족`;
+  const parts = r.violations.map(v =>
+    v === "JOB" ? `직무 다름(공고 ${posting.family.join(", ")}, 수료생 ${s.family})`
+    : v === "SKILL" ? `기술 부족(없음: ${r.missing.map(x => x.replaceAll("|", " 또는 ")).join(", ")})`
+    : v === "EDU" ? `학력 부족(공고 ${posting.education})`
+    : v === "REGION" ? `지역 밖(공고 ${posting.location})`
+    : COND_NAME[v]);
+  return `${r.score}점: ${parts.join(", ")}`;
+}
+
+function scoreTable(p) {
+  const mine = myPosting(p);
+  const rows = DATA.students.filter(s => {
+    const vals = MODELS.map(m => modelScores[m]?.[s.id]?.score);
+    return new Set(vals).size > 1 || myScores?.[s.id]?.score === 2;
+  });
+  if (!rows.length) return `<div class="hint">갈린 수료생 없음</div>`;
+  return rows.map(s => {
+    const [spec, skills] = s.line.split(", 기술 ");
+    const my = myScores?.[s.id];
+    // 같은 이유를 낸 모델끼리 한 줄로
+    const lines = [];
+    for (const m of MODELS) {
+      const text = reason(modelScores[m]?.[s.id], p.models[m].posting, s);
+      const l = lines.find(l => l.text === text);
+      l ? l.models.push(m) : lines.push({ text, models: [m] });
+    }
+    return `<div class="stu">
+      <div class="stu-head"><b>${esc(spec)}</b><span class="mine-score ${my?.score === 2 ? "two" : ""}">내 판정 ${my?.score ?? "-"}점</span></div>
+      <div class="stu-skills">기술: ${esc(skills || "없음")}</div>
+      ${lines.map(l => `<div class="why"><span class="who">${l.models.map(m => `<span class="${m}">${m}</span>`).join(" ")}</span> ${esc(l.text)}</div>`).join("")}
+      <div class="why mine-why"><span class="who"><span class="mine">내 판정</span></span> ${mine ? esc(reason(my, mine, s)) : "아직 안 고른 조건이 있어요"}</div>
+    </div>`;
+  }).join("");
+}
+
+async function refreshScores() {
+  const mine = myPosting(cur());
+  myScores = mine ? await api("/api/score", { posting: mine }) : null;
+  renderPanel();
+}
+
+function pick(key, models) {
+  const v = cur().models[models[0]].posting[key];
+  choice[key] = { models, value: v };
+  refreshScores();
+}
+function pickAll(m) { for (const { key } of CONDS) pick(key, groups(cur(), key).find(g => g.models.includes(m)).models); }
+function setCustom(key, value) { if (value) { choice[key] = { custom: true, value }; refreshScores(); } }
+function setFamily() {
+  const v = [...document.querySelectorAll(".fam:checked")].map(e => e.value);
+  choice.family = v.length ? { custom: true, value: v } : null;
+  refreshScores();
+}
+function setRequired(text) {
+  // 화면에 "또는"으로 보여 주므로 입력도 "또는"과 | 를 모두 받는다. 루브릭에는 | 로 넣는다
+  const v = text.split(",").map(s => s.split(/\||또는/).map(x => x.trim()).filter(Boolean).join("|")).filter(Boolean);
+  choice.required = { custom: true, value: v };
+  refreshScores();
+}
+
+async function go(i) {
+  idx = Math.max(0, Math.min(DATA.postings.length - 1, i));
+  const p = cur();
+  initChoice(p);
+  modelScores = {};
+  await Promise.all(MODELS.map(async m => { modelScores[m] = await api("/api/score", { posting: p.models[m].posting }); }));
+  renderList(); renderMain();
+  await refreshScores();
+  document.getElementById("main").scrollTop = 0;
+}
+
+async function save() {
+  const p = cur();
+  const mine = myPosting(p);
+  if (!mine) { alert("아직 안 고른 조건이 있어요."); return; }
+  const picked = Object.fromEntries(CONDS.map(c => [c.key, choice[c.key].custom ? "직접" : choice[c.key].models.join(",")]));
+  const fix = { family: mine.family, career: mine.career, education: mine.education, required: mine.required, note, picked };
+  DATA.fixes = await api("/api/fix", { id: p.id, fix });
+  const next = DATA.postings.findIndex((q, i) => i > idx && !DATA.fixes[q.id]);
+  go(next >= 0 ? next : idx);
+}
+
+async function unsave() {
+  DATA.fixes = await api("/api/fix", { id: cur().id, fix: null });
+  go(idx);
+}
+
+document.addEventListener("keydown", e => {
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+  if (e.key === "ArrowDown") { e.preventDefault(); go(idx + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); go(idx - 1); }
+  else if (e.key === "Enter") save();
+  else if (["1", "2", "3"].includes(e.key)) pickAll(MODELS[+e.key - 1]);
+});
+
+(async () => {
+  DATA = await api("/api/data");
+  const first = DATA.postings.findIndex(p => !DATA.fixes[p.id]);
+  go(first >= 0 ? first : 0);
+})();
+</script>
+</body>
+</html>
