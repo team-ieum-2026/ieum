@@ -6,11 +6,13 @@
 ② 지역: config.REGION_POLICY (fallback.region_allowed). 희망 지역은 "서울, 경기"처럼 여러 개일 수 있다
    METRO: 희망 지역에 수도권이 있으면 수도권 전부 후보(희망 시 · 도 우선 정렬), 수도권 밖뿐이면(예: 부산) 그 시 · 도만
    STRICT: 희망 시 · 도만. 희망 지역이 없으면 둘 다 전체
+   직무군: 희망 직무와 공고 직무군이 다르면 뺀다. 어느 쪽이든 판단 못 하면 통과 (job_conditions.family_allowed)
 ③ 검색어: 프로필(희망 직무 · 기술 · 역할 · 성과 · 자격증) 한 문장 → embed_texts(task_type="RETRIEVAL_QUERY")
 ④ 코사인 유사도 상위 config.CANDIDATE_K
 ⑤ 공용 rerank 로 후보 전부 점수 (0~1)
 ⑥ config.SCORE_THRESHOLD 미만 제외
-⑦ 회사명 · 제목 같은 공고 하나만 → 정렬(지역 우선 → 점수) → 상위 topK
+⑦ 회사명 · 제목 같은 공고 하나만 → 정렬(지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 점수) → 상위 topK
+   필수 기술이 적히지 않은 공고는 감점하지 않는다 (전부 충족과 같은 순위, job_conditions.missing_required)
 ⑧ 0건이면 items: [] 와 이유(INDEX_EMPTY · PROFILE_EMPTY · NO_CANDIDATES · BELOW_THRESHOLD)를 로그로
 ⑨ reasons: LLM 없이 겹친 단어로 (fallback.build_reasons). 기술 → 프로필 근거, 희망 직무 → JOB_POSTING 근거
 ⑩ 단계별 시간(검색어 임베딩 · 리랭크 · 전체)을 로그로
@@ -39,6 +41,7 @@ from matching.fallback import (
     term_pattern,
 )
 from matching.indexer import default_model_name
+from matching.job_conditions import family_allowed, missing_required
 from matching.models import RecommendData, RecommendItem, RecommendReason, RecommendRequest
 from matching.store import Entry, IndexStore
 from schemas import CompetencyProfile
@@ -64,6 +67,7 @@ class Candidate:
     tier: int
     similarity: float = 0.0
     score: float = 0.0
+    missing_skill: bool = False  # 필수 기술이 적혔는데 하나라도 없음 (정렬에서 뒤로)
 
 
 def default_query_embedder() -> QueryEmbedder:
@@ -149,6 +153,8 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
         tier = region_tier(profile.preferred_region, entry.get("region"))
         if not region_allowed(profile.preferred_region, tier, config.REGION_POLICY):
             continue
+        if not family_allowed(profile.desired_job, entry.get("title"), entry.get("matchText") or ""):
+            continue
         candidates.append(Candidate(job_id, entry, tier))
     if not candidates:
         return _empty(req, "NO_CANDIDATES", usable=len(usable), excluded=len(excluded), policy=config.REGION_POLICY)
@@ -202,7 +208,8 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
         return _empty(req, "BELOW_THRESHOLD", reranked=len(shortlist), bestScore=round(best, 4),
                       threshold=config.SCORE_THRESHOLD)
 
-    # ⑦ 회사명 · 제목 같은 공고는 점수 높은 하나만 → 지역 우선 → 점수 → id
+    # ⑦ 회사명 · 제목 같은 공고는 점수 높은 하나만 → 지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 점수 → id
+    skill_names = [s.name for s in profile.skills]
     picked: list[Candidate] = []
     seen: set[tuple[str, str]] = set()
     for c in sorted(passed, key=lambda c: (-c.score, c.job_posting_id)):
@@ -211,8 +218,9 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
             if (company, title) in seen:
                 continue
             seen.add((company, title))
+        c.missing_skill = bool(missing_required(c.entry.get("matchText") or "", skill_names))
         picked.append(c)
-    picked.sort(key=lambda c: (c.tier, -c.score, c.job_posting_id))
+    picked.sort(key=lambda c: (c.tier, c.missing_skill, -c.score, c.job_posting_id))
     picked = picked[: max(req.top_k, 0)]
 
     # ⑨ reasons
