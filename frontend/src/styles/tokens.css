@@ -37,9 +37,56 @@
 
   /* 코디네이터 화면 배경 */
   --color-coord-bg: #f1f5f9;
+
+  /* 수료생 웹 테마. student-app 안에서만 기존 토큰에 연결한다. */
+  --color-student-canvas: #fafafa;
+  --color-student-page: #f6f8f5;
+  --color-student-ink: #24372f;
+  --color-student-sub: #657169;
+  --color-student-muted: #7c857f;
+  --color-student-line: #e2e8e0;
+  --color-student-mint: #e8f2e8;
+  --color-student-mint-deep: #d8e8d7;
+  --color-student-warm: #f6f1e6;
+  --color-student-orange: #ac672d;
+  --color-student-orange-soft: #fcf0e3;
+  --color-student-blue: #406a8b;
+  --color-student-blue-soft: #eef3f8;
+  --color-student-purple: #73578c;
+  --color-student-purple-soft: #f2edf8;
+  --color-student-art-arch: #d5e6d4;
+  --color-student-art-inner: #e4eee0;
+  --color-student-art-shadow: #aec9b0;
+  --color-student-art-paper: #fffdf6;
+  --color-student-art-lines: #dfe7d9;
+  --color-student-art-stem: #6c9169;
+  --color-student-art-leaf: #89aa7a;
+  --color-student-art-leaf-dark: #719965;
+  --shadow-student-card: 0 8px 35px #213a2b06;
 }
 
 @theme inline {
   /* R0 제목: page.tsx에서 로드한 고운돋움 */
   --font-entry-heading: var(--font-gowun-dodum), var(--font-sans);
+}
+
+/* R0 웹 진입 화면 전용 색. 기존 수료생·코디네이터 토큰은 유지한다. */
+@theme {
+  --color-entry-web-page: #ffffff;
+  --color-entry-web-surface: #ffffff;
+  --color-entry-web-frame: #fbfcf8;
+  --color-entry-web-ink: #243c34;
+  --color-entry-web-heading: #123f3b;
+  --color-entry-web-sub: #76847c;
+  --color-entry-web-muted: #92a095;
+  --color-entry-web-primary: #047857;
+  --color-entry-web-primary-strong: #065f46;
+  --color-entry-web-mint: #e9f2e8;
+  --color-entry-web-mint-bright: #d1fae5;
+  --color-entry-web-mint-soft: #f2f9f2;
+  --color-entry-web-line: #e1e8df;
+  --color-entry-web-shadow: #254a3210;
+  --color-entry-web-shadow-hover: #254a321a;
+  --color-entry-web-danger: #b43f39;
+  --color-entry-web-backdrop: #183a3159;
 }

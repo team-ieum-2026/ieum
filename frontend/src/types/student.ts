@@ -117,6 +117,14 @@ export interface ItemResponseResult {
   applicationId: number | null;
 }
 
+/** 신규 취소 API 제안 계약. 백엔드 구현 전에는 실제 취소되지 않는다. */
+export type CancellableResponse = Extract<ResponseType, "APPLY" | "PASS" | "HELP">;
+export interface ItemResponseCancelResult {
+  itemId: number;
+  response: "NONE";
+  applicationId: null;
+}
+
 // ---- M2 → M4 도움 요청 ----
 export interface HelpRequestCreateRequest {
   studentId: number;

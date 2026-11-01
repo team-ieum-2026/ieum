@@ -5,14 +5,17 @@ import type { SectionSummary } from "@/components/resume/sectionSummary";
 interface SectionCardProps {
   summary: SectionSummary;
   onOpen: (summary: SectionSummary) => void;
+  readOnly?: boolean;
 }
 
-export function SectionCard({ summary, onOpen }: SectionCardProps) {
+export function SectionCard({ summary, onOpen, readOnly = summary.readOnly }: SectionCardProps) {
   return (
     <button
       type="button"
+      data-section={summary.section}
+      data-readonly={readOnly}
       onClick={() => onOpen(summary)}
-      className="flex min-h-9 w-full items-center gap-2.5 border-b border-line bg-surface py-1 pl-3.5 pr-1.5 text-left last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+      className="student-section-card flex min-h-9 w-full items-center gap-2.5 border-b border-line bg-surface py-1 pl-3.5 pr-1.5 text-left last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
     >
       <span className="w-16 shrink-0 text-[13px] font-bold">{summary.label}</span>
       <span
@@ -32,5 +35,5 @@ export function SectionCard({ summary, onOpen }: SectionCardProps) {
 
 /** 카드 여러 장을 흰 상자 하나로 묶음 */
 export function SectionCardGroup({ children }: { children: React.ReactNode }) {
-  return <div className="overflow-hidden rounded-2xl border border-line bg-surface">{children}</div>;
+  return <div className="student-section-grid overflow-hidden rounded-2xl border border-line bg-surface">{children}</div>;
 }

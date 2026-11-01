@@ -16,7 +16,7 @@ interface SourceTagProps {
 export default function SourceTag({ source, label }: SourceTagProps) {
   const style = STYLE[source];
   return (
-    <span className={`shrink-0 whitespace-nowrap rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold ${style.className}`}>
+    <span data-source={source} className={`s-source-tag shrink-0 whitespace-nowrap rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold ${style.className}`}>
       {label ?? style.label}
     </span>
   );

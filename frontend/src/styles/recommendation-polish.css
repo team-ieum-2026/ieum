@@ -1,0 +1,46 @@
+/* Only the recommendation heading, filters and job cards use this style. */
+.student-app .s-recommend-polished {
+  --s-polish-radius:calc(12 * var(--s-unit));
+  --s-polish-border:color-mix(in srgb,var(--color-line) 80%,var(--color-surface));
+}
+.student-app .s-recommend-polished .s-section-title { gap:calc(8 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-section-title h2 { font-size:calc(18 * var(--s-unit)); font-weight:700; letter-spacing:calc(-.6 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-count { min-width:0; padding:0; background:transparent; font-size:calc(13 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-section-description { font-size:calc(11 * var(--s-unit)); line-height:1.6; margin-top:calc(5 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-refresh { min-height:calc(34 * var(--s-unit)); border-color:var(--s-polish-border); border-radius:calc(7 * var(--s-unit)); font-size:calc(10 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-filter-tags { gap:calc(14 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-filter-chip { padding:calc(3 * var(--s-unit)) 0; background:transparent; border:0; border-radius:0; color:var(--color-ink-sub); }
+.student-app .s-recommend-polished .s-updated { color:var(--color-ink-muted); font-size:calc(9 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-card-top { min-height:calc(34 * var(--s-unit)); align-items:flex-start; }
+.student-app .s-recommend-polished .s-job-card { border:1px solid var(--s-polish-border); border-radius:var(--s-polish-radius); box-shadow:none; }
+.student-app .s-recommend-polished .s-job-card:hover { border-color:var(--color-student-art-shadow); box-shadow:var(--shadow-student-card); }
+.student-app .s-recommend-polished .s-recommend-rank { font-size:calc(10 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-recommend-rank > .s-icon { width:calc(12 * var(--s-unit)); height:calc(12 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-deadline { padding:0; background:transparent; color:var(--color-ink-muted); font-size:calc(10 * var(--s-unit)); line-height:1.7; }
+.student-app .s-recommend-polished .s-deadline.is-urgent { color:var(--color-student-orange); font-weight:700; }
+.student-app .s-recommend-polished .s-company { gap:calc(10 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-company-mark { width:calc(32 * var(--s-unit)); height:calc(32 * var(--s-unit)); border:1px solid var(--s-polish-border); border-radius:calc(9 * var(--s-unit)); background:var(--color-surface); color:var(--color-primary); font-size:calc(14 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-company strong { font-size:calc(12 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-company small { font-size:calc(10 * var(--s-unit)); color:var(--color-ink-muted); margin-top:calc(3 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-job-card h3 { font-size:calc(19 * var(--s-unit)); line-height:1.5; letter-spacing:calc(-.6 * var(--s-unit)); font-weight:700; }
+.student-app .s-recommend-polished .s-job-meta { font-size:calc(10 * var(--s-unit)); color:var(--color-ink-muted); margin-top:calc(7 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-reason-box { background:var(--color-page); border-radius:calc(8 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-reason-box > p { font-size:calc(9 * var(--s-unit)); color:var(--color-ink-sub); font-weight:500; margin-bottom:calc(7 * var(--s-unit)); }
+.student-app .s-recommend-polished .s-reason-box li { font-size:calc(11 * var(--s-unit)); line-height:1.8; }
+.student-app .s-recommend-polished .s-reason-box li .s-icon { opacity:.8; }
+.student-app .s-recommend-polished .s-job-card .s-card-cta { min-height:calc(38 * var(--s-unit)); padding:calc(8 * var(--s-unit)) calc(12 * var(--s-unit)); border-color:var(--s-polish-border); border-radius:calc(7 * var(--s-unit)); font-size:calc(11 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-job-card .s-card-cta:hover,
+.student-app .s-recommend-polished .s-job-card-link:focus-visible .s-card-cta { border-color:var(--color-primary); }
+.student-app .s-recommend-polished .s-response-badge { border-radius:calc(4 * var(--s-unit)); font-size:calc(9 * var(--s-unit)); font-weight:500; }
+.student-app .s-recommend-polished .s-response-cancel { background:transparent; padding-inline:calc(4 * var(--s-unit)); border:0; font-size:calc(9 * var(--s-unit)); text-decoration:underline; text-underline-offset:calc(3 * var(--s-unit)); }
+@media (min-width:981px) {
+  .student-app .s-recommend-polished .s-card-top { margin-bottom:calc(15 * var(--s-unit)); }
+  .student-app .s-recommend-polished .s-company { margin-bottom:calc(11 * var(--s-unit)); }
+}
+@media (max-width:760px) {
+  .student-app .s-recommend-polished .s-section-title h2 { font-size:calc(16 * var(--s-unit)); }
+  .student-app .s-recommend-polished .s-section-heading { align-items:flex-start; }
+  .student-app .s-recommend-polished .s-filter-row { gap:8px; }
+  .student-app .s-recommend-polished .s-updated { font-size:calc(8 * var(--s-unit)); }
+  .student-app .s-recommend-polished .s-job-card h3 { min-height:0; }
+}

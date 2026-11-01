@@ -30,7 +30,7 @@ export default function BottomSheet({ open, title, description, onClose, childre
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-ink/50" onClick={onClose}>
+    <div className="document-sheet-backdrop fixed inset-0 z-30 flex items-end justify-center bg-ink/50" onClick={onClose}>
       <section
         ref={sheetRef}
         role="dialog"
@@ -38,7 +38,7 @@ export default function BottomSheet({ open, title, description, onClose, childre
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[80vh] w-[390px] overflow-y-auto rounded-t-[22px] bg-surface px-5 pb-7 pt-5 outline-none"
+        className="document-sheet max-h-[80vh] w-[390px] overflow-y-auto rounded-t-[22px] bg-surface px-5 pb-7 pt-5 outline-none"
       >
         <h2 id={titleId} className="text-lg font-bold">
           {title}
