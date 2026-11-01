@@ -7,7 +7,7 @@ import { ApiState, ActionError, StudentScreen } from "./ScreenParts";
 import StudentPageHeading from "./StudentPageHeading";
 import StudentIcon from "./StudentIcon";
 import StudentHeroArt from "./StudentHero";
-import RecommendationTuner from "./RecommendationTuner";
+import RecommendationLayout from "./RecommendationLayout";
 import ResponseCancelButton from "./ResponseCancelButton";
 import ApplicationStatusBadge from "./ApplicationStatusBadge";
 import { useStudentProfile } from "./StudentShell";
@@ -41,7 +41,7 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
     } catch (error) { setActionError(errorMessage(error)); }
     finally { setRefreshing(false); }
   }
-  return <StudentScreen lighter><RecommendationTuner>
+  return <StudentScreen lighter><RecommendationLayout>
     <StudentPageHeading eyebrow="YOUR NEXT CHAPTER" title={data ? `${data.studentName}님, 반가워요.` : "나의 다음 기회를 만나보세요."} />
     <ApiState loading={loading} error={error} retry={reload} />
     {data && <>
@@ -64,5 +64,5 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
         {activity.data && <div className="s-activity-card"><span className="s-activity-symbol"><StudentIcon name="file" /></span><div className="s-activity-copy"><strong>{latest ? `${latest.companyName} · ${latest.title}` : "아직 준비 중인 지원서가 없어요."}</strong><p>{latest ? "지금까지 준비한 내용을 확인하고 다음 걸음을 이어가세요." : "맞춤 공고에서 나에게 맞는 기회를 골라보세요."}</p></div>{latest && <ApplicationStatusBadge status={latest.status} />}<Link className="s-text-link" href={studentHref(latest && latest.status === "DRAFT" ? `/student/applications/${latest.applicationId}` : "/student/applications", studentId)}>{latest?.status === "DRAFT" ? "초안 이어서 보기" : "지원 현황 보기"}<StudentIcon name="arrow" /></Link></div>}
       </section>
     </>}
-  </RecommendationTuner></StudentScreen>;
+  </RecommendationLayout></StudentScreen>;
 }
