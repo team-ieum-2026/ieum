@@ -47,6 +47,21 @@ class RequiredSkillsTest(unittest.TestCase):
     def test_missing_one_skill(self):
         self.assertTrue(jc.missing_required(MISSING, ["Spring Boot", "MySQL"]))
 
+    def test_html_one_line_body_is_read(self):
+        html = ("[공고] 프론트엔드 개발자\n[내용] <p><b>■ 담당업무</b></p><p>- 화면 개발<br>- Java 배치 운영</p>"
+                "<p><b>■ 자격요건</b></p><p>- Vue.js · JavaScript 사용 가능자<br>- 신입 지원 가능</p>"
+                "<p><b>■ 우대사항</b></p><p>- React 경험</p>")
+        self.assertCountEqual(jc.required_skills(html), ["JavaScript", "Vue.js"])  # 담당업무(Java) · 우대(React)는 뺌
+        self.assertTrue(jc.missing_required(html, ["React", "TypeScript"]))  # Vue.js 가 없음
+        self.assertEqual(jc.required_skills("<ul><li>자격요건</li><li>Python 사용 가능자</li></ul><div>우대: Docker</div>"),
+                         ["Python"])
+
+    def test_plain_line_body_is_unchanged(self):
+        plain = "[내용] < 담당업무 >\nㆍ API 개발\n< 자격요건 >\nㆍ Java · MySQL 사용 가능자\n< 우대사항 >\nㆍ Redis"
+        self.assertEqual(jc.required_text(plain), "ㆍ Java · MySQL 사용 가능자")  # "< 자격요건 >" 은 태그로 보지 않음
+        self.assertCountEqual(jc.required_skills(plain), ["Java", "MySQL"])
+        self.assertEqual(jc.required_skills(FULL), ["Spring Boot", "MySQL"])
+
 
 class FamilyTest(unittest.TestCase):
     def test_title_first_then_job_field(self):

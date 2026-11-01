@@ -71,6 +71,9 @@ _REQ_HEAD = re.compile(r"자격\s*요건|지원\s*자격|자격\s*사항|필수\
 _PREF_HEAD = re.compile(r"우대")
 _OTHER_HEAD = re.compile(r"담당\s*업무|주요\s*업무|업무\s*내용|근무\s*조건|복리\s*후생|제출\s*서류|^\s*\[(?!필요 역량)|문의|회사\s*소개|전형")
 _SECTION_LINE = re.compile(r"^\[(공고|직무)\]\s*(.*)$", re.M)
+# 줄을 나누는 태그는 줄바꿈으로, 글자 꾸밈 태그는 지운다. "<" 바로 뒤에 태그 이름이 와야 태그로 본다
+_LINE_TAG = re.compile(r"</?(?:br|p|li|div|ul|ol|tr|td|th|table|h[1-6])\b[^>]*>", re.IGNORECASE)
+_INLINE_TAG = re.compile(r"</?(?:b|strong|span|em|i|u|font)\b[^>]*>", re.IGNORECASE)
 
 
 def _spelling_re(spelling: str) -> re.Pattern[str]:
@@ -93,11 +96,19 @@ def techs_in(text: str) -> list[str]:
     return list(dict.fromkeys(found))
 
 
+def _html_to_lines(text: str) -> str:
+    """HTML 한 줄 본문("<p>■ 자격요건</p><p>- Java<br>- …")을 줄 단위로 바꾼다. 태그가 없는 본문은 그대로.
+
+    "< 자격요건 >" 처럼 꺾쇠 안에 띄어쓰기가 있는 머리글은 태그가 아니라서 건드리지 않는다.
+    """
+    return _INLINE_TAG.sub("", _LINE_TAG.sub("\n", text))
+
+
 def required_text(text: str) -> str:
     """자격요건 · 지원 자격 구간과 [필요 역량] 기타(...) 만 모은다. 우대는 뺀다"""
     req: list[str] = []
     state = None
-    for line in text.split("\n"):
+    for line in _html_to_lines(text).split("\n"):
         s = line.strip()
         if s.startswith("[필요 역량]"):
             req += re.findall(r"기타\(([^)]*)\)", s)
