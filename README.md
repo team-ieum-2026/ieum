@@ -77,10 +77,13 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-- `ai/.env.example`을 `ai/.env`로 복사하고 `GEMINI_API_KEY` · 모델 이름을 채웁니다(키는 디스코드 비공개 채널).
+- `ai/.env.example`을 `ai/.env`로 복사하고 `GEMINI_API_KEY`만 채웁니다(키는 디스코드 비공개 채널). 모델 이름은 예시 파일 값 그대로 씁니다: `LLM_MODEL=gemini-3.8-flash` · `DOCUMENT_LLM_MODEL=gemini-4-argon` · `EMBEDDING_MODEL=gemini-embedding-001` · `RERANKER_MODEL=BAAI/bge-reranker-v2-m3`
 - `requirements.txt`에 리랭커용 torch가 포함돼 처음 설치는 수 GB · 수 분 걸립니다.
+- 리랭커 모델(약 2GB)은 첫 추천 때 자동으로 받습니다. 그때 첫 추천만 1~2분 걸리고, 이후에는 PC에 저장된 모델을 씁니다. GPU가 없으면 CPU로 돕니다.
+- 서버는 꼭 `ai` 폴더에서 `uvicorn`으로 띄웁니다. `ai` 폴더에서 `python -c "…"`로 모듈을 바로 불러오면 `ai/profile/` 폴더가 파이썬 기본 모듈 `profile`과 이름이 겹쳐 torch 불러오기가 실패할 수 있습니다.
 - 상태 확인: http://localhost:8000/ai/health
 - API 문서: http://localhost:8000/docs
+- 이 AI 실행 안내는 시연용으로 간략히 정리한 것이라 통합 기간에 바뀔 수 있습니다 (10/31, PM).
 
 ### 4. FE (frontend, 3000)
 
@@ -125,5 +128,5 @@ npm run dev
 ## 일정
 
 - 10/26~11/1 병렬 개발 (매일 `dev`로 PR, 병합 담당 3명이 병합 · `main`은 동작 확인된 최종본만) · 10/29 얇은 연결 1회
-- 11/2~11/4 통합 · 11/4 저녁 코드 프리즈 (`demo-1104` 태그)
+- 11/1~11/3 파트별 마무리(UI/UX 웹버전 · AI 성능 개선) · 11/4(수) 전원 QA · **11/4 21:00 코드 프리즈** (`demo-1104` 태그) → 시연영상 촬영
 - 11/6 23:59 제출 (IR Deck + 시연영상 2분) · 11/9 본선 (DDP)

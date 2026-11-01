@@ -1,0 +1,89 @@
+{
+  "studentId": 2,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 8,
+    "evidence_ids": 16,
+    "valid_evidence_ids": 16,
+    "with_numbers": 2,
+    "numbers_passed": 2,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "백엔드 리드 (인증(JWT) · 정산 API 담당, ERD 설계 주도, PR 검토)",
+      "좌석 예약 · 취소 기능 및 예약 만료 스케줄러 담당",
+      "백엔드 개발 인턴 (공공기관 관리자 페이지 유지보수, 조회 쿼리 수정, Java 배치 오류 대응)"
+    ],
+    "skills": [
+      {
+        "name": "Java",
+        "evidence": [
+          {
+            "refType": "CAREER",
+            "refId": 2021
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": []
+      },
+      {
+        "name": "MySQL",
+        "evidence": []
+      },
+      {
+        "name": "JPA",
+        "evidence": []
+      },
+      {
+        "name": "Servlet",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 102
+          }
+        ]
+      },
+      {
+        "name": "JWT",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 101
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "월별 집계 쿼리에 복합 인덱스 추가로 통계 API 응답 1.2초 → 0.3초 단축",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 101
+          }
+        ]
+      },
+      {
+        "text": "낙관적 락(@Version) 적용으로 동시 수정 테스트 200회에서 금액 불일치 0건",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 101
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "정보처리기사",
+      "SQLD"
+    ],
+    "desiredJob": "백엔드 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "dev",
+  "extractMs": 43449
+}

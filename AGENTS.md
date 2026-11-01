@@ -5,7 +5,7 @@
 ## 프로젝트 한 줄
 
 수료생 사후관리 AI 에이전트 "이음". 보고하지 않아도, 기회가 먼저 찾아온다.
-2026 청년취업사관학교 해커톤 · P0 기간 10/26~11/1 병렬 개발, 11/2~11/4 통합, 11/4 코드 프리즈.
+2026 청년취업사관학교 해커톤 · P0 개발 10/26~11/1 완료 · 11/1~11/3 파트별 마무리 · 11/4(수) 전원 QA · **11/4(수) 21:00 코드 프리즈**.
 
 ## 먼저 읽을 문서
 
@@ -31,6 +31,13 @@
 8. **PR 설명에 완료한 요구사항 ID(예: `FE-A-03`)와 공용 파일 수정 여부를 적는다.**
 9. P0에 없는 기능(로그인, 배포, 실제 알림 발송, Docker 등)은 만들지 않는다. 필요해 보이면 사용자에게 제안만 한다.
 
+## 통합 기간 규칙 (11/1~11/4)
+
+1. **BE-B는 BE 전체(`backend/`, `db/`)를 수정할 수 있다.** BE-A 영역 포함, 위 규칙 1의 예외다. BE-B는 지금부터 QA(직접 써 보며 버그를 찾고 고치기)를 계속한다.
+2. **11/3(화) 밤까지 기능 · UI/UX · 성능 개선을 마무리한다.** 11/4(수)는 전원 QA만 한다. 새 기능 · 성능 개선은 하지 않는다.
+3. **11/4(수) 21:00 코드 프리즈.** 이후 코드는 수정하지 않는다. 21:00부터 시연영상을 촬영한다.
+4. **화면은 웹(데스크톱) 우선이다.** 모바일은 웹 UI/UX가 끝난 뒤. 우선순위: 웹 완료 → 모바일.
+
 ## 기술 스택 (변경 금지)
 
 - FE: TypeScript · Next.js App Router(React) · Tailwind CSS · Node 20 LTS · npm (yarn/pnpm 금지)
@@ -43,16 +50,12 @@
 
 | 폴더 · 파일 | 주인 |
 | --- | --- |
-| `frontend/src/app/page.tsx` (R0) | FE-A |
-| `frontend/src/app/student/` (M1~M5, M7, 하단 메뉴 layout) | FE-A |
-| `frontend/src/app/student/applications/[applicationId]/` (M6 · M6-1) | FE-B |
-| `frontend/src/app/student/profile/` (M8) | FE-B |
-| `frontend/src/app/coordinator/layout.tsx`, `coordinator/page.tsx` (C1), `coordinator/applications/` (C4) | FE-B |
-| `frontend/src/app/coordinator/students/` (C2 · C3) | FE-A |
-| `frontend/src/components/ui/`, `frontend/src/components/student/`, `frontend/src/styles/` (디자인 토큰) | FE-A |
-| `frontend/src/components/resume/`, `frontend/src/components/coordinator/` | FE-B |
-| `frontend/src/lib/api/student.ts`, `coordinatorStudents.ts` · `frontend/src/types/student.ts` | FE-A |
-| `frontend/src/lib/api/resume.ts`, `profile.ts`, `coordinatorReview.ts` · `frontend/src/types/resume.ts`, `profile.ts`, `coordinator.ts` | FE-B |
+| `frontend/src/app/page.tsx` (R0), `frontend/src/app/student/` 전체 (수료생 화면 M1~M8, 하단 메뉴 layout) | FE-A |
+| `frontend/src/app/coordinator/` 전체 (코디네이터 화면 C1~C4, 레이아웃 · 사이드바) | FE-B |
+| `frontend/src/components/ui/`, `components/student/`, `components/resume/`, `frontend/src/styles/` (디자인 토큰) | FE-A |
+| `frontend/src/components/coordinator/` | FE-B |
+| `frontend/src/lib/api/student.ts`, `resume.ts`, `profile.ts` · `frontend/src/types/student.ts`, `resume.ts`, `profile.ts` | FE-A |
+| `frontend/src/lib/api/coordinatorStudents.ts`, `coordinatorReview.ts` · `frontend/src/types/coordinator.ts` | FE-B |
 | `backend/.../common/` (응답 · 예외 · CORS · Jackson), `application.yml` | BE-A |
 | `backend/.../job/`, `recommendation/`, `application/`, `ai/` + 같은 이름의 `resources/mapper/` | BE-A |
 | `backend/.../profile/`, `helprequest/`, `status/`, `coordinator/`, `domain/`, `common/mybatis/` + 같은 이름의 `resources/mapper/` | BE-B |
@@ -67,8 +70,7 @@
 | 파일 | 주인 | 규칙 |
 | --- | --- | --- |
 | 디자인 토큰 · 공통 부품 `components/ui/` | FE-A | FE-B는 직접 고치지 않고 요청. 필요한 변형은 props로 추가 |
-| 하단 메뉴 (`app/student/layout.tsx`) | FE-A | M8 탭 추가도 FE-A가 처리 |
-| 코디네이터 레이아웃 · 사이드바 | FE-B | FE-A는 C2 · C3 화면만 작성 |
+| 서류 문서 부품 `components/resume/` · `types/resume.ts` (M6 · C4 공용) | FE-A | FE-B는 C4에서 가져다 쓰기만 하고, 변형이 필요하면 FE-A에 요청(props로 추가) |
 | FE API 함수 · 타입 | 위 표대로 도메인별 분리 | 한 파일에 둘이 쓰지 않음 |
 | BE 도메인 클래스 · DB 스키마 | BE-B | BE-A가 컬럼이 필요하면 BE-B에 요청. `application` 테이블은 BE-A가 생성 · 제출, BE-B가 승인 · 반려 · 전달만 변경 |
 | BE 공통 설정 · `application.yml` | BE-A | 설정 추가 시 PR 설명에 명시 |
@@ -98,7 +100,7 @@ AI 도구는 작업을 시작할 때 현재 브랜치를 확인하고, `dev` · 
 
 - 커밋 메시지: `종류(화면번호): 한 일` · 종류는 주로 `feat` `fix` `docs` `refactor` `build` `chore` (뜻은 `docs/GIT_RULES.md`) · 예: `feat(M1): 공고 카드 3장 표시`
 - PR 제목: `종류(화면번호): 한 일 [요구사항ID]` · 예: `feat(S3): 공고 배치 동기화 [BE-A-02]`
-- 수료생 화면은 폭 390px 고정, 코디네이터 화면은 데스크톱 고정. 반응형은 만들지 않는다.
+- 수료생 · 코디네이터 화면 모두 웹(데스크톱) 우선으로 만든다. 모바일은 웹 UI/UX가 완전히 끝난 뒤에 생각하고, 준비되지 않으면 웹으로만 시연한다. 반응형은 만들지 않는다.
 - 수료생 화면 문구에 "취업 여부", "보고"를 묻는 표현을 쓰지 않는다.
 - 색은 디자인 토큰(Tailwind 테마)만 쓰고 색값을 화면 코드에 직접 쓰지 않는다.
 - FE는 `NEXT_PUBLIC_USE_MOCK=true`일 때 `frontend/public/mock/`의 목업을 쓴다. 실제 API로 바꿀 때 화면 코드는 바뀌지 않아야 한다.

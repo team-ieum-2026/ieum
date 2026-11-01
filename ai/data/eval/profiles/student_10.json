@@ -1,0 +1,70 @@
+{
+  "studentId": 10,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 7,
+    "evidence_ids": 21,
+    "valid_evidence_ids": 21,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 2
+  },
+  "excludedReasons": [
+    "roles:원문에 없는 강한 표현 전담",
+    "skills:기술 이름이 본인 작업 근거에 없음"
+  ],
+  "profile": {
+    "roles": [
+      "모임 일정 API 담당 (일정 등록 · 수정 · 참석 응답 API 및 참석 인원 집계 쿼리)"
+    ],
+    "skills": [
+      {
+        "name": "Unity",
+        "evidence": [
+          {
+            "refType": "COVER_LETTER",
+            "refId": 10
+          }
+        ]
+      },
+      {
+        "name": "C#",
+        "evidence": []
+      },
+      {
+        "name": "Java",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 206
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 206
+          }
+        ]
+      }
+    ],
+    "achievements": [
+      {
+        "text": "오브젝트 풀링으로 탄환 생성 때 끊기던 프레임 해결",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 111
+          }
+        ]
+      }
+    ],
+    "certificates": [],
+    "desiredJob": "게임 클라이언트 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "test",
+  "extractMs": 9011
+}

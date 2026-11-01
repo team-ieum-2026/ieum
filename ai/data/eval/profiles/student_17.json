@@ -1,0 +1,77 @@
+{
+  "studentId": 17,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 6,
+    "evidence_ids": 13,
+    "valid_evidence_ids": 13,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "아두이노 펌웨어 및 센서 회로 담당",
+      "주문 API 담당 (생성 · 취소 · 상태 조회)"
+    ],
+    "skills": [
+      {
+        "name": "C",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 119
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 17
+          }
+        ]
+      },
+      {
+        "name": "Arduino",
+        "evidence": []
+      },
+      {
+        "name": "Java",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 210
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 210
+          }
+        ]
+      },
+      {
+        "name": "아두이노",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 119
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 17
+          }
+        ]
+      }
+    ],
+    "achievements": [],
+    "certificates": [
+      "전자기사"
+    ],
+    "desiredJob": "임베디드 개발",
+    "preferredRegion": "경기"
+  },
+  "split": "test",
+  "extractMs": 15649
+}

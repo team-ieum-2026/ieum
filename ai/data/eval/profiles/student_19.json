@@ -1,0 +1,45 @@
+{
+  "studentId": 19,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 4,
+    "evidence_ids": 8,
+    "valid_evidence_ids": 8,
+    "with_numbers": 0,
+    "numbers_passed": 0,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "가게 예약 웹 제작",
+      "○○카페 매니저 (매장 운영 · 예약 관리)"
+    ],
+    "skills": [
+      {
+        "name": "React",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 121
+          }
+        ]
+      },
+      {
+        "name": "Node.js",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 121
+          }
+        ]
+      }
+    ],
+    "achievements": [],
+    "certificates": [],
+    "desiredJob": "풀스택 개발",
+    "preferredRegion": "인천"
+  },
+  "split": "test",
+  "extractMs": 8551
+}

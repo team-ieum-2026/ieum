@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -95,6 +96,82 @@ class ProfileExtractionWorkerTest {
         verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
     }
 
+    @Test
+    void missingProfileIsExtractedOnceOutsideTransactionAndStoredBeforeReturningTrue() {
+        JsonNode profile = JSON.createObjectNode().set("skills", JSON.createArrayNode().add("Java"));
+        when(profiles.getProfile(7L)).thenReturn(registered("Java"));
+        when(ai.extractProfile(any())).thenAnswer(invocation -> {
+            assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
+            return JSON.createObjectNode().set("profile", profile);
+        });
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        when(profiles.getCurrentProfile(7L)).thenReturn(registered("Java"));
+
+        assertTrue(worker.extractIfMissing(7L));
+
+        verify(ai).extractProfile(any());
+        verify(mapper).upsertCompetencyProfile(eq(7L), eq(profile), anyString());
+    }
+
+    @Test
+    void existingProfileIsSkippedBeforeAiCall() {
+        when(profiles.getProfile(7L)).thenReturn(withCompetency());
+
+        assertFalse(worker.extractIfMissing(7L));
+
+        verifyNoInteractions(ai);
+        verify(mapper, never()).lockStudent(any());
+        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+    }
+
+    @Test
+    void profileCreatedDuringAiCallIsNotOverwrittenOrCountedAsExtracted() {
+        when(profiles.getProfile(7L)).thenReturn(registered("Java"));
+        when(ai.extractProfile(any())).thenReturn(JSON.createObjectNode().set("profile", JSON.createObjectNode()));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        when(profiles.getCurrentProfile(7L)).thenReturn(withCompetency());
+
+        assertFalse(worker.extractIfMissing(7L));
+
+        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+    }
+
+    @Test
+    void changedSourceIsReportedAsFailureSoItCanBeRetriedInsteadOfCountedAsSaved() {
+        when(profiles.getProfile(7L)).thenReturn(registered("Java"));
+        when(ai.extractProfile(any())).thenReturn(JSON.createObjectNode().set("profile", JSON.createObjectNode()));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        when(profiles.getCurrentProfile(7L)).thenReturn(registered("Python"));
+
+        assertThrows(IllegalStateException.class, () -> worker.extractIfMissing(7L));
+
+        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+    }
+
+    @Test
+    void studentDeletedDuringAiCallIsReportedAsFailure() {
+        when(profiles.getProfile(7L)).thenReturn(registered("Java"));
+        when(ai.extractProfile(any())).thenReturn(JSON.createObjectNode().set("profile", JSON.createObjectNode()));
+        when(mapper.lockStudent(7L)).thenReturn(null);
+
+        BusinessException failure = assertThrows(BusinessException.class, () -> worker.extractIfMissing(7L));
+
+        assertEquals(ErrorCode.STUDENT_NOT_FOUND, failure.getErrorCode());
+        verify(mapper, never()).upsertCompetencyProfile(any(), any(), anyString());
+    }
+
+    @Test
+    void databaseSaveFailureIsNotCountedAsExtracted() {
+        when(profiles.getProfile(7L)).thenReturn(registered("Java"));
+        when(ai.extractProfile(any())).thenReturn(JSON.createObjectNode().set("profile", JSON.createObjectNode()));
+        when(mapper.lockStudent(7L)).thenReturn(7L);
+        when(profiles.getCurrentProfile(7L)).thenReturn(registered("Java"));
+        when(mapper.upsertCompetencyProfile(any(), any(), anyString()))
+                .thenThrow(new IllegalStateException("모의 DB 장애"));
+
+        assertThrows(IllegalStateException.class, () -> worker.extractIfMissing(7L));
+    }
+
     @ParameterizedTest
     @MethodSource("malformedResponses")
     void malformedAiResultDoesNotReplacePreviousCompetency(JsonNode response) {
@@ -118,5 +195,10 @@ class ProfileExtractionWorkerTest {
     private static StudentProfileResponse registered(String skill) {
         return new StudentProfileResponse(7L, null, null, null,
                 List.of(), List.of(), List.of(), List.of(skill), List.of(), null, null);
+    }
+
+    private static StudentProfileResponse withCompetency() {
+        return new StudentProfileResponse(7L, null, null, null,
+                List.of(), List.of(), List.of(), List.of("Java"), List.of(), null, JSON.createObjectNode());
     }
 }

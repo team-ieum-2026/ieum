@@ -1,0 +1,75 @@
+{
+  "studentId": 18,
+  "llmStatus": "OK",
+  "metrics": {
+    "generated": 7,
+    "evidence_ids": 17,
+    "valid_evidence_ids": 17,
+    "with_numbers": 1,
+    "numbers_passed": 1,
+    "excluded": 0
+  },
+  "excludedReasons": [],
+  "profile": {
+    "roles": [
+      "백엔드 API 설계 · 구현 및 AI 서버 연동",
+      "단어 등록 · 복습 단어 조회 기능 API 개발",
+      "고객지원 (영어 · 한국어 문의 응대 및 장애 티켓 작성)"
+    ],
+    "skills": [
+      {
+        "name": "Java",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 120
+          }
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 120
+          }
+        ]
+      },
+      {
+        "name": "MyBatis",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 120
+          }
+        ]
+      },
+      {
+        "name": "FastAPI",
+        "evidence": []
+      }
+    ],
+    "achievements": [
+      {
+        "text": "비동기 처리 전환으로 리허설 12건 발생하던 timeout을 최종 시연 0건으로 개선",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 120
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 18
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "정보처리기사"
+    ],
+    "desiredJob": "백엔드 개발",
+    "preferredRegion": "서울"
+  },
+  "split": "test",
+  "extractMs": 9960
+}
