@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { onReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { Icon } from "@/components/coordinator/CoordUi";
 import { DEMO_COORDINATOR } from "@/components/coordinator/demoAccount";
-import { monthDayTime } from "@/components/coordinator/coordLabels";
+import { helpTitle, helpTypeLabel, monthDayTime } from "@/components/coordinator/coordLabels";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 
 function pageName(path: string) {
@@ -44,7 +44,7 @@ export default function CoordinatorTopbar() {
           key: `help-${h.helpRequestId}`,
           at: h.createdAt,
           title: `${h.studentName} 님이 도움을 요청했어요`,
-          text: h.jobTitle ?? "추천 공고 도움 요청",
+          text: `${helpTypeLabel(h.helpType)} · ${helpTitle(h)}`,
           href: `/coordinator/help-requests?id=${h.helpRequestId}`,
         }));
         const docs: Notice[] = d.reviewQueue.map((r) => ({

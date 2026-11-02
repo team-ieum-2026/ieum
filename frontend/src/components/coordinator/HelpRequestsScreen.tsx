@@ -10,13 +10,13 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { Badge, Icon, LoadState, PageTitle, Panel, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
-import { contactLabels, courseName, helpLabels, helpTone, monthDayTime } from "@/components/coordinator/coordLabels";
+import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
+import { contactLabels, courseName, helpLabels, helpTitle, helpTone, helpTypeLabel, monthDayTime } from "@/components/coordinator/coordLabels";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { ApiError } from "@/lib/api/client";
 import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
-import type { DashboardHelpRequest } from "@/types/coordinator";
+import type { Dashboard, DashboardHelpRequest, HelpType } from "@/types/coordinator";
 import type { ContactLog, ContactMethod, ContactType } from "@/types/student";
 
 const CHANNELS: (ContactMethod | "ALL")[] = ["ALL", "PHONE", "SMS", "EMAIL"];
@@ -55,15 +55,33 @@ export default function HelpRequestsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [done, setDone] = useState<{ name: string; studentId: number } | null>(null);
 
+  // 수동 '목록 새로고침': 선택한 요청(?id) · 선호 연락 필터는 그대로 두고 목록만 바꾼다. 실패하면 지금 목록을 그대로 둔다
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      setList(sortRequests(await getDashboard()));
+      setInfos({}); // 선택한 수료생의 연락처 · 상담 기록도 다시 받는다
+      notifyReviewQueueChanged(); // 사이드바 · 상단 알림 건수도 같은 시점으로
+    } catch (e) {
+      setRefreshError(apiErrorText(e, "도움 요청을 다시 불러오지 못했어요."));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
     getDashboard()
       .then((d) => {
-        // 먼저 접수된 순
-        if (!ignore) setList([...d.helpRequests].sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
+        if (!ignore) setList(sortRequests(d));
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "도움 요청을 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "도움 요청을 불러오지 못했어요."));
       });
     return () => {
       ignore = true;
@@ -146,7 +164,7 @@ export default function HelpRequestsScreen() {
 
   return (
     <>
-      <Title />
+      <Title action={<RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />} />
       <p className="mb-4 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-3 text-xs leading-[1.7]">
         <b>수료생이 선호하는 연락 방법</b>　전화·문자·이메일은 수료생이 앱에서 직접 고른 <b>선호 연락 방법</b>이에요. 요청은 모두
         수료생 앱으로 접수되고, 요청마다 이 방법으로 연락해 주세요.
@@ -239,7 +257,10 @@ export default function HelpRequestsScreen() {
                           <b className="text-sm">{r.studentName}</b>
                           <span className="text-[11px] text-(--coord-muted)">{courseName(r.courseLabel)}</span>
                         </p>
-                        <h3 className="mt-1.5 mb-1 truncate text-[13px] font-bold">{r.jobTitle ?? "추천 공고 도움 요청"}</h3>
+                        <h3 className="mt-1.5 mb-1 flex min-w-0 items-center gap-2 text-[13px] font-bold">
+                          <HelpTypeChip type={r.helpType} />
+                          <span className={`truncate ${r.jobTitle ? "" : "font-medium text-(--coord-muted)"}`}>{helpTitle(r)}</span>
+                        </h3>
                         <p className="flex flex-wrap items-center gap-2 text-[11px] text-(--coord-muted)">
                           <ChannelChip method={r.contactMethod} />
                           <span>{monthDayTime(r.createdAt)} 접수</span>
@@ -283,7 +304,11 @@ export default function HelpRequestsScreen() {
                     <Unlinked title="요청별 담당자 필드가 아직 없어요" />
                   </dd>
                   <dt className="text-(--coord-muted)">필요한 도움</dt>
-                  <dd>{selected.jobTitle ? `추천 공고 · ${selected.jobTitle}` : "추천 공고 도움 요청"}</dd>
+                  <dd>
+                    <HelpTypeChip type={selected.helpType} />
+                  </dd>
+                  <dt className="text-(--coord-muted)">관련 공고</dt>
+                  <dd>{selected.jobTitle ?? <span className="text-(--coord-muted)">공고 없는 일반 도움 요청</span>}</dd>
                   <dt className="text-(--coord-muted)">재요청 여부</dt>
                   <dd className="flex flex-wrap items-center gap-2">
                     <Unlinked title="지난 요청(연락 완료 · 종료) 목록이 없어 재요청인지 알 수 없어요" />
@@ -415,15 +440,27 @@ export default function HelpRequestsScreen() {
   );
 }
 
-function Title() {
-  return <PageTitle title="도움 요청" description="필요한 도움부터 확인하고, 관련 서류와 이전 연락 기록을 이어 보세요." />;
+function Title({ action }: { action?: React.ReactNode }) {
+  return <PageTitle title="도움 요청" description="필요한 도움부터 확인하고, 관련 서류와 이전 연락 기록을 이어 보세요." action={action} />;
 }
+
+/** 접수 중 도움 요청: 먼저 접수된 순 */
+const sortRequests = (d: Dashboard) => [...d.helpRequests].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
 /** API 가 없어 보여 줄 수 없는 값 */
 function Unlinked({ title }: { title: string }) {
   return (
     <span title={title} className="rounded-full bg-(--coord-head) px-2 py-0.5 text-[10px] font-semibold text-(--coord-muted)">
       미연동
+    </span>
+  );
+}
+
+/** 도움 요청 유형 칩 (서버 helpType 한글 이름). null · 키 없음은 '미분류' 회색 */
+function HelpTypeChip({ type }: { type: HelpType | null | undefined }) {
+  return (
+    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${toneClass(type ? "red" : "gray")}`}>
+      {helpTypeLabel(type)}
     </span>
   );
 }
@@ -513,7 +550,9 @@ function ContactedDialog({
             {request.studentName} · {courseName(request.courseLabel)}
           </dd>
           <dt className="text-(--coord-muted)">필요한 도움</dt>
-          <dd>{request.jobTitle ?? "추천 공고 도움 요청"}</dd>
+          <dd>
+            {helpTypeLabel(request.helpType)} · {helpTitle(request)}
+          </dd>
           <dt className="text-(--coord-muted)">선호 연락</dt>
           <dd>{request.contactMethod ? contactLabels[request.contactMethod] : "선호 연락 없음"}</dd>
           <dt className="text-(--coord-muted)">접수</dt>

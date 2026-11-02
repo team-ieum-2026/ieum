@@ -7,15 +7,17 @@
 // ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
-import { Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass } from "@/components/coordinator/CoordUi";
 import {
   MANAGE_ORDER,
   contactLabels,
   courseName,
   docLabels,
   docTone,
+  HELP_TYPE_ORDER,
   helpLabels,
   helpTone,
+  helpTypeLabel,
   knownCount,
   manageChartVar,
   manageCounts,
@@ -23,17 +25,19 @@ import {
   manageTone,
   monthDay,
   pct,
+  studentExtra,
 } from "@/components/coordinator/coordLabels";
 import { subStatusLabels } from "@/components/student/labels";
 import { ApiError } from "@/lib/api/client";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
-import type { Dashboard } from "@/types/coordinator";
+import type { CoordStudentStatus, Dashboard } from "@/types/coordinator";
 import type { ApplicationStatus, ContactMethod, CoordinatorStudentList, CoordinatorStudentRow, StudentStatus, SubStatus } from "@/types/student";
 
 const R = 54;
 const CIRC = 2 * Math.PI * R;
-const DONUT_ORDER: StudentStatus[] = ["EMPLOYED", "SEEKING", "NEED_HELP", "CHECK_REQUIRED"];
+/** 도넛 조각 = 대표 상태 4분류 (합계 = 전체 수료생). 도움 요청은 상태가 아니어서 넣지 않는다 */
+const DONUT_ORDER = MANAGE_ORDER;
 
 export default function StatsScreen() {
   const [data, setData] = useState<Dashboard | null>(null);
@@ -47,7 +51,7 @@ export default function StatsScreen() {
         if (!ignore) setData(d);
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "현황을 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "현황을 불러오지 못했어요."));
       });
     return () => {
       ignore = true;
@@ -82,7 +86,7 @@ function Body({ data }: { data: Dashboard }) {
   const counts = manageCounts(s);
   const known = knownCount(total, s);
   const emp = s.EMPLOYED;
-  const seeking = s.SEEKING.total + s.NEED_HELP;
+  const seeking = counts.SEEKING;
 
   // 각 조각의 길이와, 앞 조각들 길이의 합(시작 위치)
   const lens = DONUT_ORDER.map((k) => (total ? (counts[k] / total) * CIRC : 0));
@@ -98,13 +102,9 @@ function Body({ data }: { data: Dashboard }) {
       label: "구직 중",
       color: manageChartVar.SEEKING,
       n: seeking,
-      note: (
-        <>
-          <i className="inline-block size-[7px] shrink-0 rounded-full" style={{ background: manageChartVar.NEED_HELP }} />이 중 도움 필요{" "}
-          {s.NEED_HELP}명
-        </>
-      ),
+      note: <>기관 추천 지원 중 · 패스 후 대기 · 기타 포함</>,
     },
+    { label: "휴식", color: manageChartVar.RESTING, n: counts.RESTING, note: <>수료생이 &lsquo;휴식&rsquo;을 선택 · 연락 기록은 유지</> },
     { label: "추가 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, note: <>1주 넘게 앱 응답 없음 · 전화 확인</> },
   ];
 
@@ -217,7 +217,10 @@ function Body({ data }: { data: Dashboard }) {
           관리 상태는 수료생 앱 응답과 도움 요청으로 서버가 분류해요. 1주 넘게 응답이 없는 수료생은 &lsquo;추가 확인 필요&rsquo;로 따로 세요. &lsquo;구직
           중&rsquo;은 운영상의 분류이며 미취업을 확정하는 값은 아니에요.
         </p>
-        <p className="mt-2">이 화면의 &lsquo;구직 중&rsquo;은 도움 필요를 포함한 수예요.</p>
+        <p className="mt-2">
+          대표 상태 4분류(취업 완료 · 구직 중 · 휴식 · 추가 확인 필요)의 합은 전체 인원과 같아요. 도움 요청은 상태가 아니라 아래 &lsquo;도움 요청
+          통계&rsquo;에서 건수로 따로 세요.
+        </p>
         <p className="mt-2">
           관리 상태 파악률 = (전체 − 추가 확인 필요) ÷ 전체 · 취업률 = 취업 완료 ÷ (전체 − 추가 확인 필요) · 전체 기준 취업률 = 취업 완료 ÷ 전체.
           취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.
@@ -240,18 +243,23 @@ const HELP_STATES: { label: string; connected: boolean }[] = [
   { label: "요청 종료", connected: false },
 ];
 const CONTACT_ORDER: (ContactMethod | "NONE")[] = ["PHONE", "SMS", "EMAIL", "NONE"];
-const HELP_TOPICS = ["이력서 첨삭", "공고 같이 보기", "면접 준비", "진로 상담", "기타"];
 
 function HelpStats({ data }: { data: Dashboard }) {
   const open = data.helpRequests;
+  // 건수(요청)와 인원(학생)을 따로 센다: 한 학생이 여러 건을 낼 수 있다
+  const studentCount = new Set(open.map((h) => h.studentId)).size;
   const byContact = CONTACT_ORDER.map((m) => ({
     m,
     n: open.filter((h) => (m === "NONE" ? h.contactMethod === null : h.contactMethod === m)).length,
   }));
+  // 필요한 도움별: 서버 helpType 그대로 건수 집계, null · 키 없음은 '미분류' (공고 · 메모로 추측하지 않음)
+  const byType = [...HELP_TYPE_ORDER, null].map((t) => ({ t, n: open.filter((h) => (h.helpType ?? null) === t).length }));
   return (
     <Panel label="도움 요청 통계" className="mt-3">
-      <PanelHead title="도움 요청 통계" sub="접수 중인 요청만 집계해요. 연락 완료 · 종료된 요청은 목록 API 가 없어 포함되지 않아요.">
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${toneClass("red")}`}>접수 중 요청 {open.length}건 기준</span>
+      <PanelHead title="도움 요청 통계" sub="접수 중인 요청만 건수로 집계해요. 연락 완료 · 종료된 요청은 목록 API 가 없어 포함되지 않아요.">
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${toneClass("red")}`}>
+          접수 중 요청 {open.length}건 · 수료생 {studentCount}명 기준
+        </span>
       </PanelHead>
       <div className="grid grid-cols-3 divide-x divide-(--coord-line-soft)">
         <StatColumn title="처리 상태별">
@@ -268,9 +276,9 @@ function HelpStats({ data }: { data: Dashboard }) {
             <StatRow key={m} label={m === "NONE" ? "선호 연락 선택 안 함" : contactLabels[m]} n={n} total={open.length} />
           ))}
         </StatColumn>
-        <StatColumn title="필요한 도움별" note="요청 유형 필드 없음">
-          {HELP_TOPICS.map((t) => (
-            <StatRow key={t} label={<span className="text-(--coord-muted)">{t}</span>} unlinked="도움 요청에 요청 유형 값이 없어 분류하지 않아요" />
+        <StatColumn title="필요한 도움별" note={`접수 중 ${open.length}건 중`}>
+          {byType.map(({ t, n }) => (
+            <StatRow key={t ?? "NONE"} label={t ? helpTypeLabel(t) : <span className="text-(--coord-muted)">미분류</span>} n={n} total={open.length} />
           ))}
         </StatColumn>
       </div>
@@ -348,7 +356,10 @@ const ROSTER_COLUMNS: [string, string][] = [
 /** 한 수료생의 지원서류 (C3 상세 API) */
 type DocExtra = { state: "error" } | { state: "ok"; docs: { applicationId: number; status: ApplicationStatus }[] };
 
-type Query = { status?: StudentStatus; subStatus?: SubStatus; q: string; page: number };
+type Query = { status?: CoordStudentStatus; subStatus?: SubStatus; q: string; page: number };
+
+/** 목록 API 는 status=RESTING 을 지원한다 (docs/API.md). FE-A 쿼리 타입(StudentStatus)에 RESTING 이 아직 없어 여기서만 넘긴다 */
+const listStatus = (s: CoordStudentStatus | undefined) => s as StudentStatus | undefined;
 
 function StudentRoster({ data }: { data: Dashboard }) {
   const [query, setQuery] = useState<Query>({ q: "", page: 1 });
@@ -361,7 +372,7 @@ function StudentRoster({ data }: { data: Dashboard }) {
 
   useEffect(() => {
     let ignore = false;
-    getCoordinatorStudents({ status: query.status, subStatus: query.subStatus, q: query.q, page: query.page, size: PAGE_SIZE })
+    getCoordinatorStudents({ status: listStatus(query.status), subStatus: query.subStatus, q: query.q, page: query.page, size: PAGE_SIZE })
       .then((d) => {
         if (!ignore) {
           setList(d);
@@ -369,7 +380,7 @@ function StudentRoster({ data }: { data: Dashboard }) {
         }
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "수료생 목록을 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "수료생 목록을 불러오지 못했어요."));
       });
     return () => {
       ignore = true;
@@ -405,6 +416,8 @@ function StudentRoster({ data }: { data: Dashboard }) {
   }, [list, docs]);
 
   const openHelp = (studentId: number) => data.helpRequests.filter((h) => h.studentId === studentId);
+  // 접수 중 도움 요청 건수: 서버 openHelpRequestCount 우선, 없는 응답(이전 목업)은 대시보드 helpRequests 로 센다
+  const helpCount = (row: CoordinatorStudentRow) => studentExtra(row).openHelpRequestCount ?? openHelp(row.studentId).length;
   const filterValue = query.status ? (query.subStatus ? `${query.status}:${query.subStatus}` : query.status) : "";
   const lastPage = list ? Math.max(1, Math.ceil(list.total / list.size)) : 1;
   const conditionLabel = [FILTERS.find((f) => f.value === filterValue)?.label.replace("　└ ", "") ?? "전체", query.q && `"${query.q}"`]
@@ -419,13 +432,13 @@ function StudentRoster({ data }: { data: Dashboard }) {
       const rows = new Map<number, CoordinatorStudentRow>();
       let total = 0;
       for (let page = 1; ; page++) {
-        const d = await getCoordinatorStudents({ status: query.status, subStatus: query.subStatus, q: query.q, page, size: EXPORT_PAGE_SIZE });
+        const d = await getCoordinatorStudents({ status: listStatus(query.status), subStatus: query.subStatus, q: query.q, page, size: EXPORT_PAGE_SIZE });
         total = d.total;
         d.items.forEach((s) => rows.set(s.studentId, s));
         if (d.items.length === 0 || page * EXPORT_PAGE_SIZE >= d.total) break;
       }
       const all = [...rows.values()];
-      downloadCsv(all, openHelp, `수료생_전체명단_${today()}.csv`);
+      downloadCsv(all, helpCount, `수료생_전체명단_${today()}.csv`);
       setExportMessage(
         all.length === total ? `전체 명단 ${all.length}명을 내려받았어요.` : `서버 인원 ${total}명 중 ${all.length}명을 받았어요. 받는 중 명단이 바뀌었을 수 있어요.`,
       );
@@ -443,7 +456,7 @@ function StudentRoster({ data }: { data: Dashboard }) {
           <button
             type="button"
             disabled={!list || list.items.length === 0}
-            onClick={() => list && downloadCsv(list.items, openHelp, `수료생_명단_${query.page}쪽_${today()}.csv`)}
+            onClick={() => list && downloadCsv(list.items, helpCount, `수료생_명단_${query.page}쪽_${today()}.csv`)}
             className={`${btn.base} ${btn.outline} ${btn.sm}`}
           >
             현재 페이지 CSV
@@ -481,7 +494,7 @@ function StudentRoster({ data }: { data: Dashboard }) {
             value={filterValue}
             onChange={(event) => {
               const [s, sub] = event.target.value.split(":");
-              setQuery((cur) => ({ ...cur, status: (s || undefined) as StudentStatus | undefined, subStatus: sub as SubStatus | undefined, page: 1 }));
+              setQuery((cur) => ({ ...cur, status: (s || undefined) as CoordStudentStatus | undefined, subStatus: sub as SubStatus | undefined, page: 1 }));
             }}
             className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-xs font-normal text-(--coord-ink)"
           >
@@ -532,6 +545,7 @@ function StudentRoster({ data }: { data: Dashboard }) {
               <tbody>
                 {list.items.map((s) => {
                   const help = openHelp(s.studentId);
+                  const count = helpCount(s);
                   return (
                     <tr key={s.studentId} className="h-[54px] border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
                       <td className="overflow-hidden px-[17px]">
@@ -556,9 +570,9 @@ function StudentRoster({ data }: { data: Dashboard }) {
                         {s.hasNote && <span className="ml-1.5 text-[10px] text-(--coord-muted)">비고 있음</span>}
                       </td>
                       <td className="overflow-hidden px-[17px]">
-                        {help.length > 0 ? (
-                          <Link href={`/coordinator/help-requests?id=${help[0].helpRequestId}`} className="font-semibold text-(--coord-green) hover:underline">
-                            접수 {help.length}건
+                        {count > 0 ? (
+                          <Link href={help[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"} className="font-semibold text-(--coord-green) hover:underline">
+                            접수 {count}건
                           </Link>
                         ) : (
                           <span className="text-(--coord-muted)">접수 없음</span>
@@ -629,7 +643,7 @@ const today = () => {
 };
 
 /** 목록 API 값 + 접수 중 도움 요청 수만 담는다. 엑셀에서 한글이 깨지지 않게 BOM 을 붙인다 */
-function downloadCsv(rows: CoordinatorStudentRow[], openHelp: (studentId: number) => unknown[], fileName: string) {
+function downloadCsv(rows: CoordinatorStudentRow[], helpCount: (row: CoordinatorStudentRow) => number, fileName: string) {
   const cell = (v: string | number) => {
     const s = String(v);
     // 쉼표 · 따옴표 · 줄바꿈은 따옴표로 감싸고, 수식으로 읽히는 첫 글자는 막는다
@@ -646,7 +660,7 @@ function downloadCsv(rows: CoordinatorStudentRow[], openHelp: (studentId: number
       s.subStatus ? subStatusLabels[s.subStatus] : "",
       s.lastResponseAt ? s.lastResponseAt.slice(0, 10) : "",
       s.hasNote ? "예" : "아니요",
-      openHelp(s.studentId).length,
+      helpCount(s),
     ]
       .map(cell)
       .join(","),

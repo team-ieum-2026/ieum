@@ -2,7 +2,7 @@
 // 주인: FE-B — C1 오늘의 업무 (FE-B-07, 11/1 개편 목업). 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3).
 // - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 연락 필요(callList = 1주 무응답, 추가 확인 필요와 같은 대상)
 //   · 상담 예정(상담 일정 API 없음 → '미연동' 표시, 가짜 건수 없음)
-// - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류를 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
+// - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
 // - 오늘 예정된 상담: 일정 API 연동 전이라 빈 상태 (demoAccount.ts 의 CONSULTATION_API_CONNECTED)
 // - 서류 검토 현황 4단계: 검토 대기만 실제 건수, 나머지 3단계는 건수 API 가 없어 '—' · 미연동 (0건으로 단정하지 않음)
@@ -11,12 +11,14 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
 import { CONSULTATION_API_CONNECTED, type ConsultationSchedule } from "@/components/coordinator/demoAccount";
 import type { CoordTone } from "@/components/coordinator/coordLabels";
 import {
   MANAGE_ORDER,
   contactLabels,
+  helpTitle,
+  helpTypeLabel,
   knownCount,
   manageChartVar,
   manageCounts,
@@ -25,7 +27,6 @@ import {
   monthDay,
   pct,
 } from "@/components/coordinator/coordLabels";
-import { ApiError } from "@/lib/api/client";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 import type { Dashboard } from "@/types/coordinator";
 
@@ -42,6 +43,26 @@ export default function DashboardScreen() {
   // 탭 복귀 재조회의 중복 방지용: 조회 중인지, 마지막 조회를 시작한 시각
   const loadingRef = useRef(false);
   const lastLoadRef = useRef(0);
+  // 수동 '목록 새로고침': 성공하면 바꾸고, 실패하면 지금 화면을 그대로 두고 문구만 띄운다
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const refresh = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    lastLoadRef.current = Date.now();
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      setData(await getDashboard());
+      notifyReviewQueueChanged(); // 사이드바 · 상단 알림 건수도 같은 시점으로
+    } catch (e) {
+      setRefreshError(apiErrorText(e, "오늘의 업무를 다시 불러오지 못했어요."));
+    } finally {
+      loadingRef.current = false;
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -52,7 +73,7 @@ export default function DashboardScreen() {
         if (!ignore) setData(d);
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "대시보드를 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "대시보드를 불러오지 못했어요."));
       })
       .finally(() => {
         if (!ignore) loadingRef.current = false;
@@ -99,10 +120,12 @@ export default function DashboardScreen() {
         title="오늘의 업무"
         description="요청의 맥락을 확인하고, 필요한 지원부터 이어가세요."
         action={
-          <span className="inline-flex items-center gap-2 rounded-[7px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-xs">
-            <Icon name="calendar" className="size-4" />
-            {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
-          </span>
+          <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh}>
+            <span className="inline-flex items-center gap-2 rounded-[7px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-xs">
+              <Icon name="calendar" className="size-4" />
+              {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
+            </span>
+          </RefreshAction>
         }
       />
       <div className="mb-3.5 grid shrink-0 grid-cols-4 gap-3.5">
@@ -201,17 +224,34 @@ function Kpi({
   );
 }
 
-type Task = { kind: "help" | "doc"; key: string; at: string; name: string; text: string; href: string };
+type TaskKind = "help" | "doc" | "pass";
+type Task = { kind: TaskKind; key: string; at: string; name: string; text: string; href: string };
 
-/** 도움 요청 + 검토 대기 서류를 건별로, 먼저 들어온 순 */
+/** 할 일 종류별 표시: 아이콘 · 배지 · 시각 이름 · 버튼 */
+const TASK_LOOK: Record<TaskKind, { icon: IconName; iconClass: string; badge: string; tone: CoordTone; when: string; action: string }> = {
+  help: { icon: "help", iconClass: "bg-(--coord-red-soft) text-(--coord-red)", badge: "도움 요청", tone: "red", when: "접수", action: "요청 확인" },
+  doc: { icon: "doc", iconClass: "bg-(--coord-green-soft) text-(--coord-green-ink)", badge: "서류 검토", tone: "orange", when: "제출", action: "서류 검토" },
+  pass: { icon: "phone", iconClass: "bg-(--coord-blue-soft) text-(--coord-blue)", badge: "연락 필요", tone: "blue", when: "마지막 패스", action: "연락 기록" },
+};
+
+/** 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(백엔드 판정 passFollowUpList)을 건별로, 먼저 들어온 순 */
 function buildTasks(data: Dashboard): Task[] {
   const help: Task[] = data.helpRequests.map((h) => ({
     kind: "help",
     key: `help-${h.helpRequestId}`,
     at: h.createdAt,
     name: h.studentName,
-    text: [h.jobTitle, h.contactMethod && `${contactLabels[h.contactMethod]} 선호`].filter(Boolean).join(" · ") || "도움 요청",
+    text: [helpTypeLabel(h.helpType), helpTitle(h), h.contactMethod && `${contactLabels[h.contactMethod]} 선호`].filter(Boolean).join(" · "),
     href: `/coordinator/help-requests?id=${h.helpRequestId}`,
+  }));
+  // 3회 조건은 프론트에서 계산하지 않고 서버 목록 그대로. 연락 기록을 남기면 서버가 목록에서 뺀다
+  const pass: Task[] = (data.passFollowUpList ?? []).map((p) => ({
+    kind: "pass",
+    key: `pass-${p.studentId}`,
+    at: p.lastPassAt ?? data.asOf,
+    name: p.studentName,
+    text: `추천 공고 연속 패스 ${p.consecutivePassCount}회 · 통화 · 상담 기록을 남겨 주세요`,
+    href: `/coordinator/students/${p.studentId}?log=new`,
   }));
   const docs: Task[] = data.reviewQueue.map((r) => ({
     kind: "doc",
@@ -221,23 +261,20 @@ function buildTasks(data: Dashboard): Task[] {
     text: `${r.jobTitle} · 제출본 확인 필요`,
     href: `/coordinator/applications/${r.applicationId}`,
   }));
-  return [...help, ...docs].sort((a, b) => a.at.localeCompare(b.at));
+  return [...help, ...docs, ...pass].sort((a, b) => a.at.localeCompare(b.at));
 }
 
 /** 할 일 한 줄 (목업 .task): 아이콘 · 이름 · 종류 · 내용 · 접수/제출 시각 · 이동 버튼 */
 function TaskRow({ t }: { t: Task }) {
+  const look = TASK_LOOK[t.kind];
   return (
     <li className="flex items-center gap-2.5 border-b border-(--coord-line-soft) px-4 py-2 last:border-b-0">
-      <span
-        className={`grid size-[31px] shrink-0 place-items-center rounded-[9px] ${
-          t.kind === "help" ? "bg-(--coord-red-soft) text-(--coord-red)" : "bg-(--coord-green-soft) text-(--coord-green-ink)"
-        }`}
-      >
-        <Icon name={t.kind === "help" ? "help" : "doc"} />
+      <span className={`grid size-[31px] shrink-0 place-items-center rounded-[9px] ${look.iconClass}`}>
+        <Icon name={look.icon} />
       </span>
       <div className="min-w-0 flex-1">
         <h3 className="flex items-center gap-[7px] text-[13px] font-bold">
-          {t.name} <Badge tone={t.kind === "help" ? "red" : "orange"}>{t.kind === "help" ? "도움 요청" : "서류 검토"}</Badge>
+          {t.name} <Badge tone={look.tone}>{look.badge}</Badge>
         </h3>
         <p className="mt-1 truncate text-xs text-(--coord-muted)">{t.text}</p>
       </div>
@@ -245,10 +282,10 @@ function TaskRow({ t }: { t: Task }) {
         <b className="text-xs font-semibold">
           {monthDay(t.at)} {t.at.slice(11, 16)}
         </b>
-        <small className="text-[10px] text-(--coord-muted)">{t.kind === "help" ? "접수" : "제출"}</small>
+        <small className="text-[10px] text-(--coord-muted)">{look.when}</small>
       </span>
       <Link href={t.href} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-        {t.kind === "help" ? "요청 확인" : "서류 검토"}
+        {look.action}
       </Link>
     </li>
   );

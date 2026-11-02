@@ -6,12 +6,13 @@
 // - 마감일정: API 에 없어 '미연동' (BE-B 회신 ④ deadlineOn · untilFilled 가 오면 채움)
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDayTime } from "@/components/coordinator/coordLabels";
+import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { IS_MOCK } from "@/components/coordinator/demoAccount";
 import { ApiError } from "@/lib/api/client";
 import { getCoordinatorApplication, getDashboard } from "@/lib/api/coordinatorReview";
-import type { ReviewQueueItem, Verification } from "@/types/coordinator";
+import type { Dashboard, ReviewQueueItem, Verification } from "@/types/coordinator";
 
 /** 목업 탭 순서. 검토 대기만 실제 목록이 있다 */
 const TABS: { label: string; connected: boolean }[] = [
@@ -41,20 +42,40 @@ type Check =
   | { state: "error"; mockMissing: boolean }
   | { state: "ok"; verification: Verification; hasDocument: boolean };
 
+/** 검토 대기 목록: 먼저 제출된 순 */
+const sortQueue = (d: Dashboard) => [...d.reviewQueue].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
+
 export default function ReviewListScreen() {
   const [items, setItems] = useState<ReviewQueueItem[] | null>(null);
   const [checks, setChecks] = useState<Record<number, Check>>({});
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // 수동 '목록 새로고침': 성공하면 목록을 바꾸고(→ 아래 효과가 근거 점검 · 수료생 수정을 다시 채움), 실패하면 지금 목록을 그대로 둔다
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      setItems(sortQueue(await getDashboard()));
+      notifyReviewQueueChanged(); // 사이드바 · 상단 알림 건수도 같은 시점으로
+    } catch (e) {
+      setRefreshError(apiErrorText(e, "서류 목록을 다시 불러오지 못했어요."));
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
     getDashboard()
       .then((d) => {
-        if (!ignore) setItems([...d.reviewQueue].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)));
+        if (!ignore) setItems(sortQueue(d));
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "서류 목록을 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "서류 목록을 불러오지 못했어요."));
       });
     return () => {
       ignore = true;
@@ -84,7 +105,11 @@ export default function ReviewListScreen() {
 
   return (
     <>
-      <PageTitle title="서류 검토" description="자기소개서 전체 맥락과 문장별 근거를 보고, 개입할 지점을 판단하세요." />
+      <PageTitle
+        title="서류 검토"
+        description="자기소개서 전체 맥락과 문장별 근거를 보고, 개입할 지점을 판단하세요."
+        action={items && <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />}
+      />
       {!items ? (
         <LoadState
           error={error}
