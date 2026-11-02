@@ -43,7 +43,8 @@ class CoordinatorStudentServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CoordinatorStudentService(mapper, CLOCK);
+        service = new CoordinatorStudentService(mapper,
+                org.mockito.Mockito.mock(CoordinatorPassFollowUpService.class), CLOCK);
     }
 
     @Test
@@ -84,6 +85,27 @@ class CoordinatorStudentServiceTest {
         verifyNoMoreInteractions(mapper);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"RESTING", "NEED_HELP"})
+    void restingAndLegacyHelpFiltersPreserveRepresentativeStatusAndOpenRequestCount(String filter) {
+        var stored = student();
+        stored.setStatus("RESTING");
+        stored.setSubStatus(null);
+        stored.setOpenHelpRequestCount(2);
+        when(mapper.countStudents(filter, null, null)).thenReturn(1L);
+        when(mapper.findStudents(filter, null, null, 0, 20)).thenReturn(List.of(stored));
+
+        var result = service.list(filter, null, null, 1, 20);
+
+        assertEquals(1, result.total());
+        assertEquals("RESTING", result.items().get(0).status());
+        assertNull(result.items().get(0).subStatus());
+        assertEquals(2, result.items().get(0).openHelpRequestCount());
+        verify(mapper).countStudents(filter, null, null);
+        verify(mapper).findStudents(filter, null, null, 0, 20);
+        verifyNoMoreInteractions(mapper);
+    }
+
     @Test
     void largeValidOffsetDoesNotOverflowBeforeMapperCall() {
         when(mapper.countStudents(null, null, null)).thenReturn(Long.MAX_VALUE);
@@ -106,6 +128,7 @@ class CoordinatorStudentServiceTest {
     @Test
     void detailKeepsEmptyRecommendationHeadersOriginalEvidenceAndNullableLegacyLogs() {
         var stored = student();
+        stored.setOpenHelpRequestCount(3);
         var competency = JSON.createObjectNode();
         competency.putArray("skills").addObject().put("name", "Java")
                 .putArray("evidence").addObject().put("refType", "PROJECT").put("refId", 41L);
@@ -137,6 +160,8 @@ class CoordinatorStudentServiceTest {
         var detail = service.detail(7L);
 
         assertSame(competency, detail.competencyProfile());
+        assertEquals("SEEKING", detail.student().status());
+        assertEquals(3, detail.student().openHelpRequestCount());
         assertEquals(new CoordinatorStudentResponse.Registered(2, 3, 4, true), detail.registered());
         assertEquals(2, detail.history().size());
         assertEquals(31L, detail.history().get(0).recommendationId());
@@ -159,6 +184,7 @@ class CoordinatorStudentServiceTest {
         var detail = service.detail(7L);
 
         assertNull(detail.competencyProfile());
+        assertEquals(0, detail.student().openHelpRequestCount());
         assertEquals(new CoordinatorStudentResponse.Registered(0, 0, 0, false), detail.registered());
         assertTrue(detail.history().isEmpty());
         assertTrue(detail.contactLogs().isEmpty());
@@ -199,7 +225,7 @@ class CoordinatorStudentServiceTest {
         assertEquals(type, result.contactType());
         assertSame(note, result.note());
         assertEquals(51L, result.contactLogId());
-        assertEquals(LocalDateTime.of(2026, 10, 28, 12, 4, 5), row.getValue().getCreatedAt());
+        assertEquals(LocalDateTime.of(2026, 10, 28, 12, 4, 5, 678_000_000), row.getValue().getCreatedAt());
         assertEquals(row.getValue().getCreatedAt().atOffset(ZoneOffset.ofHours(9)), result.createdAt());
     }
 

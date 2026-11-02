@@ -55,7 +55,7 @@ HTTP 상태 코드(400, 404, 409, 500)와 함께 보냅니다. `code`는 UPPER_S
 | 패스 사유 `passReason` | `ALREADY_EMPLOYED`(이미 취업했어요) · `JOB_MISMATCH`(직무가 맞지 않아요) · `CONDITION_MISMATCH`(지역이나 근무 조건이 안 맞아요) · `SKILL_GAP`(요구 역량이 부족한 것 같아요) · `TAKING_BREAK`(지금은 구직을 잠시 쉬고 있어요) · `OTHER`(기타) |
 | 연락 방법 `contactMethod` | `SMS` · `PHONE` · `EMAIL` |
 | 지원서 상태 `status` | `GENERATING` · `DRAFT` · `SUBMITTED` · `APPROVED` · `REJECTED` · `DELIVERED` · `FAILED` |
-| 수료생 상태 `status` | `EMPLOYED` · `SEEKING` · `NEED_HELP` · `CHECK_REQUIRED` |
+| 수료생 상태 `status` | `EMPLOYED` · `SEEKING` · `RESTING` · `CHECK_REQUIRED` (`NEED_HELP`는 이전 조회 필터 호환용) |
 | 구직 중 세부 `subStatus` | `APPLYING` · `WAITING` · `OTHER` |
 | 출처 태그 `source` | `AI`(AI 작성 · 근거 연결) · `REGISTERED`(등록 자료) · `USER`(직접 입력) |
 | 병역 `militaryStatus` | `SERVED` · `NOT_SERVED` · `EXEMPT` · `NOT_APPLICABLE` · `null` |
@@ -320,11 +320,30 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M8 | `PUT /api/students/{studentId}/cover-letter` | 자기소개서 원본 수정 `{ "content": "…" }` | S1 → S2 |
 | M2 → M4 | `POST /api/help-requests` | 도움 요청 생성 | S5 → S11 |
 | M4 | `PATCH /api/help-requests/{helpRequestId}` | 연락 방법 · 메모 추가 | S11 |
+| 수료생 | `GET /api/help-requests?studentId=&status=OPEN` | 본인의 도움 요청 목록, `ALL`이면 종료·연락 완료 포함 | S11 |
+| 수료생 | `POST /api/help-requests/{helpRequestId}/close` | 본인 요청 한 건 종료 | S11 |
+| 수료생 | `GET /api/students/{studentId}/status` | 현재 대표 관리 상태 조회 | S12 |
+| 수료생 | `PUT /api/students/{studentId}/status` | 취업·구직 재개·휴식 의사 선택 | S12 |
 
 - 프로필이 바뀌면 BE-B가 AI 서버 `POST /ai/profile/extract`를 호출해 역량 프로필을 다시 만듭니다. M8 상단의 "반영 완료" 배너는 응답의 `profileUpdatedAt`으로 띄웁니다.
 - 프로필 항목 추가 · 수정 요청 본문은 서류 PATCH의 `section` · `item` 형식과 같습니다.
 
 #### `POST /api/help-requests` (M2 도움 요청 버튼)
+
+`studentId`는 필수입니다. `recommendationItemId`는 선택이며, 공고 없이 요청할 때는 `helpType`이 필수입니다.
+공고가 있으면 본인 추천인지 확인하고 추천 응답도 `HELP`로 저장합니다. 공고가 없으면 추천 응답을 만들지 않습니다.
+기존 공고 요청의 `helpType` 생략·null은 호환을 위해 허용하며 미분류로 저장합니다. 새 UI에서는 유형 한 개를 선택합니다.
+
+| `helpType` | 표시 |
+| --- | --- |
+| `RESUME_COVER_LETTER` | 이력서·자소서 |
+| `JOB_APPLICATION` | 채용공고·지원 |
+| `INTERVIEW_PREPARATION` | 면접 준비 |
+| `CAREER_COUNSELING` | 진로 상담 |
+| `OTHER` | 기타 |
+
+공고 없는 예: `{ "studentId": 1, "recommendationItemId": null, "helpType": "INTERVIEW_PREPARATION" }`.
+연락 방법·메모는 생성 후 기존 PATCH로 저장합니다. 생성 응답은 기존 형식을 유지합니다.
 
 ```json
 { "studentId": 1, "recommendationItemId": 93 }
@@ -340,11 +359,50 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 { "contactMethod": "SMS", "memo": "지원서를 같이 봐주셨으면 해요" }
 ```
 
+#### 도움 요청 조회·본인 종료
+
+`GET /api/help-requests?studentId=1`은 본인의 `OPEN` 요청만 반환합니다. `status`는
+`OPEN` · `CONTACTED` · `CLOSED` · `ALL`이며 생략하면 `OPEN`, 잘못된 값은 400입니다.
+성공 `data`는 배열이며 각 항목에 `helpRequestId`, `studentId`, `recommendationItemId`, `helpType`,
+`status`, `contactMethod`, `memo`, `createdAt`, `closedAt`, `closeReason`, `jobTitle`을 포함합니다.
+공고 없는 요청의 `recommendationItemId`·`jobTitle`, 미분류의 `helpType`은 키를 유지하고 null입니다.
+
+`POST /api/help-requests/{helpRequestId}/close`:
+
+```json
+{ "studentId": 1, "closeReason": "EMPLOYED" }
+```
+
+`closeReason`은 `EMPLOYED`(취업으로 종료), `NO_LONGER_NEEDED`(도움 불필요), `OTHER` 중 하나입니다.
+본인의 `OPEN` 요청만 `CLOSED`로 바꾸고 종료 시각·사유를 남깁니다. 다른 학생 요청은 400,
+없는 요청은 404, `CONTACTED` 요청은 409입니다. 이미 `CLOSED`인 본인 요청은 기존 종료 정보로 200을 반환합니다.
+응답은 `{ "data": { "helpRequestId": 4, "status": "CLOSED", "closedAt": "2026-11-02T12:00:00+09:00", "closeReason": "EMPLOYED" } }`.
+종료는 다른 요청·학생 현재 상태 선택·마지막 응답 시각을 변경하지 않습니다.
+
+#### 현재 상태 선택·도움 요청 분리 (BE-B-05 · BE-B-06 · BE-B-07)
+
+`PUT /api/students/{studentId}/status`는 `{ "status": "EMPLOYED" }`를 받습니다.
+선택값은 `EMPLOYED` · `SEEKING` · `RESTING`입니다. 선택 이력과 시각을 보존하며 마지막 응답 시각을 갱신합니다.
+성공 예: `{ "data": { "studentId": 1, "status": "EMPLOYED", "subStatus": null, "updatedAt": "2026-11-02T12:00:00+09:00" } }`.
+`GET`은 같은 형태의 현재 관리 상태를 읽으며, 판정 전에는 `CHECK_REQUIRED`·`updatedAt: null`일 수 있습니다.
+P0는 인증이 없으므로 학생 번호는 기존 데모 식별 방식입니다.
+
+- 최근 본인 상태 선택과 명확한 공고 응답을 시각순으로 비교합니다. `APPLY` 저장 성공은 구직 재개,
+  `PASS/ALREADY_EMPLOYED`는 취업, `PASS/TAKING_BREAK`는 휴식 의사입니다. AI 생성 실패나 서류 검토 단계와 구분합니다.
+- 일반 패스·도움 요청·서류 검토·승인은 현재 의사를 새로 선택한 것으로 해석하지 않습니다.
+  명확한 구직 의사가 있으면 추천 0건 신호가 이를 덮지 않습니다. 구직자의 7일 무응답 확인 규칙은 유지합니다.
+- 취업·휴식·새 지원만으로 도움 요청을 자동 종료하지 않습니다. 취업 상태 선택 후 유지한 도움 요청은 계속 처리 목록에 남습니다.
+  FE는 본인 미처리 목록을 보여주고 선택한 요청에만 종료 API를 호출합니다. 상태 선택과 요청별 종료는 각각 결과를 확인합니다.
+- 취업 이력을 지우지 않습니다. 이 계약은 대표 상태 하나와 도움 요청을 분리하며, 재직과 이직 준비를 두 축으로 관리하는 기능은 포함하지 않습니다.
+- 기존 DB에는 `db/migrations/20261102_student_intent_help_requests.sql`을 먼저 적용하고 BE를 재시작합니다.
+  원본 시드 재적재는 필요하지 않습니다. 기존 상태 행은 다음 응답·선택·일일 재계산에서 갱신됩니다.
+
 ### 2-3. 코디네이터 — BE-B
 
 | 화면 | 메서드 · 경로 | 설명 | 흐름 |
 | --- | --- | --- | --- |
 | C1 | `GET /api/coordinator/dashboard` | 도움 요청, 상태별 집계, 할 일 3종 | S11 · S12 · S13 |
+| C1 · C2 | `GET /api/coordinator/pass-follow-ups` | 일반 패스 3회 연속 연락 대상, 취업·휴식 선택 시 횟수 초기화 | S12 |
 | C2 | `GET /api/coordinator/students?status=&subStatus=&q=&page=1&size=20` | 수료생 목록 | S12 |
 | C3 | `GET /api/coordinator/students/{studentId}` | 수료생 상세 | S2 · S6 |
 | C1 · C3 | `POST /api/coordinator/students/{studentId}/contact-logs` | 통화 · 상담 기록 `{ "contactType": "PHONE", "note": "…" }` | S12 |
@@ -364,13 +422,14 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
     "helpRequests": [
       { "helpRequestId": 4, "studentId": 12, "studentName": "박서연", "courseLabel": "AI Agent 4기",
         "createdAt": "2026-10-24T09:12:00+09:00", "jobTitle": "데이터웨이브 데이터 엔지니어",
-        "contactMethod": "SMS", "memo": null }
+        "contactMethod": "SMS", "memo": null, "helpType": "JOB_APPLICATION" }
     ],
     "statusSummary": {
       "EMPLOYED": 32,
       "SEEKING": { "total": 88, "APPLYING": 41, "WAITING": 28, "OTHER": 19 },
-      "NEED_HELP": 5,
-      "CHECK_REQUIRED": 12
+      "NEED_HELP": 0,
+      "CHECK_REQUIRED": 12,
+      "RESTING": 5
     },
     "reviewQueue": [
       { "applicationId": 7, "studentName": "김민준", "jobTitle": "온다랩 백엔드 인턴", "submittedAt": "2026-10-24T10:12:00+09:00" }
@@ -380,10 +439,42 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
     ],
     "notesToCheck": [
       { "studentId": 33, "studentName": "서민재", "passNote": "부트캠프 하나 더 들을까 고민 중" }
-    ]
+    ],
+    "passFollowUpList": []
   }
 }
 ```
+
+대시보드의 `helpRequests`는 접수 중(`OPEN`) 요청만 포함합니다. 유형별 통계는 이 배열의 `helpType`을
+요청 건수로 집계하며, null은 ‘미분류’로 표시합니다. 누적·기간별 수요 통계와 구분합니다.
+`statusSummary.RESTING`은 휴식 인원이며 `NEED_HELP`는 호환용 0입니다.
+대표 상태별 인원 합계는 전체 수료생 수와 같습니다. 미처리 요청 건수를 인원에 더하지 않습니다.
+수료생 목록 항목과 상세의 `student`에는 `openHelpRequestCount`가 있어 대표 상태와 함께 표시할 수 있습니다.
+목록 `status=RESTING`을 지원하고, 이전 `status=NEED_HELP` 필터는 대표 상태와 무관하게 미처리 요청 보유 학생을 조회합니다.
+
+#### 일반 패스 3회 연속 연락 대상 (BE-B-06 · BE-B-07)
+
+`GET /api/coordinator/pass-follow-ups`는 다음 형태의 배열을 `data`로 반환합니다.
+
+```json
+{ "data": [{ "studentId": 12, "studentName": "모의 수료생", "status": "EMPLOYED", "consecutivePassCount": 3, "lastPassAt": "2026-11-02T12:00:00+09:00" }] }
+```
+
+- 학생별 저장된 공고 응답을 최신 시각·항목 번호 순서로 읽어 일반 `PASS`를 셉니다.
+  `ALREADY_EMPLOYED`·`TAKING_BREAK`는 횟수에 포함하지 않고 연속 횟수를 초기화합니다.
+  예: 일반 패스 2회 → 휴식 선택 → 일반 패스 1회이면 현재 횟수는 1회입니다.
+- 현재 상태 선택 API의 `EMPLOYED`·`RESTING` 선택도 그 시각까지의 횟수를 초기화합니다.
+  단순히 취업·휴식 응답만 건너뛰어 과거 일반 패스를 합산하지 않습니다. `SEEKING` 선택만으로는 초기화하지 않습니다.
+- 추천 묶음이 달라도 이어서 셉니다. 아직 응답하지 않은 `NONE`은 제외하며, `APPLY`·`HELP` 응답은 연속 횟수를 끊습니다.
+  같은 공고 중복 패스는 기존 409 처리로 횟수가 늘지 않습니다.
+- 마지막 초기화 이후 일반 패스가 새로 3회 연속이면 대표 상태와 별도로 연락 대상입니다.
+  취업·휴식 선택으로 기존 도움 요청을 종료하지 않습니다. 별도의 벌점·추천 제한·도움 요청도 만들지 않습니다.
+- 코디네이터가 기존 상담 기록 API로 `PHONE`·`MESSAGE`·`MEETING` 기록을 남기면 그 시각까지의 패스는 처리된 것으로 봅니다.
+  이후 응답부터 다시 세고 새로 3회 연속 패스하면 재등록합니다. 상담 기록은 학생 현재 상태와 마지막 응답 시각을 바꾸지 않습니다.
+- 대시보드에는 같은 목록인 `passFollowUpList`가 추가됩니다. 수료생 목록 항목·상세 `student`에는
+  `consecutivePassCount`와 `needsPassFollowUp`(3회 이상이면 true)이 추가됩니다. 연락 대상 수는 대표 상태별 인원 집계에 더하지 않습니다.
+- FE는 ‘연속 패스 · 연락 필요’ 표시와 연락 대상 목록을 연결하고, 접촉 후 상담 기록을 저장한 뒤 목록을 다시 조회합니다.
+- 기존 DB에는 `db/migrations/20261102_consecutive_pass_follow_up.sql`도 적용합니다. 연락 시각을 마이크로초로 보존해 같은 초 안의 패스와 접촉을 구분합니다.
 
 #### `GET /api/coordinator/applications/{applicationId}` (C4)
 

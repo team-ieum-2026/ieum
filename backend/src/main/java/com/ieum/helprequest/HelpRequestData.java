@@ -15,10 +15,13 @@ public final class HelpRequestData {
         private Long helpRequestId;
         private Long studentId;
         private Long recommendationItemId;
+        private String helpType;
         private String contactMethod;
         private String memo;
         private String status;
         private LocalDateTime createdAt;
         private LocalDateTime closedAt;
+        private String closeReason;
+        private String jobTitle;
     }
 }

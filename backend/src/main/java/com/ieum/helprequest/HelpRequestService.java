@@ -6,9 +6,12 @@ import com.ieum.common.ErrorCode;
 import com.ieum.recommendation.RecommendationMapper;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HelpRequestService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
+    private static final Set<String> STATUSES = Set.of("OPEN", "CONTACTED", "CLOSED");
+    private static final Set<String> CLOSE_REASONS = Set.of("EMPLOYED", "NO_LONGER_NEEDED", "OTHER");
     private final HelpRequestMapper mapper;
     private final RecommendationMapper recommendations;
     private final ApplicationEventPublisher events;
@@ -39,26 +44,29 @@ public class HelpRequestService {
 
     @Transactional
     public HelpRequestResult create(HelpRequestCreateRequest request) {
-        if (request == null || !positive(request.studentId()) || !positive(request.recommendationItemId())) {
+        if (request == null || !request.isValid()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
         if (mapper.findStudentId(request.studentId()) == null) {
             throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
         }
-        var item = recommendations.selectItemOwner(request.recommendationItemId());
-        if (item == null) throw new BusinessException(ErrorCode.RECOMMENDATION_ITEM_NOT_FOUND);
-        if (!request.studentId().equals(item.getStudentId())) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "본인의 추천 공고에서 도움을 요청해 주세요.");
-        }
-        // BE-A의 지원·패스와 같은 item → student 순서로 잠근다. NONE 조건이 중복·경쟁을 막는다.
-        if (recommendations.updateItemResponse(request.recommendationItemId(), "HELP", null, null) == 0) {
-            throw new BusinessException(ErrorCode.ALREADY_RESPONDED);
+        if (request.recommendationItemId() != null) {
+            var item = recommendations.selectItemOwner(request.recommendationItemId());
+            if (item == null) throw new BusinessException(ErrorCode.RECOMMENDATION_ITEM_NOT_FOUND);
+            if (!request.studentId().equals(item.getStudentId())) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "본인의 추천 공고에서 도움을 요청해 주세요.");
+            }
+            // BE-A의 지원·패스와 같은 item → student 순서로 잠근다. NONE 조건이 중복·경쟁을 막는다.
+            if (recommendations.updateItemResponse(request.recommendationItemId(), "HELP", null, null) == 0) {
+                throw new BusinessException(ErrorCode.ALREADY_RESPONDED);
+            }
         }
         LocalDateTime respondedAt = LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
         mapper.touchLastResponse(request.studentId(), respondedAt);
         var row = new HelpRequestData.Row();
         row.setStudentId(request.studentId());
         row.setRecommendationItemId(request.recommendationItemId());
+        row.setHelpType(request.helpType());
         row.setStatus("OPEN");
         row.setCreatedAt(respondedAt);
         if (mapper.insert(row) != 1 || row.getHelpRequestId() == null) {
@@ -66,6 +74,48 @@ public class HelpRequestService {
         }
         publish(row);
         return new HelpRequestResult(row.getHelpRequestId(), row.getStatus());
+    }
+
+    @Transactional(readOnly = true)
+    public List<HelpRequestListItem> list(Long studentId, String status) {
+        if (!positive(studentId) || (status != null && !STATUSES.contains(status))) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (mapper.findStudentId(studentId) == null) {
+            throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
+        }
+        return mapper.findByStudent(studentId, status).stream()
+                .map(row -> new HelpRequestListItem(row.getHelpRequestId(), row.getStudentId(),
+                        row.getRecommendationItemId(), row.getHelpType(), row.getStatus(),
+                        row.getContactMethod(), row.getMemo(), seoulTime(row.getCreatedAt()),
+                        seoulTime(row.getClosedAt()), row.getCloseReason(), row.getJobTitle()))
+                .toList();
+    }
+
+    @Transactional
+    public HelpRequestCloseResult close(Long helpRequestId, HelpRequestCloseRequest request) {
+        if (!positive(helpRequestId) || request == null || !positive(request.studentId())
+                || request.closeReason() == null || !CLOSE_REASONS.contains(request.closeReason())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        // 요청 행만 잠근다. 학생 상태는 이 트랜잭션 커밋 후 이벤트에서 다시 계산한다.
+        var row = mapper.findForUpdate(helpRequestId);
+        if (row == null) throw new HelpRequestNotFoundException();
+        if (!request.studentId().equals(row.getStudentId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "본인의 도움 요청만 종료할 수 있어요.");
+        }
+        if ("OPEN".equals(row.getStatus())) {
+            row.setStatus("CLOSED");
+            row.setClosedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
+            row.setCloseReason(request.closeReason());
+            if (mapper.close(row) != 1) throw new BusinessException(ErrorCode.INTERNAL_ERROR);
+        } else if (!"CLOSED".equals(row.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS);
+        }
+        // 종료는 수료생의 추가 응답으로 계산하지 않으며, 다른 요청에는 영향을 주지 않는다.
+        publish(row);
+        return new HelpRequestCloseResult(row.getHelpRequestId(), row.getStatus(),
+                seoulTime(row.getClosedAt()), row.getCloseReason());
     }
 
     @Transactional
@@ -120,5 +170,9 @@ public class HelpRequestService {
 
     private static boolean positive(Long value) {
         return value != null && value > 0;
+    }
+
+    private static OffsetDateTime seoulTime(LocalDateTime value) {
+        return value == null ? null : value.atZone(SEOUL).toOffsetDateTime();
     }
 }

@@ -23,8 +23,8 @@ final class StatusSeedFixture {
     static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     static final LocalDate BASE_DATE = LocalDate.of(2026, 10, 28);
     static final Map<String, Long> STATUS_COUNTS = Map.of(
-            "EMPLOYED", 10L, "NEED_HELP", 4L, "CHECK_REQUIRED", 7L, "SEEKING", 29L);
-    static final Map<String, Long> SEEKING_COUNTS = Map.of("WAITING", 22L, "APPLYING", 4L, "OTHER", 3L);
+            "EMPLOYED", 10L, "RESTING", 1L, "CHECK_REQUIRED", 7L, "SEEKING", 32L);
+    static final Map<String, Long> SEEKING_COUNTS = Map.of("WAITING", 25L, "APPLYING", 4L, "OTHER", 3L);
 
     private static final Pattern RELATIVE_TIME = Pattern.compile(
             "DATE_SUB\\(DATE_ADD\\(CURDATE\\(\\), INTERVAL (\\d+) HOUR\\), INTERVAL (\\d+) DAY\\)");

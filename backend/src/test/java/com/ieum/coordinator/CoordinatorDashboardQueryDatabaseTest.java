@@ -77,13 +77,14 @@ class CoordinatorDashboardQueryDatabaseTest {
                 help_request AS (
                     SELECT 101 AS id, 1 AS student_id, 501 AS recommendation_item_id,
                            'OPEN' AS status, CAST('2026-10-28 10:00:00' AS DATETIME) AS created_at,
-                           'SMS' AS contact_method, '모의 도움 메모' AS memo
+                           'SMS' AS contact_method, '모의 도움 메모' AS memo,
+                           'RESUME_COVER_LETTER' AS help_type
                     UNION ALL SELECT 102, 2, NULL, 'OPEN', CAST('2026-10-28 10:00:00' AS DATETIME),
-                                     NULL, NULL
+                                     NULL, NULL, NULL
                     UNION ALL SELECT 103, 1, 501, 'CONTACTED', CAST('2026-10-28 11:00:00' AS DATETIME),
-                                     'PHONE', '모의 처리 메모'
+                                     'PHONE', '모의 처리 메모', 'INTERVIEW_PREPARATION'
                     UNION ALL SELECT 104, 1, 501, 'CLOSED', CAST('2026-10-28 12:00:00' AS DATETIME),
-                                     'EMAIL', '모의 종료 메모'
+                                     'EMAIL', '모의 종료 메모', 'JOB_APPLICATION'
                 ),
                 recommendation_item AS (SELECT 501 AS id, 701 AS job_posting_id),
                 job_posting AS (
@@ -95,9 +96,11 @@ class CoordinatorDashboardQueryDatabaseTest {
         assertNull(rows.get(0).get("job_title"));
         assertNull(rows.get(0).get("contact_method"));
         assertNull(rows.get(0).get("memo"));
+        assertNull(rows.get(0).get("help_type"));
         assertEquals("모의 과정 모의 기수", rows.get(0).get("course_label"));
         assertEquals("모의 기업 모의 공고", rows.get(1).get("job_title"));
         assertEquals("모의 도움 메모", rows.get(1).get("memo"));
+        assertEquals("RESUME_COVER_LETTER", rows.get(1).get("help_type"));
     }
 
     @Test

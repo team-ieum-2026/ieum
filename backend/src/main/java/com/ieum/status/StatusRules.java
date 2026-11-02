@@ -3,7 +3,7 @@ package com.ieum.status;
 
 import java.time.LocalDateTime;
 
-/** DB 조회·저장 없이 상태를 판정한다. 취업·도움 요청은 추천 0건 신호보다 우선한다. */
+/** 최근 취업·구직·휴식 의사를 판정한다. 도움 요청은 별도 처리 목록에서 관리한다. */
 final class StatusRules {
 
     private StatusRules() {}
@@ -14,22 +14,29 @@ final class StatusRules {
             boolean activeApplication,
             LocalDateTime inactivitySince,
             String latestPassReason,
-            boolean latestRecommendationEmpty) {
+            boolean latestRecommendationEmpty,
+            String intent) {
+
+        Facts(boolean employed, boolean openHelp, boolean activeApplication,
+              LocalDateTime inactivitySince, String latestPassReason, boolean latestRecommendationEmpty) {
+            this(employed, openHelp, activeApplication, inactivitySince, latestPassReason,
+                    latestRecommendationEmpty, null);
+        }
 
         Facts(boolean employed, boolean openHelp, boolean activeApplication,
               LocalDateTime inactivitySince, String latestPassReason) {
-            this(employed, openHelp, activeApplication, inactivitySince, latestPassReason, false);
+            this(employed, openHelp, activeApplication, inactivitySince, latestPassReason, false, null);
         }
     }
 
     static StatusDecision decide(Facts facts, LocalDateTime now) {
-        if (facts.employed()) {
-            return new StatusDecision("EMPLOYED", null, "패스 사유 ALREADY_EMPLOYED");
+        if (facts.employed() || "EMPLOYED".equals(facts.intent())) {
+            return new StatusDecision("EMPLOYED", null, "최근 취업 의사 확인");
         }
-        if (facts.openHelp()) {
-            return new StatusDecision("NEED_HELP", null, "열린 도움 요청 있음");
+        if ("RESTING".equals(facts.intent())) {
+            return new StatusDecision("RESTING", null, "최근 휴식 의사 확인");
         }
-        if (facts.latestRecommendationEmpty()) {
+        if (facts.latestRecommendationEmpty() && !"SEEKING".equals(facts.intent())) {
             return new StatusDecision("CHECK_REQUIRED", null, "맞는 공고 없음");
         }
         if (!facts.inactivitySince().isAfter(now.minusDays(7))) {

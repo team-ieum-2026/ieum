@@ -104,7 +104,7 @@ class HelpRequestDatabaseTest {
                 "SELECT response FROM recommendation_item WHERE id = ?", String.class, item));
         assertTrue(lastResponse().isAfter(original));
         LocalDateTime responseAt = lastResponse();
-        assertStatus("NEED_HELP");
+        assertStatus("SEEKING");
 
         Reply details = send("PATCH", "/api/help-requests/" + help,
                 Map.of("contactMethod", "SMS", "memo", "모의 지원서 상담 요청"));
@@ -116,7 +116,7 @@ class HelpRequestDatabaseTest {
         assertTrue(cleared.body().path("data").get("memo").isNull());
         assertEquals("SMS", cleared.body().path("data").path("contactMethod").asText());
         assertEquals(responseAt, lastResponse());
-        assertStatus("NEED_HELP");
+        assertStatus("SEEKING");
 
         assertEquals(200, changeStatus(help, "CONTACTED").status());
         assertStatus("SEEKING");
@@ -127,7 +127,7 @@ class HelpRequestDatabaseTest {
                 LocalDateTime.class, help));
         assertEquals(200, changeStatus(help, "CONTACTED").status());
         assertEquals(200, changeStatus(help, "OPEN").status());
-        assertStatus("NEED_HELP");
+        assertStatus("SEEKING");
         assertEquals(responseAt, lastResponse());
 
         JsonNode api = send("GET", "/v3/api-docs", null).body();
@@ -145,7 +145,7 @@ class HelpRequestDatabaseTest {
     }
 
     @Test
-    void oneRemainingOpenHelpKeepsNeedHelpAndNewerStudentTimestampIsPreserved() throws Exception {
+    void openHelpDoesNotOverrideSeekingAndNewerStudentTimestampIsPreserved() throws Exception {
         LocalDateTime future = LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusDays(2)
                 .truncatedTo(ChronoUnit.SECONDS);
         jdbc.update("UPDATE student SET last_response_at = ? WHERE id = ?", future, studentId);
@@ -156,7 +156,7 @@ class HelpRequestDatabaseTest {
         long firstId = first.body().path("data").path("helpRequestId").asLong();
         long secondId = second.body().path("data").path("helpRequestId").asLong();
         assertEquals(200, changeStatus(firstId, "CONTACTED").status());
-        assertStatus("NEED_HELP");
+        assertStatus("SEEKING");
         assertEquals(200, changeStatus(secondId, "CONTACTED").status());
         assertStatus("SEEKING");
         assertEquals(future, lastResponse());
@@ -225,11 +225,67 @@ class HelpRequestDatabaseTest {
             String response = jdbc.queryForObject(
                     "SELECT response FROM recommendation_item WHERE id = ?", String.class, item);
             assertEquals("HELP".equals(response) ? 1 : 0, helpCount());
-            assertStatus("HELP".equals(response) ? "NEED_HELP" : "SEEKING");
+            assertStatus("SEEKING");
         } finally {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(15, TimeUnit.SECONDS));
         }
+    }
+
+    @Test
+    void standaloneHelpCanBeListedAndClosedWithoutChangingOtherRequestsOrLastResponse() throws Exception {
+        Reply first = send("POST", "/api/help-requests",
+                Map.of("studentId", studentId, "helpType", "CAREER_COUNSELING"));
+        Reply second = send("POST", "/api/help-requests",
+                Map.of("studentId", studentId, "helpType", "RESUME_COVER_LETTER"));
+        assertEquals(200, first.status());
+        assertEquals(200, second.status());
+        long firstId = first.body().path("data").path("helpRequestId").asLong();
+        long secondId = second.body().path("data").path("helpRequestId").asLong();
+        LocalDateTime responseAt = lastResponse();
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM recommendation WHERE student_id = ?",
+                Integer.class, studentId));
+        assertStatus("SEEKING");
+
+        Reply listed = send("GET", "/api/help-requests?studentId=" + studentId, null);
+        assertEquals(200, listed.status());
+        JsonNode data = listed.body().path("data");
+        assertEquals(2, data.size());
+        assertEquals(secondId, data.get(0).path("helpRequestId").asLong());
+        assertEquals(11, data.get(0).size());
+        assertTrue(data.get(0).get("recommendationItemId").isNull());
+        assertTrue(data.get(0).get("jobTitle").isNull());
+        assertTrue(data.get(0).get("closedAt").isNull());
+        assertTrue(data.get(0).path("createdAt").asText().endsWith("+09:00"));
+
+        assertError(send("POST", "/api/help-requests/" + firstId + "/close",
+                Map.of("studentId", otherStudentId, "closeReason", "OTHER")), 400, "INVALID_REQUEST");
+        Reply closed = send("POST", "/api/help-requests/" + firstId + "/close",
+                Map.of("studentId", studentId, "closeReason", "EMPLOYED"));
+        assertEquals(200, closed.status());
+        assertEquals("CLOSED", closed.body().path("data").path("status").asText());
+        assertEquals("EMPLOYED", closed.body().path("data").path("closeReason").asText());
+        assertEquals("OPEN", jdbc.queryForObject("SELECT status FROM help_request WHERE id = ?",
+                String.class, secondId));
+        assertEquals(responseAt, lastResponse());
+        assertStatus("SEEKING");
+
+        Reply retry = send("POST", "/api/help-requests/" + firstId + "/close",
+                Map.of("studentId", studentId, "closeReason", "OTHER"));
+        assertEquals(200, retry.status());
+        assertEquals(closed.body().path("data"), retry.body().path("data"));
+        assertEquals(1, send("GET", "/api/help-requests?studentId=" + studentId, null).body().path("data").size());
+        assertEquals(2, send("GET", "/api/help-requests?studentId=" + studentId + "&status=ALL", null)
+                .body().path("data").size());
+        JsonNode closedList = send("GET", "/api/help-requests?studentId=" + studentId + "&status=CLOSED", null)
+                .body().path("data");
+        assertEquals(1, closedList.size());
+        assertEquals(firstId, closedList.get(0).path("helpRequestId").asLong());
+
+        assertEquals(200, changeStatus(secondId, "CONTACTED").status());
+        assertError(send("POST", "/api/help-requests/" + secondId + "/close",
+                Map.of("studentId", studentId, "closeReason", "OTHER")), 409, "INVALID_STATUS");
+        assertEquals(responseAt, lastResponse());
     }
 
     private long student(String name) {

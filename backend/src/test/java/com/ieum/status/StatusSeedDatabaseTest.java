@@ -36,7 +36,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class StatusSeedDatabaseTest {
 
     private static final List<String> TABLES = List.of("student", "recommendation", "recommendation_item",
-            "help_request", "application", "student_status");
+            "help_request", "application", "student_status", "student_intent_history");
 
     @Autowired
     private StatusMapper mapper;
@@ -157,7 +157,7 @@ class StatusSeedDatabaseTest {
                 SELECT ENGINE FROM information_schema.TABLES
                 WHERE TABLE_SCHEMA = DATABASE()
                   AND TABLE_NAME IN ('student', 'recommendation', 'recommendation_item',
-                                     'help_request', 'application', 'student_status')
+                                     'help_request', 'application', 'student_status', 'student_intent_history')
                 """, String.class);
         assertEquals(TABLES.size(), engines.size(), "Existing status tables must be present");
         assertTrue(engines.stream().allMatch("InnoDB"::equalsIgnoreCase),

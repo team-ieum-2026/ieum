@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -36,7 +38,7 @@ class CoordinatorDashboardControllerTest {
     private static final OffsetDateTime AS_OF = OffsetDateTime.of(2026, 10, 28, 12, 0, 0, 0,
             ZoneOffset.ofHours(9));
     private static final Set<String> DASHBOARD_KEYS = Set.of("asOf", "totalStudents", "helpRequests",
-            "statusSummary", "reviewQueue", "callList", "notesToCheck");
+            "statusSummary", "reviewQueue", "callList", "notesToCheck", "passFollowUpList");
     private static final ObjectMapper JSON = JsonMapper.builder().addModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).build();
 
@@ -72,8 +74,8 @@ class CoordinatorDashboardControllerTest {
             assertTrue(data.get(list).isEmpty());
         }
         JsonNode counters = data.get("statusSummary");
-        assertEquals(Set.of("EMPLOYED", "SEEKING", "NEED_HELP", "CHECK_REQUIRED"), keys(counters));
-        for (String status : List.of("EMPLOYED", "NEED_HELP", "CHECK_REQUIRED")) {
+        assertEquals(Set.of("EMPLOYED", "SEEKING", "RESTING", "NEED_HELP", "CHECK_REQUIRED"), keys(counters));
+        for (String status : List.of("EMPLOYED", "RESTING", "NEED_HELP", "CHECK_REQUIRED")) {
             assertEquals(0L, counters.get(status).longValue());
         }
         assertEquals(Set.of("total", "APPLYING", "WAITING", "OTHER"), keys(counters.get("SEEKING")));
@@ -100,9 +102,9 @@ class CoordinatorDashboardControllerTest {
         assertEquals(DASHBOARD_KEYS, keys(data));
         JsonNode help = data.get("helpRequests").get(0);
         assertEquals(Set.of("helpRequestId", "studentId", "studentName", "courseLabel", "createdAt",
-                "jobTitle", "contactMethod", "memo"), keys(help));
+                "jobTitle", "contactMethod", "memo", "helpType"), keys(help));
         assertEquals(4L, help.get("helpRequestId").longValue());
-        for (String field : List.of("jobTitle", "contactMethod", "memo")) {
+        for (String field : List.of("jobTitle", "contactMethod", "memo", "helpType")) {
             assertTrue(help.has(field));
             assertTrue(help.get(field).isNull());
         }
@@ -120,7 +122,8 @@ class CoordinatorDashboardControllerTest {
         assertEquals(Set.of("studentId", "studentName", "passNote"), keys(data.get("notesToCheck").get(0)));
         assertEquals("모의 비고", data.get("notesToCheck").get(0).get("passNote").textValue());
         assertEquals(1L, data.get("statusSummary").get("SEEKING").get("APPLYING").longValue());
-        assertEquals(1L, data.get("statusSummary").get("NEED_HELP").longValue());
+        assertEquals(0L, data.get("statusSummary").get("NEED_HELP").longValue());
+        assertEquals(1L, data.get("statusSummary").get("RESTING").longValue());
         assertEquals(1L, data.get("statusSummary").get("CHECK_REQUIRED").longValue());
     }
 
@@ -138,6 +141,22 @@ class CoordinatorDashboardControllerTest {
         assertTrue(call.get("lastResponseAt").textValue().endsWith("+09:00"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"RESUME_COVER_LETTER", "JOB_APPLICATION", "INTERVIEW_PREPARATION", "CAREER_COUNSELING", "OTHER"})
+    void openHelpTypeIsSerializedAlongsideAnIndependentRestingCounter(String helpType) throws Exception {
+        when(service.getDashboard()).thenReturn(new CoordinatorDashboardResponse(
+                AS_OF, 1L, List.of(new CoordinatorDashboardResponse.HelpRequest(
+                        4L, 12L, "도움 검증 모의", "모의 과정 1기", AS_OF, null, null, null, helpType)),
+                summary(0, 0, 0, 0, 0, 1, 0), List.of(), List.of(), List.of()));
+
+        mvc.perform(get("/api/coordinator/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalStudents").value(1))
+                .andExpect(jsonPath("$.data.statusSummary.RESTING").value(1))
+                .andExpect(jsonPath("$.data.statusSummary.NEED_HELP").value(0))
+                .andExpect(jsonPath("$.data.helpRequests[0].helpType").value(helpType));
+    }
+
     @Test
     void unexpectedServiceFailureKeepsCommonInternalErrorEnvelope() throws Exception {
         when(service.getDashboard()).thenThrow(new IllegalStateException("Mock dashboard read failure"));
@@ -153,9 +172,9 @@ class CoordinatorDashboardControllerTest {
     }
 
     private static CoordinatorDashboardResponse.StatusSummary summary(
-            long employed, long seeking, long applying, long waiting, long other, long needHelp, long checkRequired) {
+            long employed, long seeking, long applying, long waiting, long other, long resting, long checkRequired) {
         return new CoordinatorDashboardResponse.StatusSummary(employed,
-                new CoordinatorDashboardResponse.Seeking(seeking, applying, waiting, other), needHelp, checkRequired);
+                new CoordinatorDashboardResponse.Seeking(seeking, applying, waiting, other), 0, checkRequired, resting);
     }
 
     private static JsonNode body(MvcResult result) throws Exception {

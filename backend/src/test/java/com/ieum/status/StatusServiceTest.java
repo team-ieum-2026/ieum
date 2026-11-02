@@ -67,6 +67,7 @@ class StatusServiceTest {
         order.verify(mapper).lockStudent(7L);
         order.verify(mapper).upsertStatus(eq(7L), decision.capture());
         verify(mapper).findResponses(7L);
+        verify(mapper).findLatestIntent(7L);
         verify(mapper).findOpenHelpRequestIds(7L);
         verify(mapper).findActiveApplicationIds(7L);
         verify(mapper).findLatestRecommendationId(7L);
@@ -107,9 +108,11 @@ class StatusServiceTest {
                 emptyRecommendation ? null : "WAITING");
         if (emptyRecommendation) assertEquals("맞는 공고 없음", decision.reason());
         verify(mapper).findResponsesUnlocked(7L);
+        verify(mapper).findLatestIntentUnlocked(7L);
         verify(mapper).findOpenHelpRequestIdsUnlocked(7L);
         verify(mapper).findActiveApplicationIdsUnlocked(7L);
         verify(mapper, never()).findResponses(any());
+        verify(mapper, never()).findLatestIntent(any());
         verify(mapper, never()).findOpenHelpRequestIds(any());
         verify(mapper, never()).findActiveApplicationIds(any());
         verify(mapper, never()).findLatestRecommendationId(any());
@@ -150,6 +153,174 @@ class StatusServiceTest {
         service.recalculate(7L);
 
         assertDecision(savedDecision(), "EMPLOYED", null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, ALREADY_EMPLOYED", "false, ALREADY_EMPLOYED",
+            "true, TAKING_BREAK", "false, TAKING_BREAK"})
+    void newSavedApplyReopensSeekingBeforeDocumentSubmissionForBothRecalculationPaths(
+            boolean committed, String previousIntentReason) {
+        var responses = List.of(
+                response(90L, "APPLY", null, NOW.minusMinutes(1)),
+                response(99L, "PASS", previousIntentReason, NOW.minusDays(1)));
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        // 지원서가 GENERATING/DRAFT/FAILED여도 저장된 APPLY 자체가 구직 재개의 근거다.
+        // 더 큰 항목 번호의 취업 응답도 응답 시각이 과거면 우선하지 않는다.
+        if (committed) {
+            when(mapper.findResponsesUnlocked(7L)).thenReturn(responses);
+            when(mapper.findOpenHelpRequestIdsUnlocked(7L)).thenReturn(List.of());
+            when(mapper.findActiveApplicationIdsUnlocked(7L)).thenReturn(List.of());
+            when(mapper.findLatestRecommendationIdUnlocked(7L)).thenReturn(null);
+            service.recalculateCommitted(7L);
+        } else {
+            prepareFacts(responses, List.of(), List.of());
+            service.recalculate(7L);
+        }
+
+        assertDecision(savedDecision(), "SEEKING", "WAITING");
+        verify(mapper, never()).updateLastResponseAt(any(), any());
+        assertEquals(previousIntentReason, responses.get(1).getPassReason());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"NONE", "PASS", "HELP"})
+    void restingPassPersistsAcrossLaterOrdinaryResponsesOpenHelpAndStaleness(String laterResponse) {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusDays(10)));
+        prepareFacts(List.of(
+                response(102L, laterResponse, "OTHER", NOW.minusDays(10)),
+                response(101L, "PASS", "TAKING_BREAK", NOW.minusDays(20))), List.of(11L), List.of(22L));
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), "RESTING", null);
+        verify(mapper, never()).updateLastResponseAt(any(), any());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"EMPLOYED, 0", "RESTING, 0", "RESTING, 30"})
+    void explicitIntentWinsSameSecondApplyAndCoexistsWithHelpAndEmptyRecommendation(
+            String selectedStatus, long secondsAfterApply) {
+        LocalDateTime appliedAt = NOW.minusHours(1);
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusDays(20)));
+        prepareFacts(List.of(response(101L, "APPLY", null, appliedAt)), List.of(11L), List.of(22L));
+        when(mapper.findLatestIntent(7L)).thenReturn(intent(selectedStatus, appliedAt.plusSeconds(secondsAfterApply)));
+        when(mapper.findLatestRecommendationId(7L)).thenReturn(42L);
+        when(mapper.findRecommendationItemIds(42L)).thenReturn(List.of());
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), selectedStatus, null);
+        verify(mapper, never()).updateLastResponseAt(any(), any());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"EMPLOYED, true", "RESTING, true", "EMPLOYED, false", "RESTING, false"})
+    void newerApplyOverridesAnExplicitEmploymentOrRestingChoiceAndSurvivesEmptyRecommendation(
+            String oldStatus, boolean committed) {
+        var responses = List.of(response(101L, "APPLY", null, NOW.minusMinutes(1)));
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        if (committed) {
+            when(mapper.findResponsesUnlocked(7L)).thenReturn(responses);
+            when(mapper.findLatestIntentUnlocked(7L)).thenReturn(intent(oldStatus, NOW.minusHours(1)));
+            when(mapper.findOpenHelpRequestIdsUnlocked(7L)).thenReturn(List.of(11L));
+            when(mapper.findActiveApplicationIdsUnlocked(7L)).thenReturn(List.of());
+            when(mapper.findLatestRecommendationIdUnlocked(7L)).thenReturn(42L);
+            when(mapper.findRecommendationItemIdsUnlocked(42L)).thenReturn(List.of());
+            service.recalculateCommitted(7L);
+        } else {
+            prepareFacts(responses, List.of(11L), List.of());
+            when(mapper.findLatestIntent(7L)).thenReturn(intent(oldStatus, NOW.minusHours(1)));
+            when(mapper.findLatestRecommendationId(7L)).thenReturn(42L);
+            when(mapper.findRecommendationItemIds(42L)).thenReturn(List.of());
+            service.recalculate(7L);
+        }
+
+        assertDecision(savedDecision(), "SEEKING", "WAITING");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void explicitSeekingWinsSameSecondEmploymentAndEmptyRecommendationButKeepsSevenDayRule(boolean stale) {
+        LocalDateTime selectedAt = stale ? NOW.minusDays(7) : NOW.minusMinutes(1);
+        when(mapper.lockStudent(7L)).thenReturn(student(selectedAt));
+        prepareFacts(List.of(response(101L, "PASS", "ALREADY_EMPLOYED", selectedAt)), List.of(11L), List.of());
+        when(mapper.findLatestIntent(7L)).thenReturn(intent("SEEKING", selectedAt));
+        when(mapper.findLatestRecommendationId(7L)).thenReturn(42L);
+        when(mapper.findRecommendationItemIds(42L)).thenReturn(List.of());
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), stale ? "CHECK_REQUIRED" : "SEEKING", stale ? null : "WAITING");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"NONE", "PASS", "HELP"})
+    void unrelatedLaterResponsesDoNotUndoSeekingResumedBySavedApply(String latestResponse) {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        prepareFacts(List.of(
+                response(102L, latestResponse, "JOB_MISMATCH", NOW.minusMinutes(1)),
+                response(101L, "APPLY", null, NOW.minusHours(1)),
+                response(100L, "PASS", "ALREADY_EMPLOYED", NOW.minusDays(1))), List.of(), List.of());
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), "SEEKING", "WAITING");
+    }
+
+    @Test
+    void employmentChosenAfterAnOlderApplyRemainsEmployedDespiteAnActiveDocument() {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        prepareFacts(List.of(
+                response(90L, "PASS", "ALREADY_EMPLOYED", NOW.minusMinutes(1)),
+                response(99L, "APPLY", null, NOW.minusDays(1))), List.of(), List.of(22L));
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), "EMPLOYED", null);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void sameSecondIntentUsesExistingMapperItemIdTieBreak(boolean newerItemIsApply) {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        var apply = response(newerItemIsApply ? 101L : 100L, "APPLY", null, NOW.minusMinutes(1));
+        var employed = response(newerItemIsApply ? 100L : 101L,
+                "PASS", "ALREADY_EMPLOYED", NOW.minusMinutes(1));
+        prepareFacts(newerItemIsApply ? List.of(apply, employed) : List.of(employed, apply),
+                List.of(), List.of());
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), newerItemIsApply ? "SEEKING" : "EMPLOYED",
+                newerItemIsApply ? "WAITING" : null);
+    }
+
+    @Test
+    void applyWithoutASavedResponseTimeCannotClearAnEmploymentChoice() {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        prepareFacts(List.of(
+                response(100L, "PASS", "ALREADY_EMPLOYED", NOW.minusMinutes(1)),
+                response(101L, "APPLY", null, null)), List.of(), List.of());
+
+        service.recalculate(7L);
+
+        assertDecision(savedDecision(), "EMPLOYED", null);
+    }
+
+    @Test
+    void repeatedRecalculationKeepsReopenedSeekingAndDoesNotRewriteTheResponseHistory() {
+        when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusMinutes(1)));
+        prepareFacts(List.of(
+                response(101L, "APPLY", null, NOW.minusMinutes(1)),
+                response(100L, "PASS", "ALREADY_EMPLOYED", NOW.minusDays(1))), List.of(), List.of());
+
+        service.recalculate(7L);
+        service.recalculate(7L);
+
+        var decisions = ArgumentCaptor.forClass(StatusDecision.class);
+        verify(mapper, times(2)).upsertStatus(eq(7L), decisions.capture());
+        decisions.getAllValues().forEach(decision -> assertDecision(decision, "SEEKING", "WAITING"));
+        verify(mapper, never()).updateLastResponseAt(any(), any());
     }
 
     @ParameterizedTest
@@ -204,13 +375,13 @@ class StatusServiceTest {
     }
 
     @Test
-    void openHelpRequestOverridesSevenDaysWithoutAnyResponseSinceCompletion() {
+    void openHelpRequestDoesNotHideSevenDaysWithoutAnyResponseSinceCompletion() {
         when(mapper.lockStudent(7L)).thenReturn(student(null));
         prepareFacts(List.of(), List.of(11L), List.of(22L));
 
         service.recalculate(7L);
 
-        assertDecision(savedDecision(), "NEED_HELP", null);
+        assertDecision(savedDecision(), "CHECK_REQUIRED", null);
         verify(mapper, never()).updateLastResponseAt(any(), any());
     }
 
@@ -414,5 +585,14 @@ class StatusServiceTest {
         item.setPassReason(passReason);
         item.setRespondedAt(respondedAt);
         return item;
+    }
+
+    private static StatusData.Intent intent(String status, LocalDateTime selectedAt) {
+        var intent = new StatusData.Intent();
+        intent.setId(201L);
+        intent.setStudentId(7L);
+        intent.setStatus(status);
+        intent.setSelectedAt(selectedAt);
+        return intent;
     }
 }

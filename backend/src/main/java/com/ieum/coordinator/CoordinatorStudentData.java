@@ -23,6 +23,7 @@ public final class CoordinatorStudentData {
         private String subStatus;
         private LocalDateTime lastResponseAt;
         private boolean hasNote;
+        private long openHelpRequestCount;
         private String email;
         private String desiredJob;
         private String preferredRegion;

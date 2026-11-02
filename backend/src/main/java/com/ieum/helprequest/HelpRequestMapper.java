@@ -2,6 +2,7 @@
 package com.ieum.helprequest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,7 +17,12 @@ public interface HelpRequestMapper {
 
     HelpRequestData.Row findForUpdate(@Param("helpRequestId") Long helpRequestId);
 
+    List<HelpRequestData.Row> findByStudent(@Param("studentId") Long studentId,
+                                          @Param("status") String status);
+
     int updateDetails(HelpRequestData.Row row);
 
     int updateStatus(@Param("helpRequestId") Long helpRequestId, @Param("status") String status);
+
+    int close(HelpRequestData.Row row);
 }

@@ -44,7 +44,8 @@ class CoordinatorDashboardServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CoordinatorDashboardService(mapper, CLOCK);
+        service = new CoordinatorDashboardService(mapper,
+                org.mockito.Mockito.mock(CoordinatorPassFollowUpService.class), CLOCK);
     }
 
     @Test
@@ -70,7 +71,7 @@ class CoordinatorDashboardServiceTest {
     void fiftyMixedStudentsAreCountedOnceAndSeekingSubtotalsExcludeOtherStatuses() {
         List<CoordinatorDashboardData.StudentState> students = new ArrayList<>();
         for (long id = 1; id <= 50; id++) {
-            String status = id <= 10 ? "EMPLOYED" : id <= 14 ? "NEED_HELP" : id <= 21 ? "CHECK_REQUIRED"
+            String status = id <= 10 ? "EMPLOYED" : id <= 14 ? "RESTING" : id <= 21 ? "CHECK_REQUIRED"
                     : "SEEKING";
             // Deliberately stale subStatus values on non-SEEKING students must not inflate seeking counters.
             String subStatus = id <= 25 ? "APPLYING" : id <= 47 ? "WAITING" : "OTHER";
@@ -85,17 +86,65 @@ class CoordinatorDashboardServiceTest {
         assertAll(
                 () -> assertEquals(50, result.totalStudents()),
                 () -> assertEquals(10, summary.employed()),
-                () -> assertEquals(4, summary.needHelp()),
+                () -> assertEquals(4, summary.resting()),
+                () -> assertEquals(0, summary.needHelp()),
                 () -> assertEquals(7, summary.checkRequired()),
                 () -> assertEquals(29, summary.seeking().total()),
                 () -> assertEquals(4, summary.seeking().applying()),
                 () -> assertEquals(22, summary.seeking().waiting()),
                 () -> assertEquals(3, summary.seeking().other()),
-                () -> assertEquals(result.totalStudents(), summary.employed() + summary.needHelp()
+                () -> assertEquals(result.totalStudents(), summary.employed() + summary.resting()
                         + summary.checkRequired() + summary.seeking().total()),
                 () -> assertEquals(summary.seeking().total(), summary.seeking().applying()
                         + summary.seeking().waiting() + summary.seeking().other()),
                 () -> assertEquals(7, result.callList().size()));
+        verifyAllReadsAndNoOtherCalls();
+    }
+
+    @Test
+    void legacyNeedHelpIsSeekingWaitingEvenWithAStaleApplyingSubStatus() {
+        prepare(List.of(student(7, "NEED_HELP", "APPLYING", NOW, NOW.toLocalDate().minusDays(30))));
+
+        var result = service.getDashboard();
+
+        assertEquals(1, result.totalStudents());
+        assertEquals(new CoordinatorDashboardResponse.Seeking(1, 0, 1, 0), result.statusSummary().seeking());
+        assertEquals(0, result.statusSummary().needHelp());
+        assertTrue(result.callList().isEmpty());
+        verifyAllReadsAndNoOtherCalls();
+    }
+
+    @Test
+    void openHelpRequestsCoexistWithEveryStudentStateAndDoNotChangeStudentCounters() {
+        prepare(List.of(
+                student(1, "RESTING", "APPLYING", NOW, NOW.toLocalDate()),
+                student(2, "EMPLOYED", null, NOW, NOW.toLocalDate()),
+                student(3, "SEEKING", "WAITING", NOW, NOW.toLocalDate())));
+        var first = new CoordinatorDashboardData.HelpRequest();
+        first.setHelpRequestId(21L);
+        first.setStudentId(1L);
+        first.setHelpType("CAREER_COUNSELING");
+        var second = new CoordinatorDashboardData.HelpRequest();
+        second.setHelpRequestId(22L);
+        second.setStudentId(1L);
+        var third = new CoordinatorDashboardData.HelpRequest();
+        third.setHelpRequestId(23L);
+        third.setStudentId(2L);
+        var fourth = new CoordinatorDashboardData.HelpRequest();
+        fourth.setHelpRequestId(24L);
+        fourth.setStudentId(3L);
+        when(mapper.findOpenHelpRequests()).thenReturn(List.of(first, second, third, fourth));
+
+        var result = service.getDashboard();
+
+        assertEquals(3, result.totalStudents());
+        assertEquals(4, result.helpRequests().size());
+        assertEquals(new CoordinatorDashboardResponse.StatusSummary(1,
+                new CoordinatorDashboardResponse.Seeking(1, 0, 1, 0), 0, 0, 1), result.statusSummary());
+        assertEquals("CAREER_COUNSELING", result.helpRequests().get(0).helpType());
+        assertNull(result.helpRequests().get(1).helpType());
+        assertNull(result.helpRequests().get(0).jobTitle());
+        assertTrue(result.callList().isEmpty());
         verifyAllReadsAndNoOtherCalls();
     }
 

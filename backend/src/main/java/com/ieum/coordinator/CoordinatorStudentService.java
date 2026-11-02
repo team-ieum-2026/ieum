@@ -23,20 +23,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CoordinatorStudentService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
-    private static final Set<String> STATUSES = Set.of("EMPLOYED", "SEEKING", "NEED_HELP", "CHECK_REQUIRED");
+    private static final Set<String> STATUSES = Set.of("EMPLOYED", "SEEKING", "RESTING", "NEED_HELP", "CHECK_REQUIRED");
     private static final Set<String> SUB_STATUSES = Set.of("APPLYING", "WAITING", "OTHER");
     private static final Set<String> CONTACT_TYPES = Set.of("PHONE", "MEETING", "MESSAGE");
     private static final int MAX_TEXT_BYTES = 65535;
     private final CoordinatorStudentMapper mapper;
+    private final CoordinatorPassFollowUpService passFollowUps;
     private final Clock clock;
 
     @Autowired
-    public CoordinatorStudentService(CoordinatorStudentMapper mapper) {
-        this(mapper, Clock.system(SEOUL));
+    public CoordinatorStudentService(CoordinatorStudentMapper mapper, CoordinatorPassFollowUpService passFollowUps) {
+        this(mapper, passFollowUps, Clock.system(SEOUL));
     }
 
-    CoordinatorStudentService(CoordinatorStudentMapper mapper, Clock clock) {
+    CoordinatorStudentService(CoordinatorStudentMapper mapper, CoordinatorPassFollowUpService passFollowUps, Clock clock) {
         this.mapper = mapper;
+        this.passFollowUps = passFollowUps;
         this.clock = clock.withZone(SEOUL);
     }
 
@@ -48,9 +50,12 @@ public class CoordinatorStudentService {
         String namePattern = namePattern(q);
         long offset = ((long) page - 1) * size;
         long total = mapper.countStudents(status, subStatus, namePattern);
-        List<CoordinatorStudentResponse.Row> rows = total == 0 || offset >= total ? List.of()
-                : mapper.findStudents(status, subStatus, namePattern, offset, size).stream()
-                .map(CoordinatorStudentService::row).toList();
+        List<CoordinatorStudentData.Student> students = total == 0 || offset >= total ? List.of()
+                : mapper.findStudents(status, subStatus, namePattern, offset, size);
+        var streaks = passFollowUps.countsForStudents(students.stream()
+                .map(CoordinatorStudentData.Student::getStudentId).toList());
+        List<CoordinatorStudentResponse.Row> rows = students.stream()
+                .map(value -> row(value, streaks.getOrDefault(value.getStudentId(), 0L))).toList();
         return new CoordinatorStudentResponse.ListResult(rows, total, page, size);
     }
 
@@ -76,7 +81,8 @@ public class CoordinatorStudentService {
         var basic = new CoordinatorStudentResponse.Student(student.getStudentId(), student.getName(),
                 student.getCourseLabel(), student.getCompletedOn(), student.getStatus(), student.getSubStatus(),
                 seoulTime(student.getLastResponseAt()), student.isHasNote(), student.getEmail(), student.getDesiredJob(),
-                student.getPreferredRegion(), student.getReason());
+                student.getPreferredRegion(), student.getReason(), student.getOpenHelpRequestCount(),
+                passFollowUps.countsForStudents(List.of(studentId)).getOrDefault(studentId, 0L));
         return new CoordinatorStudentResponse.Detail(basic, student.getCompetencyProfile(), registered, history, logs);
     }
 
@@ -92,7 +98,7 @@ public class CoordinatorStudentService {
         row.setStudentId(studentId);
         row.setContactType(request.contactType());
         row.setNote(request.note());
-        row.setCreatedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
+        row.setCreatedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.MICROS));
         if (mapper.insertContactLog(row) != 1 || row.getContactLogId() == null || row.getContactLogId() <= 0) {
             throw new BusinessException(ErrorCode.INTERNAL_ERROR);
         }
@@ -118,10 +124,10 @@ public class CoordinatorStudentService {
         return "%" + q.replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
     }
 
-    private static CoordinatorStudentResponse.Row row(CoordinatorStudentData.Student value) {
+    private static CoordinatorStudentResponse.Row row(CoordinatorStudentData.Student value, long consecutivePassCount) {
         return new CoordinatorStudentResponse.Row(value.getStudentId(), value.getName(), value.getCourseLabel(),
                 value.getCompletedOn(), value.getStatus(), value.getSubStatus(), seoulTime(value.getLastResponseAt()),
-                value.isHasNote());
+                value.isHasNote(), value.getOpenHelpRequestCount(), consecutivePassCount);
     }
 
     private static CoordinatorStudentResponse.ContactLog contactLog(CoordinatorStudentData.ContactLog value) {

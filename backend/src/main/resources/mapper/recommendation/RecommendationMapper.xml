@@ -44,12 +44,12 @@
 
     <update id="updateItemResponse">
         UPDATE recommendation_item
-        SET response = #{response}, pass_reason = #{passReason}, pass_note = #{passNote}, responded_at = NOW()
+        SET response = #{response}, pass_reason = #{passReason}, pass_note = #{passNote}, responded_at = NOW(6)
         WHERE id = #{itemId} AND response = 'NONE'
     </update>
 
     <update id="touchLastResponse">
-        UPDATE student SET last_response_at = NOW() WHERE id = #{studentId}
+        UPDATE student SET last_response_at = NOW(6) WHERE id = #{studentId}
     </update>
 
     <insert id="insertApplication" parameterType="com.ieum.recommendation.RecommendationRows$NewApplication"
