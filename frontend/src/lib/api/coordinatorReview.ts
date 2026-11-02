@@ -1,5 +1,5 @@
 // 주인: FE-B — 코디네이터 대시보드 · 서류 검토 API (C1 · C4). 경로 · 형식은 docs/API.md 2-3
-import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
+import { ApiError, apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type {
   ApplicationStatusResult,
   CoordinatorApplication,
@@ -21,8 +21,12 @@ export const updateHelpRequestStatus = (helpRequestId: number, body: HelpRequest
   );
 
 /** C4 서류 + 검증 요약 */
-export const getCoordinatorApplication = (applicationId: number) =>
-  apiGet<CoordinatorApplication>(`/api/coordinator/applications/${applicationId}`, "C4_coordinator_application.json");
+export const getCoordinatorApplication = async (applicationId: number): Promise<CoordinatorApplication> => {
+  const result = await apiGet<CoordinatorApplication>(`/api/coordinator/applications/${applicationId}`, "C4_coordinator_application.json");
+  if (process.env.NEXT_PUBLIC_USE_MOCK === "false" || result.applicationId === applicationId) return result;
+  // 목업 JSON 은 서류 1건뿐이라, 다른 번호를 열면 다른 수료생의 서류를 보여 주지 않고 '없음'으로 처리한다
+  throw new ApiError("APPLICATION_NOT_FOUND", "목업 데이터에 없는 지원서류예요.", 404);
+};
 
 /** C4 승인 (SUBMITTED → APPROVED) */
 export const approveApplication = (applicationId: number) =>
