@@ -12,8 +12,8 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "아두이노 펌웨어 및 센서 회로 담당",
-      "주문 API 담당 (생성 · 취소 · 상태 조회)"
+      "아두이노 펌웨어 · 센서 회로 담당",
+      "주문 API 담당 (주문 생성 · 취소, 주문 상태 조회)"
     ],
     "skills": [
       {
@@ -31,7 +31,12 @@
       },
       {
         "name": "Arduino",
-        "evidence": []
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 119
+          }
+        ]
       },
       {
         "name": "Java",
@@ -50,19 +55,6 @@
             "refId": 210
           }
         ]
-      },
-      {
-        "name": "아두이노",
-        "evidence": [
-          {
-            "refType": "PROJECT",
-            "refId": 119
-          },
-          {
-            "refType": "COVER_LETTER",
-            "refId": 17
-          }
-        ]
       }
     ],
     "achievements": [],
@@ -73,5 +65,5 @@
     "preferredRegion": "경기"
   },
   "split": "test",
-  "extractMs": 15649
+  "extractMs": 9954
 }

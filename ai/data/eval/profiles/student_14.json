@@ -30,5 +30,5 @@
     "preferredRegion": "서울"
   },
   "split": "dev",
-  "extractMs": 8896
+  "extractMs": 5984
 }

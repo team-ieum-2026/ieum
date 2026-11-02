@@ -3,8 +3,8 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 7,
-    "evidence_ids": 17,
-    "valid_evidence_ids": 17,
+    "evidence_ids": 16,
+    "valid_evidence_ids": 16,
     "with_numbers": 1,
     "numbers_passed": 1,
     "excluded": 0
@@ -12,9 +12,9 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "백엔드 API 설계 · 구현 및 AI 서버 연동",
-      "단어 등록 · 복습 단어 조회 기능 API 개발",
-      "고객지원 (영어 · 한국어 문의 응대 및 장애 티켓 작성)"
+      "백엔드 API 설계 · 구현 및 AI 서버 연동 담당",
+      "단어 등록 · 오늘 복습할 단어 조회 · 외운 단어 표시 API 구현",
+      "영어 · 한국어 고객 문의 응대 및 장애 문의 전달 티켓 작성"
     ],
     "skills": [
       {
@@ -51,7 +51,7 @@
     ],
     "achievements": [
       {
-        "text": "비동기 처리 전환으로 리허설 12건 발생하던 timeout을 최종 시연 0건으로 개선",
+        "text": "리허설 timeout 12건 발생에서 이후 리허설과 최종 시연 timeout 0건 달성",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -71,5 +71,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 9960
+  "extractMs": 10948
 }

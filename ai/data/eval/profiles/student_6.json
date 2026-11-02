@@ -12,7 +12,7 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "게시판 담당"
+      "게시판 맡음"
     ],
     "skills": [
       {
@@ -30,5 +30,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 3951
+  "extractMs": 7085
 }

@@ -12,7 +12,7 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "화면 몇 개 제작",
+      "화면 제작",
       "단행본 원고 교정 · 편집"
     ],
     "skills": [
@@ -31,5 +31,5 @@
     "preferredRegion": "경기"
   },
   "split": "test",
-  "extractMs": 9427
+  "extractMs": 9578
 }
