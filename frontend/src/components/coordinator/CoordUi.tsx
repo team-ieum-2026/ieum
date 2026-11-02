@@ -2,6 +2,7 @@
 // 색은 coordinator.css 의 --coord-* 변수만 쓴다.
 import type { ReactNode } from "react";
 import type { CoordTone } from "@/components/coordinator/coordLabels";
+import { ApiError } from "@/lib/api/client";
 
 const ICONS = {
   home: "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z",
@@ -21,6 +22,7 @@ const ICONS = {
   bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
   chevron: "m8 10 4 4 4-4",
   close: "M6 6l12 12M18 6 6 18",
+  refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
 } as const;
 export type IconName = keyof typeof ICONS;
 
@@ -107,6 +109,16 @@ export function Avatar({ name, large = false }: { name: string; large?: boolean 
 }
 
 /** 불러오기 · 오류 · 다시 시도 */
+/**
+ * 조회 실패 문구: 서버 메시지 + 원인 (HTTP 상태 · 오류 코드). 목업으로 대신 보여 주지 않고 실패를 그대로 알린다.
+ * 예: "일시적인 오류가 생겼어요. (HTTP 500 · INTERNAL_ERROR)" · 서버가 꺼져 있으면 "백엔드 서버에 연결할 수 없어요. (NETWORK_ERROR)"
+ */
+export function apiErrorText(e: unknown, fallback: string) {
+  if (!(e instanceof ApiError)) return fallback;
+  if (e.status === 0) return `백엔드 서버에 연결할 수 없어요. 서버가 켜져 있는지 확인해 주세요. (${e.code})`;
+  return `${e.message} (HTTP ${e.status} · ${e.code})`;
+}
+
 export function LoadState({ error, onRetry, loadingText }: { error: string | null; onRetry: () => void; loadingText: string }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-sm text-(--coord-muted)">
@@ -128,3 +140,24 @@ export const btn = {
   danger: "border-(--coord-red-soft) bg-(--coord-red-soft) text-(--coord-red)",
   sm: "px-2.5 py-1.5 text-xs",
 } as const;
+
+/**
+ * 제목 오른쪽 '목록 새로고침' (C1 · C4 목록 · 도움 요청). 페이지 전체가 아니라 그 화면의 조회 API 만 다시 부른다.
+ * 조회 중에는 비활성화 · 아이콘 회전. 실패 문구는 버튼 왼쪽 한 줄 (레이아웃 높이를 바꾸지 않음), 기존 목록은 화면 쪽에서 그대로 둔다
+ */
+export function RefreshAction({ busy, error, onRefresh, children }: { busy: boolean; error: string | null; onRefresh: () => void; children?: ReactNode }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      {error && (
+        <p role="alert" title={error} className="max-w-[420px] truncate text-xs font-semibold text-(--coord-red)">
+          새로고침 실패 · {error}
+        </p>
+      )}
+      {children}
+      <button type="button" onClick={onRefresh} disabled={busy} aria-busy={busy} className={`${btn.base} ${btn.outline}`}>
+        <Icon name="refresh" className={`size-4 ${busy ? "animate-spin" : ""}`} />
+        {busy ? "새로고침 중…" : "목록 새로고침"}
+      </button>
+    </div>
+  );
+}

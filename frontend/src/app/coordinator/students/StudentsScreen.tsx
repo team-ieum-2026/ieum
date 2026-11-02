@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
 import {
   MANAGE_ORDER,
   courseName,
@@ -21,14 +21,14 @@ import {
   manageLabels,
   manageTone,
   monthDay,
+  studentExtra,
   responseTagLabels,
   responseTone,
 } from "@/components/coordinator/coordLabels";
 import { subStatusLabels } from "@/components/student/labels";
-import { ApiError } from "@/lib/api/client";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
-import type { Dashboard } from "@/types/coordinator";
+import type { CoordStudentStatus, Dashboard } from "@/types/coordinator";
 import type { ApplicationStatus, CoordinatorStudentList, ResponseType, StudentStatus, SubStatus } from "@/types/student";
 
 const PAGE_SIZE = 10;
@@ -76,7 +76,7 @@ export default function StudentsScreen() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const statusValue = searchParams.get("status");
-  const status = statusValue && Object.hasOwn(manageLabels, statusValue) ? (statusValue as StudentStatus) : undefined;
+  const status = statusValue && Object.hasOwn(manageLabels, statusValue) ? (statusValue as CoordStudentStatus) : undefined;
   const subStatusValue = searchParams.get("subStatus");
   const subStatus =
     status === "SEEKING" && subStatusValue && Object.hasOwn(subStatusLabels, subStatusValue) ? (subStatusValue as SubStatus) : undefined;
@@ -116,7 +116,8 @@ export default function StudentsScreen() {
 
   useEffect(() => {
     let ignore = false;
-    getCoordinatorStudents({ status, subStatus, q, page, size: PAGE_SIZE })
+    // 목록 API 는 status=RESTING 을 지원한다 (docs/API.md). FE-A 쿼리 타입에 RESTING 이 아직 없어 여기서만 넘긴다
+    getCoordinatorStudents({ status: status as StudentStatus | undefined, subStatus, q, page, size: PAGE_SIZE })
       .then((d) => {
         if (!ignore) {
           setList(d);
@@ -124,7 +125,7 @@ export default function StudentsScreen() {
         }
       })
       .catch((e: unknown) => {
-        if (!ignore) setError(e instanceof ApiError ? e.message : "수료생 목록을 불러오지 못했어요.");
+        if (!ignore) setError(apiErrorText(e, "수료생 목록을 불러오지 못했어요."));
       });
     return () => {
       ignore = true;
@@ -299,6 +300,9 @@ export default function StudentsScreen() {
                   {list.items.map((s) => {
                     const extra = extras[s.studentId] ?? { state: "loading" };
                     const help = summary?.helpRequests.filter((h) => h.studentId === s.studentId) ?? null;
+                    // 11/2 추가 값: 서버 openHelpRequestCount 우선 (없는 이전 응답은 대시보드 helpRequests 로 센다) · 연속 패스 연락 대상은 서버 판정 그대로
+                    const ext = studentExtra(s);
+                    const helpCount = ext.openHelpRequestCount ?? help?.length ?? null;
                     return (
                       <tr key={s.studentId} className="h-16 border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
                         <td className="overflow-hidden px-[17px]">
@@ -315,7 +319,13 @@ export default function StudentsScreen() {
                         </td>
                         <td className="overflow-hidden px-[17px]">
                           <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
-                          {s.subStatus && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>}
+                          {ext.needsPassFollowUp ? (
+                            <span className="mt-[3px] block">
+                              <Badge tone="blue">연락 필요 · 연속 패스 {ext.consecutivePassCount ?? "—"}회</Badge>
+                            </span>
+                          ) : (
+                            s.subStatus && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>
+                          )}
                         </td>
                         <td className="overflow-hidden px-[17px]">
                           <b className={`text-xs ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : "text-(--coord-green)"}`}>
@@ -327,11 +337,14 @@ export default function StudentsScreen() {
                           <ResponseCell extra={extra} />
                         </td>
                         <td className="overflow-hidden px-[17px]">
-                          {help === null ? (
+                          {helpCount === null ? (
                             <span className="text-(--coord-muted)">조회 실패</span>
-                          ) : help.length > 0 ? (
-                            <Link href={`/coordinator/help-requests?id=${help[0].helpRequestId}`} className="font-semibold whitespace-nowrap text-(--coord-green) hover:underline">
-                              접수 {help.length}건
+                          ) : helpCount > 0 ? (
+                            <Link
+                              href={help?.[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"}
+                              className="font-semibold whitespace-nowrap text-(--coord-green) hover:underline"
+                            >
+                              접수 {helpCount}건
                             </Link>
                           ) : (
                             <span className="text-(--coord-muted)">접수 없음</span>

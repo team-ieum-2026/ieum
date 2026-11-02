@@ -15,13 +15,17 @@ import {
   courseName,
   docLabels,
   docTone,
+  helpTitle,
+  helpTypeLabel,
   manageLabels,
   manageTone,
   monthDay,
   monthDayTime,
   responseTagLabels,
   responseTone,
+  studentExtra,
 } from "@/components/coordinator/coordLabels";
+import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { ActionError, ApiState } from "@/components/student/ScreenParts";
 import { dateLabel } from "@/components/student/navigation";
@@ -132,6 +136,9 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
                 try {
                   const log = await addContactLog(studentId, { contactType, note: note.trim() });
                   setData({ ...data, contactLogs: [log, ...data.contactLogs] });
+                  // 연락 기록을 남기면 서버가 연속 패스 연락 대상에서 뺀다 → 상세를 다시 받고(화면 유지), 사이드바 · 상단 알림 · 대시보드도 다시 조회
+                  reload();
+                  notifyReviewQueueChanged();
                   setNote("");
                   setOpen(false);
                   setSaved(true);
@@ -196,12 +203,21 @@ function lastActivity(data: CoordinatorStudentDetail): { at: string; text: strin
 function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: DashboardHelpRequest[]; onAddLog: () => void }) {
   const s = data.student;
   const reviewDoc = historyItems(data).find((i) => i.applicationStatus === "SUBMITTED" && i.applicationId);
-  // 다음 행동: 접수된 도움 요청 → 검토 대기 서류 순 (있는 데이터로만 정하고, 없으면 버튼을 만들지 않는다)
-  const next = help[0]
-    ? { text: "도움 요청 확인", href: `/coordinator/help-requests?id=${help[0].helpRequestId}` }
+  // 11/2 추가 값: 도움 요청 건수는 서버 openHelpRequestCount 우선 · 연속 패스 연락 대상은 서버 판정(needsPassFollowUp) 그대로
+  const ext = studentExtra(s);
+  const helpCount = ext.openHelpRequestCount ?? help.length;
+  // 최근 패스 1건 (저장된 응답 중 가장 최근, 사유가 있으면 함께)
+  const lastPass = historyItems(data)
+    .filter((i) => i.response === "PASS" && i.respondedAt)
+    .sort((a, b) => (b.respondedAt as string).localeCompare(a.respondedAt as string))[0];
+  // 다음 행동: 접수된 도움 요청 → 검토 대기 서류 → 연속 패스 연락 순 (있는 데이터로만 정하고, 없으면 버튼을 만들지 않는다)
+  const next: { text: string; title: string; href?: string } | null = help[0]
+    ? { text: "도움 요청 확인", title: "접수된 도움 요청을 확인해 주세요", href: `/coordinator/help-requests?id=${help[0].helpRequestId}` }
     : reviewDoc
-      ? { text: "서류 검토", href: `/coordinator/applications/${reviewDoc.applicationId}` }
-      : null;
+      ? { text: "서류 검토", title: "검토 대기 서류를 확인해 주세요", href: `/coordinator/applications/${reviewDoc.applicationId}` }
+      : ext.needsPassFollowUp
+        ? { text: "통화 · 상담 기록", title: `추천 공고를 연속 ${ext.consecutivePassCount ?? "여러"}회 패스했어요. 연락해 주세요` }
+        : null;
   const activity = lastActivity(data);
   return (
     // 핵심 정보 | 다음 행동(또는 현재 진행 상태) | 기록 추가 를 한 줄에 둬 위쪽 높이를 줄인다
@@ -213,7 +229,8 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-[25px] leading-[1.3] font-bold tracking-[-1px]">{s.name}</h1>
               <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
-              {help.length > 0 && <Badge tone="red">도움 요청 {help.length}건</Badge>}
+              {helpCount > 0 && <Badge tone="red">도움 요청 {helpCount}건</Badge>}
+              {ext.needsPassFollowUp && <Badge tone="blue">연락 필요 · 연속 패스 {ext.consecutivePassCount ?? "—"}회</Badge>}
             </div>
             <p className="mt-1 text-xs text-(--coord-muted)">
               {[courseName(s.courseLabel), s.desiredJob, s.subStatus && subStatusLabels[s.subStatus]].filter(Boolean).join(" · ")}
@@ -225,18 +242,26 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
         <div>
           <span className="text-[11px] font-bold tracking-[1.4px] text-(--coord-green)">{next ? "NEXT ACTION · 다음 행동" : "현재 진행 상태"}</span>
           <h3 className="mt-[5px] text-[15px] font-bold">
-            {next ? (next.text === "서류 검토" ? "검토 대기 서류를 확인해 주세요" : "접수된 도움 요청을 확인해 주세요") : (s.reason ?? manageLabels[s.status])}
+            {next ? next.title : (s.reason ?? manageLabels[s.status])}
           </h3>
           <p className="mt-[5px] text-xs text-(--coord-muted)">
             {next && s.reason ? `${s.reason} · ` : ""}
             {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 앱 응답` : "앱 응답 기록 없음"}
+            {ext.consecutivePassCount !== null && ext.consecutivePassCount > 0 && ` · 연속 패스 ${ext.consecutivePassCount}회`}
+            {lastPass &&
+              ` · 최근 패스 ${dateLabel(lastPass.respondedAt as string)}${lastPass.passReason ? ` (${passLabels[lastPass.passReason]})` : ""}`}
           </p>
         </div>
-        {next && (
-          <Link href={next.href} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
-            {next.text}
-          </Link>
-        )}
+        {next &&
+          (next.href ? (
+            <Link href={next.href} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
+              {next.text}
+            </Link>
+          ) : (
+            <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
+              {next.text}
+            </button>
+          ))}
       </div>
         <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.outline} px-4 py-2.5 text-sm`}>
           통화 · 상담 기록 추가
@@ -342,7 +367,10 @@ function HelpList({ help }: { help: DashboardHelpRequest[] }) {
               <Icon name="help" />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[13px] font-bold">{h.jobTitle ?? "추천 공고 도움 요청"}</h3>
+              <h3 className="truncate text-[13px] font-bold">
+                <span className="mr-1.5 text-(--coord-red)">{helpTypeLabel(h.helpType)}</span>
+                {helpTitle(h)}
+              </h3>
               <p className="mt-0.5 text-xs text-(--coord-muted)">
                 {h.contactMethod ? `${contactLabels[h.contactMethod]} 선호` : "선호 연락 없음"} · {monthDayTime(h.createdAt)} 접수
               </p>
