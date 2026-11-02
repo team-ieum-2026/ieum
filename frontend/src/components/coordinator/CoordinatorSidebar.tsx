@@ -115,7 +115,14 @@ export default function CoordinatorSidebar() {
           );
         })}
       </nav>
-      <p className="mt-auto px-3 text-[10px] leading-[1.8] text-(--coord-side-muted)">
+      <Link
+        href="/"
+        className="mt-auto flex min-h-11 items-center gap-2 rounded-lg px-[13px] text-[13px] hover:bg-(--coord-surface)/5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-lime)"
+      >
+        <span aria-hidden="true">←</span>
+        홈으로 돌아가기
+      </Link>
+      <p className="mt-4 px-3 text-[10px] leading-[1.8] text-(--coord-side-muted)">
         작은 응답을, 다음 기회로.
         <br />
         IEUM COORDINATOR
