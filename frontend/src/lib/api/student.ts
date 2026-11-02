@@ -1,5 +1,5 @@
 // 주인: FE-A — 수료생 흐름 API (M1 ~ M5, M7). 경로 · 형식은 docs/API.md 2-1 · 2-2
-import { ApiError, apiGet, apiPatch, apiPost, DEMO_STUDENT_ID } from "@/lib/api/client";
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost, DEMO_STUDENT_ID } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/profile";
 import type {
   ApplicationProgress,
@@ -11,6 +11,8 @@ import type {
   HelpRequestUpdateResult,
   ItemResponseRequest,
   ItemResponseResult,
+  CancellableResponse,
+  ItemResponseCancelResult,
   RecommendationItemDetail,
   Recommendations,
   ResponseType,
@@ -31,8 +33,10 @@ export async function getStudentName(studentId: number): Promise<string> {
 }
 
 const mockApplicationsKey = "ieum:mock-applications:v1";
+const mockApplicationSequenceKey = "ieum:mock-application-sequence:v1";
 const mockPassesKey = "ieum:mock-passes:v1";
 const mockRecommendationsKey = (studentId: number) => `ieum:mock-recommendations:${studentId}`;
+const mockCancelledResponseKey = (studentId: number, itemId: number) => `ieum:mock-cancelled-response:${studentId}:${itemId}`;
 const applicationsChanged = "ieum:applications-changed";
 type MockApplication = ApplicationListItem & { studentId: number; itemId: number };
 type MockPass = { studentId: number; itemId: number; passReason: Extract<ItemResponseRequest, { response: "PASS" }>["passReason"] };
@@ -51,6 +55,7 @@ export function getMockRecommendationResponse(studentId: number, itemId: number,
   if (process.env.NEXT_PUBLIC_USE_MOCK === "false") return fallback;
   if (readMockApplications().some((item) => item.studentId === studentId && item.itemId === itemId)) return "APPLY";
   if (readMockPasses().some((item) => item.studentId === studentId && item.itemId === itemId)) return "PASS";
+  if (localStorage.getItem(mockCancelledResponseKey(studentId, itemId)) === "true") return "NONE";
   return fallback;
 }
 
@@ -73,7 +78,7 @@ export function updateMockApplicationStatus(applicationId: number, status: Appli
 /** 같은 화면·다른 탭에서 상태가 바뀌거나 화면으로 복귀하면 목록을 다시 조회한다. */
 export function subscribeApplicationChanges(listener: () => void) {
   const storageListener = (event: StorageEvent) => {
-    if (event.key === mockApplicationsKey || event.key === mockPassesKey || event.key?.startsWith("ieum:mock-recommendations:") || event.key === null) listener();
+    if (event.key === mockApplicationsKey || event.key === mockPassesKey || event.key?.startsWith("ieum:mock-recommendations:") || event.key?.startsWith("ieum:mock-cancelled-response:") || event.key === null) listener();
   };
   const visibilityListener = () => {
     if (document.visibilityState === "visible") listener();
@@ -167,7 +172,9 @@ export const respondToItem = async (itemId: number, body: ItemResponseRequest, s
   const applications = readMockApplications();
   const existing = applications.find((item) => item.studentId === studentId && item.itemId === itemId);
   if (existing) return { ...result, itemId, applicationId: existing.applicationId };
-  const applicationId = Math.max(result.applicationId - 1, ...applications.map((item) => item.applicationId)) + 1;
+  const sequence = Number(localStorage.getItem(mockApplicationSequenceKey) ?? "0");
+  const applicationId = Math.max(result.applicationId - 1, Number.isSafeInteger(sequence) ? sequence : 0, ...applications.map((item) => item.applicationId)) + 1;
+  localStorage.setItem(mockApplicationSequenceKey, String(applicationId));
   applications.push({
     studentId, itemId, applicationId,
     companyName: detail.job.companyName, title: detail.job.title,
@@ -176,6 +183,36 @@ export const respondToItem = async (itemId: number, body: ItemResponseRequest, s
   writeMockApplications(applications);
   return { ...result, itemId, applicationId };
 };
+
+/** 제안 API: 응답 취소. 실제 서버의 DELETE 구현은 별도 작업이다. */
+export async function cancelItemResponse(itemId: number, expectedResponse: CancellableResponse, studentId = DEMO_STUDENT_ID): Promise<ItemResponseCancelResult> {
+  if (expectedResponse !== "APPLY" && expectedResponse !== "PASS" && expectedResponse !== "HELP") {
+    throw new ApiError("INVALID_REQUEST", "지원·패스·도움 요청한 공고만 취소할 수 있어요.", 400);
+  }
+  if (process.env.NEXT_PUBLIC_USE_MOCK === "false") {
+    const result = await apiDelete<ItemResponseCancelResult>(
+      `/api/recommendation-items/${itemId}/response?expectedResponse=${expectedResponse}`, "",
+    );
+    if (result?.itemId !== itemId || result.response !== "NONE" || result.applicationId !== null) {
+      throw new ApiError("INVALID_RESPONSE", "취소 결과를 확인하지 못했어요. 기존 응답을 다시 확인해주세요.", 502);
+    }
+    window.dispatchEvent(new Event(applicationsChanged));
+    return result;
+  }
+  const current = getMockRecommendationResponse(studentId, itemId, expectedResponse);
+  if (current !== "NONE" && current !== expectedResponse) {
+    throw new ApiError("INVALID_STATUS", "공고 응답이 바뀌었어요. 새로고침 후 다시 확인해주세요.", 409);
+  }
+  const applications = readMockApplications();
+  const application = applications.find(item => item.studentId === studentId && item.itemId === itemId);
+  if (application && !["GENERATING", "DRAFT", "FAILED"].includes(application.status)) {
+    throw new ApiError("INVALID_STATUS", "이미 검토를 요청한 지원서는 직접 취소할 수 없어요. 담당자에게 문의해주세요.", 409);
+  }
+  localStorage.setItem(mockCancelledResponseKey(studentId, itemId), "true");
+  localStorage.setItem(mockPassesKey, JSON.stringify(readMockPasses().filter(item => item.studentId !== studentId || item.itemId !== itemId)));
+  writeMockApplications(applications.filter(item => item.studentId !== studentId || item.itemId !== itemId));
+  return { itemId, response: "NONE", applicationId: null };
+}
 
 /** M2 도움 요청 생성 → M4 */
 export const createHelpRequest = (body: HelpRequestCreateRequest) =>

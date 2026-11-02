@@ -16,6 +16,9 @@ import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
 import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
 import type { Source } from "@/types/student";
+import StudentPageHeading from "@/components/student/StudentPageHeading";
+import StudentIcon from "@/components/student/StudentIcon";
+import ApplicationStatusBadge from "@/components/student/ApplicationStatusBadge";
 
 const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
 const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
@@ -172,33 +175,12 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
 
   return (
-    <div className="min-h-screen bg-surface-warm">
-      <header className="fixed left-1/2 top-0 z-20 flex h-14 w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
-        <div className="flex min-w-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="뒤로"
-            className="flex size-11 shrink-0 items-center justify-center text-ink"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-          <div className="flex min-w-0 flex-col">
-            <h1 className="text-[15px] font-bold">이력서 초안</h1>
-            <span className="truncate text-xs text-ink-sub">
-              {job.companyName} · {job.title}
-            </span>
-          </div>
-        </div>
-        <SaveStatus state={saveState} />
-      </header>
-
-      <div className="flex flex-col px-4 pb-[104px] pt-[68px]">
-        <p className="mx-1 text-xs text-ink-sub">AI가 준비한 초안이에요. 필요한 내용만 수정해 주세요.</p>
+    <div className="s-resume-page">
+      <StudentPageHeading eyebrow="EXPERIENCE INTO OPPORTUNITY" title="나의 경험으로 채우는 지원서" description={`${job.companyName} · ${job.title}`} back={studentHref("/student/applications", studentId)} />
+      <div className="s-resume-layout"><div className="s-resume-content">
+        <div className="s-document-toolbar">
         {/* 출처 태그 설명: 이력서 · 포트폴리오 · 자기소개서 모두에 적용되는 화면 공통 설명 */}
-        <div className="mx-0.5 mt-1.5 flex flex-nowrap items-center gap-x-2 whitespace-nowrap text-[10px] tracking-tight text-ink-sub">
+        <div className="s-source-legend">
           <span className="flex items-center gap-1">
             <SourceTag source="AI" /> AI가 근거로 정리
           </span>
@@ -209,42 +191,50 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
             <SourceTag source="USER" /> 내가 쓰거나 고침
           </span>
         </div>
+        <SaveStatus state={saveState} />
+        </div>
 
-        <h2 className="mx-1 mb-2 mt-4 text-sm font-bold">이력서</h2>
+        {coverLetter && <CoverLetterCard applicationId={applicationId} studentId={studentId} section={coverLetter} />}
+
+        <h2 className="s-document-section-heading">이력서</h2>
         {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험) */}
         <SectionCardGroup>
           {resumeCards.map((card) => (
-            <SectionCard key={card.section} summary={card} onOpen={setEditing} />
+            <SectionCard key={card.section} summary={card} onOpen={setEditing} readOnly={!canSubmit || card.readOnly} />
           ))}
         </SectionCardGroup>
 
         {portfolioCard && (
           <>
-            <h2 className="mx-1 mb-2 mt-4 text-sm font-bold">포트폴리오</h2>
+            <h2 className="s-document-section-heading">포트폴리오</h2>
             <SectionCardGroup>
-              <SectionCard summary={portfolioCard} onOpen={setEditing} />
+              <SectionCard summary={portfolioCard} onOpen={setEditing} readOnly={!canSubmit} />
             </SectionCardGroup>
           </>
         )}
 
-        {coverLetter && <CoverLetterCard applicationId={applicationId} studentId={studentId} section={coverLetter} />}
       </div>
 
-      <footer className="fixed bottom-0 left-1/2 z-20 flex w-[390px] -translate-x-1/2 flex-col gap-1 border-t border-line bg-surface px-5 pb-3 pt-2.5">
+      <aside className="s-panel s-action-panel">
+        <p className="s-eyebrow">APPLICATION GUIDE</p><ApplicationStatusBadge status={status} />
+        <h2>{canSubmit ? "서류를 한 번 더 살펴봐요." : "검토 요청한 서류예요."}</h2>
+        <p>{canSubmit ? "기본정보와 경험을 확인하고, 자기소개서의 근거도 살펴보세요." : "제출한 내용을 확인할 수 있어요. 진행 상황은 지원 현황에서 확인해주세요."}</p>
+        <ul className="s-check-list"><li><StudentIcon name="file" />이력서 항목별 확인·편집</li><li><StudentIcon name="shield" />AI 작성 문장의 출처·근거 확인</li><li><StudentIcon name="check" />병역은 비워두어도 제출 가능</li></ul>
+        {coverLetter && <Link href={studentHref(`/student/applications/${applicationId}/cover-letter`, studentId)} className="s-button">자기소개서와 근거 보기</Link>}
         <button
           type="button"
           disabled={!canSubmit}
           onClick={() => setConfirmingSubmit(true)}
-          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:bg-line disabled:text-ink-muted"
+          className="s-button s-button-primary"
         >
           담당자에게 검토 요청
         </button>
-        <p className="text-center text-[11px] leading-4 text-ink-muted">
+        <p className="s-source-note">
           {canSubmit
             ? "검토 후 기관 추천으로 전달돼요 · 기업에 바로 가지 않아요"
             : "이미 검토를 요청한 서류예요 · 지원 현황에서 확인할 수 있어요"}
         </p>
-      </footer>
+      </aside></div>
 
       {listTarget ? (
         <SectionEditSheet
@@ -342,7 +332,7 @@ function CoverLetterCard({
       {/* 카드 안에 "자기소개서" 제목이 있어 바깥 제목은 두지 않는다 */}
       <Link
         href={studentHref(`/student/applications/${applicationId}/cover-letter`, studentId)}
-        className="mt-4 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="s-cover-preview mt-4 flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="flex flex-wrap items-center gap-1.5">
           <b className="mr-auto text-sm">자기소개서</b>

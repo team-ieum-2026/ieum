@@ -1,11 +1,13 @@
 "use client";
 // 주인: FE-B — M6-1 자기소개서 편집 화면 본체 (FE-B-04)
 // 문장 선택 → 근거(EvidencePanel) · 문장 고치기 → PATCH UPDATE_SENTENCE. 응답의 서류 전체로 화면을 바꾼다 (docs/API.md 2-1)
-// 와이어프레임 M6-1: 본문은 배경 위 문단, 근거 · 고치기 창은 선택한 문장 바로 아래에 끼워 넣고 다음 문장이 그 아래로 이어진다.
+// M6-1: 본문과 선택 문장의 근거를 웹에서는 나란히, 모바일에서는 위아래로 표시한다.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import EvidencePanel from "@/components/resume/EvidencePanel";
-import SentenceText from "@/components/resume/SentenceText";
+import SourceTag from "@/components/resume/SourceTag";
+import StudentPageHeading from "@/components/student/StudentPageHeading";
+import StudentIcon from "@/components/student/StudentIcon";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { studentHref } from "@/components/student/navigation";
 import { ApiError } from "@/lib/api/client";
@@ -84,10 +86,6 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
   const selected = selectedId ? findSentence(document, selectedId) : null;
   const sentences =
     document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER")?.sentences ?? [];
-  // 선택한 문장까지 앞 문단, 그다음 문장부터 뒤 문단 → 사이에 근거 · 고치기 창
-  const cut = selected ? sentences.findIndex((s) => s.sentenceId === selected.sentenceId) + 1 : sentences.length;
-  const head = sentences.slice(0, cut);
-  const tail = sentences.slice(cut);
   // 근거가 연결된 AI 문장에만 순서대로 "AI 1", "AI 2"… (문단이 나뉘어도 번호는 전체 기준)
   const markers = new Map<string, string>();
   sentences
@@ -144,118 +142,23 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
   };
 
   return (
-    <div className="min-h-screen bg-surface-warm">
-      <header className="fixed left-1/2 top-0 z-20 flex h-14 w-[390px] -translate-x-1/2 items-center justify-between gap-2 border-b border-line bg-surface-warm pl-2 pr-4">
-        <div className="flex min-w-0 items-center gap-1">
-          <Link href={backHref} aria-label="이력서로 돌아가기" className="flex size-11 shrink-0 items-center justify-center text-ink">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </Link>
-          <div className="flex min-w-0 flex-col">
-            <h1 className="text-[15px] font-bold">자기소개서</h1>
-            <span className="truncate text-xs text-ink-sub">
-              {job.companyName} · {job.title}
-            </span>
-          </div>
+    <div className="s-cover-page">
+      <StudentPageHeading eyebrow="EVERY SENTENCE HAS A STORY" title="나의 이야기에, 분명한 근거를." description={`${job.companyName} · 자기소개서`} back={backHref} />
+      <div className="s-document-toolbar"><div className="s-source-legend"><SourceTag source="AI" /><SourceTag source="REGISTERED" /><SourceTag source="USER" /></div><SaveStatus state={saveState} /></div>
+      <CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} />
+      <div ref={bodyRef} onKeyDownCapture={() => { keyboardRef.current = true; }} onPointerDownCapture={() => { keyboardRef.current = false; }} className="s-cover-layout">
+        <article className="s-panel s-letter-document"><div className="s-letter-heading"><span>자기소개서</span><span>{job.companyName}</span></div><h2>{job.title}</h2><p>{editable ? "수정할 문장을 눌러보세요." : "문장을 눌러 출처와 근거를 확인해주세요."}</p>
+          {sentences.length ? <SentenceParagraph sentences={sentences} markers={markers} selectedId={selectedId} onSelect={select} /> : <p className="s-source-note">아직 작성된 문장이 없어요.</p>}
+          <p className="s-source-note">AI 작성 문장은 등록 자료와 확인된 기업 정보에 연결된 근거를 살펴볼 수 있어요.</p>
+        </article>
+        <div ref={panelRef} className="s-panel s-letter-evidence"><h2>선택한 문장의 근거</h2>
+          {selected ? <>
+            {(selected.source !== "USER" || !editable) && <EvidencePanel sentence={selected} bare marker={markers.get(selected.sentenceId)} />}
+            {editable && <><label className="flex flex-col gap-2 text-xs font-medium text-ink-sub">문장 고치기<textarea value={draft} onChange={event => setDraft(event.target.value)} rows={7} className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink" /></label><p className="s-letter-note">고친 문장은 근거 표시 대신 ‘직접 입력’으로 표시돼요.</p>{saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={cancel} disabled={saveState === "SAVING"} className="s-button">취소</button><button type="button" onClick={apply} disabled={!canApply} aria-busy={saveState === "SAVING"} className="s-button s-button-primary">{saveState === "SAVING" ? "저장 중…" : "적용"}</button></div></>}
+          </> : <EvidencePanel sentence={null} bare />}
+          <Link href={backHref} className="s-text-link">이력서로 돌아가기<StudentIcon name="arrow" /></Link>
         </div>
-        <SaveStatus state={saveState} />
-      </header>
-
-      <div
-        ref={bodyRef}
-        onKeyDownCapture={() => {
-          keyboardRef.current = true;
-        }}
-        onPointerDownCapture={() => {
-          keyboardRef.current = false;
-        }}
-        className="flex flex-col gap-3 px-5 pb-[104px] pt-[68px]"
-      >
-        <CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} />
-        {/* 안내: 배경 없이 회색 세로선 + 정보 아이콘 (AI 초록 · 직접 입력 노랑과 겹치지 않는 중립 토큰) */}
-        <div className="flex items-start gap-2 border-l-2 border-ink-muted py-0.5 pl-2.5">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 shrink-0 text-ink-sub">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4M12 8h.01" />
-          </svg>
-          <p className="flex flex-col">
-            <b className="text-xs text-ink">{editable ? "수정할 문장을 눌러보세요." : "문장을 눌러보세요."}</b>
-            <span className="text-[11px] text-ink-sub">AI 작성 문장은 근거도 함께 확인할 수 있어요.</span>
-          </p>
-        </div>
-
-        {sentences.length === 0 && <p className="text-sm text-ink-muted">아직 작성된 문장이 없어요</p>}
-        {head.length > 0 && (
-          <SentenceParagraph sentences={head} markers={markers} selectedId={selectedId} onSelect={select} />
-        )}
-
-        {selected && (
-          // 와이어프레임 M6-1: 근거 → 문장 고치기 → 취소 · 적용을 초록 테두리 카드 하나에
-          <div
-            ref={panelRef}
-            className="flex scroll-mb-28 scroll-mt-16 flex-col gap-2 rounded-xl border-[1.5px] border-primary bg-surface p-3"
-          >
-            {/* 직접 입력 문장은 근거가 없으므로 고칠 수 있을 때는 근거 안내를 빼고 입력창만 */}
-            {(selected.source !== "USER" || !editable) && (
-              <EvidencePanel sentence={selected} bare marker={markers.get(selected.sentenceId)} />
-            )}
-            {editable && (
-              <>
-                <label className={`${selected.source === "USER" ? "" : "mt-1 "}flex flex-col gap-1 text-xs text-ink-sub`}>
-                  문장 고치기
-                  <textarea
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    rows={3}
-                    className="resize-none rounded-[10px] border-[1.5px] border-line p-2.5 text-sm text-ink focus-visible:outline-2 focus-visible:outline-primary"
-                  />
-                </label>
-                {selected.source !== "USER" && (
-                  <span className="text-[11px] text-ink-muted">고친 문장은 근거 표시 대신 &apos;직접 입력&apos;으로 표시돼요</span>
-                )}
-                {saveError && (
-                  <p role="alert" className="text-[13px] text-danger">
-                    {saveError}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={cancel}
-                    disabled={saveState === "SAVING"}
-                    className="min-h-10 flex-1 rounded-lg border-[1.5px] border-line bg-surface text-[13px] font-bold text-ink"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    onClick={apply}
-                    disabled={!canApply}
-                    aria-busy={saveState === "SAVING"}
-                    className="min-h-10 flex-1 rounded-lg bg-primary text-[13px] font-bold text-surface disabled:bg-line disabled:text-ink-muted"
-                  >
-                    {saveState === "SAVING" ? "저장 중…" : "적용"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {tail.length > 0 && (
-          <SentenceParagraph sentences={tail} markers={markers} selectedId={selectedId} onSelect={select} />
-        )}
       </div>
-
-      <footer className="fixed bottom-0 left-1/2 z-20 w-[390px] -translate-x-1/2 border-t border-line bg-surface px-5 pb-5 pt-3">
-        <Link
-          href={backHref}
-          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-bold text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          완료
-        </Link>
-      </footer>
     </div>
   );
 }
@@ -292,33 +195,9 @@ function CompanyInfoNotice({ status, sentences }: { status: CompanyInfoStatus; s
   );
 }
 
-/** 배경 위에 이어지는 자기소개서 문단 (14px · 줄 간격 1.9) */
-function SentenceParagraph({
-  sentences,
-  markers,
-  selectedId,
-  onSelect,
-}: {
-  sentences: Sentence[];
-  markers: Map<string, string>;
-  selectedId: string | null;
-  onSelect: (sentence: Sentence) => void;
-}) {
-  return (
-    <p className="text-sm leading-[1.9] text-ink">
-      {sentences.map((s, i) => (
-        <span key={s.sentenceId}>
-          {i > 0 && " "}
-          <SentenceText
-            sentence={s}
-            selected={s.sentenceId === selectedId}
-            onSelect={onSelect}
-            marker={markers.get(s.sentenceId)}
-          />
-        </span>
-      ))}
-    </p>
-  );
+/** 문장별 출처를 보여주고 선택한 문장을 근거 · 편집 패널에 연결한다. */
+function SentenceParagraph({ sentences, markers, selectedId, onSelect }: { sentences: Sentence[]; markers: Map<string, string>; selectedId: string | null; onSelect: (sentence: Sentence) => void }) {
+  return <div className="s-letter-sentences">{sentences.map(sentence => <button type="button" key={sentence.sentenceId} aria-pressed={selectedId === sentence.sentenceId} onClick={() => onSelect(sentence)} className={`s-letter-sentence${sentence.source === "AI" ? " is-ai" : ""}`}><SourceTag source={sentence.source} label={markers.get(sentence.sentenceId)} /><span>{sentence.text}</span></button>)}</div>;
 }
 
 function Notice({ message, children }: { message: string; children?: React.ReactNode }) {

@@ -1,27 +1,8 @@
-// 주인: FE-A — 수료생 공용 레이아웃: 폭 390px 고정 가운데 정렬 + 하단 메뉴 3탭 (FE-A-13, ALL-01)
-// M8 탭 포함. 하단 메뉴 수정은 FE-A 가 처리한다 (공용 파일).
-"use client";
-
+// FE-A — 수료생 웹 · 모바일 공통 레이아웃. API와 화면별 경로는 유지합니다.
 import { Suspense } from "react";
-import { usePathname } from "next/navigation";
-import BottomNavigation from "@/components/student/BottomNavigation";
-
-const tabs = [
-  { href: "/student", label: "맞춤 공고" },
-  { href: "/student/applications", label: "지원 현황" },
-  { href: "/student/profile", label: "내 프로필" },
-] as const;
+import StudentShell from "@/components/student/StudentShell";
+import "@/styles/student.css";
 
 export default function StudentLayout({ children }: LayoutProps<"/student">) {
-  const pathname = usePathname();
-  const showBottomNav = tabs.some((tab) => tab.href === pathname);
-
-  return (
-    <div className="mx-auto flex min-h-screen w-[390px] flex-col bg-surface-warm">
-      <main className={`flex flex-1 flex-col${showBottomNav ? " pb-16" : ""}`}>{children}</main>
-      {showBottomNav && (
-        <Suspense fallback={null}><BottomNavigation /></Suspense>
-      )}
-    </div>
-  );
+  return <Suspense fallback={<div className="student-app s-layout-loading" role="status">나의 커리어 공간을 불러오고 있어요…</div>}><StudentShell>{children}</StudentShell></Suspense>;
 }

@@ -1,43 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getStudentApplications, subscribeApplicationChanges } from "@/lib/api/student";
-import Card from "@/components/ui/Card";
-import StatusChip from "@/components/ui/StatusChip";
+import type { ApplicationStatus } from "@/types/student";
 import { applicationLabels, passLabels, responseLabels } from "./labels";
 import { dateLabel, studentHref } from "./navigation";
 import { ApiState, StudentScreen } from "./ScreenParts";
 import { useApi } from "./useApi";
+import ApplicationStatusBadge from "./ApplicationStatusBadge";
+import StudentPageHeading from "./StudentPageHeading";
+import StudentIcon from "./StudentIcon";
 
 export default function ApplicationsScreen({ studentId }: { studentId: number }) {
   const load = useCallback(() => getStudentApplications(studentId), [studentId]);
-  // 다른 기기에서 코디네이터가 승인해도 서버 상태를 다시 조회해 반영한다.
-  const { data, loading, error, reload } = useApi(load, {
-    refreshIntervalMs: process.env.NEXT_PUBLIC_USE_MOCK === "false" ? 5000 : 0,
-  });
+  const { data, loading, error, reload } = useApi(load, { refreshIntervalMs: process.env.NEXT_PUBLIC_USE_MOCK === "false" ? 5000 : 0 });
   useEffect(() => subscribeApplicationChanges(reload), [reload]);
+  const [filter, setFilter] = useState<ApplicationStatus | "ALL">("ALL");
+  const applications = data?.applications ?? [];
+  const visible = applications.filter(application => filter === "ALL" || application.status === filter);
+  const counts = [applications.filter(a => ["GENERATING", "DRAFT", "FAILED", "REJECTED"].includes(a.status)).length, applications.filter(a => ["SUBMITTED", "APPROVED"].includes(a.status)).length, applications.filter(a => a.status === "DELIVERED").length];
   return <StudentScreen>
-    <h1 className="px-5 pt-6 pb-4 text-[22px] font-bold">지원 현황</h1>
+    <StudentPageHeading eyebrow="ONE STEP AT A TIME" title="한 걸음씩, 나의 지원 여정." description="서류 준비부터 기관 추천 전달까지 진행 상황을 확인해요." />
     <ApiState loading={loading} error={error} retry={reload} />
-    {data && <div className="space-y-3 px-4 pb-6">
-      {!data.applications.length && <p className="text-sm text-ink-sub">아직 지원한 공고가 없어요.</p>}
-      {data.applications.map((application) => {
+    {data && <>
+      <div className="s-summary-grid">{["서류 준비·보완", "담당자 검토·승인", "기관 추천 전달"].map((label, i) => <section className="s-summary-card" key={label}><h2>{label}</h2><strong>{counts[i]}<small>건</small></strong></section>)}</div>
+      <div className="s-section-heading"><div className="s-section-title"><h2>나의 지원서</h2><span className="s-count">{applications.length}</span></div></div>
+      <div className="s-status-filters" aria-label="지원 상태 필터"><button type="button" className="s-status-filter" aria-pressed={filter === "ALL"} onClick={() => setFilter("ALL")}>전체<span>{applications.length}</span></button>{(Object.keys(applicationLabels) as ApplicationStatus[]).map(status => <button type="button" key={status} className="s-status-filter" aria-pressed={filter === status} onClick={() => setFilter(status)}>{applicationLabels[status]}<span>{applications.filter(a => a.status === status).length}</span></button>)}</div>
+      {visible.length ? <div className="s-applications-grid">{visible.map(application => {
         const stage = application.status === "DELIVERED" ? 3 : application.status === "APPROVED" ? 2 : ["SUBMITTED", "REJECTED"].includes(application.status) ? 1 : 0;
-        return <Card key={application.applicationId} className="space-y-5 p-[18px]">
-          <div className="flex items-start justify-between gap-2"><div><p className="text-[13px] text-ink-sub">{application.companyName}</p><h2 className="mt-1 text-[17px] font-bold">{application.title}</h2></div><StatusChip tone={application.status === "REJECTED" || application.status === "FAILED" ? "danger" : "success"}>{applicationLabels[application.status]}</StatusChip></div>
-          {stage > 0 ? <ol className="space-y-4">{["서류 제출", "담당 코디네이터 검토", "기관 추천으로 기업에 전달"].map((label, i) => <li key={label} className="flex gap-3"><span aria-hidden="true" className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-xs ${i < stage ? "border-primary bg-primary text-surface" : i === stage ? "border-primary bg-primary-tint" : "border-line"}`}>{i < stage ? "✓" : ""}</span><div><h3 className="text-sm font-bold">{label}</h3><p className="mt-1 text-xs text-ink-sub">{i === 0 ? `${dateLabel(application.submittedAt)} · 문장 ${application.userEditedCount}개 직접 수정` : i === 1 ? application.status === "REJECTED" ? "담당 코디네이터가 보완 사항을 안내해 드려요" : stage >= 2 ? "검토를 마쳤어요" : "확인 중이에요" : stage === 3 ? "기업에 전달했어요" : "기업에 전달할 예정이에요"}</p></div></li>)}</ol> : <Link href={studentHref(`/student/applications/${application.applicationId}${application.status === "GENERATING" || application.status === "FAILED" ? "/progress" : ""}`, studentId)} className="inline-block text-sm font-bold text-primary">{application.status === "DRAFT" ? "초안 이어서 보기" : "생성 상태 확인"} →</Link>}
-        </Card>;
-      })}
-      {data.otherItems.length > 0 && <section className="space-y-3 pt-3" aria-label="이번 주 다른 공고">
-        <h2 className="text-sm font-bold text-ink-sub">이번 주 다른 공고</h2>
-        {data.otherItems.map((item) => <Card key={item.itemId} className="space-y-3">
-          <div><p className="text-[13px] text-ink-sub">{item.companyName}</p><h3 className="mt-1 text-sm font-bold">{item.title}</h3></div>
-          {item.response === "NONE"
-            ? <Link href={studentHref(`/student/jobs/${item.itemId}`, studentId)} className="inline-flex min-h-10 items-center rounded-lg border border-primary px-3 py-2 text-xs font-bold text-primary">답하기</Link>
-            : <p className={`text-xs font-bold ${item.response === "PASS" ? "text-danger" : "text-ink-sub"}`}>{responseLabels[item.response]}{item.response === "PASS" && item.passReason && ` · ${passLabels[item.passReason]}`}</p>}
-        </Card>)}
-      </section>}
-    </div>}
+        const inProgress = application.status === "GENERATING" || application.status === "FAILED";
+        return <article className="s-application" key={application.applicationId}><div className="s-application-heading"><div><p>{application.companyName}</p><h2>{application.title}</h2></div><ApplicationStatusBadge status={application.status} /></div>
+          <p className="s-application-date">{application.submittedAt ? `${dateLabel(application.submittedAt)} 제출 · 문장 ${application.userEditedCount}개 직접 수정` : "지원 서류를 준비하고 있어요."}</p>
+          <ol className="s-stages">{["서류 제출", "담당자 검토", "기관 추천 전달"].map((label, i) => <li key={label} className={i < stage ? "is-done" : i === stage ? "is-current" : ""}><h3>0{i + 1} · {label}</h3>{stage > 0 && <p>{i === 0 ? "서류를 제출했어요" : i === 1 ? application.status === "REJECTED" ? "담당자가 보완 사항을 안내해드려요" : stage >= 2 ? "검토를 마쳤어요" : "확인 중이에요" : stage === 3 ? "기업에 전달했어요" : "전달을 준비해요"}</p>}</li>)}</ol>
+          <div className="s-application-bottom"><p>{application.status === "REJECTED" ? "담당 코디네이터가 보완 사항을 안내해드려요." : application.status === "FAILED" ? "초안 생성을 완료하지 못했어요. 생성 상태를 다시 확인해주세요." : application.status === "DRAFT" ? "나의 경험을 더해 지원서를 완성해주세요." : application.status === "GENERATING" ? "등록 자료를 지원 서류로 정리하고 있어요." : "검토를 요청한 서류도 다시 확인할 수 있어요."}</p><Link className="s-text-link" href={studentHref(`/student/applications/${application.applicationId}${inProgress ? "/progress" : ""}`, studentId)}>{inProgress ? "생성 상태 확인" : application.status === "DRAFT" ? "초안 이어서 보기" : "서류 확인"}<StudentIcon name="arrow" /></Link></div>
+        </article>;
+      })}</div> : <div className="s-empty"><StudentIcon name="folder" /><h2>{applications.length ? "이 상태의 지원서가 없어요." : "아직 지원한 공고가 없어요."}</h2><p>{applications.length ? "다른 상태를 선택해보세요." : "맞춤 공고에서 나에게 맞는 기회를 만나보세요."}</p>{!applications.length && <Link href={studentHref("/student", studentId)} className="s-button s-button-primary">맞춤 공고 보기</Link>}</div>}
+      {data.otherItems.length > 0 && <section className="s-activity" aria-label="이번 주 다른 공고"><div className="s-section-heading"><div className="s-section-title"><h2>이번 주 다른 공고</h2></div></div><div className="s-other-jobs">{data.otherItems.map(item => <article className="s-other-job" key={item.itemId}><div><h3>{item.title}</h3><p>{item.companyName}</p></div>{item.response === "NONE" ? <Link className="s-text-link" href={studentHref(`/student/jobs/${item.itemId}`, studentId)}>답하기<StudentIcon name="chevron" /></Link> : <p className={`s-response-badge s-response-${item.response}`}>{responseLabels[item.response]}{item.response === "PASS" && item.passReason && ` · ${passLabels[item.passReason]}`}</p>}</article>)}</div></section>}
+    </>}
   </StudentScreen>;
 }

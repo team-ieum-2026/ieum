@@ -14,5 +14,6 @@ export default function BottomNavigation() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const studentId = studentIdFrom({ studentId: searchParams.get("studentId") ?? undefined });
-  return <nav aria-label="하단 메뉴" className="fixed bottom-0 left-1/2 z-10 flex h-16 w-[390px] -translate-x-1/2 border-t border-line bg-surface">{tabs.map((tab) => <Link key={tab.href} href={studentHref(tab.href, studentId)} aria-current={pathname === tab.href ? "page" : undefined} className={`flex flex-1 flex-col items-center justify-center gap-1 text-xs focus-visible:outline-2 focus-visible:outline-primary ${pathname === tab.href ? "font-bold text-primary" : "text-ink-muted"}`}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true"><path d={tab.path} /></svg>{tab.label}</Link>)}</nav>;
+  const active = pathname.startsWith("/student/applications") ? "/student/applications" : pathname.startsWith("/student/profile") ? "/student/profile" : "/student";
+  return <nav aria-label="하단 메뉴" className="s-mobile-nav">{tabs.map((tab) => <Link key={tab.href} href={studentHref(tab.href, studentId)} aria-current={active === tab.href ? "page" : undefined} className={active === tab.href ? "is-active" : ""}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true"><path d={tab.path} /></svg>{tab.label}</Link>)}</nav>;
 }

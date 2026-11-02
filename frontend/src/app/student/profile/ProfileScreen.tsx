@@ -33,6 +33,10 @@ import { addProfileItem, deleteProfileItem, getProfile, updateCoverLetter, updat
 import type { StudentProfile } from "@/types/profile";
 import type { SectionName } from "@/types/resume";
 import type { Source } from "@/types/student";
+import StudentPageHeading from "@/components/student/StudentPageHeading";
+import StudentIcon from "@/components/student/StudentIcon";
+import ProfileCurrentStatus from "@/components/student/ProfileCurrentStatus";
+import { useStudentProfile } from "@/components/student/StudentShell";
 
 const DESCRIPTION = "적용을 누르면 바로 저장되고, 다음 추천부터 반영돼요.";
 
@@ -56,6 +60,7 @@ const pickSource = (sources: Source[]): Source | null =>
   sources.length === 0 ? null : sources.includes("USER") ? "USER" : "REGISTERED";
 
 export default function ProfileScreen({ studentId }: { studentId: number }) {
+  const profileFrame = useStudentProfile();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -133,6 +138,7 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
   const applyResult = (result: StudentProfile, label: string) => {
     const base = profile.profileUpdatedAt;
     setProfile(result);
+    profileFrame?.update(result);
     setBanner(`${label} 저장 완료`);
     // 응답에 이미 새 시각이 오면 바로 반영 완료, 아니면 다시 조회해서 확인한다
     setExtraction(
@@ -186,7 +192,6 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       [basic.name, basic.desiredJob && `희망 직무 ${basic.desiredJob}`].filter(Boolean).join(" · "),
       "추가하려면 누르세요",
     ),
-    row("MILITARY", "병역", militaryLabel, "선택 입력 · 비워 둬도 돼요"),
     row(
       "EDUCATION",
       "학력",
@@ -194,7 +199,6 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       "추가하려면 누르세요",
       pickSource(profile.education.map((e) => e.source)),
     ),
-    row("TRAINING", "교육", `${course.name} 수료`, "", "REGISTERED"),
     row(
       "CAREER",
       "경력",
@@ -202,15 +206,8 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       "신입이라면 비워 두세요",
       pickSource(profile.careers.map((c) => c.source)),
     ),
-    row(
-      "CERTIFICATES",
-      "자격증",
-      profile.certificates.map((c) => c.name).join(", "),
-      "추가하려면 누르세요",
-      pickSource(profile.certificates.map((c) => c.source)),
-    ),
+    row("TRAINING", "교육", `${course.name} 수료`, "", "REGISTERED"),
     row("SKILLS", "기술", profile.skills.join(" · "), "추가하려면 누르세요"),
-    row("PROJECTS", "프로젝트", profile.projects.map((p) => p.title).join(", "), "추가하려면 누르세요"),
     row(
       "PORTFOLIO",
       "포트폴리오",
@@ -221,6 +218,15 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       // 포트폴리오 파일은 기관에 등록된 자료
       "REGISTERED",
     ),
+    row(
+      "CERTIFICATES",
+      "자격증",
+      profile.certificates.map((c) => c.name).join(", "),
+      "추가하려면 누르세요",
+      pickSource(profile.certificates.map((c) => c.source)),
+    ),
+    row("PROJECTS", "프로젝트", profile.projects.map((p) => p.title).join(", "), "추가하려면 누르세요"),
+    row("MILITARY", "병역", militaryLabel, "선택 입력 · 비워 둬도 돼요"),
     row("COVER_LETTER", "자기소개서", profile.coverLetter ? "원본 · 공고별 초안의 바탕" : null, "추가하려면 누르세요"),
   ];
 
@@ -238,11 +244,8 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
   }));
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-6 pt-5">
-      <header className="mx-1 flex flex-col gap-1">
-        <h1 className="text-xl font-bold">내 프로필</h1>
-        <p className="text-xs text-ink-sub">수료 때 등록한 자료예요. 고치면 다음 추천부터 바로 반영돼요.</p>
-      </header>
+    <div className="s-profile-page">
+      <StudentPageHeading eyebrow="YOUR STORY, CONNECTED" title="경험이 모여, 나만의 가능성으로." description="수료 때 등록한 자료부터 새로 쌓은 경험까지, 이곳에서 이어가요." />
 
       {banner && (
         <p
@@ -256,16 +259,17 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
         </p>
       )}
 
+      <div className="s-profile-layout"><aside className="s-panel s-identity"><div className="s-identity-heading"><span className="s-avatar">{basic.name.slice(1, 2) || basic.name.slice(0, 1)}</span><div><h2>{basic.name}</h2><p>청년취업사관학교 수료생</p></div></div><ProfileCurrentStatus key={studentId} studentId={studentId} /><dl className="s-profile-facts">{[["희망 직무", basic.desiredJob], ["희망 지역", basic.preferredRegion], ["이메일", basic.email], ["GitHub", basic.githubUrl], ["수료 과정", `${course.name} · ${course.cohort}`], ["캠퍼스", course.campus], ["수료일", basic.completedOn]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "미입력"}</dd></div>)}</dl><button type="button" className="s-button" onClick={() => { const card = rows.find(row => row.section === "BASIC"); if (card) setEditing(card); }}><StudentIcon name="edit" />기본 정보 수정</button></aside><div className="s-profile-main">
       <CompetencyCard profile={profile} extraction={extraction} />
-
-      <div className="flex flex-col gap-2">
-        <h2 className="mx-1 text-sm font-bold">등록 자료</h2>
+      <div>
+        <h2 className="s-profile-materials-heading">나의 등록 자료</h2>
         <SectionCardGroup>
-          {rows.map((r) => (
+          {rows.filter(row => row.section !== "BASIC").map((r) => (
             <SectionCard key={r.section} summary={r} onOpen={setEditing} />
           ))}
         </SectionCardGroup>
       </div>
+      </div></div>
 
       {(section === "EDUCATION" || section === "CAREER" || section === "CERTIFICATES") && (
         <SectionEditSheet
@@ -364,7 +368,7 @@ function CompetencyCard({ profile, extraction }: { profile: StudentProfile; extr
   const cp = profile.competencyProfile;
   const tags = cp ? [...new Set([...cp.skills.map((s) => s.name), ...cp.certificates])] : [];
   return (
-    <section className="flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5">
+    <section className="s-competency-card flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-bold">추천에 쓰이는 역량 프로필</h2>
         <SourceTag source="AI" label="AI 정리" />
