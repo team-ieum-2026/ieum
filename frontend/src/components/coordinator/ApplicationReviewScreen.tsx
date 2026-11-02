@@ -12,6 +12,7 @@ import C4DocumentSummary, { userEditBreakdown } from "@/components/coordinator/C
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { Badge, Icon, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, type CoordTone } from "@/components/coordinator/coordLabels";
+import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { toDate } from "@/components/resume/resumeLabels";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -436,6 +437,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         {doneMessage ? (
           <div role="status">
             <b className="text-[13px] text-(--coord-green-ink)">{doneMessage}</b>
+            {IS_MOCK && <span className="ml-2 text-xs font-semibold text-(--coord-attention)">{MOCK_SAVE_NOTE}</span>}
             <Link href="/coordinator/applications" className="mt-0.5 block text-[11px] text-(--coord-muted) underline underline-offset-2">
               서류 검토 목록으로 돌아가기
             </Link>

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDayTime } from "@/components/coordinator/coordLabels";
+import { IS_MOCK } from "@/components/coordinator/demoAccount";
 import { ApiError } from "@/lib/api/client";
 import { getCoordinatorApplication, getDashboard } from "@/lib/api/coordinatorReview";
 import type { ReviewQueueItem, Verification } from "@/types/coordinator";
@@ -34,7 +35,11 @@ const COLUMNS: [string, string][] = [
 ];
 
 /** 서류 한 건의 검증 요약 (C4 상세 API) */
-type Check = { state: "loading" } | { state: "error" } | { state: "ok"; verification: Verification; hasDocument: boolean };
+/** mockMissing: 목업 JSON 에 없는 서류 (실제 API 오류와 구분해 '목업 데이터 없음'으로 보여 준다) */
+type Check =
+  | { state: "loading" }
+  | { state: "error"; mockMissing: boolean }
+  | { state: "ok"; verification: Verification; hasDocument: boolean };
 
 export default function ReviewListScreen() {
   const [items, setItems] = useState<ReviewQueueItem[] | null>(null);
@@ -68,7 +73,7 @@ export default function ReviewListScreen() {
         next[ids[i]] =
           r.status === "fulfilled"
             ? { state: "ok", verification: r.value.verification, hasDocument: Boolean(r.value.document) }
-            : { state: "error" };
+            : { state: "error", mockMissing: IS_MOCK && r.reason instanceof ApiError && r.reason.code === "APPLICATION_NOT_FOUND" };
       });
       setChecks(next);
     });
@@ -185,7 +190,7 @@ export default function ReviewListScreen() {
 /** 근거 점검: AI 문장 중 원본 자료와 연결된 수 (사실 검증 완료가 아님) */
 function EvidenceCell({ check }: { check: Check }) {
   if (check.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
-  if (check.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  if (check.state === "error") return <span className="text-(--coord-muted)">{check.mockMissing ? "목업 데이터 없음" : "조회 실패"}</span>;
   if (!check.hasDocument) return <span className="text-(--coord-muted)">서류 없음</span>;
   const { aiSentenceCount: total, aiSentenceWithEvidence: linked } = check.verification;
   if (total === 0) return <span className="text-(--coord-muted)">AI 문장 없음</span>;
@@ -201,7 +206,7 @@ function EvidenceCell({ check }: { check: Check }) {
 /** 수료생 수정: 수료생이 직접 쓰거나 고친 곳 수 (서버 userEditedCount) */
 function EditedCell({ check }: { check: Check }) {
   if (check.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
-  if (check.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  if (check.state === "error") return <span className="text-(--coord-muted)">{check.mockMissing ? "목업 데이터 없음" : "조회 실패"}</span>;
   if (!check.hasDocument) return <span className="text-(--coord-muted)">—</span>;
   return <span>{check.verification.userEditedCount}곳</span>;
 }

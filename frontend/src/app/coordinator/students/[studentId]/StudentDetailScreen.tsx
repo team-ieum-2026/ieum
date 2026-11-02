@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Avatar, Badge, Icon, btn } from "@/components/coordinator/CoordUi";
+import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import {
   contactLabels,
   courseName,
@@ -98,6 +99,7 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
           {saved && (
             <p role="status" className="mt-3 rounded-lg bg-(--coord-green-soft) px-3.5 py-2.5 text-[13px] text-(--coord-green-ink)">
               상담 기록을 저장했어요.
+              {IS_MOCK && <b className="ml-2 text-(--coord-attention)">{MOCK_SAVE_NOTE}</b>}
             </p>
           )}
           <div className="mt-3 grid grid-cols-[minmax(0,1.3fr)_minmax(380px,1fr)] items-start gap-4">

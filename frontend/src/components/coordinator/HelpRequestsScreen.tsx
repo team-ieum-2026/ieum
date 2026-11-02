@@ -12,6 +12,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { Badge, Icon, LoadState, PageTitle, Panel, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
 import { contactLabels, courseName, helpLabels, helpTone, monthDayTime } from "@/components/coordinator/coordLabels";
+import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { ApiError } from "@/lib/api/client";
 import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
@@ -154,6 +155,7 @@ export default function HelpRequestsScreen() {
         <p role="status" className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-(--coord-green-soft) px-3.5 py-3 text-xs text-(--coord-green-ink)">
           <span>
             {done.name} 님 요청을 <b>연락 완료</b>로 바꿨어요. 상담 내용은 수료생 상담 기록에 남겨 주세요.
+            {IS_MOCK && <b className="ml-2 text-(--coord-attention)">{MOCK_SAVE_NOTE}</b>}
           </span>
           <Link href={`/coordinator/students/${done.studentId}?log=new`} className="font-bold underline-offset-4 hover:underline">
             상담 기록 쓰기
