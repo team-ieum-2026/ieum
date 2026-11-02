@@ -1,7 +1,7 @@
-// 주인: FE-A — StudentsScreen
+// 주인: FE-B (11/1 역할 조정) — C2 수료생 관리
 import StudentsScreen from "./StudentsScreen";
 import { Suspense } from "react";
 
 export default function Page() {
-  return <Suspense fallback={<p role="status" className="p-6 text-sm text-ink-sub">불러오고 있어요…</p>}><StudentsScreen /></Suspense>;
+  return <Suspense fallback={<p role="status">불러오고 있어요…</p>}><StudentsScreen /></Suspense>;
 }
