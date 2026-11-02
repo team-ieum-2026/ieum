@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>가린 채점</title>
+<style>
+  :root { --bg: #f7f7f5; --panel: #fff; --line: #e3e3de; --text: #1f1f1d; --muted: #6b6b66; --mine: #7c3aed; --ok: #059669; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.6 -apple-system, "Apple SD Gothic Neo", sans-serif; color: var(--text); background: var(--bg); }
+  .app { display: grid; grid-template-columns: 200px 1fr 380px; height: 100vh; }
+  aside, main, section { overflow-y: auto; }
+  aside { border-right: 1px solid var(--line); background: var(--panel); }
+  .progress { padding: 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .item { padding: 6px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center; border-left: 3px solid transparent; font-size: 13px; }
+  .item:hover, .item.active { background: var(--bg); }
+  .item.active { border-left-color: var(--mine); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
+  .item.done .dot { background: var(--ok); }
+  .item .sc { margin-left: auto; color: var(--muted); }
+  main { padding: 20px 24px; }
+  h1 { font-size: 16px; margin: 0 0 12px; color: var(--muted); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+  .student { white-space: pre-wrap; }
+  .ptitle { font-weight: 600; margin-bottom: 8px; }
+  .body { white-space: pre-wrap; }
+  section { border-left: 1px solid var(--line); background: var(--panel); padding: 16px; }
+  .score { display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; font: inherit; }
+  .score b { font-size: 16px; margin-right: 6px; }
+  .score span { display: block; color: var(--muted); font-size: 12px; }
+  .score.sel { border-color: var(--mine); background: #f5f0ff; }
+  textarea { width: 100%; height: 80px; font: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+  .primary { width: 100%; margin-top: 8px; padding: 9px; border-radius: 8px; border: 0; background: var(--mine); color: #fff; font: inherit; cursor: pointer; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="list"></aside>
+  <main id="main"></main>
+  <section id="panel"></section>
+</div>
+<script>
+// 점수 기준은 시트 머리말과 같다 (review/sample_sheet_*.md)
+const SCORES = [
+  ["2", "적합", "추천해도 된다. 직무 일치, 신입이나 경력무관, 학력 충족, 희망 지역 안, 필수 기술을 모두 갖춤 (다른 표현이어도 같은 기술이면 인정)"],
+  ["1", "부분", "직무는 맞는데 한 가지가 부족하다 (경력, 학력, 지역 중 하나, 또는 필수 기술 일부)"],
+  ["0", "부적합", "추천하면 안 된다 (직무가 다르거나 두 가지 이상 부족, 필수 기술 대부분이 없음)"],
+];
+let DATA, idx = 0, score = "", memo = "";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cur = () => DATA.pairs[idx];
+const answer = p => DATA.answers[p.no] || {};
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  return res.json();
+}
+
+function render() {
+  const done = DATA.pairs.filter(p => answer(p).my_score).length;
+  document.getElementById("list").innerHTML = `<div class="progress">${done} / ${DATA.pairs.length} 채점</div>` +
+    DATA.pairs.map((p, i) => `<div class="item ${i === idx ? "active" : ""} ${answer(p).my_score ? "done" : ""}" onclick="go(${i})">
+      <span class="dot"></span>${p.no}. ${p.studentId} × ${p.jobPostingId}<span class="sc">${answer(p).my_score || ""}</span></div>`).join("");
+  document.querySelector(".item.active")?.scrollIntoView({ block: "nearest" });
+
+  const p = cur();
+  document.getElementById("main").innerHTML = `
+    <h1>${p.no}. 수료생 ${p.studentId} × 공고 ${p.jobPostingId}</h1>
+    <div class="card"><h2>수료생</h2><div class="student">${esc(p.student)}</div></div>
+    <div class="card"><h2>공고</h2><div class="ptitle">${esc(p.postingTitle)}</div><div class="body">${esc(p.postingBody)}</div></div>`;
+
+  document.getElementById("panel").innerHTML = `
+    ${SCORES.map(([v, name, desc]) => `<button class="score ${score === v ? "sel" : ""}" onclick="pick('${v}')"><b>${v}</b>${name}<span>${desc}</span></button>`).join("")}
+    <textarea id="memo" placeholder="메모 (규칙과 다르게 판단했다면 이유)">${esc(memo)}</textarea>
+    <button class="primary" onclick="save()">저장하고 다음 (Enter)</button>
+    <div class="hint">우대 조건은 판정에 넣지 않아요. 코디네이터라면 이 공고를 추천하겠는가로 판단해 주세요.<br>
+    단축키: 0, 1, 2 점수 · ↑↓ 이동 · Enter 저장<br>저장 파일: review/${esc(DATA.file)}</div>`;
+  document.getElementById("memo").oninput = e => { memo = e.target.value; };
+}
+
+function go(i) {
+  idx = Math.max(0, Math.min(DATA.pairs.length - 1, i));
+  score = answer(cur()).my_score || "";
+  memo = answer(cur()).memo || "";
+  render();
+  document.getElementById("main").scrollTop = 0;
+}
+
+function pick(v) { score = v; render(); }
+
+async function save() {
+  if (!score) { alert("점수를 골라 주세요."); return; }
+  DATA.answers = await api("/api/answer", { no: cur().no, score, memo });
+  const next = DATA.pairs.findIndex((p, i) => i > idx && !answer(p).my_score);
+  go(next >= 0 ? next : idx);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA") return;
+  if (["0", "1", "2"].includes(e.key)) pick(e.key);
+  else if (e.key === "ArrowDown") { e.preventDefault(); go(idx + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); go(idx - 1); }
+  else if (e.key === "Enter") save();
+});
+
+(async () => {
+  DATA = await api("/api/data");
+  const first = DATA.pairs.findIndex(p => !answer(p).my_score);
+  go(first >= 0 ? first : 0);
+})();
+</script>
+</body>
+</html>
