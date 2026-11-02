@@ -56,7 +56,7 @@ export default function StudentShell({ children }: { children: ReactNode }) {
             <Link href={studentHref("/student", studentId)} className="s-mobile-brand" aria-label="이음 맞춤 공고"><span className="s-mobile-brand-content"><span className="s-brand-mark" aria-hidden="true"><StudentIcon name="sprout" /></span><span className="s-brand-label">이음</span></span></Link>
             <div className="s-breadcrumb"><Link href={studentHref("/student", studentId)}>나의 커리어</Link><StudentIcon name="chevron" /><span>{current.label}</span></div>
           </div>
-          <div className="s-topbar-right"><span className="s-membership"><span className="s-status-dot" />청년취업사관학교 수료생</span><Link className="s-avatar s-avatar-small" href={studentHref("/student/profile", studentId)} aria-label="내 프로필">{name?.slice(1, 2) || "나"}</Link></div>
+          <div className="s-topbar-right"><Link href="/" className="s-text-link"><span aria-hidden="true">←</span> 홈으로 돌아가기</Link><span className="s-membership"><span className="s-status-dot" />청년취업사관학교 수료생</span><Link className="s-avatar s-avatar-small" href={studentHref("/student/profile", studentId)} aria-label="내 프로필">{name?.slice(1, 2) || "나"}</Link></div>
         </header>
         <main className="s-main" id="student-main" tabIndex={-1}>{children}</main>
         <footer className="s-page-footer"><span>당신의 가능성과 다음 기회를 연결합니다.</span><span>© 이음 · 수료 후에도, 함께.</span></footer>
