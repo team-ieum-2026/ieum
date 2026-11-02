@@ -63,7 +63,7 @@ const STAGE: Record<ApplicationStatus, number> = { GENERATING: 0, FAILED: 0, DRA
 const STATUS_GUIDE: Record<ApplicationStatus, [string, string]> = {
   SUBMITTED: ["코디네이터 검토 단계예요", "자기소개서 전체와 문장 근거를 확인한 뒤 승인하거나 수정을 요청하세요."],
   APPROVED: ["승인 완료 · 기관 추천 전달 대기", "기업 전달은 이음 밖에서 하고, 전달한 뒤 상태만 기록해요."],
-  REJECTED: ["수정 요청을 기록했어요", "수료생이 고쳐서 다시 제출하면 검토 대기로 돌아와요."],
+  REJECTED: ["수정 요청을 기록했어요", "반려 처리 후 서류 상태가 변경됩니다. 현재 수정·재제출 기능은 지원하지 않습니다."],
   DELIVERED: ["기관 추천 전달 완료", "이 서류의 검토 · 전달이 끝났어요."],
   DRAFT: ["수료생이 초안을 확인하고 있어요", "수료생이 검토를 요청하면 여기서 승인할 수 있어요."],
   GENERATING: ["서류를 만들고 있어요", "만들어지면 수료생이 확인한 뒤 검토를 요청해요."],

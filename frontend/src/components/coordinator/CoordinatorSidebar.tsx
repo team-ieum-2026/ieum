@@ -18,6 +18,12 @@ export function notifyReviewQueueChanged() {
   window.dispatchEvent(new Event(REVIEW_QUEUE_CHANGED));
 }
 
+/** 위 알림을 받아 다시 조회할 때 쓴다 (사이드바 · 상단 알림). 해제 함수를 돌려준다 */
+export function onReviewQueueChanged(listener: () => void) {
+  window.addEventListener(REVIEW_QUEUE_CHANGED, listener);
+  return () => window.removeEventListener(REVIEW_QUEUE_CHANGED, listener);
+}
+
 type Counts = { review: number; help: number };
 
 const menu: { href: string; label: string; icon: IconName; match: (p: string) => boolean; count?: keyof Counts }[] = [
@@ -46,11 +52,7 @@ export default function CoordinatorSidebar() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // 화면을 옮기지 않아도 처리 알림이 오면 다시 센다
-  useEffect(() => {
-    const onChanged = () => setRefreshKey((k) => k + 1);
-    window.addEventListener(REVIEW_QUEUE_CHANGED, onChanged);
-    return () => window.removeEventListener(REVIEW_QUEUE_CHANGED, onChanged);
-  }, []);
+  useEffect(() => onReviewQueueChanged(() => setRefreshKey((k) => k + 1)), []);
 
   // 화면을 옮길 때마다 · 처리 알림마다 서버 기준으로 다시 센다. 실패하면 배지를 숨긴다 (임의 숫자 표시 안 함)
   useEffect(() => {

@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { onReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { Icon } from "@/components/coordinator/CoordUi";
 import { DEMO_COORDINATOR } from "@/components/coordinator/demoAccount";
 import { monthDayTime } from "@/components/coordinator/coordLabels";
@@ -28,8 +29,12 @@ export default function CoordinatorTopbar() {
   const [notices, setNotices] = useState<Notice[] | null>(null);
   const [open, setOpen] = useState<"bell" | "account" | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // 화면을 옮길 때마다 알림 다시 조회 (실패하면 배지 숨김, 임의 숫자 없음)
+  // 도움 요청 · 서류 처리에 성공하면(notifyReviewQueueChanged) 같은 화면에 있어도 다시 조회한다. 실패하면 알림이 오지 않아 숫자도 그대로
+  useEffect(() => onReviewQueueChanged(() => setRefreshKey((k) => k + 1)), []);
+
+  // 화면을 옮길 때마다 · 처리 알림마다 알림 다시 조회 (실패하면 배지 숨김, 임의 숫자 없음)
   useEffect(() => {
     let ignore = false;
     getDashboard()
@@ -57,7 +62,7 @@ export default function CoordinatorTopbar() {
     return () => {
       ignore = true;
     };
-  }, [pathname]);
+  }, [pathname, refreshKey]);
 
   // 바깥을 누르거나 Esc 를 누르면 닫는다
   useEffect(() => {
