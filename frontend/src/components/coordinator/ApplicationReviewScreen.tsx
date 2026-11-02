@@ -92,6 +92,18 @@ const STATE_CHECK: Record<SentenceState, string> = {
   user: "수료생이 직접 쓰거나 고친 문장이라 AI 근거 점검 대상이 아니에요. 필요하면 원본 자료와 함께 확인해 주세요.",
   weak: "연결할 자료를 찾지 못했어요. 거짓으로 확정하지 않고 담당자 확인 대상으로 남겼어요.",
 };
+/** 선택한 문장을 왼쪽 · 오른쪽에서 같은 상태 색으로 잇는 표시 (번호 원 · 왼쪽 테두리 · 외곽선) */
+const MARK_BG: Record<SentenceState, string> = { linked: "bg-(--coord-green)", user: "bg-(--coord-blue)", weak: "bg-(--coord-red)" };
+const QUOTE_LOOK: Record<SentenceState, string> = {
+  linked: "border-(--coord-green) bg-(--coord-green-soft)",
+  user: "border-(--coord-blue) bg-(--coord-blue-soft)",
+  weak: "border-(--coord-red) bg-(--coord-red-soft)",
+};
+const SELECTED_LOOK: Record<SentenceState, string> = {
+  linked: "outline-(--coord-green) bg-(--coord-green-soft)",
+  user: "outline-(--coord-blue)",
+  weak: "outline-(--coord-red)",
+};
 
 /** 자기소개서 문장 (없으면 빈 배열) */
 const coverSentences = (document: ApplicationDocument | null): Sentence[] => {
@@ -225,8 +237,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const [guideTitle, guideText] = STATUS_GUIDE[status];
 
   return (
-    // 목업처럼 화면 높이에 맞춰 고정: 위 머리 · 가운데 두 패널(각자 스크롤) · 아래 행동 막대 (상단 막대 60 + 위아래 여백 70)
-    <div className="flex min-h-[640px] flex-col lg:h-[calc(100vh-130px)]">
+    // 위 머리 · 가운데 두 패널(내용만큼 높이, 길면 화면 높이 안에서 각자 스크롤) · 아래 행동 막대(화면 아래에 붙어 늘 보임)
+    // 서류가 짧아도 큰 빈 카드가 생기지 않게 두 패널은 늘이지 않는다
+    <div className="flex flex-col">
       <header className="shrink-0">
         <Link href="/coordinator/applications" className="mb-[18px] inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
           <Icon name="back" className="size-4" /> 서류 검토 목록
@@ -269,9 +282,12 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         </ol>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)] gap-5">
+      <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)] items-start gap-5">
         {/* 왼쪽: 자기소개서 전체 (이력서 항목은 탭) */}
-        <section aria-label="지원서류" className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
+        <section
+          aria-label="지원서류"
+          className="flex max-h-[calc(100vh-395px)] min-h-[300px] flex-col overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)"
+        >
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
             <div>
               <h2 className="text-[15px] font-bold">{tab === "cover" ? "자기소개서 전체" : "이력서 항목"}</h2>
@@ -350,11 +366,36 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         </section>
 
         {/* 오른쪽: 선택한 문장의 근거 + 문서 전체 검증 요약 */}
-        <aside aria-label="문장 근거와 검증 요약" className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+        <aside aria-label="문장 근거와 검증 요약" className="sticky top-[76px] flex max-h-[calc(100vh-395px)] flex-col gap-3 overflow-y-auto pr-1">
           <section aria-label="문장 근거" className="shrink-0 overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
             <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
               <h2 className="text-[15px] font-bold">문장 근거 · 출처</h2>
-              {selected && <Badge tone="blue">문장 {selectedIndex + 1}</Badge>}
+              {/* 왼쪽 문장과 같은 번호 · 이전/다음으로 문장을 옮기면 왼쪽 표시도 함께 바뀐다 */}
+              {selected && (
+                <div className="flex items-center gap-1 text-xs">
+                  <button
+                    type="button"
+                    aria-label="이전 문장"
+                    disabled={selectedIndex <= 0}
+                    onClick={() => setSelectedId(sentences[selectedIndex - 1].sentenceId)}
+                    className="grid size-7 place-items-center rounded-md border border-(--coord-line) hover:bg-(--coord-hover) disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ‹
+                  </button>
+                  <span className="min-w-[64px] text-center font-semibold">
+                    문장 {selectedIndex + 1} / {sentences.length}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="다음 문장"
+                    disabled={selectedIndex >= sentences.length - 1}
+                    onClick={() => setSelectedId(sentences[selectedIndex + 1].sentenceId)}
+                    className="grid size-7 place-items-center rounded-md border border-(--coord-line) hover:bg-(--coord-hover) disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
             </div>
             <div className="p-[22px]" aria-live="polite">
               {!document ? (
@@ -362,7 +403,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
               ) : !selected ? (
                 <p className="text-[13px] text-(--coord-muted)">자기소개서 문장이 없어 확인할 근거가 없어요.</p>
               ) : (
-                <SentenceEvidence sentence={selected} />
+                <SentenceEvidence sentence={selected} index={selectedIndex} />
               )}
             </div>
           </section>
@@ -391,7 +432,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
       </div>
 
       {/* 아래 검토 행동 막대: 현재 서버 상태에 맞는 버튼만 */}
-      <div className="mt-5 flex shrink-0 items-center justify-between gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-[18px] py-3.5 shadow-[0_-5px_20px_rgb(0_0_0/0.03)]">
+      <div className="sticky bottom-3 z-[2] mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-[18px] py-3.5 shadow-[0_-5px_20px_rgb(0_0_0/0.06)]">
         {doneMessage ? (
           <div role="status">
             <b className="text-[13px] text-(--coord-green-ink)">{doneMessage}</b>
@@ -477,9 +518,15 @@ function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sent
         aria-pressed={selected}
         aria-label={`문장 ${index + 1}: ${STATE_BADGE[state][0]}`}
         className={`inline rounded-[3px] px-[3px] py-0.5 text-left leading-[inherit] whitespace-normal ${look} ${
-          selected ? "outline-2 outline-offset-2 outline-(--coord-green)" : ""
+          selected ? `outline-2 outline-offset-2 ${SELECTED_LOOK[state]}` : ""
         }`}
       >
+        {/* 선택한 문장 앞에 오른쪽 패널과 같은 번호를 붙여 어느 문장의 근거인지 바로 보이게 */}
+        {selected && (
+          <span aria-hidden className={`mr-1 inline-grid size-[18px] place-items-center rounded-full align-[1px] text-[10px] font-bold text-white ${MARK_BG[state]}`}>
+            {index + 1}
+          </span>
+        )}
         {sentence.text}
       </button>{" "}
     </>
@@ -487,14 +534,22 @@ function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sent
 }
 
 /** 오른쪽 '문장 근거 · 출처' 본문 (목업 .evidence-block). 원본 근거 · 출처 → AI 점검 결과 */
-function SentenceEvidence({ sentence }: { sentence: Sentence }) {
+function SentenceEvidence({ sentence, index }: { sentence: Sentence; index: number }) {
   const state = sentenceState(sentence);
   const [label, tone] = STATE_BADGE[state];
   return (
     <>
-      <Badge tone={tone}>{label}</Badge>
-      <h3 className="mt-3 text-[11px] text-(--coord-muted)">{STATE_WRITER[state]}</h3>
-      <p className="mt-1 text-[13px] leading-[1.8] font-semibold">{sentence.text}</p>
+      {/* 선택한 문장: 왼쪽 문장과 같은 번호 · 같은 상태 색 띠로 연결 */}
+      <div className={`rounded-r-lg border-l-4 px-3.5 py-3 ${QUOTE_LOOK[state]}`}>
+        <div className="flex items-center gap-2">
+          <span aria-hidden className={`grid size-[18px] place-items-center rounded-full text-[10px] font-bold text-white ${MARK_BG[state]}`}>
+            {index + 1}
+          </span>
+          <Badge tone={tone}>{label}</Badge>
+          <span className="text-[11px] text-(--coord-muted)">{STATE_WRITER[state]}</span>
+        </div>
+        <p className="mt-2 text-[13px] leading-[1.8] font-semibold text-(--coord-ink)">{sentence.text}</p>
+      </div>
       <div className="border-b border-(--coord-line) py-[15px]">
         <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">01　원본 기록 · 출처 (등록 자료 · 기업 정보 원문)</h3>
         {sentence.evidence.length === 0 ? (
