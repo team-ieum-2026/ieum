@@ -17,6 +17,8 @@ public interface HelpRequestMapper {
 
     HelpRequestData.Row findForUpdate(@Param("helpRequestId") Long helpRequestId);
 
+    HelpRequestData.Row findLatestByItemForUpdate(@Param("recommendationItemId") Long recommendationItemId);
+
     List<HelpRequestData.Row> findByStudent(@Param("studentId") Long studentId,
                                           @Param("status") String status);
 

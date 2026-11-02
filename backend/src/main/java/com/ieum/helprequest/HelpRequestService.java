@@ -118,6 +118,27 @@ public class HelpRequestService {
                 seoulTime(row.getClosedAt()), row.getCloseReason());
     }
 
+    /**
+     * 추천 응답 HELP 취소. 호출자가 추천 항목을 먼저 잠근 같은 트랜잭션에서 부른다.
+     * 접수(OPEN) 요청만 본인 종료로 닫아 이력을 남기고, 연락 완료·종료된 요청은 409로 유지한다.
+     */
+    @Transactional
+    public void closeForCancelledResponse(Long studentId, Long recommendationItemId) {
+        var row = mapper.findLatestByItemForUpdate(recommendationItemId);
+        if (row == null || !studentId.equals(row.getStudentId())) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS, "도움 요청 기록을 찾지 못했어요. 새로고침 후 다시 확인해주세요.");
+        }
+        if (!"OPEN".equals(row.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS,
+                    "담당자가 이미 확인한 도움 요청은 직접 취소할 수 없어요. 담당자에게 문의해주세요.");
+        }
+        row.setStatus("CLOSED");
+        row.setClosedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
+        row.setCloseReason("NO_LONGER_NEEDED");
+        if (mapper.close(row) != 1) throw new BusinessException(ErrorCode.INTERNAL_ERROR);
+        publish(row);
+    }
+
     @Transactional
     public HelpRequestUpdateResult update(Long helpRequestId, HelpRequestUpdateRequest request) {
         if (!positive(helpRequestId) || request == null || !request.isValid()) {

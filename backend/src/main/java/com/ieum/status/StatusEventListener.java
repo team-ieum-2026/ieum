@@ -6,6 +6,7 @@ import com.ieum.coordinator.ApplicationReviewChangedEvent;
 import com.ieum.helprequest.HelpRequestChangedEvent;
 import com.ieum.recommendation.RecommendationCreatedEvent;
 import com.ieum.recommendation.RecommendationRespondedEvent;
+import com.ieum.recommendation.RecommendationResponseCancelledEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,11 @@ public class StatusEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onResponded(RecommendationRespondedEvent event) {
+        recalculate(event.studentId());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onResponseCancelled(RecommendationResponseCancelledEvent event) {
         recalculate(event.studentId());
     }
 

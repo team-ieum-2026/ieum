@@ -118,6 +118,15 @@ public final class RecommendationRows {
         }
     }
 
+    /** 응답 취소 때 잠그는 지원서 한 줄. 검토 요청 전 상태만 지울 수 있다 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class LockedApplication {
+        private Long id;
+        private String status;
+    }
+
     @Getter
     @Setter
     @NoArgsConstructor

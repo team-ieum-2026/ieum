@@ -74,6 +74,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 | M1 | `POST /api/students/{studentId}/recommendations/refresh` | 새로 추천받기. 응답한 공고는 제외 | S3 |
 | M2 | `GET /api/recommendation-items/{itemId}` | 공고 상세 + 추천 근거 전체 | S5 |
 | M2 · M3 | `POST /api/recommendation-items/{itemId}/response` | 지원 또는 패스 응답 | S5 · S6 |
+| M1 · M2 | `DELETE /api/recommendation-items/{itemId}/response?expectedResponse=` | 지원 · 패스 · 도움 요청 응답 취소 (응답 전으로 되돌림) | S5 · S6 |
 | M5 | `GET /api/applications/{applicationId}/progress` | 서류 생성 진행 상태 (FE가 2초마다 조회) | S7 |
 | M6 · M6-1 | `GET /api/applications/{applicationId}` | 서류 전체 (이력서 + 자기소개서 + 근거) | S8 |
 | M6 · M6-1 · M6-2 | `PATCH /api/applications/{applicationId}/document` | 문장 수정 · 섹션 항목 추가 · 수정 · 삭제 | S8 |
@@ -193,6 +194,26 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 - 이미 응답한 항목이면 409 `ALREADY_RESPONDED`. 없는 항목이면 404 `RECOMMENDATION_ITEM_NOT_FOUND`
 - `APPLY`면 `application`을 `GENERATING`으로 만들고 그 번호를 돌려줍니다. 서류 생성은 BE-A-07이 이어서 합니다.
 - 응답이 생기면 `student.last_response_at` 갱신 + `RecommendationRespondedEvent` 발행. 상태 재계산(BE-B-06)과 서류 생성(BE-A-07)은 이 이벤트를 저장 확정 뒤(`AFTER_COMMIT`) 받아 처리합니다.
+
+#### `DELETE /api/recommendation-items/{itemId}/response?expectedResponse=PASS` (M1 · M2 응답 취소)
+
+요청 본문은 없습니다. `expectedResponse`는 `APPLY` · `PASS` · `HELP` 중 하나이며, 지금 응답이 이 값일 때만 취소합니다.
+
+```json
+{ "data": { "itemId": 91, "response": "NONE", "applicationId": null } }
+```
+
+| 취소 대상 | 처리 |
+| --- | --- |
+| `PASS` | `pass_reason` · `pass_note` · `responded_at`을 비우고 `NONE`. 일반 패스 연속 횟수에서도 빠짐 |
+| `APPLY` | 검토 요청 전(`GENERATING` · `DRAFT` · `FAILED`) 지원서만 서류와 함께 삭제하고 `NONE`. 다시 지원하면 새 `applicationId` |
+| `HELP` | 가장 최근 도움 요청이 접수(`OPEN`)일 때만 `CLOSED`(`closeReason: NO_LONGER_NEEDED`, `closedAt` 기록)로 바꿔 이력을 남기고 `NONE`. 다시 요청하면 새 `helpRequestId` |
+
+- 이미 `NONE`이면 아무것도 바꾸지 않고 위와 같은 200을 돌려줍니다.
+- `expectedResponse` 누락 · 목록 밖 값은 400 `INVALID_REQUEST`. 없는 항목은 404 `RECOMMENDATION_ITEM_NOT_FOUND`
+- 지금 응답이 `expectedResponse`와 다르거나, 검토 요청 이후(`SUBMITTED` · `APPROVED` · `REJECTED` · `DELIVERED`) 지원서, 연락 완료 · 종료된 도움 요청이면 409 `INVALID_STATUS`. 기존 응답 · 지원서 · 요청은 그대로입니다.
+- 추천 항목 → 지원서 · 도움 요청 순서로 잠급니다. 검토 요청과 동시에 들어오면 한쪽만 성공합니다. 생성 중이던 서류는 저장 직전 상태 확인에서 버려집니다.
+- `student.last_response_at`은 바꾸지 않습니다. 저장 확정 뒤 `RecommendationResponseCancelledEvent`로 수료생 상태를 다시 계산합니다.
 
 #### `GET /api/applications/{applicationId}/progress` (M5)
 

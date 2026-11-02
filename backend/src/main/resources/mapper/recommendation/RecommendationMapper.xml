@@ -48,6 +48,31 @@
         WHERE id = #{itemId} AND response = 'NONE'
     </update>
 
+    <select id="selectItemOwnerForUpdate" resultType="com.ieum.recommendation.RecommendationRows$ItemOwner"
+            useCache="false" flushCache="true">
+        SELECT i.id AS item_id, r.student_id, i.job_posting_id, i.response
+        FROM recommendation_item i
+        JOIN recommendation r ON r.id = i.recommendation_id
+        WHERE i.id = #{itemId}
+        FOR UPDATE OF i
+    </select>
+
+    <select id="selectApplicationForUpdate" resultType="com.ieum.recommendation.RecommendationRows$LockedApplication"
+            useCache="false" flushCache="true">
+        SELECT id, status FROM application WHERE recommendation_item_id = #{itemId} FOR UPDATE
+    </select>
+
+    <delete id="deleteApplicationBeforeReview">
+        DELETE FROM application
+        WHERE id = #{applicationId} AND status IN ('GENERATING', 'DRAFT', 'FAILED')
+    </delete>
+
+    <update id="resetItemResponse">
+        UPDATE recommendation_item
+        SET response = 'NONE', pass_reason = NULL, pass_note = NULL, responded_at = NULL
+        WHERE id = #{itemId} AND response = #{expected}
+    </update>
+
     <update id="touchLastResponse">
         UPDATE student SET last_response_at = NOW(6) WHERE id = #{studentId}
     </update>
