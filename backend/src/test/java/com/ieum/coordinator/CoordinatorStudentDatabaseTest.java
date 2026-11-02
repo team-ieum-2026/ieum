@@ -41,11 +41,13 @@ import org.springframework.transaction.annotation.Transactional;
 class CoordinatorStudentDatabaseTest {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final String DISPLAY_STATUS = """
-            CASE WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'NEED_HELP')
+            CASE WHEN CAST(ss.status AS BINARY) = 'NEED_HELP' THEN 'SEEKING'
+                 WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'RESTING')
                  THEN ss.status ELSE 'CHECK_REQUIRED' END
             """;
     private static final String DISPLAY_SUB_STATUS = """
-            CASE WHEN CAST(ss.status AS BINARY) = 'SEEKING'
+            CASE WHEN CAST(ss.status AS BINARY) = 'NEED_HELP' THEN 'WAITING'
+                 WHEN CAST(ss.status AS BINARY) = 'SEEKING'
                  THEN CASE WHEN CAST(ss.sub_status AS BINARY) IN ('APPLYING', 'OTHER')
                            THEN ss.sub_status ELSE 'WAITING' END ELSE NULL END
             """;
@@ -98,10 +100,10 @@ class CoordinatorStudentDatabaseTest {
     private void verifyStatusFiltersAndDashboard(long totalStudents) {
         var summary = dashboard.getDashboard().statusSummary();
         Map<String, Long> dashboardCounts = Map.of("EMPLOYED", summary.employed(),
-                "SEEKING", summary.seeking().total(), "NEED_HELP", summary.needHelp(),
+                "SEEKING", summary.seeking().total(), "RESTING", summary.resting(),
                 "CHECK_REQUIRED", summary.checkRequired());
         long total = 0;
-        for (String status : List.of("EMPLOYED", "SEEKING", "NEED_HELP", "CHECK_REQUIRED")) {
+        for (String status : List.of("EMPLOYED", "SEEKING", "RESTING", "CHECK_REQUIRED")) {
             long expected = jdbc.queryForObject("""
                     SELECT COUNT(*) FROM student s LEFT JOIN student_status ss ON ss.student_id = s.id
                     WHERE (
@@ -113,6 +115,14 @@ class CoordinatorStudentDatabaseTest {
             total += expected;
         }
         assertEquals(totalStudents, total);
+        assertEquals(0, summary.needHelp());
+        long studentsWithOpenHelp = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM student s
+                WHERE EXISTS(SELECT 1 FROM help_request h WHERE h.student_id = s.id AND h.status = 'OPEN')
+                """, Long.class);
+        var help = service.list("NEED_HELP", null, null, 1, 100);
+        assertEquals(studentsWithOpenHelp, help.total());
+        assertTrue(help.items().stream().allMatch(row -> row.openHelpRequestCount() > 0));
         Map<String, Long> seekingCounts = Map.of("APPLYING", summary.seeking().applying(),
                 "WAITING", summary.seeking().waiting(), "OTHER", summary.seeking().other());
         long seekingTotal = 0;
@@ -169,15 +179,18 @@ class CoordinatorStudentDatabaseTest {
         protectedEqual(raw.get("reason"), student.reason());
         String status = (String) raw.get("raw_status");
         String subStatus = (String) raw.get("raw_sub_status");
-        String expectedStatus = "EMPLOYED".equals(status) || "SEEKING".equals(status) || "NEED_HELP".equals(status)
-                ? status : "CHECK_REQUIRED";
-        String expectedSubStatus = !"SEEKING".equals(expectedStatus) ? null
+        String expectedStatus = "NEED_HELP".equals(status) ? "SEEKING"
+                : "EMPLOYED".equals(status) || "SEEKING".equals(status) || "RESTING".equals(status)
+                    ? status : "CHECK_REQUIRED";
+        String expectedSubStatus = "NEED_HELP".equals(status) ? "WAITING" : !"SEEKING".equals(expectedStatus) ? null
                 : "APPLYING".equals(subStatus) || "OTHER".equals(subStatus) ? subStatus : "WAITING";
         protectedEqual(expectedStatus, student.status());
         protectedEqual(expectedSubStatus, student.subStatus());
         boolean hasNote = raw.get("has_note") instanceof Boolean value ? value
                 : ((Number) raw.get("has_note")).intValue() != 0;
         assertEquals(hasNote, student.hasNote());
+        assertEquals(jdbc.queryForObject("SELECT COUNT(*) FROM help_request WHERE student_id = ? AND status = 'OPEN'",
+                Long.class, studentId), student.openHelpRequestCount());
         if (raw.get("profile") == null) {
             assertTrue(detail.competencyProfile() == null, "저장된 역량 원문이 없으면 null을 유지한다");
         }

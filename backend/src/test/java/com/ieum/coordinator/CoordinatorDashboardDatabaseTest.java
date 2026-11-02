@@ -78,17 +78,18 @@ class CoordinatorDashboardDatabaseTest {
     private void verifySummary(JsonNode dashboard) {
         Map<String, Object> expected = jdbc.queryForMap("""
                 SELECT COUNT(*) AS total_students,
-                       COALESCE(SUM(CASE WHEN ss.status = 'EMPLOYED' THEN 1 ELSE 0 END), 0) AS employed,
-                       COALESCE(SUM(CASE WHEN ss.status = 'NEED_HELP' THEN 1 ELSE 0 END), 0) AS need_help,
-                       COALESCE(SUM(CASE WHEN ss.status IN ('EMPLOYED', 'SEEKING', 'NEED_HELP')
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) = 'EMPLOYED' THEN 1 ELSE 0 END), 0) AS employed,
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) = 'RESTING' THEN 1 ELSE 0 END), 0) AS resting,
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'RESTING', 'NEED_HELP')
                                          THEN 0 ELSE 1 END), 0) AS check_required,
-                       COALESCE(SUM(CASE WHEN ss.status = 'SEEKING' THEN 1 ELSE 0 END), 0) AS seeking,
-                       COALESCE(SUM(CASE WHEN ss.status = 'SEEKING' AND ss.sub_status = 'APPLYING'
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) IN ('SEEKING', 'NEED_HELP') THEN 1 ELSE 0 END), 0) AS seeking,
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) = 'SEEKING' AND CAST(ss.sub_status AS BINARY) = 'APPLYING'
                                          THEN 1 ELSE 0 END), 0) AS applying,
-                       COALESCE(SUM(CASE WHEN ss.status = 'SEEKING' AND ss.sub_status = 'OTHER'
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) = 'SEEKING' AND CAST(ss.sub_status AS BINARY) = 'OTHER'
                                          THEN 1 ELSE 0 END), 0) AS other,
-                       COALESCE(SUM(CASE WHEN ss.status = 'SEEKING'
-                                           AND (ss.sub_status IS NULL OR ss.sub_status NOT IN ('APPLYING', 'OTHER'))
+                       COALESCE(SUM(CASE WHEN CAST(ss.status AS BINARY) = 'NEED_HELP'
+                                           OR (CAST(ss.status AS BINARY) = 'SEEKING'
+                                             AND (ss.sub_status IS NULL OR CAST(ss.sub_status AS BINARY) NOT IN ('APPLYING', 'OTHER')))
                                          THEN 1 ELSE 0 END), 0) AS waiting
                 FROM student s
                 LEFT JOIN student_status ss ON ss.student_id = s.id
@@ -97,20 +98,21 @@ class CoordinatorDashboardDatabaseTest {
         JsonNode seeking = summary.path("SEEKING");
         assertEquals(number(expected, "total_students"), count(dashboard, "totalStudents"));
         assertEquals(number(expected, "employed"), count(summary, "EMPLOYED"));
-        assertEquals(number(expected, "need_help"), count(summary, "NEED_HELP"));
+        assertEquals(0, count(summary, "NEED_HELP"));
+        assertEquals(number(expected, "resting"), count(summary, "RESTING"));
         assertEquals(number(expected, "check_required"), count(summary, "CHECK_REQUIRED"));
         assertEquals(number(expected, "seeking"), count(seeking, "total"));
         assertEquals(number(expected, "applying"), count(seeking, "APPLYING"));
         assertEquals(number(expected, "waiting"), count(seeking, "WAITING"));
         assertEquals(number(expected, "other"), count(seeking, "OTHER"));
         assertEquals(count(dashboard, "totalStudents"), count(summary, "EMPLOYED")
-                + count(summary, "NEED_HELP") + count(summary, "CHECK_REQUIRED") + count(seeking, "total"));
+                + count(summary, "RESTING") + count(summary, "CHECK_REQUIRED") + count(seeking, "total"));
     }
 
     private void verifyOpenHelpRequests(JsonNode actual) {
         assertTrue(actual.isArray(), "도움 요청 목록은 빈 경우에도 배열이어야 한다");
         List<Help> expected = jdbc.query("""
-                SELECT h.id, h.student_id, h.created_at, h.contact_method, h.memo,
+                SELECT h.id, h.student_id, h.created_at, h.contact_method, h.memo, h.help_type,
                        h.recommendation_item_id, s.name AS student_name,
                        CONCAT(c.name, ' ', c.cohort) AS course_label,
                        CONCAT(j.company_name, ' ', j.title) AS job_title
@@ -124,7 +126,7 @@ class CoordinatorDashboardDatabaseTest {
                 """, (row, index) -> new Help(row.getLong("id"), row.getLong("student_id"),
                 time(row, "created_at"), row.getString("contact_method"), row.getString("memo"),
                 row.getString("student_name"), row.getString("course_label"), row.getString("job_title"),
-                row.getObject("recommendation_item_id") == null));
+                row.getObject("recommendation_item_id") == null, row.getString("help_type")));
         assertEquals(expected.size(), actual.size());
         for (int i = 0; i < expected.size(); i++) {
             Help row = expected.get(i);
@@ -136,6 +138,7 @@ class CoordinatorDashboardDatabaseTest {
             protectedText(row.jobTitle(), item.path("jobTitle"));
             protectedText(row.contactMethod(), item.path("contactMethod"));
             protectedText(row.memo(), item.path("memo"));
+            protectedText(row.helpType(), item.path("helpType"));
             protectedTime(row.createdAt(), item.path("createdAt"));
             if (row.withoutRecommendation()) {
                 assertTrue(item.path("jobTitle").isNull(), "연결 공고가 없는 열린 요청도 null 공고와 함께 포함한다");
@@ -163,7 +166,7 @@ class CoordinatorDashboardDatabaseTest {
                 SELECT s.id, s.last_response_at, s.completed_on
                 FROM student s
                 LEFT JOIN student_status ss ON ss.student_id = s.id
-                WHERE ss.status IS NULL OR ss.status NOT IN ('EMPLOYED', 'SEEKING', 'NEED_HELP')
+                WHERE ss.status IS NULL OR CAST(ss.status AS BINARY) NOT IN ('EMPLOYED', 'SEEKING', 'RESTING', 'NEED_HELP')
                 ORDER BY COALESCE(s.last_response_at, s.completed_on) ASC, s.id ASC
                 """, (row, index) -> new Call(row.getLong("id"), time(row, "last_response_at"),
                 row.getDate("completed_on").toLocalDate()));
@@ -246,7 +249,8 @@ class CoordinatorDashboardDatabaseTest {
 
     private record Table(String name, String key) {}
     private record Help(long id, long studentId, LocalDateTime createdAt, String contactMethod, String memo,
-                        String studentName, String courseLabel, String jobTitle, boolean withoutRecommendation) {}
+                        String studentName, String courseLabel, String jobTitle, boolean withoutRecommendation,
+                        String helpType) {}
     private record Review(long id, LocalDateTime submittedAt) {}
     private record Call(long id, LocalDateTime lastResponseAt, LocalDate completedOn) {}
     private record Note(long id, String note) {}

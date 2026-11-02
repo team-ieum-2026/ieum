@@ -30,6 +30,7 @@ public final class CoordinatorDashboardData {
         private String jobTitle;
         private String contactMethod;
         private String memo;
+        private String helpType;
     }
 
     @Getter @Setter

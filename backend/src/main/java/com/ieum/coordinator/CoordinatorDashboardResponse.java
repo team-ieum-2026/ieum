@@ -13,7 +13,14 @@ public record CoordinatorDashboardResponse(
         StatusSummary statusSummary,
         List<ReviewQueueItem> reviewQueue,
         List<CallListItem> callList,
-        List<NoteToCheck> notesToCheck) {
+        List<NoteToCheck> notesToCheck,
+        List<CoordinatorPassFollowUpResponse> passFollowUpList) {
+
+    public CoordinatorDashboardResponse(OffsetDateTime asOf, long totalStudents, List<HelpRequest> helpRequests,
+                                        StatusSummary statusSummary, List<ReviewQueueItem> reviewQueue,
+                                        List<CallListItem> callList, List<NoteToCheck> notesToCheck) {
+        this(asOf, totalStudents, helpRequests, statusSummary, reviewQueue, callList, notesToCheck, List.of());
+    }
 
     public record HelpRequest(
             Long helpRequestId,
@@ -23,13 +30,24 @@ public record CoordinatorDashboardResponse(
             OffsetDateTime createdAt,
             String jobTitle,
             String contactMethod,
-            String memo) {}
+            String memo,
+            String helpType) {
+        public HelpRequest(Long helpRequestId, Long studentId, String studentName, String courseLabel,
+                           OffsetDateTime createdAt, String jobTitle, String contactMethod, String memo) {
+            this(helpRequestId, studentId, studentName, courseLabel, createdAt, jobTitle, contactMethod, memo, null);
+        }
+    }
 
     public record StatusSummary(
             @JsonProperty("EMPLOYED") long employed,
             @JsonProperty("SEEKING") Seeking seeking,
             @JsonProperty("NEED_HELP") long needHelp,
-            @JsonProperty("CHECK_REQUIRED") long checkRequired) {}
+            @JsonProperty("CHECK_REQUIRED") long checkRequired,
+            @JsonProperty("RESTING") long resting) {
+        public StatusSummary(long employed, Seeking seeking, long needHelp, long checkRequired) {
+            this(employed, seeking, needHelp, checkRequired, 0);
+        }
+    }
 
     public record Seeking(
             long total,

@@ -43,4 +43,12 @@ public interface StatusMapper {
     List<Long> findStudentIds();
 
     int upsertStatus(@Param("studentId") Long studentId, @Param("decision") StatusDecision decision);
+
+    StatusData.Intent findLatestIntent(@Param("studentId") Long studentId);
+
+    StatusData.Intent findLatestIntentUnlocked(@Param("studentId") Long studentId);
+
+    int insertIntent(StatusData.Intent intent);
+
+    StatusData.CurrentStatus findStudentStatus(@Param("studentId") Long studentId);
 }

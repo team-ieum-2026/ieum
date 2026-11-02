@@ -11,12 +11,14 @@
 
     <!-- 대시보드와 같은 표시 정책이다. 저장된 판정 원문은 바꾸지 않는다. -->
     <sql id="displayStatus">
-        CASE WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'NEED_HELP')
+        CASE WHEN CAST(ss.status AS BINARY) = 'NEED_HELP' THEN 'SEEKING'
+             WHEN CAST(ss.status AS BINARY) IN ('EMPLOYED', 'SEEKING', 'RESTING')
              THEN ss.status ELSE 'CHECK_REQUIRED' END
     </sql>
 
     <sql id="displaySubStatus">
-        CASE WHEN CAST(ss.status AS BINARY) = 'SEEKING'
+        CASE WHEN CAST(ss.status AS BINARY) = 'NEED_HELP' THEN 'WAITING'
+             WHEN CAST(ss.status AS BINARY) = 'SEEKING'
              THEN CASE WHEN CAST(ss.sub_status AS BINARY) IN ('APPLYING', 'OTHER')
                        THEN ss.sub_status ELSE 'WAITING' END
              ELSE NULL END
@@ -25,12 +27,26 @@
     <sql id="studentSource">
         FROM student s
         LEFT JOIN student_status ss ON ss.student_id = s.id
+        LEFT JOIN (
+            SELECT student_id, COUNT(*) AS open_help_request_count
+            FROM help_request
+            WHERE status = 'OPEN'
+            GROUP BY student_id
+        ) open_help ON open_help.student_id = s.id
     </sql>
 
     <sql id="studentFilters">
         <where>
             <if test="status != null">
-                AND <include refid="displayStatus"/> = #{status}
+                <choose>
+                    <!-- 이전 필터는 대표 상태와 독립된 미처리 요청 보유 학생 조회로 유지한다. -->
+                    <when test='status == "NEED_HELP"'>
+                        AND COALESCE(open_help.open_help_request_count, 0) &gt; 0
+                    </when>
+                    <otherwise>
+                        AND <include refid="displayStatus"/> = #{status}
+                    </otherwise>
+                </choose>
             </if>
             <if test="subStatus != null">
                 AND <include refid="displaySubStatus"/> = #{subStatus}
@@ -45,7 +61,7 @@
         s.id AS student_id, s.name, CONCAT(c.name, ' ', c.cohort) AS course_label, s.completed_on,
         <include refid="displayStatus"/> AS status,
         <include refid="displaySubStatus"/> AS sub_status,
-        s.last_response_at,
+        s.last_response_at, COALESCE(open_help.open_help_request_count, 0) AS open_help_request_count,
         (EXISTS(
             SELECT 1
             FROM recommendation_item ri_note

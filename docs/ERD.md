@@ -12,6 +12,7 @@ erDiagram
     student ||--o| student_cover_letter : "자기소개서 원본"
     student ||--o| competency_profile : "역량 프로필 (S2)"
     student ||--o| student_status : "상태 (S12)"
+    student ||--o{ student_intent_history : "본인 상태 선택 이력"
     student ||--o{ recommendation : "추천 묶음 (S3)"
     recommendation ||--|{ recommendation_item : "Top-3"
     job_posting ||--o{ recommendation_item : "추천된 공고"
@@ -134,9 +135,12 @@ erDiagram
         BIGINT id PK
         BIGINT student_id FK
         BIGINT recommendation_item_id FK
+        VARCHAR help_type "5개 유형 | null=미분류"
         VARCHAR contact_method
         TEXT memo
         VARCHAR status "OPEN | CONTACTED | CLOSED"
+        DATETIME closed_at
+        VARCHAR close_reason "EMPLOYED | NO_LONGER_NEEDED | OTHER"
     }
     application {
         BIGINT id PK
@@ -155,9 +159,15 @@ erDiagram
     }
     student_status {
         BIGINT student_id PK, FK
-        VARCHAR status "EMPLOYED | SEEKING | NEED_HELP | CHECK_REQUIRED"
+        VARCHAR status "EMPLOYED | SEEKING | RESTING | CHECK_REQUIRED"
         VARCHAR sub_status "APPLYING | WAITING | OTHER"
         VARCHAR reason
+    }
+    student_intent_history {
+        BIGINT id PK
+        BIGINT student_id FK
+        VARCHAR status "EMPLOYED | SEEKING | RESTING"
+        DATETIME selected_at "마이크로초 정밀도"
     }
     contact_log {
         BIGINT id PK

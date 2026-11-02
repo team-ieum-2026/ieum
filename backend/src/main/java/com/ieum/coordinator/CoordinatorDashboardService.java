@@ -19,15 +19,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class CoordinatorDashboardService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private final CoordinatorDashboardMapper mapper;
+    private final CoordinatorPassFollowUpService passFollowUps;
     private final Clock clock;
 
     @Autowired
-    public CoordinatorDashboardService(CoordinatorDashboardMapper mapper) {
-        this(mapper, Clock.system(SEOUL));
+    public CoordinatorDashboardService(CoordinatorDashboardMapper mapper, CoordinatorPassFollowUpService passFollowUps) {
+        this(mapper, passFollowUps, Clock.system(SEOUL));
     }
 
-    CoordinatorDashboardService(CoordinatorDashboardMapper mapper, Clock clock) {
+    CoordinatorDashboardService(CoordinatorDashboardMapper mapper, CoordinatorPassFollowUpService passFollowUps, Clock clock) {
         this.mapper = mapper;
+        this.passFollowUps = passFollowUps;
         this.clock = clock.withZone(SEOUL);
     }
 
@@ -35,18 +37,19 @@ public class CoordinatorDashboardService {
     public CoordinatorDashboardResponse getDashboard() {
         OffsetDateTime asOf = OffsetDateTime.now(clock);
         List<CoordinatorDashboardData.StudentState> students = mapper.findStudentStates();
-        long employed = 0, needHelp = 0, checkRequired = 0, applying = 0, waiting = 0, other = 0;
+        long employed = 0, resting = 0, checkRequired = 0, applying = 0, waiting = 0, other = 0;
         List<CoordinatorDashboardData.StudentState> calls = new ArrayList<>();
         for (var student : students) {
             switch (displayStatus(student.getStatus())) {
                 case "EMPLOYED" -> employed++;
-                case "NEED_HELP" -> needHelp++;
+                case "RESTING" -> resting++;
                 case "CHECK_REQUIRED" -> {
                     checkRequired++;
                     calls.add(student);
                 }
                 case "SEEKING" -> {
-                    if ("APPLYING".equals(student.getSubStatus())) applying++;
+                    if ("NEED_HELP".equals(student.getStatus())) waiting++;
+                    else if ("APPLYING".equals(student.getSubStatus())) applying++;
                     else if ("OTHER".equals(student.getSubStatus())) other++;
                     else waiting++;
                 }
@@ -55,7 +58,7 @@ public class CoordinatorDashboardService {
         }
         var summary = new CoordinatorDashboardResponse.StatusSummary(employed,
                 new CoordinatorDashboardResponse.Seeking(applying + waiting + other, applying, waiting, other),
-                needHelp, checkRequired);
+                0, checkRequired, resting);
         var callList = calls.stream()
                 .sorted(Comparator.comparing(CoordinatorDashboardService::inactivitySince)
                         .thenComparing(CoordinatorDashboardData.StudentState::getStudentId))
@@ -66,19 +69,21 @@ public class CoordinatorDashboardService {
         var help = mapper.findOpenHelpRequests().stream()
                 .map(row -> new CoordinatorDashboardResponse.HelpRequest(row.getHelpRequestId(), row.getStudentId(),
                         row.getStudentName(), row.getCourseLabel(), seoulTime(row.getCreatedAt()), row.getJobTitle(),
-                        row.getContactMethod(), row.getMemo())).toList();
+                        row.getContactMethod(), row.getMemo(), row.getHelpType())).toList();
         var review = mapper.findReviewQueue().stream()
                 .map(row -> new CoordinatorDashboardResponse.ReviewQueueItem(row.getApplicationId(),
                         row.getStudentName(), row.getJobTitle(), seoulTime(row.getSubmittedAt()))).toList();
         var notes = mapper.findLatestPassNotes().stream()
                 .map(row -> new CoordinatorDashboardResponse.NoteToCheck(row.getStudentId(), row.getStudentName(),
                         row.getPassNote())).toList();
-        return new CoordinatorDashboardResponse(asOf, students.size(), help, summary, review, callList, notes);
+        return new CoordinatorDashboardResponse(asOf, students.size(), help, summary, review, callList, notes,
+                passFollowUps.list());
     }
 
     private static String displayStatus(String status) {
         // 아직 판정 행이 없는 학생도 인원에서 누락하지 않는다. 조회 결과에만 확인 필요로 표시한다.
-        if ("EMPLOYED".equals(status) || "SEEKING".equals(status) || "NEED_HELP".equals(status)) return status;
+        if ("NEED_HELP".equals(status)) return "SEEKING";
+        if ("EMPLOYED".equals(status) || "SEEKING".equals(status) || "RESTING".equals(status)) return status;
         return "CHECK_REQUIRED";
     }
 

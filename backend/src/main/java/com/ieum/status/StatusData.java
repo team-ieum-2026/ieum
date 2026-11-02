@@ -27,4 +27,20 @@ public final class StatusData {
         private String passReason;
         private LocalDateTime respondedAt;
     }
+
+    @Getter @Setter
+    public static class Intent {
+        private Long id;
+        private Long studentId;
+        private String status;
+        private LocalDateTime selectedAt;
+    }
+
+    @Getter @Setter
+    public static class CurrentStatus {
+        private Long studentId;
+        private String status;
+        private String subStatus;
+        private LocalDateTime updatedAt;
+    }
 }

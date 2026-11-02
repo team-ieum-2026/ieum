@@ -115,6 +115,37 @@
         <include refid="recommendationItemsQuery"/>
     </select>
 
+    <sql id="latestIntentQuery">
+        SELECT id, student_id, status, selected_at
+        FROM student_intent_history WHERE student_id = #{studentId}
+        ORDER BY selected_at DESC, id DESC LIMIT 1
+    </sql>
+
+    <select id="findLatestIntent" resultType="com.ieum.status.StatusData$Intent"
+            useCache="false" flushCache="true">
+        <include refid="latestIntentQuery"/> FOR UPDATE
+    </select>
+
+    <select id="findLatestIntentUnlocked" resultType="com.ieum.status.StatusData$Intent"
+            useCache="false" flushCache="true">
+        <include refid="latestIntentQuery"/>
+    </select>
+
+    <insert id="insertIntent" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student_intent_history (student_id, status, selected_at)
+        VALUES (#{studentId}, #{status}, #{selectedAt})
+    </insert>
+
+    <select id="findStudentStatus" resultType="com.ieum.status.StatusData$CurrentStatus">
+        SELECT s.id AS student_id,
+               CASE WHEN ss.status = 'NEED_HELP' THEN 'SEEKING'
+                    ELSE COALESCE(ss.status, 'CHECK_REQUIRED') END AS status,
+               CASE WHEN ss.status = 'NEED_HELP' THEN 'WAITING' ELSE ss.sub_status END AS sub_status,
+               ss.updated_at
+        FROM student s LEFT JOIN student_status ss ON ss.student_id = s.id
+        WHERE s.id = #{studentId}
+    </select>
+
     <select id="findStudentIds" resultType="java.lang.Long" useCache="false" flushCache="true">
         SELECT id FROM student ORDER BY id
     </select>

@@ -31,10 +31,10 @@ class StatusRulesTest {
     }
 
     @Test
-    void openHelpOverridesStaleResponseAndActiveApplication() {
+    void openHelpDoesNotMaskStaleResponseOrChangeTheRepresentativeStatus() {
         var facts = new StatusRules.Facts(false, true, true, NOW.minusDays(30), "OTHER");
 
-        assertDecision(StatusRules.decide(facts, NOW), "NEED_HELP", null);
+        assertDecision(StatusRules.decide(facts, NOW), "CHECK_REQUIRED", null);
     }
 
     @Test
@@ -48,8 +48,8 @@ class StatusRulesTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"true, true, EMPLOYED", "true, false, EMPLOYED", "false, true, NEED_HELP"})
-    void employmentAndExplicitHelpOverrideSavedEmptyRecommendation(
+    @CsvSource({"true, true, EMPLOYED", "true, false, EMPLOYED", "false, true, CHECK_REQUIRED"})
+    void employmentOverridesSavedEmptyRecommendationWhileOpenHelpDoesNot(
             boolean employed, boolean openHelp, String expectedStatus) {
         var facts = new StatusRules.Facts(employed, openHelp, true, NOW.minusDays(30), "OTHER", true);
 
@@ -65,7 +65,7 @@ class StatusRulesTest {
 
     @ParameterizedTest
     @MethodSource("higherPriorityAfterCompletion")
-    void employmentAndHelpOverrideSevenDaysSinceCompletion(
+    void employmentAndRestingOverrideSevenDaysSinceCompletion(
             StatusRules.Facts facts, String expectedStatus) {
         assertDecision(StatusRules.decide(facts, NOW), expectedStatus, null);
     }
@@ -75,7 +75,38 @@ class StatusRulesTest {
         return Stream.of(
                 Arguments.of(new StatusRules.Facts(true, true, true, completedAt, "OTHER"), "EMPLOYED"),
                 Arguments.of(new StatusRules.Facts(true, false, false, completedAt, null), "EMPLOYED"),
-                Arguments.of(new StatusRules.Facts(false, true, true, completedAt, "OTHER"), "NEED_HELP"));
+                Arguments.of(new StatusRules.Facts(false, true, true, completedAt, "OTHER", true, "RESTING"),
+                        "RESTING"));
+    }
+
+    @Test
+    void restingPersistsWithOpenHelpAnActiveApplicationAndAnEmptyRecommendation() {
+        var facts = new StatusRules.Facts(false, true, true, NOW.minusDays(30), "OTHER", true, "RESTING");
+
+        assertDecision(StatusRules.decide(facts, NOW), "RESTING", null);
+    }
+
+    @Test
+    void recentSeekingIntentSurvivesAnEmptyRecommendationAndOpenHelp() {
+        var facts = new StatusRules.Facts(false, true, true, RECENT, "OTHER", true, "SEEKING");
+
+        assertDecision(StatusRules.decide(facts, NOW), "SEEKING", "APPLYING");
+    }
+
+    @Test
+    void seekingIntentStillRequiresCheckingAtTheSevenDayBoundary() {
+        var facts = new StatusRules.Facts(false, true, true, NOW.minusDays(7), "OTHER", true, "SEEKING");
+
+        assertDecision(StatusRules.decide(facts, NOW), "CHECK_REQUIRED", null);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"false, OTHER, OTHER", "true, OTHER, APPLYING", "false, JOB_MISMATCH, WAITING"})
+    void openHelpDoesNotReplaceAnySeekingSubStatus(boolean activeApplication, String passReason,
+                                                  String expectedSubStatus) {
+        var facts = new StatusRules.Facts(false, true, activeApplication, RECENT, passReason);
+
+        assertDecision(StatusRules.decide(facts, NOW), "SEEKING", expectedSubStatus);
     }
 
     @ParameterizedTest
@@ -118,7 +149,7 @@ class StatusRulesTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"JOB_MISMATCH", "CONDITION_MISMATCH", "SKILL_GAP", "TAKING_BREAK"})
+    @ValueSource(strings = {"JOB_MISMATCH", "CONDITION_MISMATCH", "SKILL_GAP"})
     void remainingRecentResponsesWaitForTheNextRecommendation(String latestPassReason) {
         var facts = new StatusRules.Facts(false, false, false, RECENT, latestPassReason);
 

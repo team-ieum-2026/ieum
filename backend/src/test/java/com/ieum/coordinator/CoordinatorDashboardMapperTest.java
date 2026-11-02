@@ -57,6 +57,18 @@ class CoordinatorDashboardMapperTest {
         });
     }
 
+    @Test
+    void openHelpReadKeepsUnclassifiedRequestsAndRequestsWithoutAJob() {
+        String help = sql("findOpenHelpRequests");
+
+        assertTrue(help.contains("h.help_type"));
+        assertTrue(help.contains("where h.status = 'open'"));
+        assertTrue(help.contains("left join recommendation_item"));
+        assertTrue(help.contains("left join job_posting"));
+        assertFalse(help.contains("student_status"), "대표 상태가 도움 요청 노출을 제한하면 안 된다");
+        assertFalse(help.contains("help_type is not null"));
+    }
+
     private static String sql(String name) {
         return configuration.getMappedStatement(NAMESPACE + name).getBoundSql(null).getSql()
                 .replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);

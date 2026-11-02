@@ -37,7 +37,7 @@ CREATE TABLE student (
   military_status    VARCHAR(20)  NULL     COMMENT 'SERVED | NOT_SERVED | EXEMPT | NOT_APPLICABLE | NULL(입력 안 함)',
   skills             JSON         NULL     COMMENT '직접 입력 · 확인한 기술 목록 ["Java","React"]. 역량 프로필(AI 추출)과 별개',
   completed_on       DATE         NOT NULL COMMENT '수료일',
-  last_response_at   DATETIME     NULL     COMMENT '마지막 응답(지원·패스·도움 요청·서류 제출) 시각. 1주 무응답 판정에 사용',
+  last_response_at   DATETIME(6)  NULL     COMMENT '마지막 응답·현재 의사 선택 시각. 1주 무응답 판정에 사용',
   created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -190,7 +190,7 @@ CREATE TABLE recommendation_item (
   response           VARCHAR(20)  NOT NULL DEFAULT 'NONE' COMMENT 'NONE | APPLY | PASS | HELP',
   pass_reason        VARCHAR(30)  NULL     COMMENT 'ALREADY_EMPLOYED | JOB_MISMATCH | CONDITION_MISMATCH | SKILL_GAP | TAKING_BREAK | OTHER',
   pass_note          TEXT         NULL     COMMENT '기타 자유 입력 = 비고. 분류하지 않고 코디네이터가 확인',
-  responded_at       DATETIME     NULL,
+  responded_at       DATETIME(6)  NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uk_item_rank (recommendation_id, rank_no),
   CONSTRAINT fk_item_rec FOREIGN KEY (recommendation_id) REFERENCES recommendation (id) ON DELETE CASCADE,
@@ -202,11 +202,13 @@ CREATE TABLE help_request (
   id                     BIGINT       NOT NULL AUTO_INCREMENT,
   student_id             BIGINT       NOT NULL,
   recommendation_item_id BIGINT       NULL,
+  help_type              VARCHAR(32)  NULL     COMMENT 'RESUME_COVER_LETTER | JOB_APPLICATION | INTERVIEW_PREPARATION | CAREER_COUNSELING | OTHER; null=미분류',
   contact_method         VARCHAR(20)  NULL     COMMENT 'SMS | PHONE | EMAIL',
   memo                   TEXT         NULL,
   status                 VARCHAR(20)  NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN | CONTACTED | CLOSED',
   created_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   closed_at              DATETIME     NULL,
+  close_reason           VARCHAR(32)  NULL     COMMENT 'EMPLOYED | NO_LONGER_NEEDED | OTHER; 본인 종료 사유',
   PRIMARY KEY (id),
   KEY idx_help_status (status, created_at),
   CONSTRAINT fk_help_student FOREIGN KEY (student_id) REFERENCES student (id) ON DELETE CASCADE,
@@ -253,9 +255,20 @@ CREATE TABLE application_document (
 -- ---------------------------------------------------------------------
 
 -- 수료생 상태 (규칙으로 계산해 저장. 응답이 생길 때 + 하루 1회 무응답 판정)
+CREATE TABLE student_intent_history (
+  id                 BIGINT       NOT NULL AUTO_INCREMENT,
+  student_id         BIGINT       NOT NULL,
+  status             VARCHAR(20)  NOT NULL COMMENT 'EMPLOYED | SEEKING | RESTING',
+  selected_at        DATETIME(6)  NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_intent_student_time (student_id, selected_at, id),
+  CONSTRAINT fk_intent_student FOREIGN KEY (student_id) REFERENCES student (id) ON DELETE CASCADE,
+  CONSTRAINT ck_intent_status CHECK (status IN ('EMPLOYED', 'SEEKING', 'RESTING'))
+) COMMENT '수료생 본인 상태 선택 이력';
+
 CREATE TABLE student_status (
   student_id         BIGINT       NOT NULL,
-  status             VARCHAR(20)  NOT NULL COMMENT 'EMPLOYED | SEEKING | NEED_HELP | CHECK_REQUIRED',
+  status             VARCHAR(20)  NOT NULL COMMENT 'EMPLOYED | SEEKING | RESTING | CHECK_REQUIRED; NEED_HELP는 이전 자료 호환',
   sub_status         VARCHAR(20)  NULL     COMMENT 'SEEKING일 때: APPLYING(기관 추천 지원 중) | WAITING(패스 후 대기) | OTHER(기타 사유)',
   reason             VARCHAR(200) NULL     COMMENT '판정 근거 한 줄. 예: 패스 사유 ALREADY_EMPLOYED',
   updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -271,18 +284,21 @@ CREATE TABLE contact_log (
   contact_type       VARCHAR(20)  NOT NULL COMMENT 'PHONE | MESSAGE | MEETING',
   note               TEXT         NULL,
   created_by         VARCHAR(50)  NOT NULL DEFAULT 'coordinator' COMMENT 'P0는 로그인 없음',
-  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at         DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   PRIMARY KEY (id),
   CONSTRAINT fk_contact_student FOREIGN KEY (student_id) REFERENCES student (id) ON DELETE CASCADE
 ) COMMENT '통화 · 상담 기록';
 
 -- =====================================================================
--- 상태 판정 규칙 (S12, BE-B 구현) — 위에서부터 먼저 맞는 것을 적용
---   1. EMPLOYED       : 패스 사유가 ALREADY_EMPLOYED인 응답이 있음
---   2. NEED_HELP      : status = 'OPEN'인 help_request가 있음
---   3. CHECK_REQUIRED : COALESCE(last_response_at, completed_on) 기준 7일 이상 지남
+-- 상태 판정 규칙 (S12) — 현재 의사와 도움 요청은 별도 관리한다.
+--   1. 최신 상태 선택 또는 명확한 공고 응답을 시각순으로 비교한다.
+--      ALREADY_EMPLOYED=EMPLOYED, TAKING_BREAK=RESTING, 저장 성공 APPLY=SEEKING.
+--      일반 PASS·HELP·서류 검토/승인은 현재 의사를 바꾸지 않는다. 취업/지원 이력은 보존한다.
+--   2. 최신 의사가 EMPLOYED/RESTING이면 그 상태를 유지한다.
+--   3. 명확한 구직 의사가 없고 최신 추천이 0건이면 CHECK_REQUIRED.
+--   4. CHECK_REQUIRED : COALESCE(last_response_at, completed_on) 기준 7일 이상 지남
 --                      응답 이력이 없으면 수료일 00:00:00부터 계산. 첫 추천일은 쓰지 않음
---   4. SEEKING        : 그 외
+--   5. SEEKING        : 그 외. OPEN 도움 요청이 있어도 대표 상태를 덮어쓰지 않는다.
 --        APPLYING = SUBMITTED · APPROVED · DELIVERED 지원서가 있음
 --        OTHER    = 가장 최근 패스 사유가 OTHER
 --        WAITING  = 나머지

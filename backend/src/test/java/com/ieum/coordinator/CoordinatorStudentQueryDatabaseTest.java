@@ -60,6 +60,7 @@ class CoordinatorStudentQueryDatabaseTest {
                 UNION ALL SELECT 9, 10, '모의 지원', CAST('2026-08-31' AS DATE), NULL, NULL, NULL, NULL
                 UNION ALL SELECT 10, 10, '모의 도움', CAST('2026-08-31' AS DATE), NULL, NULL, NULL, NULL
                 UNION ALL SELECT 11, 10, '모의 기타', CAST('2026-08-31' AS DATE), NULL, NULL, NULL, NULL
+                UNION ALL SELECT 12, 10, '모의 휴식', CAST('2026-08-31' AS DATE), NULL, NULL, NULL, NULL
             ),
             student_status AS (
                 SELECT 1 AS student_id, 'EMPLOYED' AS status, 'APPLYING' AS sub_status,
@@ -73,6 +74,14 @@ class CoordinatorStudentQueryDatabaseTest {
                 UNION ALL SELECT 9, 'SEEKING', 'APPLYING', '모의 상태 근거'
                 UNION ALL SELECT 10, 'NEED_HELP', 'OTHER', '모의 상태 근거'
                 UNION ALL SELECT 11, 'SEEKING', 'OTHER', '모의 상태 근거'
+                UNION ALL SELECT 12, 'RESTING', 'APPLYING', '모의 상태 근거'
+            ),
+            help_request AS (
+                SELECT 1 AS id, 1 AS student_id, 'OPEN' AS status
+                UNION ALL SELECT 2, 1, 'OPEN'
+                UNION ALL SELECT 3, 12, 'OPEN'
+                UNION ALL SELECT 4, 10, 'CONTACTED'
+                UNION ALL SELECT 5, 11, 'CLOSED'
             ),
             competency_profile AS (SELECT 1 AS student_id, CAST('{"roles":[]}' AS JSON) AS profile),
             student_education AS (
@@ -155,22 +164,37 @@ class CoordinatorStudentQueryDatabaseTest {
     void statusNormalizationMatchesDashboardForMissingUnknownAndNoncanonicalValues() {
         List<Map<String, Object>> rows = query("findStudents", filters(null, null, null, 0, 50));
 
-        assertEquals(List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L), ids(rows, "student_id"));
+        assertEquals(List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L), ids(rows, "student_id"));
         assertEquals(List.of("EMPLOYED", "SEEKING", "CHECK_REQUIRED", "CHECK_REQUIRED", "CHECK_REQUIRED",
-                        "CHECK_REQUIRED", "SEEKING", "SEEKING", "SEEKING", "NEED_HELP", "SEEKING"),
+                        "CHECK_REQUIRED", "SEEKING", "SEEKING", "SEEKING", "SEEKING", "SEEKING", "RESTING"),
                 values(rows, "status"));
         assertEquals(Arrays.asList(null, "WAITING", null, null, null, null, "WAITING", "WAITING",
-                        "APPLYING", null, "OTHER"), values(rows, "sub_status"));
+                        "APPLYING", "WAITING", "OTHER", null), values(rows, "sub_status"));
         assertNull(rows.get(2).get("last_response_at"));
     }
 
     @Test
     void countsAndPagesApplyTheSameStatusSubstatusAndLiteralNameFilters() {
-        assertPage(null, null, null, 2, 3, 11, List.of(3L, 4L, 5L));
+        assertPage(null, null, null, 2, 3, 12, List.of(3L, 4L, 5L));
         assertPage("CHECK_REQUIRED", null, null, 1, 2, 4, List.of(4L, 5L));
-        assertPage("SEEKING", "WAITING", null, 1, 2, 3, List.of(7L, 8L));
+        assertPage("SEEKING", "WAITING", null, 1, 2, 4, List.of(7L, 8L));
         assertPage("SEEKING", "WAITING", "%!%!_!!%", 0, 20, 1, List.of(2L));
-        assertPage(null, null, null, 99, 20, 11, List.of());
+        assertPage(null, null, null, 99, 20, 12, List.of());
+    }
+
+    @Test
+    void openHelpCountIsIndependentOfStatusAndLegacyFilterCountsStudentsRatherThanRequests() {
+        List<Map<String, Object>> rows = query("findStudents", filters("NEED_HELP", null, null, 0, 50));
+
+        assertEquals(List.of(1L, 12L), ids(rows, "student_id"));
+        assertEquals(List.of("EMPLOYED", "RESTING"), values(rows, "status"));
+        assertEquals(List.of(2L, 1L), ids(rows, "open_help_request_count"));
+        assertPage("NEED_HELP", null, null, 0, 50, 2, List.of(1L, 12L));
+        assertPage("RESTING", null, null, 0, 50, 1, List.of(12L));
+        assertPage("SEEKING", "WAITING", null, 0, 50, 4, List.of(2L, 7L, 8L, 10L));
+        assertEquals(1, number(query("findStudent", student(12)).get(0), "open_help_request_count"));
+        assertEquals(0, number(query("findStudent", student(10)).get(0), "open_help_request_count"));
+        assertEquals(0, number(query("findStudent", student(11)).get(0), "open_help_request_count"));
     }
 
     @Test

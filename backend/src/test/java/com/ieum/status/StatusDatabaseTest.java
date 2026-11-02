@@ -73,9 +73,9 @@ class StatusDatabaseTest {
                 SELECT ENGINE FROM information_schema.TABLES
                 WHERE TABLE_SCHEMA = DATABASE()
                   AND TABLE_NAME IN ('student', 'student_status', 'recommendation',
-                                     'recommendation_item', 'help_request', 'application')
+                                     'recommendation_item', 'help_request', 'application', 'student_intent_history')
                 """, String.class);
-        assertEquals(6, engines.size(), "기존 스키마가 준비되어 있어야 한다");
+        assertEquals(7, engines.size(), "기존 스키마와 상태 선택 이력 테이블이 준비되어 있어야 한다");
         assertTrue(engines.stream().allMatch("InnoDB"::equalsIgnoreCase),
                 "기존 데이터를 보호하기 위해 InnoDB 테이블에서만 실행한다");
         assertEquals(2L, jdbc.queryForObject("SELECT COUNT(*) FROM student WHERE id IN (1, 2)", Long.class),
@@ -87,13 +87,64 @@ class StatusDatabaseTest {
     }
 
     @Test
-    void employedResponseHasPriorityOverHelpStalenessApplicationsAndLaterOtherPass() {
+    void employedResponseHasPriorityOverHelpStalenessOlderApplicationsAndLaterOtherPass() {
         rolledBack(tx -> {
             neutralize(STUDENT_ID, now().minusDays(10));
             item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", now().minusDays(12));
             item(STUDENT_ID, "PASS", "OTHER", now().minusDays(11));
             help(STUDENT_ID, "OPEN");
-            application(STUDENT_ID, "SUBMITTED");
+            application(STUDENT_ID, "SUBMITTED", now().minusDays(13));
+
+            service.recalculate(STUDENT_ID);
+
+            assertStored(STUDENT_ID, "EMPLOYED", null);
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"GENERATING", "DRAFT", "FAILED"})
+    void newerSavedApplyClearsEmploymentBeforeSubmissionAndRepeatedRecalculationPreservesHistory(
+            String applicationStatus) {
+        rolledBack(tx -> {
+            neutralize(STUDENT_ID, now().minusMinutes(30));
+            item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", now().minusDays(2));
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, "EMPLOYED", null);
+
+            application(STUDENT_ID, applicationStatus, now().minusMinutes(30));
+            LocalDateTime responseAt = lastResponse(STUDENT_ID);
+            List<Map<String, Object>> responses = rows("""
+                    SELECT i.* FROM recommendation_item i
+                    JOIN recommendation r ON r.id = i.recommendation_id
+                    WHERE r.student_id = ? ORDER BY i.id
+                    """, STUDENT_ID);
+            List<Map<String, Object>> applications = rows(
+                    "SELECT * FROM application WHERE student_id = ? ORDER BY id", STUDENT_ID);
+
+            for (int attempt = 0; attempt < 2; attempt++) {
+                service.recalculate(STUDENT_ID);
+                assertStored(STUDENT_ID, "SEEKING", "WAITING");
+            }
+
+            assertEquals(responseAt, lastResponse(STUDENT_ID));
+            assertTrue(responses.equals(rows("""
+                    SELECT i.* FROM recommendation_item i
+                    JOIN recommendation r ON r.id = i.recommendation_id
+                    WHERE r.student_id = ? ORDER BY i.id
+                    """, STUDENT_ID)), "취업·지원 응답 이력은 재계산 후에도 보존해야 한다");
+            assertTrue(applications.equals(rows(
+                    "SELECT * FROM application WHERE student_id = ? ORDER BY id", STUDENT_ID)),
+                    "서류 생성 상태와 지원서 원문은 재계산 후에도 보존해야 한다");
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PASS", "HELP"})
+    void newerOrdinaryPassOrHelpResponseDoesNotClearEmployment(String response) {
+        rolledBack(tx -> {
+            neutralize(STUDENT_ID, now().minusMinutes(30));
+            item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", now().minusDays(2));
+            item(STUDENT_ID, response, "PASS".equals(response) ? "OTHER" : null, now().minusMinutes(30));
 
             service.recalculate(STUDENT_ID);
 
@@ -102,7 +153,33 @@ class StatusDatabaseTest {
     }
 
     @Test
-    void openHelpHasPriorityOverStalenessApplicationsAndOtherPass() {
+    void employmentAndSavedApplyUseResponseTimeThenItemIdAndIgnoreApplyWithoutATimestamp() {
+        rolledBack(tx -> {
+            neutralize(STUDENT_ID, now().minusMinutes(30));
+            LocalDateTime responseAt = now().minusHours(1);
+            item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", responseAt);
+            item(STUDENT_ID, "APPLY", null, null);
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, "EMPLOYED", null);
+
+            application(STUDENT_ID, "GENERATING", responseAt.plusMinutes(1));
+            // ID가 더 큰 과거 취업 응답이 최근 지원을 덮어쓰면 안 된다.
+            item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", responseAt.minusMinutes(1));
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, "SEEKING", "WAITING");
+
+            item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", responseAt.plusMinutes(1));
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, "EMPLOYED", null);
+
+            item(STUDENT_ID, "APPLY", null, responseAt.plusMinutes(1));
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, "SEEKING", "WAITING");
+        });
+    }
+
+    @Test
+    void openHelpDoesNotReplaceTheStatusFromStalenessApplicationsOrOtherPass() {
         rolledBack(tx -> {
             neutralize(STUDENT_ID, now().minusDays(10));
             item(STUDENT_ID, "PASS", "OTHER", now().minusDays(9));
@@ -111,7 +188,62 @@ class StatusDatabaseTest {
 
             service.recalculate(STUDENT_ID);
 
-            assertStored(STUDENT_ID, "NEED_HELP", null);
+            assertStored(STUDENT_ID, "CHECK_REQUIRED", null);
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"EMPLOYED", "RESTING"})
+    void explicitIntentCoexistsWithOpenHelpUntilANewerApplyAndAllHistoryIsPreserved(String selectedStatus) {
+        rolledBack(tx -> {
+            neutralize(STUDENT_ID, now().minusMinutes(10));
+            application(STUDENT_ID, "APPROVED", now().minusDays(2));
+            insert("""
+                    INSERT INTO student_intent_history (student_id, status, selected_at) VALUES (?, ?, ?)
+                    """, STUDENT_ID, selectedStatus, now().minusHours(1));
+            help(STUDENT_ID, "OPEN");
+            item(STUDENT_ID, "HELP", null, now().minusMinutes(30));
+            item(STUDENT_ID, "PASS", "OTHER", now().minusMinutes(20));
+            List<Map<String, Object>> history = rows(
+                    "SELECT * FROM student_intent_history WHERE student_id = ? ORDER BY id", STUDENT_ID);
+
+            service.recalculate(STUDENT_ID);
+            assertStored(STUDENT_ID, selectedStatus, null);
+
+            item(STUDENT_ID, "APPLY", null, now().minusMinutes(10));
+            insert("""
+                    INSERT INTO recommendation (student_id, trigger_type, created_at) VALUES (?, 'REFRESH', ?)
+                    """, STUDENT_ID, now().plusSeconds(1));
+            for (int attempt = 0; attempt < 2; attempt++) {
+                service.recalculate(STUDENT_ID);
+                assertStored(STUDENT_ID, "SEEKING", "APPLYING");
+            }
+
+            assertEquals(1L, count("SELECT COUNT(*) FROM help_request WHERE student_id = ? AND status = 'OPEN'",
+                    STUDENT_ID), "구직 의사 변경과 재계산은 열린 도움 요청을 종료하지 않는다");
+            assertTrue(history.equals(rows(
+                    "SELECT * FROM student_intent_history WHERE student_id = ? ORDER BY id", STUDENT_ID)),
+                    "과거 취업·휴식 선택 이력을 덮어쓰거나 지우지 않는다");
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"EMPLOYED", "RESTING"})
+    void latestEmploymentOrRestingPassPersistsWithOpenHelpDespiteLaterOrdinaryPass(String expectedStatus) {
+        rolledBack(tx -> {
+            neutralize(STUDENT_ID, now().minusDays(10));
+            item(STUDENT_ID, "PASS", "EMPLOYED".equals(expectedStatus) ? "TAKING_BREAK" : "ALREADY_EMPLOYED",
+                    now().minusDays(20));
+            item(STUDENT_ID, "PASS", "EMPLOYED".equals(expectedStatus) ? "ALREADY_EMPLOYED" : "TAKING_BREAK",
+                    now().minusDays(15));
+            item(STUDENT_ID, "PASS", "OTHER", now().minusDays(10));
+            help(STUDENT_ID, "OPEN");
+
+            service.recalculate(STUDENT_ID);
+
+            assertStored(STUDENT_ID, expectedStatus, null);
+            assertEquals(1L, count("SELECT COUNT(*) FROM help_request WHERE student_id = ? AND status = 'OPEN'",
+                    STUDENT_ID));
         });
     }
 
@@ -293,7 +425,7 @@ class StatusDatabaseTest {
             help(STUDENT_ID, "OPEN");
             service.recalculate(STUDENT_ID);
 
-            assertStored(STUDENT_ID, "NEED_HELP", null);
+            assertStored(STUDENT_ID, "SEEKING", "WAITING");
             assertEquals(1L, jdbc.queryForObject(
                     "SELECT COUNT(*) FROM student_status WHERE student_id = ?", Long.class, STUDENT_ID));
         });
@@ -312,7 +444,7 @@ class StatusDatabaseTest {
             service.recordResponse(STUDENT_ID, newerTime);
 
             assertEquals(newerTime, lastResponse(STUDENT_ID));
-            assertStored(STUDENT_ID, "NEED_HELP", null);
+            assertStored(STUDENT_ID, "SEEKING", "WAITING");
             service.recordResponse(STUDENT_ID, newerTime);
             assertEquals(newerTime, lastResponse(STUDENT_ID), "같은 시각의 이벤트도 시각을 유지한다");
         });
@@ -377,17 +509,17 @@ class StatusDatabaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"EMPLOYED", "NEED_HELP"})
-    void employmentAndOpenHelpHavePriorityOverStaleCompletionWithoutAResponse(String status) {
+    @ValueSource(strings = {"EMPLOYED", "RESTING", "CHECK_REQUIRED"})
+    void employmentAndRestingPersistWhileOpenHelpDoesNotHideStaleCompletion(String status) {
         rolledBack(tx -> {
             neutralize(STUDENT_ID, null);
             completedOn(STUDENT_ID, now().toLocalDate().minusDays(30));
             if ("EMPLOYED".equals(status)) {
                 item(STUDENT_ID, "PASS", "ALREADY_EMPLOYED", now().minusDays(1));
-                help(STUDENT_ID, "OPEN");
-            } else {
-                help(STUDENT_ID, "OPEN");
+            } else if ("RESTING".equals(status)) {
+                item(STUDENT_ID, "PASS", "TAKING_BREAK", now().minusDays(1));
             }
+            help(STUDENT_ID, "OPEN");
 
             service.recalculate(STUDENT_ID);
 
@@ -477,15 +609,25 @@ class StatusDatabaseTest {
     }
 
     private Expected expectedFromSources(long studentId, LocalDateTime at) {
-        if (count("""
-                SELECT COUNT(*) FROM recommendation_item i
-                JOIN recommendation r ON r.id = i.recommendation_id
-                WHERE r.student_id = ? AND i.response = 'PASS' AND i.pass_reason = 'ALREADY_EMPLOYED'
-                """, studentId) > 0) {
-            return new Expected("EMPLOYED", null);
-        }
-        if (count("SELECT COUNT(*) FROM help_request WHERE student_id = ? AND status = 'OPEN'", studentId) > 0) {
-            return new Expected("NEED_HELP", null);
+        List<String> latestIntent = jdbc.queryForList("""
+                SELECT intent_status FROM (
+                    SELECT CASE WHEN i.response = 'APPLY' THEN 'SEEKING'
+                                WHEN i.pass_reason = 'ALREADY_EMPLOYED' THEN 'EMPLOYED'
+                                ELSE 'RESTING' END AS intent_status,
+                           i.responded_at AS selected_at, 0 AS explicit_selection, i.id AS source_id
+                    FROM recommendation_item i JOIN recommendation r ON r.id = i.recommendation_id
+                    WHERE r.student_id = ?
+                      AND ((i.response = 'PASS' AND i.pass_reason IN ('ALREADY_EMPLOYED', 'TAKING_BREAK'))
+                           OR (i.response = 'APPLY' AND i.responded_at IS NOT NULL))
+                    UNION ALL
+                    SELECT status, selected_at, 1, id
+                    FROM student_intent_history WHERE student_id = ?
+                ) candidates
+                ORDER BY selected_at DESC, explicit_selection DESC, source_id DESC LIMIT 1
+                """, String.class, studentId, studentId);
+        String intent = latestIntent.isEmpty() ? null : latestIntent.get(0);
+        if ("EMPLOYED".equals(intent) || "RESTING".equals(intent)) {
+            return new Expected(intent, null);
         }
         List<Long> latestItemCounts = jdbc.queryForList("""
                 SELECT COUNT(i.id)
@@ -496,7 +638,7 @@ class StatusDatabaseTest {
                 ORDER BY r.created_at DESC, r.id DESC
                 LIMIT 1
                 """, Long.class, studentId);
-        if (!latestItemCounts.isEmpty() && latestItemCounts.get(0) == 0L) {
+        if (!"SEEKING".equals(intent) && !latestItemCounts.isEmpty() && latestItemCounts.get(0) == 0L) {
             return new Expected("CHECK_REQUIRED", null);
         }
         LocalDateTime inactivitySince = lastResponse(studentId);
@@ -527,6 +669,7 @@ class StatusDatabaseTest {
     private void neutralize(long studentId, LocalDateTime lastResponse) {
         assertEquals(studentId, jdbc.queryForObject(
                 "SELECT id FROM student WHERE id = ? FOR UPDATE", Long.class, studentId));
+        jdbc.update("DELETE FROM student_intent_history WHERE student_id = ?", studentId);
         jdbc.update("""
                 UPDATE recommendation_item i JOIN recommendation r ON r.id = i.recommendation_id
                 SET i.response = 'NONE', i.pass_reason = NULL, i.pass_note = NULL, i.responded_at = NULL
@@ -564,7 +707,11 @@ class StatusDatabaseTest {
     }
 
     private void application(long studentId, String status) {
-        long itemId = item(studentId, "APPLY", null, now().minusHours(1));
+        application(studentId, status, now().minusHours(1));
+    }
+
+    private void application(long studentId, String status, LocalDateTime respondedAt) {
+        long itemId = item(studentId, "APPLY", null, respondedAt);
         jdbc.update("""
                 INSERT INTO application (student_id, recommendation_item_id, job_posting_id, status)
                 VALUES (?, ?, ?, ?)
@@ -600,6 +747,7 @@ class StatusDatabaseTest {
         return new Baseline(List.of(
                 rows("SELECT * FROM student WHERE id IN (1, 2) ORDER BY id"),
                 rows("SELECT * FROM student_status WHERE student_id IN (1, 2) ORDER BY student_id"),
+                rows("SELECT * FROM student_intent_history WHERE student_id IN (1, 2) ORDER BY id"),
                 rows("SELECT * FROM recommendation WHERE student_id IN (1, 2) ORDER BY id"),
                 rows("""
                         SELECT i.* FROM recommendation_item i

@@ -49,9 +49,10 @@ class CoordinatorStudentControllerTest {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE).build();
     private static final Set<String> ROW_KEYS = Set.of("studentId", "name", "courseLabel", "completedOn",
-            "status", "subStatus", "lastResponseAt", "hasNote");
+            "status", "subStatus", "lastResponseAt", "hasNote", "openHelpRequestCount", "consecutivePassCount", "needsPassFollowUp");
     private static final Set<String> STUDENT_KEYS = Set.of("studentId", "name", "courseLabel", "completedOn",
-            "status", "subStatus", "lastResponseAt", "hasNote", "email", "desiredJob", "preferredRegion", "reason");
+            "status", "subStatus", "lastResponseAt", "hasNote", "email", "desiredJob", "preferredRegion", "reason",
+            "openHelpRequestCount", "consecutivePassCount", "needsPassFollowUp");
     private static final Set<String> LOG_KEYS = Set.of("contactLogId", "contactType", "note", "createdAt");
     private static final OffsetDateTime CREATED_AT = OffsetDateTime.of(2026, 10, 28, 12, 0, 0, 0,
             ZoneOffset.ofHours(9));
@@ -114,7 +115,7 @@ class CoordinatorStudentControllerTest {
     }
 
     @Test
-    void listRowsMatchAllEightFieldsAndRetainNullableStatusDetailAndResponseTime() throws Exception {
+    void listRowsIncludeOpenRequestCountAndRetainNullableStatusDetailAndResponseTime() throws Exception {
         var response = JSON.readValue("""
                 {"items":[{"studentId":7,"name":"목록 검증 모의","courseLabel":"모의 과정 1기",
                   "completedOn":"2026-08-29","status":"CHECK_REQUIRED","subStatus":null,
@@ -130,6 +131,27 @@ class CoordinatorStudentControllerTest {
         assertTrue(row.get("subStatus").isNull());
         assertTrue(row.get("lastResponseAt").isNull());
         assertFalse(row.get("hasNote").booleanValue());
+        assertEquals(0, row.get("openHelpRequestCount").longValue());
+    }
+
+    @Test
+    void restingStudentRetainsOpenHelpCountInListAndDetail() throws Exception {
+        var row = new CoordinatorStudentResponse.Row(7L, "목록 검증 모의", "모의 과정 1기",
+                java.time.LocalDate.of(2026, 8, 29), "RESTING", null, null, false, 2);
+        when(service.list("RESTING", null, null, 1, 20))
+                .thenReturn(new CoordinatorStudentResponse.ListResult(List.of(row), 1, 1, 20));
+        ObjectNode detail = JSON.valueToTree(emptyDetail());
+        ((ObjectNode) detail.get("student")).put("status", "RESTING").put("openHelpRequestCount", 2);
+        when(service.detail(7L)).thenReturn(JSON.treeToValue(detail, CoordinatorStudentResponse.Detail.class));
+
+        mvc.perform(get("/api/coordinator/students").param("status", "RESTING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].status").value("RESTING"))
+                .andExpect(jsonPath("$.data.items[0].openHelpRequestCount").value(2));
+        mvc.perform(get("/api/coordinator/students/7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.student.status").value("RESTING"))
+                .andExpect(jsonPath("$.data.student.openHelpRequestCount").value(2));
     }
 
     @ParameterizedTest
@@ -150,6 +172,7 @@ class CoordinatorStudentControllerTest {
 
         assertEquals(Set.of("student", "competencyProfile", "registered", "history", "contactLogs"), keys(data));
         assertEquals(STUDENT_KEYS, keys(data.get("student")));
+        assertEquals(0, data.get("student").get("openHelpRequestCount").longValue());
         for (String field : List.of("subStatus", "lastResponseAt", "email", "desiredJob", "preferredRegion", "reason")) {
             assertTrue(data.get("student").has(field));
             assertTrue(data.get("student").get(field).isNull());
