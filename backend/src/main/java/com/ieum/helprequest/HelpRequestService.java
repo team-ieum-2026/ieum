@@ -128,9 +128,13 @@ public class HelpRequestService {
         if (row == null || !studentId.equals(row.getStudentId())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS, "도움 요청 기록을 찾지 못했어요. 새로고침 후 다시 확인해주세요.");
         }
+        if ("CLOSED".equals(row.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS,
+                    "이미 종료한 도움 요청이에요. 새로고침 후 다시 확인해주세요.");
+        }
         if (!"OPEN".equals(row.getStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS,
-                    "담당자가 이미 확인한 도움 요청은 직접 취소할 수 없어요. 담당자에게 문의해주세요.");
+                    "담당자가 이미 연락한 도움 요청은 직접 취소할 수 없어요. 담당자에게 문의해주세요.");
         }
         row.setStatus("CLOSED");
         row.setClosedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
