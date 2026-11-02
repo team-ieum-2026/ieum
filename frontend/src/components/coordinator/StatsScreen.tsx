@@ -6,7 +6,7 @@
 // ④ 수료생 통합 현황: C2 목록 API(검색 · 관리 상태 · 페이지) + 지금 페이지만 C3 상세로 지원서류를 채운다. 도움 요청은 접수 중 건수
 // ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass } from "@/components/coordinator/CoordUi";
 import {
   MANAGE_ORDER,
@@ -74,6 +74,9 @@ export default function StatsScreen() {
 }
 
 function Body({ data }: { data: Dashboard }) {
+  // 집계 기준 설명은 기본으로 접어 두고 '취업 지표' 옆 버튼으로만 펼친다
+  const [showBasis, setShowBasis] = useState(false);
+  const basisId = useId();
   const total = data.totalStudents;
   const s = data.statusSummary;
   const counts = manageCounts(s);
@@ -164,8 +167,23 @@ function Body({ data }: { data: Dashboard }) {
           </div>
         </Panel>
         <Panel label="취업 지표" className="px-5 py-4">
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-[15px] font-bold">취업 지표</h2>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[15px] font-bold">취업 지표</h2>
+              <button
+                type="button"
+                aria-expanded={showBasis}
+                aria-controls={basisId}
+                onClick={() => setShowBasis((v) => !v)}
+                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold focus-visible:outline-2 focus-visible:outline-(--coord-green) ${
+                  showBasis
+                    ? "border-(--coord-green) bg-(--coord-green-soft) text-(--coord-forest)"
+                    : "border-(--coord-line) text-(--coord-muted) hover:bg-(--coord-hover)"
+                }`}
+              >
+                <span aria-hidden="true">ⓘ</span> 집계 기준
+              </button>
+            </div>
             <span className="text-xs text-(--coord-muted)">관리 상태 기준</span>
           </div>
           <div className="grid grid-cols-3 gap-2.5 text-center">
@@ -186,8 +204,15 @@ function Body({ data }: { data: Dashboard }) {
           <p className="mt-3 text-[11px] text-(--coord-muted)">취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.</p>
         </Panel>
       </div>
-      <details className="mt-3 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-2.5 text-xs leading-[1.7]">
-        <summary className="cursor-pointer font-semibold">관리 상태와 집계 기준</summary>
+      {/* 닫혀 있으면 아무것도 그리지 않아 여백이 생기지 않는다 */}
+      <div
+        id={basisId}
+        role="region"
+        aria-label="관리 상태와 집계 기준"
+        hidden={!showBasis}
+        className="mt-3 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-2.5 text-xs leading-[1.7]"
+      >
+        <b>관리 상태와 집계 기준</b>
         <p className="mt-2">
           관리 상태는 수료생 앱 응답과 도움 요청으로 서버가 분류해요. 1주 넘게 응답이 없는 수료생은 &lsquo;추가 확인 필요&rsquo;로 따로 세요. &lsquo;구직
           중&rsquo;은 운영상의 분류이며 미취업을 확정하는 값은 아니에요.
@@ -197,7 +222,7 @@ function Body({ data }: { data: Dashboard }) {
           관리 상태 파악률 = (전체 − 추가 확인 필요) ÷ 전체 · 취업률 = 취업 완료 ÷ (전체 − 추가 확인 필요) · 전체 기준 취업률 = 취업 완료 ÷ 전체.
           취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.
         </p>
-      </details>
+      </div>
       <HelpStats data={data} />
       <StudentRoster data={data} />
     </>
