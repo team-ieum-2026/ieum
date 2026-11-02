@@ -1,141 +1,85 @@
-/* R0 전용: 사용자가 조정한 시안 비율을 고정하고 다른 화면으로 스타일이 번지지 않게 제한한다. */
+@import "./career-foundation.css";
+
 .entry-app {
-  --page:var(--color-entry-web-page); --surface:var(--color-entry-web-surface); --frame:var(--color-entry-web-frame); --ink:var(--color-entry-web-ink); --heading:var(--color-entry-web-heading); --sub:var(--color-entry-web-sub); --muted:var(--color-entry-web-muted);
-  --primary:var(--color-entry-web-primary); --primary-strong:var(--color-entry-web-primary-strong); --mint:var(--color-entry-web-mint); --mint-bright:var(--color-entry-web-mint-bright); --mint-soft:var(--color-entry-web-mint-soft); --line:var(--color-entry-web-line);
-  --shadow:var(--color-entry-web-shadow); --shadow-hover:var(--color-entry-web-shadow-hover); --danger:var(--color-entry-web-danger); --backdrop:var(--color-entry-web-backdrop);
-  --font-sans:var(--font-noto-sans-kr), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  min-height: 100dvh;
+  .entry-page { display: flex; flex-direction: column; min-height: 100dvh; width: min(1240px, calc(100% - 64px)); margin: auto; }
+  .header { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 88px; }
+  .header::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--color-line); box-shadow: 0 0 0 100vmax var(--color-line); clip-path: inset(0 -100vmax); pointer-events: none; }
+  .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink); font-size: 28px; font-weight: 800; letter-spacing: -.06em; }
+  .brand small { margin-left: 8px; color: var(--color-ink-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+  .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; color: var(--color-primary); }
+  .brand-mark .icon { width: 30px; height: 30px; stroke-width: 2; }
+  .icon, .s-icon { display: block; width: 22px; height: 22px; flex-shrink: 0; }
+  .help-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-ink-sub); font-size: 14px; }
+  .entry-layout { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: 72px 0; flex: 1; }
+  .entry-copy { position: relative; top: -10px; width: min(640px, 100%); }
+  .entry-service-caption { position: fixed; right: 24px; bottom: max(20px, env(safe-area-inset-bottom)); color: var(--color-ink-muted); font-size: 12px; line-height: 1.6; text-align: right; }
+  .hero { text-align: center; }
+  h1 { margin-top: 24px; font-size: calc(clamp(40px, 3.7vw, 52px) + 37px); font-weight: 700; line-height: 1.25; letter-spacing: -.045em; word-break: keep-all; color: var(--color-ink); }
+  h1 em { color: var(--color-primary); font-style: normal; }
+  #entry-heading { --entry-character-duration: 320ms; --entry-character-stagger: 65ms; }
+  .entry-heading-character { animation: entry-character-reveal var(--entry-character-duration) ease-out both; animation-delay: calc(120ms + var(--entry-character-index) * var(--entry-character-stagger) + var(--entry-line-delay, 0ms)); }
+  .entry-heading-second-line { --entry-line-delay: calc(var(--entry-character-duration) + 250ms - var(--entry-character-stagger)); }
+  .entry-heading-punctuation { font-size: calc(1em - 20px); }
+  #entry-heading > .entry-heading-punctuation { font-size: calc(1em - 25px); }
+  .hero-description { margin-top: 24px; color: var(--color-ink-sub); font-size: 16px; line-height: 1.8; word-break: keep-all; }
+  .roles { margin-top: 48px; }
+  .roles h2 { margin-bottom: 16px; font-size: 21px; font-weight: 600; text-align: center; }
+  .role-list { display: grid; gap: 12px; width: min(620px, 100%); margin-inline: auto; }
+  .role-card { display: flex; align-items: center; gap: 16.8px; min-height: 105px; width: 100%; padding: 21px 25.2px; border: 1.05px solid var(--color-line); border-radius: 12.6px; background: var(--color-surface); text-align: left; transition: border-color .2s, transform .2s, box-shadow .2s; }
+  .role-card:hover { border-color: var(--color-career-blue); transform: translateY(-2px); box-shadow: var(--shadow-career-card); }
+  .student-card { border-color: var(--color-career-blue); background: var(--color-career-blue-soft); }
+  .role-icon { display: grid; place-items: center; flex-shrink: 0; width: 50.4px; height: 50.4px; border-radius: 10.5px; background: var(--color-career-blue-soft); color: var(--color-primary); }
+  .role-icon .icon { width: 23.1px; height: 23.1px; }
+  .student-card .role-icon { background: var(--color-surface); }
+  .coordinator-card .role-icon { background: var(--color-career-purple-soft); color: var(--color-career-purple-deep); }
+  .role-copy { display: grid; gap: 4.2px; min-width: 0; }
+  .role-copy strong { font-size: 18.9px; font-weight: 600; }
+  .role-copy > span { color: var(--color-ink-sub); font-size: 14.7px; }
+  .role-arrow { margin-left: auto; width: 18.9px; height: 18.9px; color: var(--color-ink-sub); }
+  dialog { position: fixed; inset: 0; width: min(480px, calc(100% - 32px)); max-height: 88dvh; overflow-y: auto; margin: auto; padding: 40px; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-career-dialog); }
+  dialog::backdrop { background: var(--color-career-backdrop); }
+  .dialog-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-ink-sub); border-radius: 8px; }
+  .dialog-close:hover { background: var(--color-page); }
+  .dialog-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border-radius: 10px; color: var(--color-primary); background: var(--color-career-blue-soft); }
+  dialog h2 { font-size: 24px; font-weight: 700; line-height: 1.4; }
+  dialog p { margin-top: 16px; color: var(--color-ink-sub); font-size: 15px; line-height: 1.8; }
+  form { margin-top: 32px; }
+  label { display: block; font-size: 14px; font-weight: 600; }
+  .field-hint { margin-top: 8px; margin-bottom: 16px; font-size: 13px; }
+  .input-wrap { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border: 1px solid var(--color-line); border-radius: 8px; color: var(--color-ink-muted); }
+  .input-wrap:focus-within { border-color: var(--color-primary); outline: 2px solid var(--color-career-blue-soft); }
+  .input-wrap.is-error { border-color: var(--color-danger); }
+  .input-wrap input { width: 100%; min-width: 0; min-height: 52px; outline: none; background: none; color: var(--color-ink); font-size: 16px; }
+  #student-entry-error { margin-top: 12px; color: var(--color-danger); font-size: 13px; }
+  .form-actions { display: grid; gap: 16px; margin-top: 24px; }
+  .text-button { order: 2; min-height: 44px; color: var(--color-ink-sub); font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
+  .primary-button { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 52px; padding: 12px 20px; border-radius: 8px; background: var(--color-primary); color: var(--color-surface); font-size: 16px; font-weight: 600; }
+  .primary-button:hover { background: var(--color-career-hero-ink); }
+  .entry-help-dialog .primary-button { margin-top: 24px; }
+  .student-entry-dialog {
+    h2 { font-size: 32px; }
+    form { margin-top: 37px; }
+    label { font-size: 17px; }
+    .field-hint { position: relative; top: 3px; margin-bottom: 5px; font-size: 14px; }
+    .input-wrap input { font-size: 19px; }
+    .input-wrap:focus-within { outline: none; }
+    .input-wrap:not(.is-error):focus-within { border-color: var(--color-line); }
+    .input-wrap input:focus-visible { outline: none; box-shadow: none; }
+    #student-entry-error { font-size: 16px; }
+    .primary-button { font-size: 19px; line-height: 24px; }
+    .text-button { font-size: 16px; }
+  }
+  button:disabled { opacity: .55; }
 }
-.entry-app * { box-sizing:border-box; }
-.entry-app { margin:0; min-height:100dvh; font-family:var(--font-sans); letter-spacing:-.4px; color:var(--ink); background:var(--page); -webkit-font-smoothing:antialiased; }
-.entry-app button, .entry-app input { font:inherit; color:inherit; }.entry-app button, .entry-app a { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }.entry-app button { cursor:pointer; }.entry-app a { color:inherit; text-decoration:none; }.entry-app p, .entry-app h1, .entry-app h2 { margin:0; }.entry-app [hidden] { display:none !important; }
-.entry-app button:focus-visible, .entry-app a:focus-visible { outline:2px solid var(--primary); outline-offset:4px; }
-.entry-app .icon-library { position:absolute; width:0; height:0; overflow:hidden; }.entry-app .icon { display:block; width:22px; height:22px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
-.entry-app .entry-page { display:flex; flex-direction:column; width:100%; min-height:100dvh; padding:0 64px; overflow:hidden; }
-.entry-app .header { display:flex; align-items:center; justify-content:space-between; width:min(1240px,100%); min-height:84px; margin:0 auto; border-bottom:1px solid var(--line); }
-.entry-app .brand { display:inline-flex; align-items:center; gap:11px; font-size:29px; font-weight:700; letter-spacing:-1px; color:var(--heading); }.entry-app .brand-mark { display:grid; place-items:center; width:37px; height:37px; border-radius:10px; color:var(--primary); background:var(--mint-bright); }.entry-app .brand-mark .icon { width:24px; height:24px; stroke-width:2; }.entry-app .brand-dot { color:var(--primary); }
-.entry-app .help-button { display:flex; align-items:center; gap:7px; padding:10px 0 10px 12px; background:none; border:0; color:var(--sub); font-size:12px; }.entry-app .help-button .icon { width:17px; height:17px; }
-.entry-app .hero { position:relative; width:min(1240px,100%); margin:26px auto 0; text-align:center; isolation:isolate; }.entry-app .hero::before { content:''; position:absolute; width:960px; max-width:100%; height:370px; top:125px; left:50%; transform:translateX(-50%); background:radial-gradient(ellipse,var(--mint),transparent 70%); z-index:-1; pointer-events:none; }
-.entry-app .eyebrow { font-size:10px; font-weight:500; letter-spacing:2.2px; color:var(--primary); }
-.entry-app h1 { font-size:48px; font-weight:700; letter-spacing:-2px; line-height:1.3; margin-top:12px; color:var(--heading); word-break:keep-all; }.entry-app h1 em { font-style:normal; color:var(--primary-strong); }
-.entry-app .hero-description { font-size:15px; color:var(--sub); line-height:1.85; margin-top:13px; }.entry-app .mobile-break { display:none; }
-.entry-app .hero-art { display:flex; align-items:center; justify-content:center; width:100%; height:252px; margin:8px auto 0; }.entry-app .hero-art img { display:block; width:420px; max-width:100%; height:auto; max-height:280px; object-fit:contain; filter:saturate(.82); }
-.entry-app .roles { width:min(1120px,100%); margin:13px auto 36px; }.entry-app .roles h2 { font-size:18px; font-weight:700; line-height:1.7; margin-bottom:18px; text-align:center; letter-spacing:-.5px; }.entry-app .role-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:24px; }
-.entry-app .role-card { position:relative; display:flex; align-items:center; gap:22px; width:100%; min-height:112px; padding:24px 28px; text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 3px 13px var(--shadow); transition:border-color .18s,box-shadow .18s,transform .18s; }
-.entry-app .role-card:hover { border-color:var(--primary); box-shadow:0 7px 25px var(--shadow-hover); transform:translateY(-2px); }.entry-app .role-card[aria-expanded=true] { border-color:var(--primary); background:var(--mint-soft); }
-.entry-app .role-icon { display:grid; place-items:center; width:56px; height:56px; border-radius:15px; flex-shrink:0; background:var(--mint-bright); color:var(--primary); }.entry-app .role-icon .icon { width:31px; height:31px; }.entry-app .coordinator-card .role-icon { background:var(--mint); }
-.entry-app .role-copy { display:grid; gap:5px; min-width:0; }.entry-app .role-copy strong { font-size:20px; font-weight:700; line-height:1.5; }.entry-app .role-copy > span { font-size:14px; color:var(--sub); line-height:1.7; }.entry-app .role-arrow { width:20px; height:20px; color:var(--primary); margin-left:auto; }.entry-app .student-card[aria-expanded=true] .role-arrow { transform:rotate(90deg); }
-.entry-app .student-form-panel { margin:10px 0 2px; padding:23px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }.entry-app label { display:block; font-size:13px; font-weight:700; }.entry-app .field-hint { font-size:11px; color:var(--sub); line-height:1.8; margin:5px 0 12px; }
-.entry-app .input-wrap { display:flex; align-items:center; gap:10px; min-height:49px; padding:0 13px; border:1px solid var(--line); border-radius:9px; color:var(--sub); background:var(--surface); }.entry-app .input-wrap .icon { width:18px; height:18px; }.entry-app .input-wrap:focus-within { outline:2px solid var(--primary); outline-offset:2px; }.entry-app .input-wrap.is-error { border-color:var(--danger); }.entry-app .input-check { color:var(--primary); }.entry-app input { border:0; outline:0; min-width:0; width:100%; background:none; min-height:47px; font-size:14px; }.entry-app input::placeholder { color:var(--muted); font-size:12px; }
-.entry-app #student-entry-error { font-size:11px; color:var(--danger); margin-top:10px; line-height:1.8; }.entry-app .form-actions { display:flex; align-items:center; gap:15px; justify-content:space-between; margin-top:17px; }.entry-app .text-button { padding:8px 0; background:none; border:0; color:var(--sub); font-size:10px; text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
-.entry-app .primary-button { display:flex; align-items:center; justify-content:center; gap:10px; min-height:45px; padding:12px 16px; color:var(--surface); background:var(--primary); border:1px solid var(--primary); border-radius:9px; font-size:12px; font-weight:700; }.entry-app .primary-button:hover { background:var(--primary-strong); }.entry-app .primary-button .icon { width:16px; height:16px; }
-.entry-app .footer { display:flex; align-items:center; justify-content:space-between; gap:24px; width:min(1240px,100%); min-height:72px; margin:auto auto 0; border-top:1px solid var(--line); }.entry-app .footer > p { font-size:11px; color:var(--sub); line-height:1.8; }.entry-app .footer > div { display:flex; gap:30px; align-items:center; color:var(--sub); font-size:10px; }.entry-app .footer > div > span { display:flex; align-items:center; gap:10px; }.entry-app .footer strong { font-size:13px; color:var(--primary); font-weight:500; }.entry-app .footer-cross { font-size:9px; color:var(--muted); }.entry-app .footer small { font-size:10px; color:var(--muted); }.entry-app .page-caption { display:none; }
-.entry-app dialog { width:min(420px,calc(100% - 32px)); max-height:88dvh; overflow-y:auto; padding:32px; color:var(--ink); background:var(--frame); border:1px solid var(--line); border-radius:19px; box-shadow:0 20px 70px var(--shadow-hover); }.entry-app dialog::backdrop { background:var(--backdrop); backdrop-filter:blur(4px); }.entry-app .dialog-close { position:absolute; top:13px; right:13px; display:grid; place-items:center; background:none; border:0; color:var(--sub); width:34px; height:34px; }.entry-app .dialog-close .icon { width:18px; height:18px; }.entry-app .dialog-icon { display:grid; place-items:center; width:43px; height:43px; margin-bottom:21px; background:var(--mint-bright); color:var(--primary); border-radius:12px; }.entry-app dialog h2 { font-size:20px; font-weight:700; letter-spacing:-.8px; }.entry-app dialog .eyebrow { margin-bottom:10px; }.entry-app dialog p:not(.eyebrow) { font-size:12px; color:var(--sub); line-height:1.9; margin-top:15px; }.entry-app dialog .preview-note { font-size:11px !important; border-top:1px solid var(--line); padding-top:14px; }.entry-app dialog .primary-button { margin-top:23px; width:100%; }
-@media(min-width:1600px) {
-  .entry-app .hero { margin-top:34px; }.entry-app h1 { font-size:52px; }.entry-app .hero-art { height:285px; }.entry-app .hero-art img { width:470px; max-height:315px; }.entry-app .roles { margin-top:16px; margin-bottom:45px; }
-}
-@media(max-width:1000px) and (min-width:701px) {
-  .entry-app .entry-page { padding-inline:32px; }.entry-app .header { min-height:76px; }.entry-app h1 { font-size:43px; }.entry-app .role-list { gap:16px; }.entry-app .role-card { padding:21px; gap:14px; min-height:105px; }.entry-app .role-icon { width:45px; height:45px; border-radius:12px; }.entry-app .role-icon .icon { width:27px; height:27px; }.entry-app .role-copy strong { font-size:18px; }.entry-app .role-copy > span { font-size:11px; }.entry-app .role-arrow { width:16px; }
-}
-@media(min-width:701px) and (max-height:820px) {
-  .entry-app .header { min-height:72px; }.entry-app .hero { margin-top:18px; }.entry-app h1 { font-size:42px; margin-top:10px; }.entry-app .hero-description { margin-top:10px; font-size:14px; }.entry-app .hero-art { height:210px; margin-top:6px; }.entry-app .hero-art img { width:350px; max-height:233px; }.entry-app .roles { margin:8px auto 24px; }.entry-app .roles h2 { font-size:17px; margin-bottom:14px; }.entry-app .role-card { min-height:100px; padding-block:20px; }.entry-app .footer { min-height:60px; }
-}
-@media(max-width:700px) {
-  .entry-app .entry-page { min-height:100dvh; padding:0 24px; }.entry-app .header { min-height:72px; }.entry-app .brand { font-size:22px; gap:8px; }.entry-app .brand-mark { width:30px; height:30px; border-radius:8px; }.entry-app .brand-mark .icon { width:20px; height:20px; }.entry-app .help-button { font-size:10px; }.entry-app .help-button .icon { width:15px; height:15px; }
-  .entry-app .hero { margin-top:22px; text-align:left; }.entry-app .hero .eyebrow { display:none; }.entry-app h1 { font-size:30px; margin-top:0; line-height:1.4; letter-spacing:-1.2px; }.entry-app .hero-description { font-size:13px; line-height:1.65; margin-top:11px; }.entry-app .mobile-break { display:block; }.entry-app .hero-art { width:calc(100% + 20px); max-width:none; height:215px; margin:4px -10px 6px; }.entry-app .hero-art img { width:340px; max-width:100%; max-height:227px; }.entry-app .hero::before { top:110px; height:240px; width:400px; }
-  .entry-app .roles { margin:8px auto 28px; }.entry-app .roles h2 { font-size:14px; margin-bottom:12px; text-align:left; }.entry-app .role-list { grid-template-columns:1fr; gap:10px; }.entry-app .role-card { padding:14px 15px; min-height:79px; gap:13px; border-radius:14px; }.entry-app .role-icon { width:43px; height:43px; border-radius:11px; }.entry-app .role-icon .icon { width:26px; height:26px; }.entry-app .role-copy strong { font-size:16px; line-height:1.4; }.entry-app .role-copy > span { font-size:11px; line-height:1.65; }.entry-app .role-copy { gap:3px; }.entry-app .role-arrow { width:15px; height:15px; }
-  .entry-app .student-form-panel { padding:17px; }.entry-app .field-hint { font-size:10px; }.entry-app .form-actions { gap:10px; }.entry-app .primary-button { font-size:11px; padding-inline:12px; }.entry-app .text-button { font-size:9px; }.entry-app .footer { flex-direction:column; gap:12px; padding:20px 0 23px; min-height:0; }.entry-app .footer > p { font-size:10px; }.entry-app .footer > div { width:100%; justify-content:space-between; gap:15px; }.entry-app .footer small { font-size:8px; }
-}
-@media(max-width:370px) {
-  .entry-app .entry-page { padding-inline:20px; }.entry-app h1 { font-size:27px; letter-spacing:-1px; }.entry-app .hero-description { font-size:12px; }.entry-app .hero-art { height:190px; }.entry-app .hero-art img { max-height:205px; }.entry-app .role-card { gap:11px; padding:12px; min-height:75px; }.entry-app .role-icon { width:39px; height:39px; }.entry-app .role-copy strong { font-size:15px; }.entry-app .role-copy > span { font-size:10px; }.entry-app .role-arrow { width:14px; }.entry-app .roles h2 { font-size:13px; }.entry-app .footer > p { font-size:9px; }.entry-app .form-actions { align-items:stretch; flex-direction:column-reverse; gap:5px; }.entry-app .text-button { align-self:center; }
-}
-/* 큰 모니터에서도 콘텐츠가 고정 폭·고정 크기로 남지 않도록 화면에 비례한다. */
-@media(min-width:701px) {
-  .entry-app { background:var(--surface); }
-  .entry-app .entry-page { display:grid; grid-template-rows:auto minmax(0,1fr) auto auto; height:100dvh; min-height:100dvh; padding-inline:clamp(32px,4vw,150px); }
-  .entry-app .header { width:100%; min-height:clamp(78px,6.6dvh,140px); margin:0; }
-  .entry-app .brand { font-size:clamp(21px,1.68vw,49px); gap:clamp(8px,.7vw,20px); }
-  .entry-app .brand-mark { width:clamp(28px,2.31vw,63px); height:clamp(28px,2.31vw,63px); border-radius:clamp(8px,.7vw,17px); }
-  .entry-app .brand-mark .icon { width:63%; height:63%; }
-  .entry-app .help-button { font-size:clamp(15px,1.1vw,30px); gap:clamp(7px,.6vw,18px); }
-  .entry-app .help-button .icon { width:clamp(20px,1.4vw,36px); height:clamp(20px,1.4vw,36px); }
-  .entry-app .hero { display:grid; grid-template-rows:auto auto auto minmax(0,1fr); width:100%; min-height:clamp(390px,40dvh,700px); margin:0; padding-top:clamp(14px,1.5dvh,30px); }
-  .entry-app .hero::before { display:none; }
-  .entry-app .eyebrow { font-size:clamp(12px,.85vw,24px); letter-spacing:clamp(2px,.17vw,5px); }
-  .entry-app h1 { font-size:clamp(56px,min(4.2vw,7.8dvh),124px); line-height:1.18; letter-spacing:-.045em; margin-top:clamp(8px,.8dvh,18px); }
-  .entry-app .hero-description { font-size:clamp(18px,1.5vw,42px); line-height:1.6; margin-top:clamp(8px,.9dvh,20px); }
-  .entry-app .hero-art { width:100%; height:100%; min-height:0; margin:0; }
-  .entry-app .hero-art img { width:100%; height:100%; max-width:100%; max-height:100%; object-fit:contain; filter:saturate(.9); }
-  .entry-app .roles { width:100%; margin:clamp(4px,.6dvh,14px) 0 clamp(16px,1.5dvh,32px); }
-  .entry-app .roles h2 { font-size:clamp(22px,1.6vw,44px); line-height:1.45; margin-bottom:clamp(14px,1.5dvh,30px); }
-  .entry-app .role-list { width:88%; margin-inline:auto; gap:clamp(20px,2vw,64px); align-items:center; min-height:max(clamp(132px,12dvh,250px),calc(clamp(64px,5.2vw,150px) + clamp(22px,2dvh,44px) + clamp(22px,2dvh,44px) + 2px)); }
-  .entry-app .role-card { min-height:clamp(112px,10dvh,210px); padding:clamp(18px,1.5dvh,34px) clamp(22px,2.2vw,64px); gap:clamp(16px,1.4vw,40px); border-radius:clamp(15px,1.15vw,30px); box-shadow:0 8px 32px var(--shadow); }
-  .entry-app .role-icon { width:clamp(56px,4.4vw,120px); height:clamp(56px,4.4vw,120px); border-radius:clamp(14px,1.1vw,30px); }
-  .entry-app .role-icon .icon { width:58%; height:58%; }
-  .entry-app .role-copy { gap:clamp(4px,.55dvh,12px); }
-  .entry-app .role-copy strong { font-size:clamp(22px,1.5vw,42px); line-height:1.35; }
-  .entry-app .role-copy > span { font-size:clamp(13px,.95vw,26px); line-height:1.6; }
-  .entry-app .role-arrow { width:clamp(21px,1.5vw,40px); height:clamp(21px,1.5vw,40px); }
-  .entry-app .footer { width:100%; min-height:clamp(60px,5.5dvh,115px); margin:0; gap:24px; }
-  .entry-app .footer > p { font-size:clamp(10px,.65vw,18px); }
-  .entry-app .footer > div { gap:clamp(22px,2vw,60px); font-size:clamp(10px,.7vw,20px); }
-  .entry-app .footer strong { font-size:clamp(12px,.85vw,24px); }
-  .entry-app .footer-cross, .entry-app .footer small { font-size:clamp(9px,.6vw,17px); }
-  .entry-app .student-form-panel { padding:clamp(24px,2vw,50px); }
-  .entry-app label { font-size:clamp(16px,1.15vw,28px); }
-  .entry-app .field-hint, .entry-app #student-entry-error { font-size:clamp(14px,1vw,24px); }
-  .entry-app .input-wrap { min-height:clamp(56px,4.8dvh,86px); }
-  .entry-app input { min-height:clamp(54px,4.6dvh,82px); font-size:clamp(18px,1.2vw,30px); }
-  .entry-app input::placeholder { font-size:clamp(16px,1.05vw,26px); }
-  .entry-app .primary-button { min-height:clamp(52px,4.6dvh,84px); font-size:clamp(16px,1.15vw,28px); padding-inline:clamp(20px,1.5vw,40px); }
-  .entry-app .text-button { font-size:clamp(13px,.9vw,23px); }
-  .entry-app dialog { width:clamp(440px,34vw,780px); padding:clamp(32px,2.5vw,58px); }
-  .entry-app dialog h2 { font-size:clamp(26px,1.8vw,44px); }
-  .entry-app dialog p:not(.eyebrow) { font-size:clamp(16px,1.1vw,26px); }
-}
-@media(prefers-reduced-motion:reduce) { .entry-app *, .entry-app *::before, .entry-app *::after { transition:none !important; animation:none !important; scroll-behavior:auto !important; } }
-
-.entry-app { --adjust-title:1; --adjust-image:1; --adjust-width:.6; --adjust-button:.65; --adjust-label:.94; --adjust-background:.31; }
-.entry-app .hero-art img { scale:var(--adjust-image); transform-origin:center; }
-.entry-app .hero::before { opacity:var(--adjust-background); }
-.entry-app .role-list { width:clamp(min(100%,300px),calc(100% * var(--adjust-width)),100%); max-width:100%; margin-inline:auto; }
-.entry-app h1 { font-size:calc(30px * var(--adjust-title)); }
-.entry-app .role-card { min-height:calc(79px * var(--adjust-button)); padding-block:calc(14px * var(--adjust-button)); }
-.entry-app .role-icon { width:calc(43px * var(--adjust-button)); height:calc(43px * var(--adjust-button)); }
-.entry-app .role-copy strong { font-size:calc(16px * var(--adjust-label)); }
-.entry-app .role-copy > span { font-size:calc(11px * var(--adjust-label)); }
-@media(min-width:701px) {
-  .entry-app h1 { font-size:calc(clamp(56px,min(4.2vw,7.8dvh),124px) * var(--adjust-title)); }
-  .entry-app .role-list { width:clamp(min(100%,760px),calc(88% * var(--adjust-width)),100%); }
-  .entry-app .role-card { min-height:calc(clamp(112px,10dvh,210px) * var(--adjust-button)); padding-block:calc(clamp(18px,1.5dvh,34px) * var(--adjust-button)); }
-  .entry-app .role-icon { width:calc(clamp(56px,4.4vw,120px) * var(--adjust-button)); height:calc(clamp(56px,4.4vw,120px) * var(--adjust-button)); }
-  .entry-app .role-copy strong { font-size:calc(clamp(22px,1.5vw,42px) * var(--adjust-label)); }
-  .entry-app .role-copy > span { font-size:calc(clamp(13px,.95vw,26px) * var(--adjust-label)); }
-}
-@media(max-width:370px) {
-  .entry-app h1 { font-size:calc(27px * var(--adjust-title)); }
-  .entry-app .role-card { min-height:calc(75px * var(--adjust-button)); padding-block:calc(12px * var(--adjust-button)); }
-  .entry-app .role-icon { width:calc(39px * var(--adjust-button)); height:calc(39px * var(--adjust-button)); }
-  .entry-app .role-copy strong { font-size:calc(15px * var(--adjust-label)); }
-  .entry-app .role-copy > span { font-size:calc(10px * var(--adjust-label)); }
+@keyframes entry-character-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.entry-app { box-sizing:border-box; }
-.entry-app dialog { margin:auto; }
-.entry-app button:disabled { cursor:wait; opacity:.6; }
-
-/* ID 입력은 top layer에 띄워 히어로와 역할 카드의 배치가 바뀌지 않게 한다. */
-.entry-app dialog.student-entry-dialog { width:min(640px,calc(100% - 32px)); padding:32px; }
-.entry-app .student-entry-dialog h2 { font-size:clamp(22px,1.3vw,30px); padding-right:28px; }
-.entry-app .student-entry-dialog form { margin-top:24px; }
-.entry-app .student-entry-dialog label { font-size:clamp(14px,.95vw,20px); }
-.entry-app .student-entry-dialog .field-hint { font-size:clamp(12px,.8vw,17px); }
-.entry-app .student-entry-dialog .form-actions { gap:16px; flex-wrap:wrap; }
-.entry-app .student-entry-dialog .primary-button { width:auto; margin-top:0; min-height:44px; padding:10px 18px; font-size:clamp(14px,.8vw,18px); line-height:1.5; white-space:nowrap; flex-shrink:0; }
-.entry-app .student-entry-dialog .text-button { font-size:clamp(11px,.75vw,15px); }
-.entry-app .student-entry-dialog .primary-button .icon { width:16px; height:16px; }
-.entry-app .student-entry-dialog #student-entry-error { font-size:clamp(12px,.8vw,16px); }
-@media(max-width:700px) {
-  .entry-app dialog.student-entry-dialog { padding:24px; }
-  .entry-app .student-entry-dialog .form-actions { flex-direction:column-reverse; align-items:stretch; gap:8px; }
-  .entry-app .student-entry-dialog .text-button { align-self:center; }
+@media (min-width: 640px) and (max-width: 1023px) {
+  .entry-app { .entry-layout { gap: 32px; padding: 48px 0; } h1 { font-size: 77px; } .hero-description br { display: none; } .role-card { padding: 16.8px; } .role-copy > span { font-size: 12.6px; } }
+}
+@media (max-width: 639px) {
+  .entry-app { .entry-page { width: calc(100% - 40px); } .header { min-height: 72px; } .brand { font-size: 26px; } .entry-layout { grid-template-columns: 1fr; gap: 40px; padding: 40px 0; } h1 { margin-top: 20px; font-size: 77px; } .hero-description { font-size: 15px; } .hero-description br { display: none; } .roles { margin-top: 32px; } .role-card { padding: 21px; } .role-copy > span { font-size: 13.65px; } dialog { padding: 32px 24px; } }
 }

@@ -143,7 +143,7 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
 
   return (
     <div className="s-cover-page">
-      <StudentPageHeading eyebrow="EVERY SENTENCE HAS A STORY" title="나의 이야기에, 분명한 근거를." description={`${job.companyName} · 자기소개서`} back={backHref} />
+      <StudentPageHeading title="나의 이야기에, 분명한 근거를." description={`${job.companyName} · 자기소개서`} back={backHref} />
       <div className="s-document-toolbar"><div className="s-source-legend"><SourceTag source="AI" /><SourceTag source="REGISTERED" /><SourceTag source="USER" /></div><SaveStatus state={saveState} /></div>
       <CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} />
       <div ref={bodyRef} onKeyDownCapture={() => { keyboardRef.current = true; }} onPointerDownCapture={() => { keyboardRef.current = false; }} className="s-cover-layout">
