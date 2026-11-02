@@ -3,8 +3,8 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 9,
-    "evidence_ids": 23,
-    "valid_evidence_ids": 23,
+    "evidence_ids": 24,
+    "valid_evidence_ids": 24,
     "with_numbers": 2,
     "numbers_passed": 2,
     "excluded": 0
@@ -12,8 +12,8 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "예약 도메인 담당 (동적 쿼리 작성 · Redis 분산락 적용 · 부하 테스트)",
-      "알고리즘 스터디 디스코드 봇 개발 (문제 게시 및 풀이 제출 기록 관리)"
+      "예약 도메인 담당 (동적 쿼리 작성 · Redis 분산락 적용 · 부하 테스트 시나리오 작성)",
+      "알고리즘 스터디 디스코드 봇 개발 (문제 공유 · 제출 기록 저장 · 주간 현황 출력)"
     ],
     "skills": [
       {
@@ -76,7 +76,7 @@
     ],
     "achievements": [
       {
-        "text": "동시 요청 테스트에서 중복 예약 0건 확인",
+        "text": "동시 요청 테스트 재실행을 통해 중복 예약 0건 확인",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -89,7 +89,7 @@
         ]
       },
       {
-        "text": "예약 API 부하 테스트에서 TPS 300 기준 오류율 1% 미만 확인",
+        "text": "k6 예약 API 부하 테스트로 TPS 300에서 오류율 1% 미만 확인",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -109,5 +109,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 8795
+  "extractMs": 8716
 }

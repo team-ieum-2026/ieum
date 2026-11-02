@@ -3,17 +3,18 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 8,
-    "evidence_ids": 21,
-    "valid_evidence_ids": 21,
+    "evidence_ids": 19,
+    "valid_evidence_ids": 19,
     "with_numbers": 3,
     "numbers_passed": 3,
-    "excluded": 0
+    "excluded": 1
   },
-  "excludedReasons": [],
+  "excludedReasons": [
+    "roles:원문에 없는 역할 표현 구축"
+  ],
   "profile": {
     "roles": [
-      "캔버스 그리기 엔진·되돌리기 기능 구현, WebSocket 메시지 형식 설계, 렌더링 성능 개선",
-      "개인 기술 블로그 설계, 구현, 배포 및 정적 생성 구조 구축"
+      "캔버스 그리기 엔진 및 되돌리기 기능 구현, WebSocket 동기화 메시지 형식 설계, 렌더링 성능 측정 및 개선"
     ],
     "skills": [
       {
@@ -54,7 +55,7 @@
     ],
     "achievements": [
       {
-        "text": "정적·커서 레이어 분리와 requestAnimationFrame 적용으로 8명 동시 그리기 시 60fps 유지",
+        "text": "정적 레이어와 커서 레이어 분리 및 requestAnimationFrame 적용으로 8명 동시 그리기 시 60fps 유지",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -63,15 +64,6 @@
           {
             "refType": "COVER_LETTER",
             "refId": 11
-          }
-        ]
-      },
-      {
-        "text": "최종 발표에서 청중 20여 명이 함께 접속해 시연",
-        "evidence": [
-          {
-            "refType": "PROJECT",
-            "refId": 112
           }
         ]
       },
@@ -87,6 +79,15 @@
             "refId": 11
           }
         ]
+      },
+      {
+        "text": "최종 발표에서 청중 20여 명이 함께 접속해 시연",
+        "evidence": [
+          {
+            "refType": "PROJECT",
+            "refId": 112
+          }
+        ]
       }
     ],
     "certificates": [
@@ -96,5 +97,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 9863
+  "extractMs": 10868
 }

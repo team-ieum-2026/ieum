@@ -12,9 +12,9 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "RAG 파이프라인 · 답변 검증 단계 리드, Qdrant 색인 및 Docker Compose 개발 환경 구성",
-      "일정 비서 에이전트 구현 (흐름 그래프 구성 · 충돌 확인 분기 추가)",
-      "댓글 API 담당"
+      "RAG 파이프라인 · 답변 검증 단계 리드 및 Qdrant 색인 · Docker Compose 개발 환경 구성 담당",
+      "LangGraph 기반 일정 비서 에이전트 구현",
+      "게시판 댓글 API 담당"
     ],
     "skills": [
       {
@@ -73,7 +73,7 @@
     ],
     "achievements": [
       {
-        "text": "답변 검증 단계 설계로 답변 근거 일치율 93% 달성",
+        "text": "답변 근거 일치율 93% 달성",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -102,5 +102,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 15199
+  "extractMs": 12028
 }

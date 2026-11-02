@@ -3,7 +3,7 @@
 
 from profile.sources import Candidate, render_candidates
 
-PROMPT_VERSION = "profile-extract-v3"
+PROMPT_VERSION = "profile-extract-v4"
 
 SYSTEM_INSTRUCTION = """너는 IT 교육 과정 수료생의 등록 자료를 읽고 역량 프로필의 roles(역할), achievements(성과), skills(본인이 쓴 기술)를 정리하는 도우미다.
 
@@ -26,6 +26,7 @@ roles (역할):
 - 프로젝트 하나, 경력 하나마다 역할 하나로 합친다. 같은 프로젝트의 하위 작업을 따로 나열하지 않는다.
   예: "백엔드 API 구현 (모집 글 · 지원 · 알림)". 나쁜 예: "모집 글 API 구현", "알림 API 구현"을 따로 쓰기.
 - 리드 같은 직함이 원문에 있으면 같은 역할 안에 넣는다. 예: "프론트엔드 리드 · 공통 컴포넌트 구현"
+- "기획" · "설계" · "담당" · "책임" · "개선" · "최적화" · "도입" · "구축"은 같은 프로젝트 · 경력 근거 원문에 있을 때만 쓴다.
 - 결과나 수치 없이 "~ 구현 · 제작 · 설정 · 구성"만 있는 일은 성과가 아니라 여기 역할에 넣는다.
 - 짧은 명사구. 최대 5개.
 

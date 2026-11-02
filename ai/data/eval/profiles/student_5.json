@@ -2,21 +2,19 @@
   "studentId": 5,
   "llmStatus": "OK",
   "metrics": {
-    "generated": 12,
-    "evidence_ids": 29,
-    "valid_evidence_ids": 29,
+    "generated": 11,
+    "evidence_ids": 26,
+    "valid_evidence_ids": 26,
     "with_numbers": 4,
-    "numbers_passed": 3,
-    "excluded": 1
+    "numbers_passed": 4,
+    "excluded": 0
   },
-  "excludedReasons": [
-    "achievements:text 의 숫자 0 가 고른 근거에 없음"
-  ],
+  "excludedReasons": [],
   "profile": {
     "roles": [
-      "모임 참여 기능(화면 · API) 구현, 정원 초과 버그 해결, 배포 담당",
-      "상품 정보 검증 및 MySQL 일괄 등록 Java 프로그램 개발",
-      "쇼핑몰 상품 등록 · 배너 교체 · 주문 문의 응대 및 업무 개선 도구 제작"
+      "모임 참여 기능(React 화면 · Spring Boot API) 구현 및 AWS EC2 배포 담당",
+      "상품 일괄 등록 Java 프로그램 제작",
+      "쇼핑몰 웹 운영 (상품 등록 · 배너 교체 · 주문 문의 응대)"
     ],
     "skills": [
       {
@@ -109,11 +107,11 @@
         ]
       },
       {
-        "text": "팀 내 다른 운영 담당자 2명도 사용",
+        "text": "시연 당일 실제 모임 6개 열려 참여 오류 없이 운영",
         "evidence": [
           {
             "refType": "PROJECT",
-            "refId": 203
+            "refId": 106
           }
         ]
       }
@@ -125,5 +123,5 @@
     "preferredRegion": "서울"
   },
   "split": "dev",
-  "extractMs": 18016
+  "extractMs": 8871
 }

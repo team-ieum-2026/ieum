@@ -3,8 +3,8 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 8,
-    "evidence_ids": 17,
-    "valid_evidence_ids": 17,
+    "evidence_ids": 16,
+    "valid_evidence_ids": 16,
     "with_numbers": 2,
     "numbers_passed": 2,
     "excluded": 0
@@ -12,7 +12,7 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "검색 · 리랭크 파이프라인 구성 및 질의 API 구현, 평가 실험",
+      "검색 · 리랭크 파이프라인 구성, 질의 API 구현 및 평가 실험 설계",
       "데이터 정제 및 모델 비교"
     ],
     "skills": [
@@ -55,7 +55,7 @@
     ],
     "achievements": [
       {
-        "text": "청크 크기 조정 및 리랭커 적용으로 정답률 61%에서 84%로 향상",
+        "text": "청크 500자와 리랭커 적용을 통해 정답률을 61%에서 84%로 개선",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -68,7 +68,7 @@
         ]
       },
       {
-        "text": "선형 회귀 대비 랜덤 포레스트 적용으로 MAE 182만 원에서 131만 원으로 개선",
+        "text": "모델 비교를 통해 평균 절대 오차(MAE) 선형 회귀 182만 원 대비 랜덤 포레스트 131만 원 달성",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -84,5 +84,5 @@
     "preferredRegion": "서울, 경기"
   },
   "split": "test",
-  "extractMs": 11950
+  "extractMs": 9243
 }

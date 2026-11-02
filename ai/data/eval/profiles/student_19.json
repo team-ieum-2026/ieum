@@ -3,8 +3,8 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 4,
-    "evidence_ids": 8,
-    "valid_evidence_ids": 8,
+    "evidence_ids": 6,
+    "valid_evidence_ids": 6,
     "with_numbers": 0,
     "numbers_passed": 0,
     "excluded": 0
@@ -13,7 +13,7 @@
   "profile": {
     "roles": [
       "가게 예약 웹 제작",
-      "○○카페 매니저 (매장 운영 · 예약 관리)"
+      "매니저 (매장 운영 · 예약 관리)"
     ],
     "skills": [
       {
@@ -41,5 +41,5 @@
     "preferredRegion": "인천"
   },
   "split": "test",
-  "extractMs": 8551
+  "extractMs": 25652
 }

@@ -3,8 +3,8 @@
   "llmStatus": "OK",
   "metrics": {
     "generated": 8,
-    "evidence_ids": 16,
-    "valid_evidence_ids": 16,
+    "evidence_ids": 20,
+    "valid_evidence_ids": 20,
     "with_numbers": 2,
     "numbers_passed": 2,
     "excluded": 0
@@ -12,9 +12,9 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "백엔드 리드 (인증(JWT) · 정산 API 담당, ERD 설계 주도, PR 검토)",
-      "좌석 예약 · 취소 기능 및 예약 만료 스케줄러 담당",
-      "백엔드 개발 인턴 (공공기관 관리자 페이지 유지보수, 조회 쿼리 수정, Java 배치 오류 대응)"
+      "백엔드 리드 · 인증(JWT) 및 정산 API 담당, ERD 설계 주도",
+      "좌석 예약 · 취소 기능 담당 (예약·취소 Servlet 및 스케줄러 구현)",
+      "백엔드 개발 인턴 · 공공기관 관리자 페이지 유지보수 (조회 쿼리 수정 및 Java 배치 오류 대응)"
     ],
     "skills": [
       {
@@ -59,7 +59,7 @@
     ],
     "achievements": [
       {
-        "text": "월별 집계 쿼리에 복합 인덱스 추가로 통계 API 응답 1.2초 → 0.3초 단축",
+        "text": "월별 집계 쿼리에 복합 인덱스를 추가하여 통계 API 응답 1.2초에서 0.3초로 단축",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -68,11 +68,15 @@
         ]
       },
       {
-        "text": "낙관적 락(@Version) 적용으로 동시 수정 테스트 200회에서 금액 불일치 0건",
+        "text": "동시 지출 수정 이슈에 낙관적 락 적용으로 동시 수정 테스트 200회에서 금액 불일치 0건 달성",
         "evidence": [
           {
             "refType": "PROJECT",
             "refId": 101
+          },
+          {
+            "refType": "COVER_LETTER",
+            "refId": 2
           }
         ]
       }
@@ -85,5 +89,5 @@
     "preferredRegion": "서울"
   },
   "split": "dev",
-  "extractMs": 43449
+  "extractMs": 13191
 }

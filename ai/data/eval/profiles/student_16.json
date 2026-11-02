@@ -2,9 +2,9 @@
   "studentId": 16,
   "llmStatus": "OK",
   "metrics": {
-    "generated": 6,
-    "evidence_ids": 14,
-    "valid_evidence_ids": 14,
+    "generated": 5,
+    "evidence_ids": 16,
+    "valid_evidence_ids": 16,
     "with_numbers": 2,
     "numbers_passed": 2,
     "excluded": 0
@@ -12,18 +12,13 @@
   "excludedReasons": [],
   "profile": {
     "roles": [
-      "프론트엔드 개발 (AI 대기 화면 · 일정 편집 · 공유 링크)",
-      "오픈소스 UI 라이브러리 접근성 이슈 개선"
+      "프론트엔드 담당 (AI 응답 대기 화면 · 일정 편집 화면 및 사용자 테스트 진행과 화면 개선)",
+      "오픈소스 접근성 이슈 선정부터 수정 및 PR 작성"
     ],
     "skills": [
       {
         "name": "React",
-        "evidence": [
-          {
-            "refType": "PROJECT",
-            "refId": 209
-          }
-        ]
+        "evidence": []
       },
       {
         "name": "TypeScript",
@@ -54,7 +49,7 @@
         ]
       },
       {
-        "text": "접근성 개선 PR 2건 메인테이너 리뷰 거쳐 병합",
+        "text": "오픈소스 UI 라이브러리 접근성 이슈 수정 PR 2건 메인테이너 리뷰 거쳐 병합",
         "evidence": [
           {
             "refType": "PROJECT",
@@ -68,5 +63,5 @@
     "preferredRegion": "서울"
   },
   "split": "test",
-  "extractMs": 11317
+  "extractMs": 17169
 }

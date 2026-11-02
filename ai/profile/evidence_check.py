@@ -18,6 +18,8 @@ AllowedRefs = set[tuple[str, int]]
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 # 원문에 없으면 쓰면 안 되는 강한 표현 (부풀리기)
 STRONG_WORDS = ("주도", "총괄", "리드", "리더", "팀장", "전담", "단독", "혼자")
+# 역할에서만 보는 일의 범위 표현. 고른 근거 원문에 없으면 역할을 뺀다 ("담당"은 너무 흔해 프롬프트로만 다룬다)
+ROLE_RISK_WORDS = ("기획", "설계", "책임", "개선", "최적화", "도입", "구축")
 # 원문에 있으면 성과에서도 남겨야 하는 참여 정도 표현. "일부"는 "일부 메시지가…" 처럼 다른 뜻으로도 써서 프롬프트로만 다룬다
 HEDGE_WORDS = ("참여", "함께", "보조")
 # 숫자도 결과도 없이 작업만 말하는 성과 ("챗봇 제작", "알림 설정"). 이런 문장은 역할 쪽이다
@@ -117,6 +119,7 @@ def check_llm_items(
     1. 후보에 없는 근거 번호(eid)는 지우고, 남은 근거가 0개면 뺀다.
     2. text 안의 숫자는 고른 근거들의 quote 중 하나에 있어야 한다.
     3. 강한 표현(STRONG_WORDS)은 고른 근거들의 quote 중 하나에 있어야 한다.
+       roles 만: 일의 범위 표현(ROLE_RISK_WORDS)도 고른 근거들의 quote 중 하나에 있어야 한다.
     4. achievements 만: 고른 근거에 참여 표현(HEDGE_WORDS)이 있으면 text 에도 있어야 한다. 숫자 없이 작업만 말하면 뺀다.
        수상 · 선정 · 채택은 숫자가 없어도 성과다. 단 팀 프로젝트(team_refs) 근거면 text 에 "팀"이 있어야 한다.
     5. eid → { refType, refId }. 같은 (refType, refId) 는 하나로 합친다 (예: 같은 프로젝트의 README 두 문장).
@@ -166,6 +169,9 @@ def _wording_problem(
     strong = [w for w in STRONG_WORDS if w in text and not any(w in c.quote for c in chosen)]
     if strong:
         return f"원문에 없는 강한 표현 {', '.join(strong)}"
+    if kind == "roles":
+        risky = [w for w in ROLE_RISK_WORDS if w in text and not any(w in c.quote for c in chosen)]
+        return f"원문에 없는 역할 표현 {', '.join(risky)}" if risky else None
     if kind != "achievements":
         return None
     hedges = [w for w in HEDGE_WORDS if any(w in c.quote for c in chosen)]
