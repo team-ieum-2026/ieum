@@ -1,23 +1,40 @@
 "use client";
-// 주인: FE-B — C2 수료생 관리 (11/1 역할 조정으로 FE-B, 11/1 개편 목업).
+// 주인: FE-B — C2 수료생 관리 (11/1 역할 조정으로 FE-B, 11/1 개편 목업 studentTable7).
 // - 상단 요약: 취업 완료 · 구직 중 · 도움 필요 · 추가 확인 필요 (대시보드 statusSummary). 누르면 그 상태로 거른다
-// - 목록 4열: 수료생 / 교육과정 / 현재 상태 / 최근 응답 (GET /api/coordinator/students, 한 페이지 10명)
-//   교육과정은 끝의 ' N기'를 떼어 표시. 추천 응답 · 도움 요청 · 서류 · 다음 행동 열은 목록 API 에 없어 숨김
-// - 필터: 이름 검색(q) · 관리 상태(status · subStatus)만. 교육과정 · 지원 업무 필터는 API 에 없어 숨김
+// - 목록 7열 (GET /api/coordinator/students, 한 페이지 10명): 수료생 / 교육과정 / 현재 상태 / 최근 응답 / 추천 공고 응답 / 도움 요청 / 서류
+//   · 추천 공고 응답 · 서류: 목록 API 에 없어 지금 페이지 10명만 C3 상세 API 를 병렬로 불러 채운다 (실패하면 '조회 실패')
+//   · 도움 요청: 대시보드 API 의 접수(OPEN) 목록을 수료생 번호로 맞춘다 (연락 완료 이력은 목록 API 가 없어 보여 주지 않음)
+//   교육과정은 끝의 ' N기'를 떼어 표시
+// - 필터: 이름 검색(q) · 관리 상태(status · subStatus)만. 지금 검색 조건은 C3 에서 돌아올 때 다시 쓰도록 sessionStorage 에 둔다
 // - 필터를 바꿔도 열 너비 · 행 높이는 같게 (table-fixed + 고정 행 높이 + 줄임표)
+// - 수료생 등록: 등록 API 가 없어 입력 폼만 있고 저장은 막아 둔다 (가짜 저장 없음)
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Avatar, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
-import { MANAGE_ORDER, courseName, manageCounts, manageLabels, manageTone, monthDay } from "@/components/coordinator/coordLabels";
+import { Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import {
+  MANAGE_ORDER,
+  courseName,
+  docLabels,
+  docTone,
+  manageCounts,
+  manageLabels,
+  manageTone,
+  monthDay,
+  responseTagLabels,
+  responseTone,
+} from "@/components/coordinator/coordLabels";
 import { subStatusLabels } from "@/components/student/labels";
 import { ApiError } from "@/lib/api/client";
 import { getDashboard } from "@/lib/api/coordinatorReview";
-import { getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
+import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
 import type { Dashboard } from "@/types/coordinator";
-import type { CoordinatorStudentList, StudentStatus, SubStatus } from "@/types/student";
+import type { ApplicationStatus, CoordinatorStudentList, ResponseType, StudentStatus, SubStatus } from "@/types/student";
 
 const PAGE_SIZE = 10;
+
+/** C3 의 '수료생 목록으로'가 검색 조건 · 페이지를 되살릴 때 쓰는 키 */
+export const STUDENTS_QUERY_KEY = "ieum:coord-students-query";
 
 /** 관리 상태 필터 값: "EMPLOYED" · "SEEKING" · "SEEKING:APPLYING" … */
 const FILTERS: { value: string; label: string }[] = [
@@ -31,6 +48,28 @@ const FILTERS: { value: string; label: string }[] = [
       : [{ value: s, label: manageLabels[s] }],
   ),
 ];
+
+/** 목업 열 비율 12 / 15 / 14 / 19 / 15 / 13 / 12 */
+const COLUMNS: [string, string][] = [
+  ["수료생", "w-[12%]"],
+  ["교육과정", "w-[15%]"],
+  ["현재 상태", "w-[14%]"],
+  ["최근 응답", "w-[19%]"],
+  ["추천 공고 응답", "w-[15%]"],
+  ["도움 요청", "w-[13%]"],
+  ["서류", "w-[12%]"],
+];
+
+/** 한 수료생의 추천 응답 · 서류 (C3 상세 API 에서 뽑음). error: 그 수료생 상세 조회 실패 */
+type RowExtra =
+  | { state: "loading" }
+  | { state: "error" }
+  | {
+      state: "ok";
+      /** 가장 최근 추천의 응답별 개수 (추천 이력이 없으면 null) */
+      responses: Partial<Record<ResponseType, number>> | null;
+      docs: { applicationId: number; status: ApplicationStatus }[];
+    };
 
 export default function StudentsScreen() {
   const router = useRouter();
@@ -47,8 +86,19 @@ export default function StudentsScreen() {
 
   const [summary, setSummary] = useState<Dashboard | null>(null);
   const [list, setList] = useState<CoordinatorStudentList | null>(null);
+  const [extras, setExtras] = useState<Record<number, RowExtra>>({});
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [registering, setRegistering] = useState(false);
+
+  // 지금 검색 조건을 기억해 C3 에서 '수료생 목록으로' 돌아올 때 되살린다
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STUDENTS_QUERY_KEY, searchParams.toString());
+    } catch {
+      // 저장소를 못 쓰면 기본 목록으로 돌아간다
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let ignore = false;
@@ -57,7 +107,7 @@ export default function StudentsScreen() {
         if (!ignore) setSummary(d);
       })
       .catch(() => {
-        // 요약을 못 받아도 목록은 보여 준다 (요약 칸만 숨김)
+        // 요약을 못 받아도 목록은 보여 준다 (요약 칸 · 도움 요청 열만 '조회 실패')
       });
     return () => {
       ignore = true;
@@ -81,6 +131,36 @@ export default function StudentsScreen() {
     };
   }, [status, subStatus, q, page, reloadKey]);
 
+  // 지금 페이지(최대 10명)만 상세를 병렬로 불러 추천 응답 · 서류 열을 채운다
+  useEffect(() => {
+    if (!list) return;
+    let ignore = false;
+    const ids = list.items.map((s) => s.studentId);
+    Promise.allSettled(ids.map((id) => getCoordinatorStudent(id))).then((results) => {
+      if (ignore) return;
+      const next: Record<number, RowExtra> = {};
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          next[ids[i]] = { state: "error" };
+          return;
+        }
+        const latest = r.value.history[0];
+        const responses = latest
+          ? latest.items.reduce<Partial<Record<ResponseType, number>>>((acc, item) => ({ ...acc, [item.response]: (acc[item.response] ?? 0) + 1 }), {})
+          : null;
+        const docs = r.value.history
+          .flatMap((h) => h.items)
+          .filter((item) => item.applicationId && item.applicationStatus)
+          .map((item) => ({ applicationId: item.applicationId as number, status: item.applicationStatus as ApplicationStatus }));
+        next[ids[i]] = { state: "ok", responses, docs };
+      });
+      setExtras(next);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [list]);
+
   function changeQuery(changes: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(changes)) {
@@ -101,9 +181,17 @@ export default function StudentsScreen() {
   return (
     // 머리 · 필터 · 페이지 이동은 고정하고 표 영역만 안에서 스크롤 (상단 막대 60 + 위아래 여백 70)
     <div className="flex h-[calc(100vh-130px)] min-h-[560px] flex-col">
-      <PageTitle title="수료생 관리" description="최근 응답과 요청을 먼저 보고, 필요한 다음 행동으로 이어가세요." />
+      <PageTitle
+        title="수료생 관리"
+        description="최근 응답과 요청을 먼저 보고, 필요한 다음 행동으로 이어가세요."
+        action={
+          <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary} px-4 py-3 text-sm`}>
+            <span aria-hidden="true">＋</span> 수료생 등록
+          </button>
+        }
+      />
       {counts && (
-        <div role="group" aria-label="관리 상태 요약" className="mb-3 grid grid-cols-4 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface)">
+        <div role="group" aria-label="관리 상태 요약" className="mb-3 grid shrink-0 grid-cols-4 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface)">
           {MANAGE_ORDER.map((s) => {
             const selected = status === s && !subStatus;
             return (
@@ -136,7 +224,7 @@ export default function StudentsScreen() {
         >
           <span className="text-xs text-(--coord-muted)">이름을 누르면 추천 응답 · 지원서류 · 상담 기록이 열려요</span>
         </PanelHead>
-        <div className="flex flex-wrap items-end gap-[9px] border-b border-(--coord-line) px-5 py-4">
+        <div className="flex shrink-0 flex-wrap items-end gap-[9px] border-b border-(--coord-line) px-5 py-3">
           <form
             className="flex items-center gap-2"
             onSubmit={(event) => {
@@ -196,59 +284,75 @@ export default function StudentsScreen() {
               </p>
             )}
             <div className="min-h-0 flex-1 overflow-auto">
-            <table className="w-full table-fixed border-collapse text-left text-xs">
-              <caption className="sr-only">수료생 목록: 수료생, 교육과정, 현재 상태, 최근 응답</caption>
-              <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
-                <tr>
-                  {[
-                    ["수료생", "w-[20%]"],
-                    ["교육과정", "w-[25%]"],
-                    ["현재 상태", "w-[23%]"],
-                    ["최근 응답", "w-[32%]"],
-                  ].map(([label, w]) => (
-                    <th key={label} scope="col" className={`${w} border-b border-(--coord-line-soft) px-[17px] py-[15px] font-medium`}>
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {list.items.map((s) => (
-                  <tr key={s.studentId} className="h-16 border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
-                    <td className="overflow-hidden px-[17px]">
-                      <Link
-                        href={`/coordinator/students/${s.studentId}`}
-                        aria-label={`${s.name} 상세 보기`}
-                        className="flex items-center gap-2.5 font-semibold hover:text-(--coord-green)"
-                      >
-                        <Avatar name={s.name} />
-                        <span className="truncate">{s.name}</span>
-                      </Link>
-                    </td>
-                    <td className="truncate px-[17px]" title={s.courseLabel}>
-                      {courseName(s.courseLabel)}
-                    </td>
-                    <td className="overflow-hidden px-[17px]">
-                      <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
-                      {s.subStatus && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>}
-                    </td>
-                    <td className="overflow-hidden px-[17px]">
-                      <b className={`text-xs ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : "text-(--coord-green)"}`}>
-                        {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 응답` : "응답 기록 없음"}
-                      </b>
-                      {s.hasNote && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">비고 있음</span>}
-                    </td>
+              <table className="w-full min-w-[1040px] table-fixed border-collapse text-left text-xs">
+                <caption className="sr-only">수료생 목록: 수료생, 교육과정, 현재 상태, 최근 응답, 추천 공고 응답, 도움 요청, 서류</caption>
+                <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
+                  <tr>
+                    {COLUMNS.map(([label, w]) => (
+                      <th key={label} scope="col" className={`${w} border-b border-(--coord-line-soft) px-[17px] py-3 font-medium`}>
+                        {label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {list.items.length === 0 && (
-              <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">조건에 맞는 수료생이 없어요. 필터를 초기화해 보세요.</p>
-            )}
+                </thead>
+                <tbody>
+                  {list.items.map((s) => {
+                    const extra = extras[s.studentId] ?? { state: "loading" };
+                    const help = summary?.helpRequests.filter((h) => h.studentId === s.studentId) ?? null;
+                    return (
+                      <tr key={s.studentId} className="h-16 border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
+                        <td className="overflow-hidden px-[17px]">
+                          <Link
+                            href={`/coordinator/students/${s.studentId}`}
+                            className="block truncate text-[13px] font-bold underline-offset-4 hover:text-(--coord-green) hover:underline focus-visible:outline-2 focus-visible:outline-(--coord-green)"
+                          >
+                            {s.name}
+                          </Link>
+                        </td>
+                        <td className="px-[17px] text-(--coord-ink)" title={s.courseLabel}>
+                          {/* 과정 이름이 길어 두 줄까지 보인다 (행 높이는 그대로) */}
+                          <span className="line-clamp-2 leading-[1.45]">{courseName(s.courseLabel)}</span>
+                        </td>
+                        <td className="overflow-hidden px-[17px]">
+                          <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
+                          {s.subStatus && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>}
+                        </td>
+                        <td className="overflow-hidden px-[17px]">
+                          <b className={`text-xs ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : "text-(--coord-green)"}`}>
+                            {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 응답` : "응답 기록 없음"}
+                          </b>
+                          {s.hasNote && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">비고 있음</span>}
+                        </td>
+                        <td className="overflow-hidden px-[17px]">
+                          <ResponseCell extra={extra} />
+                        </td>
+                        <td className="overflow-hidden px-[17px]">
+                          {help === null ? (
+                            <span className="text-(--coord-muted)">조회 실패</span>
+                          ) : help.length > 0 ? (
+                            <Link href={`/coordinator/help-requests?id=${help[0].helpRequestId}`} className="font-semibold whitespace-nowrap text-(--coord-green) hover:underline">
+                              접수 {help.length}건
+                            </Link>
+                          ) : (
+                            <span className="text-(--coord-muted)">접수 없음</span>
+                          )}
+                        </td>
+                        <td className="overflow-hidden px-[17px]">
+                          <DocCell extra={extra} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {list.items.length === 0 && (
+                <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">조건에 맞는 수료생이 없어요. 필터를 초기화해 보세요.</p>
+              )}
             </div>
-            <div className="flex items-center justify-between border-t border-(--coord-line-soft) px-5 py-3.5 text-[11px] text-(--coord-muted)">
+            <div className="flex shrink-0 items-center justify-between border-t border-(--coord-line-soft) px-5 py-3 text-[11px] text-(--coord-muted)">
               <span role="status">
                 {list.total}명 중 {list.total ? (page - 1) * list.size + 1 : 0}–{(page - 1) * list.size + list.items.length}명
+                <span className="ml-3">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
               </span>
               <div className="flex items-center gap-3">
                 <button
@@ -275,6 +379,112 @@ export default function StudentsScreen() {
           </>
         )}
       </Panel>
+      {registering && <RegisterModal onClose={() => setRegistering(false)} />}
+    </div>
+  );
+}
+
+const RESPONSE_ORDER: ResponseType[] = ["APPLY", "PASS", "HELP", "NONE"];
+
+/** 가장 최근 추천의 응답 개수 칩 (목업: 지원 1 · 패스 1 · 미응답 1) */
+function ResponseCell({ extra }: { extra: RowExtra }) {
+  if (extra.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
+  if (extra.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  if (!extra.responses) return <span className="text-(--coord-muted)">추천 없음</span>;
+  const responses = extra.responses;
+  return (
+    // 칩이 많으면 두 줄까지 (행 높이 64px 안)
+    <span className="flex max-h-[52px] flex-wrap gap-1 overflow-hidden">
+      {RESPONSE_ORDER.filter((r) => responses[r]).map((r) => (
+        <Badge key={r} tone={responseTone[r]}>
+          {responseTagLabels[r]} {responses[r]}
+        </Badge>
+      ))}
+    </span>
+  );
+}
+
+/** 가장 최근 지원서 상태 (여러 건이면 +N) */
+function DocCell({ extra }: { extra: RowExtra }) {
+  if (extra.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
+  if (extra.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  const [first, ...rest] = extra.docs;
+  if (!first) return <span className="text-(--coord-muted)">제출 없음</span>;
+  return (
+    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex items-center gap-1 hover:brightness-95">
+      <Badge tone={docTone[first.status]}>{docLabels[first.status]}</Badge>
+      {rest.length > 0 && <span className="text-[10px] text-(--coord-muted)">+{rest.length}</span>}
+    </Link>
+  );
+}
+
+/**
+ * 수료생 등록 폼 (목업 registerModal). 수료생 등록 API 가 아직 없어서 입력만 받고 저장은 막는다.
+ * API 가 생기면 onSubmit 에서 호출하고 목록을 다시 불러오면 된다 (가짜 저장 없음)
+ */
+function RegisterModal({ onClose }: { onClose: () => void }) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const fields: { name: string; label: string; type?: string; required?: boolean }[] = [
+    { name: "name", label: "이름", required: true },
+    { name: "email", label: "이메일", type: "email", required: true },
+    { name: "course", label: "교육과정", required: true },
+    { name: "completedOn", label: "수료일", type: "date", required: true },
+    { name: "desiredJob", label: "희망 직무" },
+    { name: "preferredRegion", label: "희망 지역" },
+  ];
+  return (
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-(--coord-forest)/40 p-6 backdrop-blur-[3px]" onClick={onClose}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        className="w-[600px] overflow-hidden rounded-[14px] border border-(--coord-line) bg-(--coord-surface) outline-none"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-6 py-4">
+          <h2 id={titleId} className="text-[19px] font-bold">
+            수료생 등록
+          </h2>
+          <button type="button" onClick={onClose} aria-label="닫기" className="grid size-9 place-items-center rounded-lg hover:bg-(--coord-hover)">
+            <Icon name="close" />
+          </button>
+        </div>
+        <form className="p-6" onSubmit={(e) => e.preventDefault()}>
+          <p role="note" className="mb-4 rounded-lg border border-(--coord-attention-line) bg-(--coord-attention-soft) px-3.5 py-2.5 text-xs leading-[1.7] text-(--coord-attention)">
+            <b>등록 API 미연동</b> · 수료생 등록 기능이 아직 서버에 없어서 입력한 내용은 저장되지 않아요. 지금은 시드 데이터로 등록된 수료생만 관리할 수 있어요.
+          </p>
+          <div className="grid grid-cols-2 gap-[15px]">
+            {fields.map((f) => (
+              <label key={f.name} className="flex flex-col gap-1.5 text-xs">
+                <span className="font-semibold">
+                  {f.label}
+                  {f.required && <span className="ml-0.5 text-(--coord-red)">*</span>}
+                </span>
+                <input name={f.name} type={f.type ?? "text"} required={f.required} className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-3 py-2.5 text-[13px]" />
+              </label>
+            ))}
+          </div>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" onClick={onClose} className={`${btn.base} ${btn.outline}`}>
+              닫기
+            </button>
+            <button type="submit" disabled aria-disabled="true" title="등록 API 미연동" className={`${btn.base} ${btn.primary}`}>
+              등록 (API 미연동)
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

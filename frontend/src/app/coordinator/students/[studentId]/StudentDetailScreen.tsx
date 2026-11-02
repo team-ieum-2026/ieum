@@ -6,7 +6,7 @@
 // 도움 요청은 대시보드 API 의 접수(OPEN) 목록에서 이 수료생 것만 거른다. ?log=new 로 들어오면 기록 추가 창을 바로 연다.
 // 취업 확인 경로 · 마지막 확인일 · 회사/직무 · 후속 연락일 · 상태 변경 이력 · '취업 상태 확인·변경'은 저장하는 곳이 없어 숨김.
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Avatar, Badge, Icon, btn } from "@/components/coordinator/CoordUi";
 import {
@@ -28,6 +28,7 @@ import { passLabels, subStatusLabels } from "@/components/student/labels";
 import { errorMessage, useApi } from "@/components/student/useApi";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 import { addContactLog, getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
+import { STUDENTS_QUERY_KEY } from "../StudentsScreen";
 import type { DashboardHelpRequest } from "@/types/coordinator";
 import type { ContactType, CoordinatorStudentDetail } from "@/types/student";
 
@@ -35,6 +36,7 @@ const contactTypeLabels: Record<ContactType, string> = { PHONE: "통화", MEETIN
 
 export default function StudentDetailScreen({ studentId }: { studentId: number }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const load = useCallback(() => getCoordinatorStudent(studentId), [studentId]);
   const { data, loading, error, reload, setData } = useApi(load);
   const [help, setHelp] = useState<DashboardHelpRequest[]>([]);
@@ -64,33 +66,55 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
     setSaved(false);
   };
 
+  // C2 에서 쓰던 검색 조건 · 페이지로 돌아간다 (누를 때 읽음, 없으면 기본 목록)
+  const backHref = "/coordinator/students";
+  const goBack = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    try {
+      const saved = sessionStorage.getItem(STUDENTS_QUERY_KEY);
+      if (saved) {
+        e.preventDefault();
+        router.push(`${backHref}?${saved}`);
+      }
+    } catch {
+      // 저장소를 못 쓰면 기본 목록 (링크 그대로)
+    }
+  };
+
   return (
-    // 상단 막대 60 + 위아래 여백 70 을 뺀 높이. 작은 화면 · 확대에서는 페이지가 자연스럽게 늘어난다
-    <div className="flex min-h-[640px] flex-col lg:h-[calc(100vh-130px)]">
-      <Link href="/coordinator/students" className="mb-[18px] inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
-        <Icon name="back" className="size-4" /> 수료생 목록
+    // 위: 핵심 정보 / 가운데 2열: 코디네이터 업무(추천 · 서류 · 도움 요청) | 기본 정보 · 상담 기록 / 아래: 참고 정보(역량 프로필 · 등록 자료)
+    // 카드 안 목록은 각자 최대 높이 안에서 스크롤해 한쪽만 길어지지 않게 한다
+    <div>
+      <Link
+        href={backHref}
+        onClick={goBack}
+        className="mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-3.5 py-2 text-[13px] font-semibold text-(--coord-ink) hover:border-(--coord-green) hover:text-(--coord-green) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+      >
+        <Icon name="back" className="size-4" /> 수료생 목록으로
       </Link>
-      <ApiState loading={loading} error={error} retry={reload} notFoundHref="/coordinator/students" notFoundLabel="수료생 목록으로" />
+      <ApiState loading={loading} error={error} retry={reload} notFoundHref={backHref} notFoundLabel="수료생 목록으로" />
       {data && (
         <>
           <Head data={data} help={help} onAddLog={openLog} />
           {saved && (
-            <p role="status" className="mt-3 shrink-0 rounded-lg bg-(--coord-green-soft) px-3.5 py-2.5 text-[13px] text-(--coord-green-ink)">
+            <p role="status" className="mt-3 rounded-lg bg-(--coord-green-soft) px-3.5 py-2.5 text-[13px] text-(--coord-green-ink)">
               상담 기록을 저장했어요.
             </p>
           )}
-          <div className="mt-[22px] grid min-h-0 flex-1 grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)] gap-5">
-            <div className="flex min-h-0 flex-col gap-[18px] overflow-y-auto pr-1">
+          <div className="mt-[18px] grid grid-cols-2 items-start gap-5">
+            <div className="flex flex-col gap-[18px]">
               <Recommendations data={data} />
               <Documents data={data} />
               <HelpList help={help} />
             </div>
-            <div className="flex min-h-0 flex-col gap-[18px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-[18px]">
               <BasicInfo data={data} help={help} />
               <ContactLogs data={data} onAdd={openLog} />
-              <Competency data={data} />
-              <Registered data={data} />
             </div>
+          </div>
+          <h2 className="mt-7 mb-3 text-[13px] font-bold text-(--coord-muted)">참고 정보</h2>
+          <div className="grid grid-cols-2 items-start gap-5">
+            <Competency data={data} />
+            <Registered data={data} />
           </div>
           <BottomSheet
             open={open}
@@ -249,7 +273,7 @@ function Recommendations({ data }: { data: CoordinatorStudentDetail }) {
       aside={<span className="text-xs text-(--coord-muted)">추천 → 선택 → 다음 행동</span>}
       empty={items.length === 0 && "저장된 추천 공고 응답이 없어요."}
     >
-      <ul>
+      <ul className="max-h-[300px] overflow-y-auto">
         {items.map((item) => (
           <li key={item.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line) px-5 py-[15px] last:border-b-0">
             <span
@@ -285,7 +309,7 @@ function Documents({ data }: { data: CoordinatorStudentDetail }) {
   const docs = historyItems(data).filter((i) => i.applicationId && i.applicationStatus);
   return (
     <Card title="진행 중인 지원서류" aside={<Badge>{docs.length}건</Badge>} empty={docs.length === 0 && "지원한 서류가 없어요."}>
-      <ul>
+      <ul className="max-h-[220px] overflow-y-auto">
         {docs.map((d) => (
           <li key={d.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-[15px] last:border-b-0">
             <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-green-soft) text-(--coord-green-ink)">
@@ -311,7 +335,7 @@ function Documents({ data }: { data: CoordinatorStudentDetail }) {
 function HelpList({ help }: { help: DashboardHelpRequest[] }) {
   return (
     <Card title="도움 요청" aside={<span className="text-xs text-(--coord-muted)">접수된 요청</span>} empty={help.length === 0 && "접수된 도움 요청이 없어요."}>
-      <ul>
+      <ul className="max-h-[200px] overflow-y-auto">
         {help.map((h) => (
           <li key={h.helpRequestId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-[15px] last:border-b-0">
             <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-red-soft) text-(--coord-red)">
