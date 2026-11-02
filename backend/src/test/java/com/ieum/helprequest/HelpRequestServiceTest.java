@@ -289,4 +289,40 @@ class HelpRequestServiceTest {
         row.setStatus(status);
         return row;
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"CONTACTED", "CLOSED"})
+    void cancelledResponseKeepsNonOpenRequestWithMatchingMessage(String status) {
+        var row = new HelpRequestData.Row();
+        row.setHelpRequestId(19L);
+        row.setStudentId(7L);
+        row.setRecommendationItemId(11L);
+        row.setStatus(status);
+        when(mapper.findLatestByItemForUpdate(11L)).thenReturn(row);
+
+        var e = assertThrows(BusinessException.class, () -> service.closeForCancelledResponse(7L, 11L));
+
+        assertEquals(ErrorCode.INVALID_STATUS, e.getErrorCode());
+        assertTrue(e.getMessage().contains("CLOSED".equals(status) ? "이미 종료한" : "이미 연락한"));
+        verify(mapper, never()).close(any());
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void cancelledResponseClosesOpenRequestAsNoLongerNeeded() {
+        var row = new HelpRequestData.Row();
+        row.setHelpRequestId(19L);
+        row.setStudentId(7L);
+        row.setRecommendationItemId(11L);
+        row.setStatus("OPEN");
+        when(mapper.findLatestByItemForUpdate(11L)).thenReturn(row);
+        when(mapper.close(row)).thenReturn(1);
+
+        service.closeForCancelledResponse(7L, 11L);
+
+        assertEquals("CLOSED", row.getStatus());
+        assertEquals("NO_LONGER_NEEDED", row.getCloseReason());
+        assertEquals(LocalDateTime.of(2026, 10, 28, 10, 0), row.getClosedAt());
+        verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
+    }
 }

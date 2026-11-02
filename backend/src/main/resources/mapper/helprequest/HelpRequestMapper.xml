@@ -31,6 +31,18 @@
         FOR UPDATE
     </select>
 
+    <!-- 응답 취소용: 같은 추천 항목의 가장 최근 요청. 취소 후 다시 요청하면 새 행이 생긴다. -->
+    <select id="findLatestByItemForUpdate" resultType="com.ieum.helprequest.HelpRequestData$Row"
+            useCache="false" flushCache="true">
+        SELECT id AS help_request_id, student_id, recommendation_item_id,
+               help_type, contact_method, memo, status, created_at, closed_at, close_reason
+        FROM help_request
+        WHERE recommendation_item_id = #{recommendationItemId}
+        ORDER BY id DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
     <select id="findByStudent" resultType="com.ieum.helprequest.HelpRequestData$Row">
         SELECT h.id AS help_request_id, h.student_id, h.recommendation_item_id,
                h.help_type, h.contact_method, h.memo, h.status, h.created_at, h.closed_at,

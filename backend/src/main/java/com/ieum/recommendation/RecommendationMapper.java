@@ -25,6 +25,18 @@ public interface RecommendationMapper {
     int updateItemResponse(@Param("itemId") Long itemId, @Param("response") String response,
                            @Param("passReason") String passReason, @Param("passNote") String passNote);
 
+    /** 응답 취소용: 추천 항목 행을 잠그고 읽는다 (없으면 null). 지원 · 도움 요청 저장과 같은 항목 → 하위 행 순서 */
+    RecommendationRows.ItemOwner selectItemOwnerForUpdate(@Param("itemId") Long itemId);
+
+    /** 응답 취소용: 항목에 연결된 지원서를 잠그고 읽는다 (없으면 null) */
+    RecommendationRows.LockedApplication selectApplicationForUpdate(@Param("itemId") Long itemId);
+
+    /** 검토 요청 전(GENERATING · DRAFT · FAILED) 지원서만 지운다. 서류 본문은 FK cascade 로 함께 지워진다 */
+    int deleteApplicationBeforeReview(@Param("applicationId") Long applicationId);
+
+    /** 응답이 expected 일 때만 NONE 으로 되돌리고 패스 사유 · 메모 · 응답 시각을 비운다 */
+    int resetItemResponse(@Param("itemId") Long itemId, @Param("expected") String expected);
+
     /** student.last_response_at = 지금 (1주 무응답 판정 기준) */
     int touchLastResponse(@Param("studentId") Long studentId);
 
