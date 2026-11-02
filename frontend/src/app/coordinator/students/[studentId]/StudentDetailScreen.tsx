@@ -81,13 +81,13 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
   };
 
   return (
-    // 위: 핵심 정보 / 가운데 2열: 코디네이터 업무(추천 · 서류 · 도움 요청) | 기본 정보 · 상담 기록 / 아래: 참고 정보(역량 프로필 · 등록 자료)
+    // 위: 핵심 정보 + 다음 행동 한 줄 / 아래 2열: 코디네이터 업무(추천 · 서류 · 도움 요청) | 기본 정보 · 상담 기록 · 역량 프로필 · 등록 자료
     // 카드 안 목록은 각자 최대 높이 안에서 스크롤해 한쪽만 길어지지 않게 한다
     <div>
       <Link
         href={backHref}
         onClick={goBack}
-        className="mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-3.5 py-2 text-[13px] font-semibold text-(--coord-ink) hover:border-(--coord-green) hover:text-(--coord-green) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+        className="mb-3 inline-flex w-fit items-center gap-2 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-3.5 py-2 text-[13px] font-semibold text-(--coord-ink) hover:border-(--coord-green) hover:text-(--coord-green) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
       >
         <Icon name="back" className="size-4" /> 수료생 목록으로
       </Link>
@@ -100,21 +100,18 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
               상담 기록을 저장했어요.
             </p>
           )}
-          <div className="mt-[18px] grid grid-cols-2 items-start gap-5">
-            <div className="flex flex-col gap-[18px]">
+          <div className="mt-3 grid grid-cols-[minmax(0,1.3fr)_minmax(380px,1fr)] items-start gap-4">
+            <div className="flex flex-col gap-3">
               <Recommendations data={data} />
               <Documents data={data} />
               <HelpList help={help} />
             </div>
-            <div className="flex flex-col gap-[18px]">
+            <div className="flex flex-col gap-3">
               <BasicInfo data={data} help={help} />
               <ContactLogs data={data} onAdd={openLog} />
+              <Competency data={data} />
+              <Registered data={data} />
             </div>
-          </div>
-          <h2 className="mt-7 mb-3 text-[13px] font-bold text-(--coord-muted)">참고 정보</h2>
-          <div className="grid grid-cols-2 items-start gap-5">
-            <Competency data={data} />
-            <Registered data={data} />
           </div>
           <BottomSheet
             open={open}
@@ -205,26 +202,23 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
       : null;
   const activity = lastActivity(data);
   return (
-    <section aria-label="수료생 요약" className="shrink-0 rounded-xl border border-(--coord-line) bg-(--coord-surface) p-[22px]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-[17px]">
+    // 핵심 정보 | 다음 행동(또는 현재 진행 상태) | 기록 추가 를 한 줄에 둬 위쪽 높이를 줄인다
+    <section aria-label="수료생 요약" className="shrink-0 rounded-xl border border-(--coord-line) bg-(--coord-surface) px-5 py-4">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5">
+        <div className="flex items-center gap-[15px]">
           <Avatar name={s.name} large />
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[27px] leading-[1.3] font-bold tracking-[-1px]">{s.name}</h1>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-[25px] leading-[1.3] font-bold tracking-[-1px]">{s.name}</h1>
               <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
               {help.length > 0 && <Badge tone="red">도움 요청 {help.length}건</Badge>}
             </div>
-            <p className="mt-[7px] text-xs text-(--coord-muted)">
+            <p className="mt-1 text-xs text-(--coord-muted)">
               {[courseName(s.courseLabel), s.desiredJob, s.subStatus && subStatusLabels[s.subStatus]].filter(Boolean).join(" · ")}
             </p>
           </div>
         </div>
-        <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.primary} px-4 py-3 text-sm`}>
-          통화 · 상담 기록 추가
-        </button>
-      </div>
-      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-[9px]">
+      <div className="flex min-w-0 items-center justify-between gap-4 rounded-[10px] border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-[9px]">
         {/* 실제로 이동할 행동이 있을 때만 '다음 행동', 없으면 서버 상태 근거를 '현재 진행 상태'로 보여 준다 */}
         <div>
           <span className="text-[11px] font-bold tracking-[1.4px] text-(--coord-green)">{next ? "NEXT ACTION · 다음 행동" : "현재 진행 상태"}</span>
@@ -237,13 +231,17 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
           </p>
         </div>
         {next && (
-          <Link href={next.href} className={`${btn.base} ${btn.primary} px-4 py-3 text-sm`}>
+          <Link href={next.href} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
             {next.text}
           </Link>
         )}
       </div>
+        <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.outline} px-4 py-2.5 text-sm`}>
+          통화 · 상담 기록 추가
+        </button>
+      </div>
       {activity && (
-        <p className="mt-2.5 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-2.5 text-xs leading-[1.7]">
+        <p className="mt-2.5 text-xs leading-[1.7]">
           <b>마지막 기록 활동</b>　{monthDayTime(activity.at)} · {activity.text}
           <span className="text-(--coord-muted)"> · 저장된 응답 · 상담 기록 기준이며 실시간 접속 정보는 아니에요.</span>
         </p>
@@ -256,11 +254,11 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
 function Card({ title, aside, empty, children }: { title: string; aside?: ReactNode; empty?: string | false; children?: ReactNode }) {
   return (
     <section aria-label={title} className="shrink-0 overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
-      <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-5 py-4">
-        <h2 className="text-[15px] font-bold">{title}</h2>
+      <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-5 py-3">
+        <h2 className="text-[14px] font-bold">{title}</h2>
         {aside}
       </div>
-      {empty ? <p className="px-5 py-4 text-[13px] text-(--coord-muted)">{empty}</p> : children}
+      {empty ? <p className="px-5 py-3 text-[13px] text-(--coord-muted)">{empty}</p> : children}
     </section>
   );
 }
@@ -273,9 +271,9 @@ function Recommendations({ data }: { data: CoordinatorStudentDetail }) {
       aside={<span className="text-xs text-(--coord-muted)">추천 → 선택 → 다음 행동</span>}
       empty={items.length === 0 && "저장된 추천 공고 응답이 없어요."}
     >
-      <ul className="max-h-[300px] overflow-y-auto">
+      <ul className="max-h-[236px] overflow-y-auto">
         {items.map((item) => (
-          <li key={item.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line) px-5 py-[15px] last:border-b-0">
+          <li key={item.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line) px-5 py-3 last:border-b-0">
             <span
               aria-hidden="true"
               className="grid size-[38px] shrink-0 place-items-center rounded-[9px] border border-(--coord-line) bg-(--coord-head) text-sm font-bold text-(--coord-green-ink)"
@@ -309,9 +307,9 @@ function Documents({ data }: { data: CoordinatorStudentDetail }) {
   const docs = historyItems(data).filter((i) => i.applicationId && i.applicationStatus);
   return (
     <Card title="진행 중인 지원서류" aside={<Badge>{docs.length}건</Badge>} empty={docs.length === 0 && "지원한 서류가 없어요."}>
-      <ul className="max-h-[220px] overflow-y-auto">
+      <ul className="max-h-[190px] overflow-y-auto">
         {docs.map((d) => (
-          <li key={d.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-[15px] last:border-b-0">
+          <li key={d.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-3 last:border-b-0">
             <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-green-soft) text-(--coord-green-ink)">
               <Icon name="doc" />
             </span>
@@ -335,9 +333,9 @@ function Documents({ data }: { data: CoordinatorStudentDetail }) {
 function HelpList({ help }: { help: DashboardHelpRequest[] }) {
   return (
     <Card title="도움 요청" aside={<span className="text-xs text-(--coord-muted)">접수된 요청</span>} empty={help.length === 0 && "접수된 도움 요청이 없어요."}>
-      <ul className="max-h-[200px] overflow-y-auto">
+      <ul className="max-h-[170px] overflow-y-auto">
         {help.map((h) => (
-          <li key={h.helpRequestId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-[15px] last:border-b-0">
+          <li key={h.helpRequestId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-3 last:border-b-0">
             <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-red-soft) text-(--coord-red)">
               <Icon name="help" />
             </span>
@@ -379,11 +377,13 @@ function BasicInfo({ data, help }: { data: CoordinatorStudentDetail; help: Dashb
   ];
   return (
     <Card title="기본 정보">
-      <dl className="grid grid-cols-[96px_1fr] items-center gap-3 p-5 text-[13px]">
+      {/* 두 쌍씩 한 줄 (이름 · 값 · 이름 · 값) — 카드 높이를 반으로 */}
+      <dl className="grid grid-cols-[66px_minmax(0,1fr)_66px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-5 py-3.5 text-[12.5px]">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
             <dt className="text-(--coord-muted)">{label}</dt>
-            <dd className="break-words">{value || <span className="text-(--coord-muted)">기록 없음</span>}</dd>
+            {/* 이메일은 길어서 한 줄 전체를 쓴다 */}
+            <dd className={`break-all ${label === "이메일" ? "col-span-3" : ""}`}>{value || <span className="text-(--coord-muted)">기록 없음</span>}</dd>
           </div>
         ))}
       </dl>
@@ -402,9 +402,9 @@ function ContactLogs({ data, onAdd }: { data: CoordinatorStudentDetail; onAdd: (
       }
       empty={data.contactLogs.length === 0 && "아직 남긴 비고나 상담 기록이 없어요."}
     >
-      <ul className="max-h-[320px] overflow-y-auto px-5 py-4">
+      <ul className="max-h-[180px] overflow-y-auto px-5 py-3">
         {data.contactLogs.map((log, index) => (
-          <li key={`${log.contactLogId}-${index}`} className="border-l border-(--coord-tint-line) pb-4 pl-4 last:pb-0">
+          <li key={`${log.contactLogId}-${index}`} className="border-l border-(--coord-tint-line) pb-3 pl-4 last:pb-0">
             <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{log.note}</p>
             <small className="mt-1 block text-[11px] text-(--coord-muted)">
               {monthDayTime(log.createdAt)} · {contactTypeLabels[log.contactType]}
@@ -421,13 +421,13 @@ function Competency({ data }: { data: CoordinatorStudentDetail }) {
   return (
     <Card title="역량 프로필" aside={<Badge tone="blue">AI 정리</Badge>} empty={!cp && "아직 생성된 역량 프로필이 없어요."}>
       {cp && (
-        <div className="space-y-3 p-5 text-[13px]">
+        <div className="space-y-2.5 px-5 py-3.5 text-[13px]">
           <p>
             <span className="mr-2 text-xs font-bold text-(--coord-muted)">역할</span>
             {cp.roles.join(", ") || "추출된 역할이 없어요."}
           </p>
           {cp.skills.length > 0 && (
-            <ul className="flex flex-wrap gap-1.5" aria-label="역량 기술">
+            <ul className="flex max-h-[84px] flex-wrap gap-1.5 overflow-y-auto" aria-label="역량 기술">
               {cp.skills.map((skill) => (
                 <li key={skill.name} className="rounded-md border border-(--coord-line) px-2 py-1 text-xs">
                   {skill.name}
@@ -461,7 +461,7 @@ function Registered({ data }: { data: CoordinatorStudentDetail }) {
   ];
   return (
     <Card title="등록 자료" aside={<Badge tone="green">등록 자료</Badge>}>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 p-5 text-[13px]">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5 px-5 py-3 text-[12.5px]">
         {rows.map(([label, value]) => (
           <div key={label} className="flex justify-between gap-2">
             <dt className="text-(--coord-muted)">{label}</dt>
