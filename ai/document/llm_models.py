@@ -25,7 +25,7 @@ class LlmCompanyLink(CamelModel):
 
     company_evidence_id: str = ""  # 쓸 C 하나
     student_evidence_ids: list[str] = []  # 그와 맞는 E
-    fit: str = ""  # 수료생 경험이 그 C 와 어떻게 맞는지 한 줄. 주어는 수료생
+    fit: str = ""  # 첫 문장에 쓸 경험의 구체적인 사실 한 줄. 주어는 수료생
 
 
 class LlmCoverPlan(CamelModel):
