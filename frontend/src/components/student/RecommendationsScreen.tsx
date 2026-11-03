@@ -43,9 +43,9 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
         <div>
           <h1 id="recommendation-heading">{data
             ? data.items.length > 0
-              ? <>{data.studentName}님, 맞춤 공고 <span className="s-recommend-count">{data.items.length}</span>개가 도착했어요 👋</>
-              : <>{data.studentName}님, 새로운 기회를 준비하고 있어요 👋</>
-            : "나의 맞춤 공고"}</h1>
+              ? <>{data.studentName}님, 맞춤 공고 <span className="s-recommend-count">{data.items.length}</span>개가 도착했어요</>
+              : <>{data.studentName}님, 새로운 기회를 준비하고 있어요</>
+            : "나의 맞춤 공고"}{data && <> <span className="s-greeting-wave" role="img" aria-label="손 흔드는 인사">👋</span></>}</h1>
           <p>나의 경험과 역량을 바탕으로 추천한 새로운 기회를 확인해 보세요.</p>
         </div>
       </header>
