@@ -121,6 +121,18 @@ class RequiredSkillsTest(unittest.TestCase):
         self.assertFalse(jc.missing_required("자격요건\n- SQL", ["MyBatis"]))
         self.assertTrue(jc.missing_required("자격요건\n- MyBatis", ["MySQL"]))  # 매퍼 쪽으로는 인정하지 않음 (루브릭과 같게)
 
+    def test_body_skills_only_when_no_requirement_section(self):
+        body = "[공고] 병원 시스템 개발자\n[직무] 응용 소프트웨어 개발자\n[내용] *VB.NET 경험\n*MS SQL Server 활용한 개발경험\n*Windows FORMS 우대"
+        self.assertCountEqual(jc.body_skills(body), ["MS SQL"])  # 우대 줄은 뺀다 (VB.NET 은 사전에 없음)
+        self.assertEqual(jc.body_skills(FULL), [])  # 자격요건 구간이 있으면 읽지 않는다 (기존 동작 그대로)
+
+    def test_lacks_body_skills_below_half(self):
+        body = "[공고] Back End SW 개발자\n[직무] 응용 소프트웨어 개발자\n[내용] - Data Bricks, AWS 등 AI 관련 SW 개발 (Java, Python)"
+        self.assertTrue(jc.lacks_body_skills(body, ["Java", "Spring Boot", "MySQL"]))  # Java · Python · AWS 중 1개
+        self.assertFalse(jc.lacks_body_skills(body, ["Java", "Python"]))  # 3개 중 2개
+        self.assertFalse(jc.lacks_body_skills(NEUTRAL, ["Java"]))  # 기술이 안 적혔으면 빼지 않는다
+        self.assertFalse(jc.lacks_body_skills(MISSING, []))  # 자격요건 구간이 있는 공고는 이 규칙과 상관없음
+
     def test_plain_line_body_is_unchanged(self):
         plain = "[내용] < 담당업무 >\nㆍ API 개발\n< 자격요건 >\nㆍ Java · MySQL 사용 가능자\n< 우대사항 >\nㆍ Redis"
         self.assertEqual(jc.required_text(plain), "ㆍ Java · MySQL 사용 가능자")  # "< 자격요건 >" 은 태그로 보지 않음
@@ -214,6 +226,11 @@ class RecommendOrderTest(unittest.TestCase):
         ids = self.run_recommend({"1": entry(FRONT), "2": entry(UNKNOWN), "3": entry(FULL)},
                                  {FRONT: 0.95, UNKNOWN: 0.4, FULL: 0.6})
         self.assertEqual(ids, [3, 2])
+
+    def test_body_skill_filter_drops_posting(self):
+        body = "[공고] 데이터 서버 개발\n[직무] 응용 소프트웨어 개발자\n[내용] Python · Django · Redis 로 서버 개발"
+        ids = self.run_recommend({"1": entry(body), "2": entry(FULL)}, {body: 0.9, FULL: 0.6})
+        self.assertEqual(ids, [2])  # 수료생(Spring Boot · MySQL)이 내용의 기술 3개 중 하나도 없음
 
     def test_empty_when_only_other_family(self):
         self.assertEqual(self.run_recommend({"1": entry(FRONT)}, {FRONT: 0.95}), [])

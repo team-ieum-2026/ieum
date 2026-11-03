@@ -250,6 +250,26 @@ def missing_required(text: str, skills: list[str]) -> bool | None:
     return not all(owns(r, skills) for r in required)
 
 
+_BODY = re.compile(r"^\[내용\]", re.M)
+
+
+def body_skills(text: str) -> list[str]:
+    """자격요건 구간이 없는 공고만: [내용] 칸부터 끝까지에 적힌 기술 ("우대"가 든 줄은 뺌). 자격요건 구간이 있으면 []"""
+    if required_text(text).strip():
+        return []
+    m = _BODY.search(text)
+    if not m:
+        return []
+    lines = _html_to_lines(text[m.end():]).split("\n")
+    return techs_in("\n".join(line for line in lines if "우대" not in line))
+
+
+def lacks_body_skills(text: str, skills: list[str]) -> bool:
+    """자격요건 구간이 없는 공고에서 [내용]에 적힌 기술 중 수료생이 가진 비율이 절반 미만이면 True (루브릭처럼 필터에서 뺀다)"""
+    found = body_skills(text)
+    return bool(found) and sum(owns(r, skills) for r in found) / len(found) < 0.5
+
+
 def posting_family(title: str | None, match_text: str) -> str | None:
     """공고 직무군. 제목 → [직무] 칸 순. 판단 못 하면 None"""
     lines = dict((m.group(1), m.group(2)) for m in _SECTION_LINE.finditer(match_text or ""))

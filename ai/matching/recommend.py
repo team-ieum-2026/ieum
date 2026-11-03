@@ -7,6 +7,7 @@
    METRO: 희망 지역에 수도권이 있으면 수도권 전부 후보(희망 시 · 도 우선 정렬), 수도권 밖뿐이면(예: 부산) 그 시 · 도만
    STRICT: 희망 시 · 도만. 희망 지역이 없으면 둘 다 전체
    직무군: 희망 직무와 공고 직무군이 다르면 뺀다. 어느 쪽이든 판단 못 하면 통과 (job_conditions.family_allowed)
+   기술: 자격요건 구간이 없는 공고는 [내용]에 적힌 기술 중 절반 미만만 가졌으면 뺀다 (job_conditions.lacks_body_skills)
 ③ 검색어: 프로필(희망 직무 · 기술 · 역할 · 성과 · 자격증) 한 문장 → embed_texts(task_type="RETRIEVAL_QUERY")
 ④ 코사인 유사도 상위 config.CANDIDATE_K
 ⑤ 공용 rerank 로 후보 전부 점수 (0~1)
@@ -41,7 +42,7 @@ from matching.fallback import (
     term_pattern,
 )
 from matching.indexer import default_model_name
-from matching.job_conditions import family_allowed, missing_required
+from matching.job_conditions import family_allowed, lacks_body_skills, missing_required
 from matching.models import RecommendData, RecommendItem, RecommendReason, RecommendRequest
 from matching.store import Entry, IndexStore
 from schemas import CompetencyProfile
@@ -145,6 +146,7 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
 
     # ① ② 규칙 필터
     excluded = set(req.exclude_job_posting_ids)
+    skill_names = [s.name for s in profile.skills]
     candidates: list[Candidate] = []
     for key, entry in usable.items():
         job_id = int(key)
@@ -154,6 +156,8 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
         if not region_allowed(profile.preferred_region, tier, config.REGION_POLICY):
             continue
         if not family_allowed(profile.desired_job, entry.get("title"), entry.get("matchText") or ""):
+            continue
+        if lacks_body_skills(entry.get("matchText") or "", skill_names):
             continue
         candidates.append(Candidate(job_id, entry, tier))
     if not candidates:
@@ -209,7 +213,6 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
                       threshold=config.SCORE_THRESHOLD)
 
     # ⑦ 회사명 · 제목 같은 공고는 점수 높은 하나만 → 지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 점수 → id
-    skill_names = [s.name for s in profile.skills]
     picked: list[Candidate] = []
     seen: set[tuple[str, str]] = set()
     for c in sorted(passed, key=lambda c: (-c.score, c.job_posting_id)):
