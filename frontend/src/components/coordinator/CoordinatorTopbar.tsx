@@ -13,11 +13,11 @@ import { getDashboard } from "@/lib/api/coordinatorReview";
 
 function pageName(path: string) {
   if (path === "/coordinator") return "오늘의 업무";
-  if (/^\/coordinator\/students\/[^/]+/.test(path)) return "수료생 상세";
+  if (/^\/coordinator\/students\/[^/]+/.test(path)) return "수료생 상세 프로필";
   if (path.startsWith("/coordinator/students")) return "수료생 관리";
-  if (/^\/coordinator\/applications\/[^/]+/.test(path)) return "지원서류 검토";
+  if (/^\/coordinator\/applications\/[^/]+/.test(path)) return "지원서류 상세 검토";
   if (path.startsWith("/coordinator/applications")) return "서류 검토";
-  if (path.startsWith("/coordinator/help-requests")) return "도움 요청";
+  if (path.startsWith("/coordinator/help-requests")) return "도움 요청 관리";
   if (path.startsWith("/coordinator/stats")) return "취업·지원 현황";
   return "";
 }
@@ -83,22 +83,23 @@ export default function CoordinatorTopbar() {
 
   const count = notices?.length ?? 0;
   return (
-    <header className="sticky top-0 z-10 flex h-[60px] items-center justify-between border-b border-(--coord-line) bg-(--coord-surface) px-[34px]">
-      <p className="flex items-center gap-2.5 text-xs text-(--coord-muted)">
-        워크스페이스 <span aria-hidden="true">/</span>
-        <b className="font-medium text-(--coord-ink)">{pageName(pathname)}</b>
+    // 리뉴얼 .app-topbar: 56px · 왼쪽 경로 · 오른쪽 알림 벨(원형) + 계정 칩(알약). 글로벌 검색은 이번 범위에서 제외
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-(--coord-line) bg-(--coord-surface) px-6">
+      <p className="flex items-center gap-2 text-[13.5px] text-(--coord-muted)">
+        워크스페이스 <span aria-hidden="true" className="opacity-40">/</span>
+        <b className="font-bold text-(--coord-ink)">{pageName(pathname)}</b>
       </p>
-      <div ref={boxRef} className="relative flex items-center gap-2">
+      <div ref={boxRef} className="relative flex items-center gap-4">
         <button
           type="button"
           aria-label={`알림 ${count}건`}
           aria-expanded={open === "bell"}
           onClick={() => setOpen(open === "bell" ? null : "bell")}
-          className="relative grid size-9 place-items-center rounded-lg hover:bg-(--coord-hover) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+          className="relative grid size-9 place-items-center rounded-full border border-(--coord-line) text-(--coord-muted) transition hover:bg-(--coord-page) hover:text-(--coord-ink) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
         >
-          <Icon name="bell" />
+          <Icon name="bell" className="size-[18px]" />
           {count > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 grid h-[17px] min-w-[17px] place-items-center rounded-[10px] border-2 border-(--coord-surface) bg-(--coord-red) px-1 text-[9px] text-(--coord-surface)">
+            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full border-[1.5px] border-(--coord-surface) bg-(--coord-red) px-[3px] text-[9px] leading-none font-extrabold text-(--coord-surface)">
               {count}
             </span>
           )}
@@ -108,33 +109,32 @@ export default function CoordinatorTopbar() {
           aria-expanded={open === "account"}
           aria-label={`${DEMO_COORDINATOR.name} ${DEMO_COORDINATOR.role} 계정 메뉴`}
           onClick={() => setOpen(open === "account" ? null : "account")}
-          className="flex items-center gap-[9px] border-l border-(--coord-line) pl-4 text-left focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+          className="flex items-center gap-2 rounded-full border border-(--coord-line) bg-(--coord-surface) py-1 pr-2.5 pl-1.5 text-left transition hover:bg-(--coord-page) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
         >
-          <span aria-hidden="true" className="grid size-[34px] place-items-center rounded-full bg-(--coord-green-soft) text-xs font-semibold text-(--coord-green-ink)">
+          <span aria-hidden="true" className="grid size-[26px] place-items-center rounded-full bg-(--coord-green-soft) text-[12.5px] font-extrabold text-(--coord-green)">
             {DEMO_COORDINATOR.initial}
           </span>
-          <span>
-            <b className="block text-xs">{DEMO_COORDINATOR.name}</b>
-            <small className="text-[10px] text-(--coord-muted)">{DEMO_COORDINATOR.role}</small>
+          <span className="text-[13.5px] font-bold">
+            {DEMO_COORDINATOR.name} {DEMO_COORDINATOR.role}
           </span>
-          <Icon name="chevron" className="size-4" />
+          <Icon name="chevron" className="size-3.5" />
         </button>
 
         {open === "bell" && (
-          <div role="dialog" aria-label="알림" className="absolute top-[46px] right-0 w-[350px] overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface) shadow-[0_15px_60px_rgb(0_0_0/0.12)]">
+          <div role="dialog" aria-label="알림" className="absolute top-[46px] right-0 w-[380px] overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) shadow-[0_20px_40px_rgb(0_0_0/0.16)]">
             <div className="border-b border-(--coord-line) px-5 py-3.5">
-              <b className="text-[13px]">알림 {count}건</b>
-              <p className="mt-0.5 text-[11px] text-(--coord-muted)">새 도움 요청 · 검토 대기 서류 기준이에요.</p>
+              <b className="text-[15px]">알림 {count}건</b>
+              <p className="mt-0.5 text-[13px] text-(--coord-muted)">새 도움 요청 · 검토 대기 서류 기준이에요.</p>
             </div>
             {count === 0 ? (
-              <p className="px-5 py-6 text-center text-xs text-(--coord-muted)">새 알림이 없어요.</p>
+              <p className="px-5 py-6 text-center text-sm text-(--coord-muted)">새 알림이 없어요.</p>
             ) : (
-              <ul className="max-h-[360px] overflow-y-auto">
+              <ul className="max-h-[400px] overflow-y-auto">
                 {notices?.map((n) => (
                   <li key={n.key}>
-                    <Link href={n.href} onClick={() => setOpen(null)} className="block border-b border-(--coord-line) px-5 py-3 text-xs hover:bg-(--coord-hover)">
+                    <Link href={n.href} onClick={() => setOpen(null)} className="block border-b border-(--coord-line) px-5 py-3 text-[13.5px] hover:bg-(--coord-hover)">
                       <b className="block">{n.title}</b>
-                      <span className="mt-0.5 block truncate text-(--coord-muted)">
+                      <span className="mt-0.5 block truncate text-[13px] text-(--coord-muted)">
                         {n.text} · {monthDayTime(n.at)}
                       </span>
                     </Link>
@@ -146,23 +146,23 @@ export default function CoordinatorTopbar() {
         )}
 
         {open === "account" && (
-          <div role="menu" aria-label="계정 메뉴" className="absolute top-[46px] right-0 w-[240px] overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface) shadow-[0_15px_60px_rgb(0_0_0/0.12)]">
+          <div role="menu" aria-label="계정 메뉴" className="absolute top-[46px] right-0 w-[260px] overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) shadow-[0_20px_40px_rgb(0_0_0/0.16)]">
             <div className="border-b border-(--coord-line) px-5 py-3.5">
-              <b className="block text-[13px]">
+              <b className="block text-[15px]">
                 {DEMO_COORDINATOR.name} {DEMO_COORDINATOR.role}
               </b>
-              {DEMO_COORDINATOR.isDemo && <p className="mt-0.5 text-[11px] text-(--coord-muted)">데모 계정 · 로그인 기능은 아직 없어요</p>}
+              {DEMO_COORDINATOR.isDemo && <p className="mt-0.5 text-[13px] text-(--coord-muted)">데모 계정 · 로그인 기능은 아직 없어요</p>}
             </div>
             <button
               type="button"
               role="menuitem"
               disabled
               aria-disabled="true"
-              className="block w-full cursor-not-allowed border-b border-(--coord-line) px-5 py-3 text-left text-xs text-(--coord-muted)"
+              className="block w-full cursor-not-allowed border-b border-(--coord-line) px-5 py-3 text-left text-[13.5px] text-(--coord-muted)"
             >
-              계정 설정 <span className="ml-1 text-[10px]">(준비 중)</span>
+              계정 설정 <span className="ml-1 text-xs">(준비 중)</span>
             </button>
-            <Link href="/" role="menuitem" onClick={() => setOpen(null)} className="block px-5 py-3 text-xs hover:bg-(--coord-hover)">
+            <Link href="/" role="menuitem" onClick={() => setOpen(null)} className="block px-5 py-3 text-[13.5px] hover:bg-(--coord-hover)">
               역할 선택 화면으로
             </Link>
           </div>

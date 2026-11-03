@@ -7,11 +7,11 @@
 // ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
-import { apiErrorText, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import { IS_MOCK } from "@/components/coordinator/demoAccount";
 import {
   MANAGE_ORDER,
   contactLabels,
-  courseName,
   docLabels,
   docTone,
   HELP_TYPE_ORDER,
@@ -22,7 +22,6 @@ import {
   manageChartVar,
   manageCounts,
   manageLabels,
-  manageTone,
   monthDay,
   pct,
   studentExtra,
@@ -105,34 +104,30 @@ function Body({ data }: { data: Dashboard }) {
   })).filter((a) => counts[a.k] > 0);
 
   const legend = [
-    { label: "취업 완료", color: manageChartVar.EMPLOYED, n: emp, note: <>패스 사유 &lsquo;이미 취업&rsquo; 응답 기준</> },
-    {
-      label: "구직 중",
-      color: manageChartVar.SEEKING,
-      n: seeking,
-      note: <>기관 추천 지원 중 · 패스 후 대기 · 기타 포함</>,
-    },
-    { label: "휴식", color: manageChartVar.RESTING, n: counts.RESTING, note: <>수료생이 &lsquo;휴식&rsquo;을 선택 · 연락 기록은 유지</> },
-    { label: "추가 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, note: <>1주 넘게 앱 응답 없음 · 전화 확인</> },
+    { label: "취업 완료", color: manageChartVar.EMPLOYED, n: emp, noteText: "패스 사유 '이미 취업' 응답 기준" },
+    { label: "구직 중", color: manageChartVar.SEEKING, n: seeking, noteText: "기관 추천 지원 중 · 패스 후 대기 · 기타 포함" },
+    { label: "휴식", color: manageChartVar.RESTING, n: counts.RESTING, noteText: "수료생이 '휴식'을 선택 · 연락 기록은 유지" },
+    { label: "추가 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, noteText: "1주 넘게 앱 응답 없음 · 전화 확인" },
   ];
 
+  // 리뉴얼 .gauge-circle-box: 회색 상자 + 큰 숫자 (파악률 초록 · 파악 기준 취업률 파랑 · 전체 기준 회색). 계산식은 그대로
   const rings = [
-    { label: "관리 상태 파악률", a: known, b: total, color: "var(--coord-chart-seeking)", note: `상태가 분류된 ${known}명 ÷ 전체 ${total}명` },
-    { label: "취업률", a: emp, b: known, color: "var(--coord-chart-employed)", note: `취업 완료 ${emp}명 ÷ 상태가 분류된 ${known}명` },
-    { label: "전체 기준 취업률", a: emp, b: total, color: "var(--coord-chart-total)", note: `취업 완료 ${emp}명 ÷ 전체 ${total}명 · 최소치` },
+    { label: "관리 상태 파악률", a: known, b: total, color: "text-(--coord-green)", note: `분류 ${known}명 ÷ 전체 ${total}명` },
+    { label: "취업률 (파악 기준)", a: emp, b: known, color: "text-(--coord-blue)", note: `취업 ${emp}명 ÷ 파악 ${known}명` },
+    { label: "전체 기준 취업률", a: emp, b: total, color: "text-(--coord-muted)", note: `취업 ${emp}명 ÷ 전체 ${total}명 · 최소치` },
   ];
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
-        <Panel label="수료생 관리 현황" className="px-5 py-4">
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="text-[15px] font-bold">수료생 관리 현황</h2>
-            <span className="text-xs text-(--coord-muted)">현재 등록 인원 {total}명</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-[22px]">
-            <div className="relative size-[150px] flex-none" role="img" aria-label={`관리 상태 분포: ${legend.map((l) => `${l.label} ${l.n}명`).join(", ")}`}>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-5">
+        <Panel label="수료생 관리 현황">
+          <PanelHead title="수료생 관리 현황">
+            <Badge tone="green">현재 등록 인원 {total}명</Badge>
+          </PanelHead>
+          <div className="flex items-center gap-5 p-5">
+            <div className="relative size-[130px] flex-none" role="img" aria-label={`관리 상태 분포: ${legend.map((l) => `${l.label} ${l.n}명`).join(", ")}`}>
               <svg viewBox="0 0 140 140" aria-hidden="true" className="block size-full">
+                <circle cx="70" cy="70" r={R} fill="none" stroke="var(--coord-chart-track)" strokeWidth="14" />
                 {arcs.map((a) => (
                   <circle
                     key={a.k}
@@ -141,7 +136,7 @@ function Body({ data }: { data: Dashboard }) {
                     r={R}
                     fill="none"
                     stroke={manageChartVar[a.k]}
-                    strokeWidth="18"
+                    strokeWidth="14"
                     strokeDasharray={`${a.dash.toFixed(2)} ${(CIRC - a.dash).toFixed(2)}`}
                     strokeDashoffset={a.offset.toFixed(2)}
                     transform="rotate(-90 70 70)"
@@ -149,67 +144,54 @@ function Body({ data }: { data: Dashboard }) {
                 ))}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <b className="text-[30px] leading-[1.1] text-(--coord-forest)">
-                  {total}
-                  <small className="ml-0.5 text-sm font-bold">명</small>
-                </b>
-                <span className="text-[11px] text-(--coord-muted)">관리 중인 수료생</span>
+                <b className="text-xl leading-none font-extrabold">{total}명</b>
+                <span className="mt-1 text-[11px] text-(--coord-faint)">관리 중</span>
               </div>
             </div>
-            <ul className="min-w-0 flex-1">
-              {legend.map((l) => (
-                <li
-                  key={l.label}
-                  className="grid grid-cols-[10px_minmax(0,1fr)_auto_54px] items-center gap-2 border-b border-(--coord-line) py-2.5 first:pt-0 last:border-b-0 last:pb-0"
-                >
-                  <i className="block size-2.5 rounded-[3px]" style={{ background: l.color }} />
-                  <div>
-                    <b className="block text-[13px] leading-[1.3]">{l.label}</b>
-                    <small className="flex items-center gap-[5px] text-[11px] leading-[1.4] text-(--coord-muted)">{l.note}</small>
-                  </div>
-                  <strong className="text-right text-xl leading-[1.2] text-(--coord-forest)">{l.n}명</strong>
-                  <em className="text-right text-xs text-(--coord-muted) not-italic">{pct(l.n, total)}%</em>
-                </li>
-              ))}
+            <ul className="flex min-w-0 flex-1 flex-col gap-2 text-[13.5px]">
+              {legend.map((l) => {
+                const warn = l.color === manageChartVar.CHECK_REQUIRED;
+                return (
+                  // 분류 설명(note)은 줄을 늘리지 않게 마우스 안내 · 화면 낭독기용으로 둔다 (같은 설명이 '집계 기준'에도 있음)
+                  <li key={l.label} className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-1.5" title={l.noteText}>
+                      <i aria-hidden="true" className="block size-2.5 shrink-0 rounded-full" style={{ background: l.color }} />
+                      {l.label}
+                      <span className="sr-only"> ({l.noteText})</span>
+                    </span>
+                    <b className={`shrink-0 whitespace-nowrap ${warn ? "text-(--coord-chart-check)" : ""}`}>
+                      {l.n}명 ({Math.round(pct(l.n, total))}%)
+                    </b>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </Panel>
-        <Panel label="취업 지표" className="px-5 py-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-bold">취업 지표</h2>
-              <button
-                type="button"
-                aria-expanded={showBasis}
-                aria-controls={basisId}
-                onClick={() => setShowBasis((v) => !v)}
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold focus-visible:outline-2 focus-visible:outline-(--coord-green) ${
-                  showBasis
-                    ? "border-(--coord-green) bg-(--coord-green-soft) text-(--coord-forest)"
-                    : "border-(--coord-line) text-(--coord-muted) hover:bg-(--coord-hover)"
-                }`}
-              >
-                <span aria-hidden="true">ⓘ</span> 집계 기준
-              </button>
-            </div>
-            <span className="text-xs text-(--coord-muted)">관리 상태 기준</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2.5 text-center">
-            {rings.map((r) => (
-              <div key={r.label} className="flex flex-col items-center gap-[5px]">
-                <div
-                  className="relative grid size-[98px] place-items-center rounded-full"
-                  style={{ background: `conic-gradient(${r.color} ${pct(r.a, r.b)}%, var(--coord-chart-track) 0)` }}
-                >
-                  <span className="absolute inset-[10px] rounded-full bg-(--coord-surface)" />
-                  <b className="relative text-base">{pct(r.a, r.b)}%</b>
+        <Panel label="취업 지표">
+          <PanelHead title="취업 지표">
+            <button
+              type="button"
+              aria-expanded={showBasis}
+              aria-controls={basisId}
+              onClick={() => setShowBasis((v) => !v)}
+              className={`${btn.base} ${btn.outline} ${btn.sm} ${showBasis ? "border-(--coord-green)! bg-(--coord-green-soft)! text-(--coord-green-ink)" : ""}`}
+            >
+              집계 기준 <Icon name="info" className="size-3.5" />
+            </button>
+          </PanelHead>
+          <div className="p-5">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              {rings.map((r) => (
+                <div key={r.label} className="flex flex-col items-center justify-center rounded-md border border-(--coord-line) bg-(--coord-head) px-3 py-4">
+                  <b className={`text-[30px] leading-none font-extrabold ${r.color}`}>{pct(r.a, r.b)}%</b>
+                  <span className="mt-2 text-sm font-bold">{r.label}</span>
+                  <small className="mt-0.5 text-xs break-keep text-(--coord-faint)">{r.note}</small>
                 </div>
-                <b className="text-[12.5px] leading-[1.3]">{r.label}</b>
-                <small className="text-[11px] leading-[1.45] break-keep text-(--coord-muted)">{r.note}</small>
-              </div>
-            ))}
+              ))}
+            </div>
+            <p className="mt-3 text-center text-xs text-(--coord-faint)">취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.</p>
           </div>
-          <p className="mt-3 text-[11px] text-(--coord-muted)">취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.</p>
         </Panel>
       </div>
       {/* 닫혀 있으면 아무것도 그리지 않아 여백이 생기지 않는다 */}
@@ -218,7 +200,7 @@ function Body({ data }: { data: Dashboard }) {
         role="region"
         aria-label="관리 상태와 집계 기준"
         hidden={!showBasis}
-        className="mt-3 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-2.5 text-xs leading-[1.7]"
+        className="mt-5 rounded-md border border-(--coord-tint-line) bg-(--coord-tint) px-4 py-3 text-[13.5px] leading-[1.7]"
       >
         <b>관리 상태와 집계 기준</b>
         <p className="mt-2">
@@ -272,6 +254,7 @@ function HelpStats({ data }: { data: Dashboard }) {
   const statusCount = (status: StudentHelpRequestStatus) =>
     all ? all.filter((h) => h.status === status).length : status === "OPEN" ? data.helpRequests.length : null;
   const statusTotal = all ? all.length : data.helpRequests.length;
+  const allStudentCount = all ? new Set(all.map((h) => h.studentId)).size : null;
 
   const open = data.helpRequests;
   // 건수(요청)와 인원(학생)을 따로 센다: 한 학생이 여러 건을 낼 수 있다
@@ -283,21 +266,48 @@ function HelpStats({ data }: { data: Dashboard }) {
   // 필요한 도움별: 서버 helpType 그대로 건수 집계, null · 키 없음은 '미분류' (공고 · 메모로 추측하지 않음)
   const byType = [...HELP_TYPE_ORDER, null].map((t) => ({ t, n: open.filter((h) => (h.helpType ?? null) === t).length }));
   return (
-    <Panel label="도움 요청 통계" className="mt-3">
+    <Panel label="도움 요청 통계" className="mt-5">
       <PanelHead
         title="도움 요청 통계"
         sub="처리 상태별은 지금까지 들어온 전체 요청, 선호 연락별 · 필요한 도움별은 접수 중인 요청만 건수로 집계해요."
       >
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${toneClass("red")}`}>
+        <span className="shrink-0 rounded-full bg-(--coord-red-soft) px-3.5 py-[5px] text-[13px] font-bold whitespace-nowrap text-(--coord-red)">
           접수 중 요청 {open.length}건 · 수료생 {studentCount}명 기준
         </span>
       </PanelHead>
-      <div className="grid grid-cols-3 divide-x divide-(--coord-line-soft)">
-        <StatColumn title="처리 상태별" note={all ? `전체 ${all.length}건 중` : undefined}>
+      {/* 리뉴얼 .help-stats-grid: 3열 1.1 : 1 : 1.1, 간격 32px */}
+      <div className="grid grid-cols-[1.1fr_1fr_1.1fr] gap-7 px-5 pt-5 pb-6">
+        <StatColumn
+          title="처리 상태별"
+          note={all ? `전체 ${all.length}건 · 수료생 ${allStudentCount}명` : undefined}
+          caution={IS_MOCK ? "목업에는 접수 중인 요청만 있어요. 다른 상태 건수는 실제 BE 연결 시 보여요." : undefined}
+        >
           {HELP_STATES.map(({ label, status }) => {
             const n = status ? statusCount(status) : null;
+            // 목업 목록은 접수(OPEN)만 만들어 다른 상태가 0건처럼 보이므로, 목업 모드에서는 0 대신 '목업 없음'
+            if (IS_MOCK && status && status !== "OPEN") {
+              return (
+                <StatRow
+                  key={label}
+                  label={<span className="text-(--coord-muted)">{label}</span>}
+                  unlinked="목업 데이터에 없는 상태예요 (실제 BE 에서는 상태별 목록 API 로 셉니다)"
+                  placeholder="— 목업 없음"
+                />
+              );
+            }
             if (status && n !== null) {
-              return <StatRow key={label} label={<Badge tone={helpTone[status]}>{label}</Badge>} n={n} total={statusTotal} />;
+              return (
+                <StatRow
+                  key={label}
+                  label={
+                    <Badge tone={helpTone[status]} small>
+                      {label}
+                    </Badge>
+                  }
+                  n={n}
+                  total={statusTotal}
+                />
+              );
             }
             const loading = status && !all && !allFailed;
             return (
@@ -325,19 +335,21 @@ function HelpStats({ data }: { data: Dashboard }) {
   );
 }
 
-function StatColumn({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+/** 통계 한 열 (리뉴얼 .help-stats-col). caution: 집계 범위 주의 문구 (목업 모드 등) */
+function StatColumn({ title, note, caution, children }: { title: string; note?: string; caution?: string; children: React.ReactNode }) {
   return (
-    <div className="px-5 py-3.5">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h3 className="text-[13px] font-bold">{title}</h3>
-        {note && <span className="text-[11px] text-(--coord-muted)">{note}</span>}
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex items-center justify-between gap-2 border-b border-(--coord-line-soft) pb-2">
+        <h3 className="text-[14.5px] font-extrabold">{title}</h3>
+        {note && <span className="text-[12.5px] font-medium whitespace-nowrap text-(--coord-faint)">{note}</span>}
       </div>
-      <ul className="flex flex-col gap-1.5">{children}</ul>
+      <ul className="flex flex-col gap-3">{children}</ul>
+      {caution && <p className="text-xs leading-[1.4] text-(--coord-attention)">{caution}</p>}
     </div>
   );
 }
 
-/** 통계 한 줄: 이름 · 막대 · 건수. unlinked 이면 '— · 미연동' (placeholder 가 있으면 그 문구) */
+/** 통계 한 줄 (리뉴얼 .help-stats-item): 이름 100px · 8px 막대 · 건수. unlinked 이면 '— 미연동' (placeholder 가 있으면 그 문구) */
 function StatRow({
   label,
   n = 0,
@@ -352,25 +364,21 @@ function StatRow({
   placeholder?: string;
 }) {
   return (
-    <li className="grid grid-cols-[110px_minmax(0,1fr)_64px] items-center gap-2.5 text-xs">
-      <span className="truncate">{label}</span>
+    <li className="flex min-h-[26px] items-center gap-3 text-[13.5px]">
+      {/* 이름 칸은 가장 긴 '선호 연락 선택 안 함'이 한 줄에 들어가는 폭 (글자 크기는 그대로) */}
+      <span className="w-[132px] shrink-0 font-semibold whitespace-nowrap text-(--coord-muted)">{label}</span>
       {/* 미연동은 막대를 그리지 않는다 (빈 막대가 0건처럼 보이지 않게) */}
       {unlinked ? (
-        <span />
-      ) : (
-        <span className="h-1.5 overflow-hidden rounded-full bg-(--coord-chart-track)">
-          <span className="block h-full rounded-full bg-(--coord-chart-total)" style={{ width: `${pct(n, total)}%` }} />
-        </span>
-      )}
-      {unlinked ? (
-        <span title={unlinked} className="text-right text-[11px] text-(--coord-muted)">
-          {placeholder ?? "— · 미연동"}
+        <span title={unlinked} className="flex-1 pr-1 text-right text-[12.5px] text-(--coord-chart-resting)">
+          {placeholder ?? "— 미연동"}
         </span>
       ) : (
-        <b className="text-right text-[13px]">
-          {n}
-          <small className="ml-0.5 text-[11px] font-medium text-(--coord-muted)">건</small>
-        </b>
+        <>
+          <span className="flex h-2 flex-1 overflow-hidden rounded-[4px] bg-(--coord-line-soft)">
+            <span className="block h-full rounded-[4px] bg-(--coord-green) transition-[width] duration-300" style={{ width: `${pct(n, total)}%` }} />
+          </span>
+          <b className="w-11 shrink-0 text-right">{n}건</b>
+        </>
       )}
     </li>
   );
@@ -396,12 +404,13 @@ const FILTERS: { value: string; label: string }[] = [
 ];
 
 const ROSTER_COLUMNS: [string, string][] = [
-  ["수료생", "w-[13%]"],
-  ["교육과정", "w-[22%]"],
-  ["관리 상태", "w-[16%]"],
-  ["최근 응답 · 활동", "w-[17%]"],
-  ["도움 요청", "w-[14%]"],
-  ["지원서류", "w-[18%]"],
+  // 교육과정 · 관리 상태(배지 + 세부 상태 한 줄)에 폭을 더 준다 (실제 과정명이 길다)
+  ["수료생", "w-[11%]"],
+  ["교육과정", "w-[26%]"],
+  ["관리 상태", "w-[20%]"],
+  ["최근 응답 · 활동", "w-[16%]"],
+  ["도움 요청", "w-[11%]"],
+  ["지원서류", "w-[16%]"],
 ];
 
 /** 한 수료생의 지원서류 (C3 상세 API) */
@@ -501,9 +510,16 @@ function StudentRoster({ data }: { data: Dashboard }) {
   };
 
   return (
-    <Panel label="수료생 통합 현황" className="mt-3 flex h-[560px] flex-col">
-      <PanelHead title="수료생 통합 현황" sub="관리 상태 · 최근 응답 · 접수 중 도움 요청 · 지원서류를 한 줄로 봐요. 이름을 누르면 수료생 상세로 이동해요.">
-        <div className="flex items-center gap-2">
+    <Panel label="수료생 통합 현황" className="mt-5 flex flex-col">
+      {/* 리뉴얼 .table-toolbar-box: 제목 18px + 설명, 오른쪽에 CSV. 다음 줄에 검색 · 상태 필터 · 초기화 */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-4">
+        <p className="min-w-0">
+          <b className="text-lg font-extrabold">수료생 통합 현황</b>
+          <span className="ml-2.5 text-[13.5px] text-(--coord-muted)">
+            관리 상태 · 최근 응답 · 접수 중 도움 요청 · 지원서류를 한 줄로 봐요. 이름을 누르면 수료생 상세로 이동해요.
+          </span>
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             disabled={!list || list.items.length === 0}
@@ -516,10 +532,10 @@ function StudentRoster({ data }: { data: Dashboard }) {
             {exporting ? "받는 중…" : `전체 명단 CSV (${conditionLabel})`}
           </button>
         </div>
-      </PanelHead>
-      <div className="flex shrink-0 flex-wrap items-end gap-[9px] border-b border-(--coord-line) px-5 py-3">
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2.5 border-b border-(--coord-line) bg-(--coord-head) px-5 py-3">
         <form
-          className="flex items-center gap-2"
+          className="flex items-center gap-1.5"
           onSubmit={(event) => {
             event.preventDefault();
             const q = String(new FormData(event.currentTarget).get("q") ?? "").trim();
@@ -533,34 +549,33 @@ function StudentRoster({ data }: { data: Dashboard }) {
             defaultValue={query.q}
             aria-label="수료생 이름 검색"
             placeholder="수료생 이름 검색"
-            className="w-[220px] rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-xs"
+            className="w-[220px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px]"
           />
-          <button type="submit" aria-label="검색" className="grid size-9 place-items-center rounded-lg hover:bg-(--coord-hover)">
-            <Icon name="search" />
+          <button type="submit" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+            <Icon name="search" className="size-3.5" />
+            검색
           </button>
         </form>
-        <label className="flex min-w-[180px] flex-col gap-0.5 text-[11px] font-semibold text-(--coord-muted)">
-          관리 상태
-          <select
-            value={filterValue}
-            onChange={(event) => {
-              const [s, sub] = event.target.value.split(":");
-              setQuery((cur) => ({ ...cur, status: (s || undefined) as CoordStudentStatus | undefined, subStatus: sub as SubStatus | undefined, page: 1 }));
-            }}
-            className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-xs font-normal text-(--coord-ink)"
-          >
-            {FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" onClick={() => setQuery({ q: "", page: 1 })} className="py-2 text-xs font-semibold text-(--coord-green)">
+        <select
+          value={filterValue}
+          aria-label="관리 상태"
+          onChange={(event) => {
+            const [s, sub] = event.target.value.split(":");
+            setQuery((cur) => ({ ...cur, status: (s || undefined) as CoordStudentStatus | undefined, subStatus: sub as SubStatus | undefined, page: 1 }));
+          }}
+          className="min-w-[190px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px] text-(--coord-ink)"
+        >
+          {FILTERS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.value ? f.label : "관리 상태 (전체)"}
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={() => setQuery({ q: "", page: 1 })} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
           초기화
         </button>
         {exportMessage && (
-          <p role="status" className="ml-auto self-center text-[11px] text-(--coord-muted)">
+          <p role="status" className="ml-auto text-[13px] text-(--coord-muted)">
             {exportMessage}
           </p>
         )}
@@ -577,17 +592,18 @@ function StudentRoster({ data }: { data: Dashboard }) {
       ) : (
         <>
           {error && (
-            <p role="alert" className="px-5 pt-3 text-xs font-bold text-(--coord-red)">
+            <p role="alert" className="px-5 pt-3 text-[13.5px] font-bold text-(--coord-red)">
               {error}
             </p>
           )}
-          <div className="min-h-0 flex-1 overflow-auto">
-            <table className="w-full table-fixed border-collapse text-left text-xs">
+          {/* 리뉴얼 table.data-table: 머리 13.5px 회색 바탕 · 본문 15px · 행 hover */}
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed border-collapse text-left text-[15px]">
               <caption className="sr-only">수료생 통합 현황: 수료생, 교육과정, 관리 상태, 최근 응답 · 활동, 도움 요청, 지원서류</caption>
-              <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
+              <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
                 <tr>
                   {ROSTER_COLUMNS.map(([label, w]) => (
-                    <th key={label} scope="col" className={`${w} border-b border-(--coord-line-soft) px-[17px] py-2.5 font-medium`}>
+                    <th key={label} scope="col" className={`${w} border-b border-(--coord-line) px-4 py-3 font-bold whitespace-nowrap`}>
                       {label}
                     </th>
                   ))}
@@ -598,38 +614,38 @@ function StudentRoster({ data }: { data: Dashboard }) {
                   const help = openHelp(s.studentId);
                   const count = helpCount(s);
                   return (
-                    <tr key={s.studentId} className="h-[54px] border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
-                      <td className="overflow-hidden px-[17px]">
+                    <tr key={s.studentId} className="border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                      <td className="overflow-hidden px-4 py-3.5">
                         <Link
                           href={`/coordinator/students/${s.studentId}`}
-                          className="block truncate text-[13px] font-bold underline-offset-4 hover:text-(--coord-green) hover:underline"
+                          className="block truncate text-[15.5px] font-extrabold text-(--coord-green) underline-offset-4 hover:underline"
                         >
                           {s.name}
                         </Link>
                       </td>
-                      <td className="px-[17px]" title={s.courseLabel}>
-                        <span className="line-clamp-2 leading-[1.45]">{courseName(s.courseLabel)}</span>
+                      {/* 리뉴얼 C6 표는 한 줄 행(약 54px): 교육과정 · 세부 상태 · 비고는 같은 줄에 두고 넘치면 줄임표 + 마우스 안내 */}
+                      <td className="px-4 py-3.5">
+                        <CourseLabel label={s.courseLabel} lines={1} />
                       </td>
-                      <td className="overflow-hidden px-[17px]">
-                        <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
-                        {s.subStatus && <span className="ml-1.5 text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>}
+                      <td className="overflow-hidden px-4 py-3.5">
+                        <ManageStatus status={s.status} subStatus={s.subStatus} />
                       </td>
-                      <td className="overflow-hidden px-[17px]">
-                        <b className={s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : "text-(--coord-green)"}>
+                      <td className="overflow-hidden px-4 py-3.5 whitespace-nowrap">
+                        <b className={`text-sm ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : ""}`}>
                           {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 응답` : "응답 기록 없음"}
                         </b>
-                        {s.hasNote && <span className="ml-1.5 text-[10px] text-(--coord-muted)">비고 있음</span>}
+                        {s.hasNote && <span className="ml-1.5 text-xs text-(--coord-muted)">비고 있음</span>}
                       </td>
-                      <td className="overflow-hidden px-[17px]">
+                      <td className="overflow-hidden px-4 py-3.5">
                         {count > 0 ? (
-                          <Link href={help[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"} className="font-semibold text-(--coord-green) hover:underline">
-                            접수 {count}건
+                          <Link href={help[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"} className="hover:brightness-95">
+                            <Badge tone="red">접수 {count}건</Badge>
                           </Link>
                         ) : (
-                          <span className="text-(--coord-muted)">접수 없음</span>
+                          <span className="text-[13px] text-(--coord-faint)">접수 없음</span>
                         )}
                       </td>
-                      <td className="overflow-hidden px-[17px]">
+                      <td className="overflow-hidden px-4 py-3.5">
                         <DocCell extra={docs[s.studentId]} />
                       </td>
                     </tr>
@@ -637,14 +653,14 @@ function StudentRoster({ data }: { data: Dashboard }) {
                 })}
               </tbody>
             </table>
-            {list.items.length === 0 && <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">조건에 맞는 수료생이 없어요.</p>}
+            {list.items.length === 0 && <p className="p-9 text-center text-[15px] text-(--coord-muted)">조건에 맞는 수료생이 없어요.</p>}
           </div>
-          <div className="flex shrink-0 items-center justify-between border-t border-(--coord-line-soft) px-5 py-2.5 text-[11px] text-(--coord-muted)">
+          <div className="flex shrink-0 items-center justify-between px-5 py-3.5 text-[13.5px] text-(--coord-muted)">
             <span role="status">
               {list.total}명 중 {list.total ? (query.page - 1) * list.size + 1 : 0}–{(query.page - 1) * list.size + list.items.length}명
-              <span className="ml-3">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
+              <span className="ml-3 text-(--coord-faint)">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
             </span>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 font-bold text-(--coord-ink)">
               <button
                 type="button"
                 disabled={query.page <= 1}
@@ -674,14 +690,14 @@ function StudentRoster({ data }: { data: Dashboard }) {
 
 /** 가장 최근 지원서 상태 (여러 건이면 +N) */
 function DocCell({ extra }: { extra: DocExtra | undefined }) {
-  if (!extra) return <span className="text-(--coord-muted)">불러오는 중…</span>;
-  if (extra.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  if (!extra) return <span className="text-[13px] text-(--coord-faint)">불러오는 중…</span>;
+  if (extra.state === "error") return <span className="text-[13px] text-(--coord-muted)">조회 실패</span>;
   const [first, ...rest] = extra.docs;
-  if (!first) return <span className="text-(--coord-muted)">제출 없음</span>;
+  if (!first) return <span className="text-[13px] text-(--coord-faint)">제출 없음</span>;
   return (
-    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex items-center gap-1 hover:brightness-95">
+    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex max-w-full items-center gap-1 hover:brightness-95">
       <Badge tone={docTone[first.status]}>{docLabels[first.status]}</Badge>
-      {rest.length > 0 && <span className="text-[10px] text-(--coord-muted)">+{rest.length}</span>}
+      {rest.length > 0 && <span className="text-xs text-(--coord-muted)">+{rest.length}</span>}
     </Link>
   );
 }
