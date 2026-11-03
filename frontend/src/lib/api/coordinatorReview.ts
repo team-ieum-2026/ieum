@@ -3,6 +3,10 @@ import { ApiError, apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type {
   ApplicationStatusResult,
   CoordinatorApplication,
+  CoordinatorApplicationFilter,
+  CoordinatorApplicationListItem,
+  CoordinatorHelpRequest,
+  CoordinatorHelpRequestFilter,
   Dashboard,
   HelpRequestStatusUpdateRequest,
   HelpRequestStatusUpdateResult,
@@ -11,6 +15,40 @@ import type {
 
 /** C1 대시보드: 도움 요청, 상태별 집계, 할 일 3종 */
 export const getDashboard = () => apiGet<Dashboard>("/api/coordinator/dashboard", "C1_coordinator_dashboard.json");
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
+
+/**
+ * C4 서류 상태별 목록 (제출 순). 생략 · ALL 이면 SUBMITTED · REJECTED · APPROVED · DELIVERED 전체.
+ * 목업 모드에는 이 목록 JSON 이 없어 대시보드 reviewQueue(검토 대기)만 같은 모양으로 바꿔 쓴다
+ */
+export const getCoordinatorApplications = async (
+  status: CoordinatorApplicationFilter = "ALL",
+): Promise<CoordinatorApplicationListItem[]> => {
+  if (!USE_MOCK) return apiGet<CoordinatorApplicationListItem[]>(`/api/coordinator/applications?status=${status}`, "");
+  const { reviewQueue } = await getDashboard();
+  return reviewQueue
+    .map((r) => ({
+      applicationId: r.applicationId, studentId: 0, studentName: r.studentName, jobTitle: r.jobTitle,
+      status: "SUBMITTED" as const, submittedAt: r.submittedAt, reviewedAt: null, deliveredAt: null,
+      deadlineOn: r.deadlineOn ?? null, untilFilled: r.untilFilled ?? false,
+    }))
+    .filter((r) => status === "ALL" || r.status === status);
+};
+
+/**
+ * 도움 요청 상태별 목록 (최근 순). 생략 · ALL 이면 OPEN · CONTACTED · CLOSED 전체.
+ * 목업 모드에는 이 목록 JSON 이 없어 대시보드 helpRequests(접수)만 같은 모양으로 바꿔 쓴다
+ */
+export const getCoordinatorHelpRequests = async (
+  status: CoordinatorHelpRequestFilter = "ALL",
+): Promise<CoordinatorHelpRequest[]> => {
+  if (!USE_MOCK) return apiGet<CoordinatorHelpRequest[]>(`/api/coordinator/help-requests?status=${status}`, "");
+  const { helpRequests } = await getDashboard();
+  return helpRequests
+    .map((r) => ({ ...r, helpType: r.helpType ?? null, status: "OPEN" as const, closedAt: null, closeReason: null }))
+    .filter((r) => status === "ALL" || r.status === status);
+};
 
 /** C1 도움 요청 처리 */
 export const updateHelpRequestStatus = (helpRequestId: number, body: HelpRequestStatusUpdateRequest) =>
