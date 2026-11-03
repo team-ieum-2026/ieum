@@ -1,14 +1,14 @@
 "use client";
 // 주인: FE-B — C3 수료생 상세 (11/1 역할 조정으로 FE-B, 11/3 리뉴얼 design-reference renderStudentDetailView).
-// 리뉴얼 배치: 목록으로 → 프로필 머리 카드(이름 · 상태 · 기록 추가 + NEXT ACTION + 마지막 기록 활동) → 2열 1.4 : 1
-// 왼쪽: 추천 공고와 수료생 응답 · 진행 중인 지원서류 · 도움 요청 이력(접수)
+// 리뉴얼 배치: 목록으로 → 프로필 머리 카드(이름 · 상태 · 기록 추가 + NEXT ACTION) → 2열 1.4 : 1
+// 왼쪽: 응답이력(추천 공고와 수료생 응답) · 진행 중인 지원서류 · 도움 요청 이력(접수)
 // 오른쪽: 기본 정보 · 통화 · 상담 기록(타임라인 + 기록 추가) · 역량 프로필 · 등록 자료 (기존 C3 기능은 모두 유지)
 // 도움 요청은 대시보드 API 의 접수(OPEN) 목록에서 이 수료생 것만 거른다. ?log=new 로 들어오면 기록 추가 창을 바로 연다.
 // 취업 확인 경로 · 마지막 확인일 · 회사/직무 · 후속 연락일 · 상태 변경 이력 · '취업 상태 변경'은 저장하는 곳(API)이 없어 숨김.
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Badge, Icon, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import { Badge, Icon, Panel, PanelHead, backLink, btn } from "@/components/coordinator/CoordUi";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import {
   contactLabels,
@@ -26,13 +26,13 @@ import {
   studentExtra,
 } from "@/components/coordinator/coordLabels";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import BottomSheet from "@/components/ui/BottomSheet";
-import { ActionError, ApiState } from "@/components/student/ScreenParts";
+import ContactLogDialog from "@/components/coordinator/ContactLogDialog";
+import { ApiState } from "@/components/student/ScreenParts";
 import { dateLabel } from "@/components/student/navigation";
 import { passLabels, subStatusLabels } from "@/components/student/labels";
-import { errorMessage, useApi } from "@/components/student/useApi";
+import { useApi } from "@/components/student/useApi";
 import { getDashboard } from "@/lib/api/coordinatorReview";
-import { addContactLog, getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
+import { getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
 import { STUDENTS_QUERY_KEY } from "../StudentsScreen";
 import type { DashboardHelpRequest } from "@/types/coordinator";
 import type { ContactType, CoordinatorStudentDetail } from "@/types/student";
@@ -46,10 +46,6 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
   const { data, loading, error, reload, setData } = useApi(load);
   const [help, setHelp] = useState<DashboardHelpRequest[]>([]);
   const [open, setOpen] = useState(searchParams.get("log") === "new");
-  const [contactType, setContactType] = useState<ContactType>("PHONE");
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   // 이 수료생의 접수(OPEN) 도움 요청. 못 받아도 상세는 그대로 보여 준다
@@ -67,7 +63,6 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
 
   const openLog = () => {
     setOpen(true);
-    setSaveError(null);
     setSaved(false);
   };
 
@@ -87,9 +82,10 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
 
   return (
     <div>
-      <div className="mb-3.5">
-        <Link href={backHref} onClick={goBack} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-          <Icon name="back" className="size-3.5" /> 수료생 목록으로
+      {/* 2차 피드백: 배경 · 테두리 없이 아이콘과 글씨만 */}
+      <div className="mb-3">
+        <Link href={backHref} onClick={goBack} className={backLink}>
+          <Icon name="back" className="size-4" /> 수료생 목록으로
         </Link>
       </div>
       <ApiState loading={loading} error={error} retry={reload} notFoundHref={backHref} notFoundLabel="수료생 목록으로" />
@@ -116,69 +112,21 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
               <Registered data={data} />
             </div>
           </div>
-          <BottomSheet
-            open={open}
-            onClose={() => {
-              if (!busy) setOpen(false);
-            }}
-            title="통화 · 상담 기록 추가"
-          >
-            <form
-              className="space-y-4"
-              onSubmit={async (event) => {
-                event.preventDefault();
-                if (!note.trim() || busy) return;
-                setBusy(true);
-                setSaveError(null);
-                try {
-                  const log = await addContactLog(studentId, { contactType, note: note.trim() });
-                  setData({ ...data, contactLogs: [log, ...data.contactLogs] });
-                  // 연락 기록을 남기면 서버가 연속 패스 연락 대상에서 뺀다 → 상세를 다시 받고(화면 유지), 사이드바 · 상단 알림 · 대시보드도 다시 조회
-                  reload();
-                  notifyReviewQueueChanged();
-                  setNote("");
-                  setOpen(false);
-                  setSaved(true);
-                } catch (e) {
-                  setSaveError(errorMessage(e));
-                } finally {
-                  setBusy(false);
-                }
+          {/* 기록 추가: C3 · C5 공용 가운데 창 (내용이 길면 창 안에서 스크롤) */}
+          {open && (
+            <ContactLogDialog
+              studentId={studentId}
+              onClose={() => setOpen(false)}
+              onSaved={(log) => {
+                setData({ ...data, contactLogs: [log, ...data.contactLogs] });
+                // 연락 기록을 남기면 서버가 연속 패스 연락 대상에서 뺀다 → 상세를 다시 받고(화면 유지), 사이드바 · 상단 알림 · 대시보드도 다시 조회
+                reload();
+                notifyReviewQueueChanged();
+                setOpen(false);
+                setSaved(true);
               }}
-            >
-              <label className="block space-y-2 text-sm">
-                <span>연락 유형</span>
-                <select
-                  value={contactType}
-                  disabled={busy}
-                  onChange={(event) => setContactType(event.target.value as ContactType)}
-                  className="min-h-11 w-full rounded-xl border border-line bg-surface px-3"
-                >
-                  {(Object.keys(contactTypeLabels) as ContactType[]).map((value) => (
-                    <option key={value} value={value}>
-                      {contactTypeLabels[value]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block space-y-2 text-sm">
-                <span>상담 내용</span>
-                <textarea
-                  required
-                  rows={5}
-                  value={note}
-                  disabled={busy}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="상담 내용을 남겨주세요"
-                  className="w-full rounded-xl border border-line p-3"
-                />
-              </label>
-              <ActionError message={saveError} />
-              <button type="submit" disabled={!note.trim() || busy} className={`${btn.base} ${btn.primary} w-full py-3`}>
-                {busy ? "저장 중…" : "저장"}
-              </button>
-            </form>
-          </BottomSheet>
+            />
+          )}
         </>
       )}
     </div>
@@ -187,18 +135,6 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
 
 /** 추천 이력의 모든 공고 (최근 추천 먼저) */
 const historyItems = (data: CoordinatorStudentDetail) => data.history.flatMap((h) => h.items.map((item) => ({ ...item, recommendedAt: h.createdAt })));
-
-/** 저장된 기록 중 가장 최근 것: 상담 기록 작성 · 추천 공고 응답 (실제 데이터만, 없으면 null) */
-function lastActivity(data: CoordinatorStudentDetail): { at: string; text: string } | null {
-  const logs = data.contactLogs.map((l) => ({ at: l.createdAt, text: `${contactTypeLabels[l.contactType]} 기록 작성` }));
-  const responses = historyItems(data)
-    .filter((i) => i.respondedAt && i.response !== "NONE")
-    .map((i) => ({ at: i.respondedAt as string, text: `추천 공고 ${responseTagLabels[i.response]} · ${i.companyName}` }));
-  return [...logs, ...responses].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
-}
-
-/** 회사 이름 첫 글자 ('(주)' 는 뗌) */
-const initialOf = (company: string) => company.replace(/^\(주\)\s*/, "").slice(0, 1);
 
 function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: DashboardHelpRequest[]; onAddLog: () => void }) {
   const s = data.student;
@@ -218,18 +154,12 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
       : ext.needsPassFollowUp
         ? { text: "통화 · 상담 기록", title: `추천 공고를 연속 ${ext.consecutivePassCount ?? "여러"}회 패스했어요. 연락해 주세요` }
         : null;
-  const activity = lastActivity(data);
   return (
     // 리뉴얼 .profile-header-card: 8px 모서리 · 22px 24px 여백 · 세로 간격 16px
     <section aria-label="수료생 요약" className="mb-5 flex flex-col gap-4 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-6 py-[22px]">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <span
-            aria-hidden="true"
-            className="grid size-[58px] shrink-0 place-items-center rounded-full border-2 border-(--coord-green-line) bg-(--coord-green-soft) text-xl font-extrabold text-(--coord-green-ink)"
-          >
-            {s.name.length > 2 ? s.name.slice(1) : s.name}
-          </span>
+        {/* 1차 피드백: 이름 아바타 없음 */}
+        <div className="flex min-w-0 items-center">
           <div className="min-w-0">
             <h1 className="flex flex-wrap items-center gap-2.5 text-[22px] leading-[1.35] font-extrabold">
               {s.name}
@@ -270,9 +200,6 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
             </button>
           ))}
       </div>
-      <p className="pt-1 text-[12.5px] text-(--coord-faint)">
-        마지막 기록 활동: {activity ? `${monthDayTime(activity.at)} · ${activity.text}` : "저장된 기록 없음"} · 저장된 응답 및 상담 기록 기준이며 실시간 접속 정보는 아니에요.
-      </p>
     </section>
   );
 }
@@ -290,22 +217,13 @@ function Card({ title, aside, empty, children }: { title: string; aside?: ReactN
 function Recommendations({ data }: { data: CoordinatorStudentDetail }) {
   const items = historyItems(data);
   return (
-    <Card
-      title="추천 공고와 수료생 응답"
-      aside={<span className="text-[13px] text-(--coord-faint)">추천 → 선택 → 다음 행동</span>}
-      empty={items.length === 0 && "추천 공고 내역이 없어요."}
-    >
+    // 1차 피드백: 제목 '응답이력' · 오른쪽 설명과 회사 첫 글자 아이콘 없음
+    <Card title="응답이력" empty={items.length === 0 && "추천 공고 내역이 없어요."}>
       {/* 리뉴얼 .task-item-row. 이력이 길면 카드 안에서 스크롤 (약 6건 높이) */}
       <ul className="max-h-[460px] overflow-y-auto">
         {items.map((item) => (
-          <li key={item.itemId} className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-4 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <span
-                aria-hidden="true"
-                className="grid size-9 shrink-0 place-items-center rounded-full border border-(--coord-tint-line) bg-(--coord-tint) text-[13px] font-extrabold text-(--coord-green)"
-              >
-                {initialOf(item.companyName)}
-              </span>
+          <li key={item.itemId} className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
+            <div className="flex min-w-0 flex-1 items-center">
               <div className="min-w-0">
                 <h3 className="truncate text-[15px] font-extrabold" title={`${item.companyName} · ${item.title}`}>
                   {item.companyName} · {item.title}

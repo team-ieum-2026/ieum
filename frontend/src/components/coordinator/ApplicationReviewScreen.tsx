@@ -1,16 +1,22 @@
 "use client";
 // 주인: FE-B — C4 서류 검토 · 승인 (FE-B-08, 11/1 개편 목업 documentPage()). API: docs/API.md 2-3.
-// 승인 SUBMITTED → APPROVED, 수정 요청(=반려) { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
+// 승인 SUBMITTED → APPROVED, 보완 필요(=반려) { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
+// REJECTED 는 이번 버전에서 끝 상태다 (수료생 수정 · 재제출 · 승인 불가, 코디네이터가 이음 밖에서 연락).
 // 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다.
-// 화면: 위(목록으로 · 제목 · 상태 · 5단계) / 가운데 왼쪽 '자기소개서 전체'(문서 형태, 문장 단위 근거 상태) · 오른쪽 '문장 근거'(각자 안에서 스크롤)
-//       / 아래 검토 행동 막대(항상 보임). 이력서 9개 항목은 왼쪽 '이력서 항목' 탭으로 옮겼다.
-// 목업의 AI 초안 원문 · 수료생 수정 이유 · 문장별 코디네이터 판단 저장은 API 에 없어서 만들지 않는다.
+// 화면 (11/3 리뉴얼 design-reference documentPage + 1차 피드백): 위(목록으로 · 제목 + 상태 · 5단계 막대) / 왼쪽 '자기소개서 전체'(페이지와 함께 스크롤)
+//       · 오른쪽 '문장 근거 · 출처'(긴 서류를 스크롤해도 화면에 고정). 이력서 9개 항목은 왼쪽 '이력서 항목' 탭.
+// 1차 피드백: 아래 검토 행동 막대를 없애고 버튼만 오른쪽 위로 옮김. '보완 필요로 처리' = 반려 API (예전 '첨삭 제안' · '수정 요청 기록'). 선택한 문장은 왼쪽 · 오른쪽 모두 하늘색 강조.
+// 2차 피드백: 검토 버튼은 두 카드 위 한 줄(오른쪽)로 빼서 두 카드가 같은 선에서 시작 · '이 문서에서 확인할 것' 요약 삭제.
+// 3차 피드백: 제목 줄에 수료생 정보 · 카드 제목 '자기소개서 | 이름 | 공고명' · 문장 번호 원과 상태 색 삭제(처음엔 선택 없음, 다시 누르면 해제)
+//       · 작성 주체(AI / 수료생 작성 · 수정)는 고른 문장의 오른쪽 패널에만, 근거 검증 상태와 따로.
+// 리뉴얼 HTML 의 문장별 '확인 후 유지 · 수정 요청에 포함', 마감일, 소제목 문단은 API 에 없어서 만들지 않는다.
+// 목업의 AI 초안 원문 · 수료생 수정 이유 · 문장별 코디네이터 판단 저장도 API 에 없어서 만들지 않는다.
 // document 가 null(GENERATING · FAILED · 본문 없음)이면 서류 · 근거 · 검증 요약 대신 안내를 보이고 승인 · 전달을 끈다.
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import C4DocumentSummary, { userEditBreakdown } from "@/components/coordinator/C4DocumentSummary";
+import C4DocumentSummary from "@/components/coordinator/C4DocumentSummary";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { Badge, Icon, btn } from "@/components/coordinator/CoordUi";
+import { Badge, Icon, backLink, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, type CoordTone } from "@/components/coordinator/coordLabels";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { toDate } from "@/components/resume/resumeLabels";
@@ -37,11 +43,11 @@ const ACTION: Record<Action, { button: string; title: string; description: strin
     done: "승인했어요. 기업에 전달한 뒤 '전달 완료로 표시'를 눌러 주세요.",
   },
   REJECT: {
-    button: "수정 요청 기록",
-    title: "수정 요청을 기록할까요?",
-    description: "서류 상태가 '수정 요청'으로 바뀌어요. 이음이 수료생에게 자동으로 알리지 않으니 보완할 점을 직접 연락해 주세요. 아래 메모는 상담 기록에도 남아요.",
-    confirm: "수정 요청 기록",
-    done: "수정 요청을 기록했어요. 수료생에게 직접 연락해 보완할 점을 알려 주세요.",
+    button: "보완 필요로 처리",
+    title: "보완 필요 처리",
+    description: "보완이 필요한 내용을 기록해 주세요. 처리 후에는 수료생에게 별도로 연락하여 안내해야 합니다. 현재 시스템에서는 해당 서류의 수정·재제출을 지원하지 않습니다.",
+    confirm: "보완 필요로 처리",
+    done: "보완 필요로 처리했어요. 수료생에게 별도로 연락해 보완 사항을 안내해 주세요.",
   },
   DELIVER: {
     button: "전달 완료로 표시",
@@ -57,17 +63,19 @@ const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJEC
 
 /** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료 */
 const STEPS = ["AI 초안", "수료생 확인", "코디네이터 검토", "승인", "전달 완료"];
-const STAGE: Record<ApplicationStatus, number> = { GENERATING: 0, FAILED: 0, DRAFT: 1, REJECTED: 1, SUBMITTED: 2, APPROVED: 3, DELIVERED: 4 };
-
-/** 아래 행동 막대 왼쪽 설명 (현재 서버 상태 기준) */
-const STATUS_GUIDE: Record<ApplicationStatus, [string, string]> = {
-  SUBMITTED: ["코디네이터 검토 단계예요", "자기소개서 전체와 문장 근거를 확인한 뒤 승인하거나 수정을 요청하세요."],
-  APPROVED: ["승인 완료 · 기관 추천 전달 대기", "기업 전달은 이음 밖에서 하고, 전달한 뒤 상태만 기록해요."],
-  REJECTED: ["수정 요청을 기록했어요", "반려 처리 후 서류 상태가 변경됩니다. 현재 수정·재제출 기능은 지원하지 않습니다."],
-  DELIVERED: ["기관 추천 전달 완료", "이 서류의 검토 · 전달이 끝났어요."],
-  DRAFT: ["수료생이 초안을 확인하고 있어요", "수료생이 검토를 요청하면 여기서 승인할 수 있어요."],
-  GENERATING: ["서류를 만들고 있어요", "만들어지면 수료생이 확인한 뒤 검토를 요청해요."],
-  FAILED: ["서류를 만들지 못했어요", "수료생이 서류를 다시 만들면 여기서 검토할 수 있어요."],
+/**
+ * 상태별 단계: done = 완료(✓)한 단계 수, current = 지금 단계(없으면 null).
+ * REJECTED 는 ②로 되돌리지 않고 ③ 코디네이터 검토에서 '보완 필요'로 끝난 것으로 보인다 (④ · ⑤ 미완료).
+ * APPROVED 는 ④까지 완료 · ⑤ 미완료, DELIVERED 는 모두 완료
+ */
+const STAGE: Record<ApplicationStatus, { done: number; current: number | null }> = {
+  GENERATING: { done: 0, current: 0 },
+  FAILED: { done: 0, current: 0 },
+  DRAFT: { done: 1, current: 1 },
+  SUBMITTED: { done: 2, current: 2 },
+  REJECTED: { done: 2, current: 2 },
+  APPROVED: { done: 4, current: null },
+  DELIVERED: { done: 5, current: null },
 };
 
 const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
@@ -85,26 +93,24 @@ const STATE_BADGE: Record<SentenceState, [string, CoordTone]> = {
   user: ["수료생 직접 작성", "blue"],
   weak: ["근거 확인 필요", "red"],
 };
-/** 선택한 문장 위 제목: 누가 쓴 문장인지 */
-const STATE_WRITER: Record<SentenceState, string> = { linked: "AI가 작성한 문장", user: "수료생이 쓰거나 고친 문장", weak: "AI가 작성한 문장" };
+/**
+ * 작성 주체 (3차 피드백, 근거 검증 상태와 별개). API 의 문장 source 만 본다: AI = AI 작성, USER = 수료생이 쓰거나 고친 문장.
+ * 수료생이 AI 문장을 고치면 서버가 source 를 USER 로 바꾸고 원래 문장을 남기지 않아(docs/API.md 2-2) '직접 작성'과 '수정'은 나눌 수 없다.
+ */
+const WRITER: Partial<Record<Sentence["source"], [string, CoordTone]>> = {
+  AI: ["AI 작성", "green"],
+  USER: ["수료생 작성 · 수정", "blue"],
+};
 const STATE_CHECK: Record<SentenceState, string> = {
   linked:
     "AI가 위 원본 기록을 바탕으로 쓴 문장이에요. 원본에 있는 사실과, AI가 덧붙인 해석 · 표현(성과 수치 · 역할 범위 · 평가)이 같은 범위인지 비교해 확인해 주세요. 근거 연결은 사실 전체가 검증됐다는 뜻이 아니에요.",
-  user: "수료생이 직접 쓰거나 고친 문장이라 AI 근거 점검 대상이 아니에요. 필요하면 원본 자료와 함께 확인해 주세요.",
-  weak: "연결할 자료를 찾지 못했어요. 거짓으로 확정하지 않고 담당자 확인 대상으로 남겼어요.",
+  user: "수료생이 직접 쓰거나 고친 문장이라 연결된 근거 자료가 없어요. 필요하면 원본 자료와 함께 확인해 주세요.",
+  weak: "연결된 근거 자료가 없는 AI 문장이에요. 사실이 아니라는 뜻은 아니니, 원본 자료와 함께 직접 확인해 주세요.",
 };
-/** 선택한 문장을 왼쪽 · 오른쪽에서 같은 상태 색으로 잇는 표시 (번호 원 · 왼쪽 테두리 · 외곽선) */
-const MARK_BG: Record<SentenceState, string> = { linked: "bg-(--coord-green)", user: "bg-(--coord-blue)", weak: "bg-(--coord-red)" };
-const QUOTE_LOOK: Record<SentenceState, string> = {
-  linked: "border-(--coord-green) bg-(--coord-green-soft)",
-  user: "border-(--coord-blue) bg-(--coord-blue-soft)",
-  weak: "border-(--coord-red) bg-(--coord-red-soft)",
-};
-const SELECTED_LOOK: Record<SentenceState, string> = {
-  linked: "outline-(--coord-green) bg-(--coord-green-soft)",
-  user: "outline-(--coord-blue)",
-  weak: "outline-(--coord-red)",
-};
+/** 평소엔 모든 문장이 투명하고, 선택한 문장만 하늘색 배경 + 1px 연파랑 실선 (근거 확인 필요 등 경고 빨강과 구분) */
+const SELECTED_LOOK = "bg-(--coord-select-bg) outline outline-(--coord-select-line)";
+/** 진행 단계 번호 */
+const CIRCLED = ["①", "②", "③", "④", "⑤"];
 
 /** 자기소개서 문장 (없으면 빈 배열) */
 const coverSentences = (document: ApplicationDocument | null): Sentence[] => {
@@ -178,9 +184,10 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   // GENERATING · FAILED 이거나 본문이 없으면 null (docs/API.md 2-2). 형식이 깨진 서류도 빈 서류로 보고 멈추지 않게 (M6 와 같은 방식)
   const document = detail.document && Array.isArray(detail.document.sections) ? detail.document : null;
   const sentences = coverSentences(document);
-  // 처음엔 첫 문장의 근거를 보여 준다 (목업처럼 오른쪽 패널이 비어 있지 않게)
-  const selectedIndex = Math.max(0, sentences.findIndex((s) => s.sentenceId === selectedId));
+  // 3차 피드백: 처음엔 아무 문장도 고르지 않는다 (-1). 같은 문장을 다시 누르면 선택 해제
+  const selectedIndex = sentences.findIndex((s) => s.sentenceId === selectedId);
   const selected = sentences[selectedIndex] ?? null;
+  const toggleSentence = (id: string) => setSelectedId((cur) => (cur === id ? null : id));
   const counts = { linked: 0, user: 0, weak: 0 };
   sentences.forEach((s) => (counts[sentenceState(s)] += 1));
 
@@ -222,82 +229,129 @@ export default function ApplicationReviewScreen({ applicationId }: { application
     }
   };
 
-  const hasAi = verification.aiSentenceCount > 0;
-  const allAiLinked = verification.aiSentenceWithEvidence === verification.aiSentenceCount;
-  // AI 문장이 0개면 "모두 근거 연결"이 아니라 확인할 문장이 없다고 알린다
-  const aiValue = !hasAi
-    ? "없음"
-    : `${verification.aiSentenceCount}개 · ${allAiLinked ? "모두 근거 연결" : `근거 연결 ${verification.aiSentenceWithEvidence}개`}`;
-  // 종류별 합이 서버의 userEditedCount 와 같을 때만 나눠 보여 준다 (다르면 서버 총합만)
-  const edits = document ? userEditBreakdown(document) : [];
-  const editsTotal = edits.reduce((sum, e) => sum + e.count, 0);
-  const editedValue =
-    edits.length > 0 && editsTotal === verification.userEditedCount
-      ? edits.map((e) => `${e.label} ${e.count}`).join(" · ")
-      : `${verification.userEditedCount}개`;
-  const [guideTitle, guideText] = STATUS_GUIDE[status];
-
   return (
-    // 위 머리 · 가운데 두 패널(내용만큼 높이, 길면 화면 높이 안에서 각자 스크롤) · 아래 행동 막대(화면 아래에 붙어 늘 보임)
-    // 서류가 짧아도 큰 빈 카드가 생기지 않게 두 패널은 늘이지 않는다
+    // 리뉴얼 documentPage: 목록으로 · 제목 · 5단계 막대 · 검토 버튼 / 왼쪽 자기소개서 전체(페이지와 함께 스크롤) · 오른쪽 문장 근거(화면에 고정)
     <div className="flex flex-col">
-      <header className="shrink-0">
-        <Link href="/coordinator/applications" className="mb-[18px] inline-flex w-fit items-center gap-[7px] text-xs text-(--coord-muted) hover:text-(--coord-green)">
-          <Icon name="back" className="size-4" /> 서류 검토 목록
+      {/* 2차 피드백: 배경 · 테두리 없이 아이콘과 글씨만 */}
+      <div className="mb-3">
+        <Link href="/coordinator/applications" className={backLink}>
+          <Icon name="back" className="size-4" /> 서류 검토 목록으로
         </Link>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[27px] leading-[1.3] font-bold tracking-[-1px]">{student.name} 님의 지원서류</h1>
-            {/* C4 API 에 제출 시각 · 버전 · 마감일이 없어서 날짜는 표시하지 않는다 */}
-            <p className="mt-2 text-[13px] text-(--coord-muted)">
-              {job.companyName} · {job.title}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge tone={docTone[status]}>{docLabels[status]}</Badge>
-            <Link href={`/coordinator/students/${student.studentId}`} className={`${btn.base} ${btn.outline}`}>
-              수료생 정보
-            </Link>
-          </div>
-        </div>
-        <ol className="my-5 flex items-center gap-[5px]" aria-label="서류 진행 단계">
-          {STEPS.map((label, i) => {
-            const stage = STAGE[status];
-            return (
-              <li
-                key={label}
-                aria-current={i === stage ? "step" : undefined}
-                className={`flex flex-1 items-center gap-[7px] rounded-[7px] px-[11px] py-[9px] text-[11px] ${
-                  i === stage
-                    ? "bg-(--coord-forest) text-(--coord-surface)"
-                    : i < stage
-                      ? "bg-(--coord-green-soft) text-(--coord-green)"
-                      : "bg-(--coord-gray-soft) text-(--coord-muted)"
-                }`}
-              >
-                <span className="grid size-[18px] place-items-center rounded-full border border-current text-[10px]">{i < stage ? "✓" : i + 1}</span>
-                {label}
-              </li>
-            );
-          })}
-        </ol>
+      </div>
+      {/* 3차 피드백: 제목 · 상태 배지 · 수료생 정보를 한 줄에. 기업 · 직무는 자기소개서 카드 제목으로 옮김
+          (C4 상세 API 에 제출 시각 · 마감일이 없어서 HTML 의 '마감'은 표시하지 않는다) */}
+      <header className="mb-4 flex items-center justify-between gap-4">
+        <h1 className="flex min-w-0 flex-wrap items-center gap-2.5 text-[26px] font-extrabold tracking-[-0.4px]">
+          {student.name} 님의 지원서류 <Badge tone={docTone[status]}>{docLabels[status]}</Badge>
+        </h1>
+        <Link href={`/coordinator/students/${student.studentId}`} className={`${btn.base} ${btn.outline} shrink-0`}>
+          <Icon name="user" className="size-4" /> 수료생 정보
+        </Link>
       </header>
 
-      <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)] items-start gap-5">
-        {/* 왼쪽: 자기소개서 전체 (이력서 항목은 탭) */}
-        <section
-          aria-label="지원서류"
-          className="flex max-h-[calc(100vh-395px)] min-h-[300px] flex-col overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)"
-        >
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
-            <div>
-              <h2 className="text-[15px] font-bold">{tab === "cover" ? "자기소개서 전체" : "이력서 항목"}</h2>
-              <p className="mt-1 text-[11px] text-(--coord-muted)">
-                {tab === "cover" ? "문장을 누르면 오른쪽에서 근거와 출처를 확인해요." : "수료생 등록 자료와 AI가 정리한 이력서 항목이에요."}
-              </p>
+      {/* 5단계 막대 (리뉴얼 .stepped-progress-bar) */}
+      <ol className="mb-5 flex overflow-hidden rounded-[6px] border border-(--coord-line) bg-(--coord-surface)" aria-label="서류 진행 단계">
+        {STEPS.map((label, i) => {
+          const { done, current } = STAGE[status];
+          const rejectedHere = status === "REJECTED" && i === current;
+          return (
+            <li
+              key={label}
+              aria-current={i === current || (current === null && i === done - 1) ? "step" : undefined}
+              className={`flex flex-1 items-center justify-center gap-2 border-r border-(--coord-line) px-3.5 py-3.5 text-center text-[16px] font-bold last:border-r-0 ${
+                rejectedHere
+                  ? "bg-(--coord-red-soft) text-(--coord-red)"
+                  : i === current
+                    ? "bg-(--coord-forest) text-(--coord-surface)"
+                    : i < done
+                      ? "bg-(--coord-tint) text-(--coord-green-ink)"
+                      : "bg-(--coord-head) text-(--coord-muted)"
+              }`}
+            >
+              {i < done && <span aria-label="완료">✓</span>} {CIRCLED[i]} {label}
+              {rejectedHere && <span>· {docLabels.REJECTED}</span>}
+            </li>
+          );
+        })}
+      </ol>
+      {/* 보완 필요는 다음 단계로 이어지지 않는 끝 상태라 따로 알린다 (자동 연락 없음) */}
+      {status === "REJECTED" && (
+        <p role="note" className="-mt-2 mb-5 rounded-[6px] border border-(--coord-red-line) bg-(--coord-red-soft) px-4 py-3 text-[14px] font-semibold text-(--coord-red)">
+          보완이 필요한 서류입니다. 코디네이터가 수료생에게 별도로 연락하여 보완 사항을 안내합니다.
+        </p>
+      )}
+
+      {/* 1·2차 피드백: 아래 검토 막대 대신 단계 막대 아래 오른쪽에 버튼만 (두 카드가 같은 선에서 시작하도록 카드 위 한 줄에 둔다).
+          현재 서버 상태에 맞는 버튼만 보인다 (보완 필요 · 전달 완료 상태는 제목 옆 배지로 확인) */}
+      {(status === ALLOWED.APPROVE || status === ALLOWED.DELIVER || doneMessage) && (
+        <div className="mb-4 flex items-center justify-end gap-3">
+          {doneMessage && (
+            <div role="status" className="mr-auto min-w-0 rounded-[6px] border border-(--coord-green-line) bg-(--coord-tint) px-4 py-2.5 text-[14px]">
+              <b className="text-(--coord-green-ink)">{doneMessage}</b>
+              {IS_MOCK && <span className="ml-2 text-[13px] font-semibold text-(--coord-attention)">{MOCK_SAVE_NOTE}</span>}
+              <Link href="/coordinator/applications" className="ml-2 text-[13.5px] text-(--coord-muted) underline underline-offset-2">
+                서류 검토 목록으로 돌아가기
+              </Link>
             </div>
+          )}
+          <div className="flex shrink-0 gap-2.5">
+            {status === ALLOWED.APPROVE && (
+              // 서버는 상태만 보지만, 빈 서류를 승인하지 않도록 서류가 있을 때만 켠다
+              <button
+                type="button"
+                disabled={!document}
+                title={document ? undefined : "서류 본문이 없어 승인할 수 없어요"}
+                onClick={() => setConfirming("APPROVE")}
+                className={`${btn.base} ${btn.primary} px-5! py-2.5! text-[15.5px]!`}
+              >
+                {ACTION.APPROVE.button}
+              </button>
+            )}
+            {status === ALLOWED.REJECT && (
+              <button type="button" onClick={() => setConfirming("REJECT")} className={`${btn.base} ${btn.danger} px-5! py-2.5! text-[15.5px]!`}>
+                <Icon name="pencil" className="size-4" />
+                {ACTION.REJECT.button}
+              </button>
+            )}
+            {status === ALLOWED.DELIVER && (
+              <button
+                type="button"
+                disabled={!document}
+                onClick={() => setConfirming("DELIVER")}
+                className={`${btn.base} ${btn.primary} px-5! py-2.5! text-[15.5px]!`}
+              >
+                {ACTION.DELIVER.button}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start gap-5">
+        {/* 왼쪽: 자기소개서 전체 (이력서 항목은 탭) — 리뉴얼 .doc-viewer-card */}
+        <section aria-label="지원서류" className="min-w-0 rounded-[8px] border border-(--coord-line) bg-(--coord-surface) px-7 py-6">
+          {/* 3차 피드백: '자기소개서 | 수료생 이름 | 지원 공고명'을 한 줄 전체로. 이름은 제목과 같은 student.name, 공고명 · 회사명은 job (상세 API) */}
+          <div className="mb-3">
+            <p className="mb-0.5 text-[12.5px] font-bold text-(--coord-faint)">{job.companyName}</p>
+            <h2 className="text-[19px] leading-[1.4] font-extrabold break-keep">
+              {tab === "cover" ? "자기소개서" : "이력서 항목"}
+              <span className="mx-2 font-normal text-(--coord-line-strong)">|</span>
+              {student.name}
+              <span className="mx-2 font-normal text-(--coord-line-strong)">|</span>
+              {job.title}
+            </h2>
+          </div>
+          {/* 근거 요약 이름표(자기소개서 탭) · 탭 전환 한 줄 */}
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-(--coord-line) pb-3.5">
+            {document && tab === "cover" && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="green">근거 자료 연결 {counts.linked}</Badge>
+                <Badge tone="blue">수료생 직접 작성 {counts.user}</Badge>
+                {counts.weak > 0 && <Badge tone="red">근거 확인 필요 {counts.weak}</Badge>}
+              </div>
+            )}
             {document && (
-              <div role="tablist" aria-label="서류 보기" className="flex gap-1">
+              <div role="tablist" aria-label="서류 보기" className="ml-auto flex shrink-0 gap-2">
                 {(
                   [
                     ["cover", "자기소개서"],
@@ -310,9 +364,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                     role="tab"
                     aria-selected={tab === key}
                     onClick={() => setTab(key)}
-                    className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
-                      tab === key ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
-                    }`}
+                    className={`${btn.base} ${tab === key ? btn.primary : btn.outline} px-5! py-2.5! text-[15.5px]!`}
                   >
                     {label}
                   </button>
@@ -323,41 +375,30 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           {!document ? (
             <NoDocument status={status} onReload={() => setReloadKey((k) => k + 1)} />
           ) : tab === "resume" ? (
-            <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6">
+            <div className="pt-1">
               <C4DocumentSummary document={document} selectedSentenceId={null} onSelectSentence={() => {}} showCover={false} />
             </div>
           ) : (
             <>
-              <div className="flex shrink-0 flex-wrap items-center gap-[9px] border-b border-(--coord-line) px-5 py-3">
-                <Badge tone="green">근거 자료 연결 {counts.linked}</Badge>
-                <Badge tone="blue">수료생 직접 작성 {counts.user}</Badge>
-                {counts.weak > 0 && <Badge tone="red">근거 확인 필요 {counts.weak}</Badge>}
-                <span className="text-xs text-(--coord-muted)">문장 색상 + 상태로 구분</span>
-              </div>
-              <article className="min-h-0 flex-1 overflow-y-auto px-[34px] py-[30px]">
-                <span className="text-[10px] tracking-[2px] text-(--coord-muted)">APPLICATION LETTER · {job.companyName}</span>
-                <h2 className="mt-1.5 mb-2 text-2xl font-bold">자기소개서</h2>
-                <p className="text-xs text-(--coord-muted)">
-                  {student.name}　|　{job.title} 지원
+              {document.companyInfoStatus !== "FOUND" && (
+                <p className="mb-[18px] rounded-[4px] border border-(--coord-attention-line) bg-(--coord-orange-soft) px-3.5 py-3 text-[13.5px] text-(--coord-attention)">
+                  <b>{COMPANY_INFO_LABEL[document.companyInfoStatus]}</b>
+                  {document.companyInfoNote && `: ${document.companyInfoNote}`}
                 </p>
-                <div className="my-[22px] border-t-2 border-(--coord-forest)" />
-                {document.companyInfoStatus !== "FOUND" && (
-                  <p className="mb-5 rounded-lg border border-(--coord-attention-line) bg-(--coord-attention-soft) px-3.5 py-2.5 text-xs leading-[1.7] text-(--coord-attention)">
-                    <b>{COMPANY_INFO_LABEL[document.companyInfoStatus]}</b>
-                    {document.companyInfoNote && ` · ${document.companyInfoNote}`}
-                  </p>
-                )}
+              )}
+              <article aria-label={`${job.companyName} 자기소개서`}>
                 {sentences.length === 0 ? (
-                  <p className="text-[13px] text-(--coord-muted)">이 서류에는 자기소개서 문장이 없어요. 이력서 항목 탭에서 나머지 내용을 확인해 주세요.</p>
+                  <p className="text-[14.5px] text-(--coord-muted)">이 서류에는 자기소개서 문장이 없어요. 이력서 항목 탭에서 나머지 내용을 확인해 주세요.</p>
                 ) : (
-                  <p className="text-sm leading-[2.1] break-keep">
+                  // 3차 피드백: 문장마다 줄을 바꾸고 문장 사이를 넉넉하게
+                  <div className="flex flex-col gap-3 text-[15.5px] leading-[1.9] break-keep">
                     {sentences.map((s, i) => (
-                      <CoverSentence key={s.sentenceId} sentence={s} index={i} selected={i === selectedIndex} onSelect={() => setSelectedId(s.sentenceId)} />
+                      <CoverSentence key={s.sentenceId} sentence={s} index={i} selected={i === selectedIndex} onSelect={() => toggleSentence(s.sentenceId)} />
                     ))}
-                  </p>
+                  </div>
                 )}
                 {verification.excludedSentenceCount > 0 && (
-                  <p className="mt-6 rounded-lg bg-(--coord-head) px-3.5 py-2.5 text-xs text-(--coord-muted)">
+                  <p className="mt-5 rounded-[4px] border border-(--coord-line) bg-(--coord-head) px-3.5 py-2.5 text-[13px] text-(--coord-muted)">
                     AI가 근거를 찾지 못해 초안에서 제외한 문장 {verification.excludedSentenceCount}개
                   </p>
                 )}
@@ -366,111 +407,54 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           )}
         </section>
 
-        {/* 오른쪽: 선택한 문장의 근거 + 문서 전체 검증 요약 */}
-        <aside aria-label="문장 근거와 검증 요약" className="sticky top-[76px] flex max-h-[calc(100vh-395px)] flex-col gap-3 overflow-y-auto pr-1">
-          <section aria-label="문장 근거" className="shrink-0 overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
-            <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
-              <h2 className="text-[15px] font-bold">문장 근거 · 출처</h2>
+        {/* 오른쪽: 선택한 문장의 근거 — 리뉴얼 .inspector-card (자기소개서를 스크롤해도 화면 위에 고정, 길면 안에서 스크롤) */}
+        <aside aria-label="문장 근거" className="sticky top-[76px] flex max-h-[calc(100vh-96px)] min-w-0 flex-col overflow-y-auto [scrollbar-width:thin]">
+          <section aria-label="문장 근거" className="shrink-0 rounded-[8px] border border-(--coord-line) bg-(--coord-surface)">
+            <div className="flex items-center justify-between gap-3 border-b border-(--coord-line) px-5 py-4">
+              <h2 className="text-[17px] font-extrabold">문장 근거 · 출처</h2>
               {/* 왼쪽 문장과 같은 번호 · 이전/다음으로 문장을 옮기면 왼쪽 표시도 함께 바뀐다 */}
-              {selected && (
-                <div className="flex items-center gap-1 text-xs">
+              {sentences.length > 0 && (
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     aria-label="이전 문장"
                     disabled={selectedIndex <= 0}
                     onClick={() => setSelectedId(sentences[selectedIndex - 1].sentenceId)}
-                    className="grid size-7 place-items-center rounded-md border border-(--coord-line) hover:bg-(--coord-hover) disabled:cursor-not-allowed disabled:opacity-40"
+                    className={`${btn.base} ${btn.outline} ${btn.sm} px-2! py-0.5!`}
                   >
-                    ‹
+                    &lt;
                   </button>
-                  <span className="min-w-[64px] text-center font-semibold">
-                    문장 {selectedIndex + 1} / {sentences.length}
+                  <span className="text-[13px] font-bold whitespace-nowrap">
+                    문장 {selected ? selectedIndex + 1 : "–"} / {sentences.length}
                   </span>
                   <button
                     type="button"
                     aria-label="다음 문장"
                     disabled={selectedIndex >= sentences.length - 1}
                     onClick={() => setSelectedId(sentences[selectedIndex + 1].sentenceId)}
-                    className="grid size-7 place-items-center rounded-md border border-(--coord-line) hover:bg-(--coord-hover) disabled:cursor-not-allowed disabled:opacity-40"
+                    className={`${btn.base} ${btn.outline} ${btn.sm} px-2! py-0.5!`}
                   >
-                    ›
+                    &gt;
                   </button>
                 </div>
               )}
             </div>
-            <div className="p-[22px]" aria-live="polite">
+            <div className="flex flex-col gap-4 p-5" aria-live="polite">
               {!document ? (
-                <p className="text-[13px] text-(--coord-muted)">서류가 없어 확인할 근거가 없어요.</p>
+                <p className="text-[14px] text-(--coord-muted)">서류가 없어 확인할 근거가 없어요.</p>
+              ) : sentences.length === 0 ? (
+                <p className="text-[14px] text-(--coord-muted)">자기소개서 문장이 없어 확인할 근거가 없어요.</p>
               ) : !selected ? (
-                <p className="text-[13px] text-(--coord-muted)">자기소개서 문장이 없어 확인할 근거가 없어요.</p>
+                <p className="py-6 text-center text-[14.5px] leading-[1.6] text-(--coord-muted)">
+                  자기소개서에서 문장을 선택하면 근거와 출처를 확인할 수 있습니다.
+                </p>
               ) : (
-                <SentenceEvidence sentence={selected} index={selectedIndex} />
+                <SentenceEvidence sentence={selected} />
               )}
             </div>
           </section>
 
-          <section aria-label="문서 전체 검증 요약" className="shrink-0 rounded-lg border border-(--coord-tint-line) bg-(--coord-tint) px-4 py-3.5">
-            <h2 className="text-[13px] font-bold">이 문서에서 확인할 것</h2>
-            {/* 서류가 없으면 서버 요약이 0개 · NOT_FOUND 로 오므로 "확인 불가"처럼 보이지 않게 숫자 대신 안내만 */}
-            {!document ? (
-              <p className="mt-2 text-xs text-(--coord-muted)">서류가 없어 검증할 내용이 없어요.</p>
-            ) : (
-              <dl className="mt-2 flex flex-col gap-1.5 text-xs">
-                <SummaryRow label="AI 문장" value={aiValue} note={hasAi ? null : "AI가 쓴 문장이 없어 확인할 근거가 없어요."} warn={hasAi && !allAiLinked} />
-                <SummaryRow label="생성 단계에서 제외된 문장" value={`${verification.excludedSentenceCount}개`} />
-                <SummaryRow label="수료생 직접 수정" value={editedValue} warn={verification.userEditedCount > 0} />
-                <SummaryRow
-                  label="기업 정보"
-                  value={COMPANY_INFO_LABEL[verification.companyInfoStatus]}
-                  note={verification.companyInfoStatus !== "FOUND" ? document.companyInfoNote : null}
-                  warn={verification.companyInfoStatus === "NOT_FOUND"}
-                />
-              </dl>
-            )}
-            <p className="mt-2.5 text-[11px] text-(--coord-muted)">AI 점검은 원본 자료와의 연결 여부예요. 사실의 진위와 추천 여부는 코디네이터가 최종 판단해요.</p>
-          </section>
         </aside>
-      </div>
-
-      {/* 아래 검토 행동 막대: 현재 서버 상태에 맞는 버튼만 */}
-      <div className="sticky bottom-3 z-[2] mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-[18px] py-3.5 shadow-[0_-5px_20px_rgb(0_0_0/0.06)]">
-        {doneMessage ? (
-          <div role="status">
-            <b className="text-[13px] text-(--coord-green-ink)">{doneMessage}</b>
-            {IS_MOCK && <span className="ml-2 text-xs font-semibold text-(--coord-attention)">{MOCK_SAVE_NOTE}</span>}
-            <Link href="/coordinator/applications" className="mt-0.5 block text-[11px] text-(--coord-muted) underline underline-offset-2">
-              서류 검토 목록으로 돌아가기
-            </Link>
-          </div>
-        ) : (
-          <div>
-            <b className="text-[13px]">
-              {!document && status === "SUBMITTED" ? "서류 본문이 없어 승인할 수 없어요" : counts.weak > 0 && status === "SUBMITTED" ? `근거 확인이 필요한 문장 ${counts.weak}개` : guideTitle}
-            </b>
-            <p className="mt-0.5 text-[11px] text-(--coord-muted)">
-              {!document && status === "SUBMITTED" ? "수정 요청을 기록하고 수료생에게 연락해 주세요." : guideText}
-            </p>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          {status === ALLOWED.REJECT && (
-            <button type="button" onClick={() => setConfirming("REJECT")} className={`${btn.base} ${btn.danger} px-4 py-2.5 text-sm`}>
-              {ACTION.REJECT.button}
-            </button>
-          )}
-          {status === ALLOWED.APPROVE && (
-            // 서버는 상태만 보지만, 빈 서류를 승인하지 않도록 서류가 있을 때만 켠다
-            <button type="button" disabled={!document} onClick={() => setConfirming("APPROVE")} className={`${btn.base} ${btn.primary} px-4 py-2.5 text-sm`}>
-              {ACTION.APPROVE.button}
-            </button>
-          )}
-          {status === ALLOWED.DELIVER && (
-            <button type="button" disabled={!document} onClick={() => setConfirming("DELIVER")} className={`${btn.base} ${btn.primary} px-4 py-2.5 text-sm`}>
-              {ACTION.DELIVER.button}
-            </button>
-          )}
-          {status !== "SUBMITTED" && status !== "APPROVED" && <Badge tone={docTone[status]}>{docLabels[status]}</Badge>}
-        </div>
       </div>
 
       {confirming && (
@@ -486,14 +470,14 @@ export default function ApplicationReviewScreen({ applicationId }: { application
           onClose={closeConfirm}
         >
           {confirming === "REJECT" && (
-            <label className="flex flex-col gap-1 text-xs text-(--coord-muted)">
-              보완할 점 (필수)
+            <label className="flex flex-col gap-1.5 text-[13px] font-bold">
+              보완 사항 (필수)
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={4}
-                placeholder="예: 자기소개서 2문단의 수치 근거를 README와 맞춰 주세요"
-                className="resize-none rounded-[10px] border-[1.5px] border-(--coord-line) p-3 text-sm text-(--coord-ink) focus-visible:outline-2 focus-visible:outline-(--coord-green)"
+                placeholder="예: 프로젝트 경험에서 본인이 담당한 역할과 성과를 구체적으로 작성하도록 안내 필요"
+                className="resize-none rounded-[4px] border border-(--coord-line-strong) px-3 py-2.5 text-[14.5px] font-normal text-(--coord-ink) focus-visible:outline-2 focus-visible:outline-(--coord-green)"
               />
             </label>
           )}
@@ -503,85 +487,88 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   );
 }
 
-/** 자기소개서 한 문장 (목업 .sentence): 근거 연결 · 수료생 직접 작성(파랑) · 근거 확인 필요(빨강 점선) */
+/**
+ * 자기소개서 한 문장 (3차 피드백): 번호 원 · 상태 색 없이 글만. 문장마다 한 줄씩, 고른 문장만 강조.
+ * <button> 은 줄 단위로 감싸지지 않아(한 덩어리 상자) span 으로 만들고 키보드(Enter · Space)도 받는다.
+ * box-decoration-clone 으로 여러 줄로 넘어가도 줄마다 배경 · 테두리가 이어진다. 문장 안 줄바꿈은 그대로(whitespace-pre-line)
+ */
 function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sentence; index: number; selected: boolean; onSelect: () => void }) {
-  const state = sentenceState(sentence);
-  const look =
-    state === "user"
-      ? "bg-(--coord-blue-soft) text-(--coord-blue) border-b border-(--coord-blue)"
-      : state === "weak"
-        ? "bg-(--coord-red-soft) text-(--coord-red) border-b border-dashed border-(--coord-red)"
-        : "hover:bg-(--coord-tint) hover:shadow-[0_0_0_1px_var(--coord-tint-line)]";
   return (
-    <>
-      <button
-        type="button"
+    <p>
+      <span
+        role="button"
+        tabIndex={0}
         onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
         aria-pressed={selected}
-        aria-label={`문장 ${index + 1}: ${STATE_BADGE[state][0]}`}
-        className={`inline rounded-[3px] px-[3px] py-0.5 text-left leading-[inherit] whitespace-normal ${look} ${
-          selected ? `outline-2 outline-offset-2 ${SELECTED_LOOK[state]}` : ""
+        className={`-mx-1 cursor-pointer rounded-[4px] box-decoration-clone px-1 py-0.5 whitespace-pre-line transition-colors focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
+          selected ? SELECTED_LOOK : "hover:bg-(--coord-head)"
         }`}
       >
-        {/* 선택한 문장 앞에 오른쪽 패널과 같은 번호를 붙여 어느 문장의 근거인지 바로 보이게 */}
-        {selected && (
-          <span aria-hidden className={`mr-1 inline-grid size-[18px] place-items-center rounded-full align-[1px] text-[10px] font-bold text-white ${MARK_BG[state]}`}>
-            {index + 1}
-          </span>
-        )}
+        <span className="sr-only">문장 {index + 1}: </span>
         {sentence.text}
-      </button>{" "}
-    </>
+      </span>
+    </p>
   );
 }
 
-/** 오른쪽 '문장 근거 · 출처' 본문 (목업 .evidence-block). 원본 근거 · 출처 → AI 점검 결과 */
-function SentenceEvidence({ sentence, index }: { sentence: Sentence; index: number }) {
+/** 오른쪽 '문장 근거 · 출처' 본문 (리뉴얼 .quote-box → 01 원본 기록 → 02 근거 확인 안내: 문장 상태별 고정 안내문, AI 검증 결과 아님) */
+function SentenceEvidence({ sentence }: { sentence: Sentence }) {
   const state = sentenceState(sentence);
-  const [label, tone] = STATE_BADGE[state];
+  const writer = WRITER[sentence.source] ?? (["작성 주체 확인 불가", "gray"] as [string, CoordTone]);
   return (
     <>
-      {/* 선택한 문장: 왼쪽 문장과 같은 번호 · 같은 상태 색 띠로 연결 */}
-      <div className={`rounded-r-lg border-l-4 px-3.5 py-3 ${QUOTE_LOOK[state]}`}>
-        <div className="flex items-center gap-2">
-          <span aria-hidden className={`grid size-[18px] place-items-center rounded-full text-[10px] font-bold text-white ${MARK_BG[state]}`}>
-            {index + 1}
-          </span>
-          <Badge tone={tone}>{label}</Badge>
-          <span className="text-[11px] text-(--coord-muted)">{STATE_WRITER[state]}</span>
-        </div>
-        <p className="mt-2 text-[13px] leading-[1.8] font-semibold text-(--coord-ink)">{sentence.text}</p>
+      {/* 선택한 문장: 왼쪽 선택 문장과 같은 하늘색 강조. 작성 주체 라벨과 근거 검증 상태 라벨은 따로 보인다 */}
+      <div className="rounded-[4px] border border-(--coord-select-line) bg-(--coord-select-bg) px-3.5 py-3 text-[14.5px] leading-[1.55]">
+        <p className="mb-1.5 flex flex-wrap items-center gap-1.5">
+          <Badge tone={writer[1]} small>
+            {writer[0]}
+          </Badge>
+          {state !== "user" && (
+            <Badge tone={STATE_BADGE[state][1]} small>
+              {STATE_BADGE[state][0]}
+            </Badge>
+          )}
+        </p>
+        <b className="text-(--coord-green)">&ldquo;{sentence.text}&rdquo;</b>
       </div>
-      <div className="border-b border-(--coord-line) py-[15px]">
-        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">01　원본 기록 · 출처 (등록 자료 · 기업 정보 원문)</h3>
+      <div>
+        <h3 className="mb-1.5 text-[13px] font-extrabold text-(--coord-muted)">01 원본 기록 · 출처 (등록 자료 · 기업 정보 원문)</h3>
         {sentence.evidence.length === 0 ? (
-          <p className="text-xs leading-[1.8] text-(--coord-muted)">
+          <p className="rounded-[4px] border border-(--coord-line) bg-(--coord-head) px-3 py-2.5 text-[13.5px] text-(--coord-muted)">
             {state === "user" ? "직접 입력한 문장이라 연결된 근거가 없어요." : "연결된 근거가 없어요."}
           </p>
         ) : (
-          <ol className="flex flex-col gap-3">
+          <ol className="flex flex-col gap-2">
             {sentence.evidence.map((ev, i) => (
-              <li key={`${ev.refType}-${ev.refId}-${i}`}>
-                <p className="text-xs font-semibold">{ev.label}</p>
-                <blockquote className="mt-2 border-l-3 border-(--coord-chart-total) bg-(--coord-tint) px-3 py-2.5 text-xs leading-[1.8]">{ev.quote}</blockquote>
-                {(ev.url || ev.collectedAt) && (
-                  <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-(--coord-muted)">
-                    {ev.url && (
-                      <a href={ev.url} target="_blank" rel="noreferrer" className="underline underline-offset-2">
-                        출처 열기
-                      </a>
-                    )}
-                    {ev.collectedAt && <span>{toDate(ev.collectedAt)} 수집</span>}
-                  </p>
-                )}
+              <li key={`${ev.refType}-${ev.refId}-${i}`} className="rounded-[4px] border border-(--coord-line) bg-(--coord-head) px-3 py-2.5 text-[13.5px]">
+                <div className="mb-0.5 flex justify-between gap-3 text-[12px] text-(--coord-faint)">
+                  <b className="min-w-0">{ev.label}</b>
+                  {(ev.url || ev.collectedAt) && (
+                    <span className="flex shrink-0 gap-2">
+                      {ev.url && (
+                        <a href={ev.url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-(--coord-green)">
+                          출처 열기
+                        </a>
+                      )}
+                      {ev.collectedAt && <span>{toDate(ev.collectedAt)} 수집</span>}
+                    </span>
+                  )}
+                </div>
+                <blockquote className="font-semibold break-keep text-(--coord-ink)">&ldquo;{ev.quote}&rdquo;</blockquote>
               </li>
             ))}
           </ol>
         )}
       </div>
-      <div className="pt-[15px]">
-        <h3 className="mb-[7px] text-[11px] text-(--coord-muted)">02　AI 점검 결과 · 확인할 점</h3>
-        <p className="text-xs leading-[1.8]">{STATE_CHECK[state]}</p>
+      <div className="rounded-[4px] border border-(--coord-red-line) bg-(--coord-red-soft) px-3.5 py-3">
+        <h3 className="mb-1 text-[13.5px] font-bold text-(--coord-red)">02 근거 확인 안내</h3>
+        <p className="text-[13px] leading-[1.5] text-(--coord-ink)">{STATE_CHECK[state]}</p>
       </div>
     </>
   );
@@ -596,26 +583,14 @@ function NoDocument({ status, onReload }: { status: ApplicationStatus; onReload:
         ? ["서류를 만들지 못했어요.", "수료생이 서류를 다시 만들면 여기서 검토할 수 있어요."]
         : ["서류 본문이 없어요.", "지원서는 있지만 저장된 서류가 없어요. 필요하면 수료생에게 연락해 주세요."];
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-7 py-10 text-center">
-      <p className="text-[15px] font-bold">{title}</p>
-      <p className="text-[13px] text-(--coord-muted)">{description}</p>
+    <div className="flex flex-col items-center justify-center gap-2 border-t border-(--coord-line) px-7 py-14 text-center">
+      <p className="text-[16px] font-bold">{title}</p>
+      <p className="text-[14px] text-(--coord-muted)">{description}</p>
       {status === "GENERATING" && (
-        <button type="button" onClick={onReload} className="mt-2 text-sm font-bold text-(--coord-green)">
+        <button type="button" onClick={onReload} className={`${btn.base} ${btn.outline} ${btn.sm} mt-2`}>
           다시 불러오기
         </button>
       )}
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, note = null, warn = false }: { label: string; value: string; note?: string | null; warn?: boolean }) {
-  return (
-    <div className="flex flex-col gap-0.5 border-b border-(--coord-tint-line) pb-1.5 last:border-b-0 last:pb-0">
-      <div className="flex justify-between gap-2">
-        <dt className="text-(--coord-muted)">{label}</dt>
-        <dd className={`text-right font-bold ${warn ? "text-(--coord-orange)" : ""}`}>{value}</dd>
-      </div>
-      {note && <dd className="text-[11px] text-(--coord-muted)">{note}</dd>}
     </div>
   );
 }
@@ -659,7 +634,8 @@ function ConfirmDialog({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-(--coord-forest)/40 backdrop-blur-[3px]" onClick={onClose}>
+    // 리뉴얼 .modal-backdrop-wrap · .modal-dialog-box (머리 · 본문 · 아래 버튼 줄)
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-(--coord-forest)/50 p-5 backdrop-blur-[3px]" onClick={onClose}>
       <div
         ref={panelRef}
         role="dialog"
@@ -667,20 +643,27 @@ function ConfirmDialog({
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[480px] flex-col gap-3 rounded-[14px] border border-(--coord-line) bg-(--coord-surface) p-6 outline-none"
+        className="w-full max-w-[520px] overflow-hidden rounded-[8px] bg-(--coord-surface) shadow-[0_20px_40px_rgb(0_0_0/0.16)] outline-none"
       >
-        <h2 id={titleId} className="text-[19px] font-bold">
-          {title}
-        </h2>
-        <p className="text-[13px] leading-[1.8] text-(--coord-muted)">{description}</p>
-        {children}
-        {error && (
-          <p role="alert" className="text-[13px] text-(--coord-red)">
-            {error}
-          </p>
-        )}
-        <div className="mt-2 flex gap-2">
-          <button type="button" onClick={onClose} disabled={busy} className={`${btn.base} ${btn.outline} flex-1 py-3 text-sm`}>
+        <div className="flex items-center justify-between border-b border-(--coord-line) px-5 py-4">
+          <h2 id={titleId} className="text-[18px] font-extrabold">
+            {title}
+          </h2>
+          <button type="button" aria-label="닫기" onClick={onClose} disabled={busy} className="text-(--coord-muted) hover:text-(--coord-ink) disabled:opacity-50">
+            <Icon name="close" className="size-[18px]" />
+          </button>
+        </div>
+        <div className="flex max-h-[75vh] flex-col gap-3 overflow-y-auto p-5">
+          <p className="text-[14.5px] leading-[1.6] text-(--coord-muted)">{description}</p>
+          {children}
+          {error && (
+            <p role="alert" className="text-[13.5px] text-(--coord-red)">
+              {error}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2.5 border-t border-(--coord-line) bg-(--coord-head) px-5 py-3.5">
+          <button type="button" onClick={onClose} disabled={busy} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
             취소
           </button>
           <button
@@ -688,7 +671,7 @@ function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy || confirmDisabled}
             aria-busy={busy}
-            className={`${btn.base} ${danger ? "border-(--coord-red) bg-(--coord-red) text-(--coord-surface)" : btn.primary} flex-1 py-3 text-sm`}
+            className={`${btn.base} ${danger ? btn.danger : btn.primary} ${btn.sm}`}
           >
             {confirmLabel}
           </button>

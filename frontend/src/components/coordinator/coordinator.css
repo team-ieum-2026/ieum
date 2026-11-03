@@ -56,6 +56,9 @@
   --coord-red-line: #f9cbcb;
   --coord-blue: #3079d5;
   --coord-blue-soft: #eaf3fd;
+  /* C4 선택한 문장 강조 (하늘색 배경 + 연파랑 실선) */
+  --coord-select-bg: #eaf3ff;
+  --coord-select-line: #75a9e8;
   --coord-gray: #53636b;
   --coord-gray-soft: #eceff1;
 

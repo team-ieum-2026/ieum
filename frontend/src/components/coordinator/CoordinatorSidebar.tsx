@@ -43,7 +43,7 @@ const menu: { href: string; label: string; icon: IconName; match: (p: string) =>
     match: (p) => p.startsWith("/coordinator/help-requests"),
     count: "help",
   },
-  { href: "/coordinator/stats", label: "취업·지원 현황", icon: "chart", match: (p) => p.startsWith("/coordinator/stats") },
+  { href: "/coordinator/stats", label: "통계", icon: "chart", match: (p) => p.startsWith("/coordinator/stats") },
 ];
 
 export default function CoordinatorSidebar() {
@@ -76,8 +76,9 @@ export default function CoordinatorSidebar() {
         href="/coordinator"
         className="mb-4 flex items-center gap-2.5 rounded-md border-b border-(--coord-surface)/10 px-2 pt-1.5 pb-[18px] focus-visible:outline-3 focus-visible:outline-(--coord-lime)"
       >
-        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-(--coord-side-logo) text-lg font-extrabold text-(--coord-side-logo-ink)">
-          이
+        {/* 1차 피드백: '이' 글자 대신 새싹 로고 */}
+        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-(--coord-side-logo) text-(--coord-side-logo-ink)">
+          <Icon name="sprout" className="size-[22px] stroke-[2.1]" />
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="flex items-center gap-1.5 text-[17px] font-extrabold tracking-[-0.3px] text-(--coord-surface)">

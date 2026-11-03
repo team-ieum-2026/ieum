@@ -18,7 +18,7 @@ function pageName(path: string) {
   if (/^\/coordinator\/applications\/[^/]+/.test(path)) return "지원서류 상세 검토";
   if (path.startsWith("/coordinator/applications")) return "서류 검토";
   if (path.startsWith("/coordinator/help-requests")) return "도움 요청 관리";
-  if (path.startsWith("/coordinator/stats")) return "취업·지원 현황";
+  if (path.startsWith("/coordinator/stats")) return "통계";
   return "";
 }
 
