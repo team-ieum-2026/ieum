@@ -72,7 +72,8 @@ public class CoordinatorDashboardService {
                         row.getContactMethod(), row.getMemo(), row.getHelpType())).toList();
         var review = mapper.findReviewQueue().stream()
                 .map(row -> new CoordinatorDashboardResponse.ReviewQueueItem(row.getApplicationId(),
-                        row.getStudentName(), row.getJobTitle(), seoulTime(row.getSubmittedAt()))).toList();
+                        row.getStudentName(), row.getJobTitle(), seoulTime(row.getSubmittedAt()),
+                        row.getDeadlineOn(), row.isUntilFilled())).toList();
         var notes = mapper.findLatestPassNotes().stream()
                 .map(row -> new CoordinatorDashboardResponse.NoteToCheck(row.getStudentId(), row.getStudentName(),
                         row.getPassNote())).toList();

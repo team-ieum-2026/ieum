@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 주인: BE-B — C 서류 검토 · 도움 요청 상태별 목록. 조회만 한다. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ieum.coordinator.CoordinatorListMapper">
+
+    <select id="findApplications" resultType="com.ieum.coordinator.CoordinatorListData$ApplicationRow">
+        SELECT a.id AS application_id, s.id AS student_id, s.name AS student_name,
+               CONCAT(j.company_name, ' ', j.title) AS job_title, a.status,
+               a.submitted_at, a.reviewed_at, a.delivered_at, j.deadline_on, j.until_filled
+        FROM application a
+        JOIN student s ON s.id = a.student_id
+        JOIN job_posting j ON j.id = a.job_posting_id
+        WHERE a.status IN
+        <foreach collection="statuses" item="st" open="(" separator="," close=")">#{st}</foreach>
+        ORDER BY a.submitted_at ASC, a.id ASC
+    </select>
+
+    <select id="findHelpRequests" resultType="com.ieum.coordinator.CoordinatorListData$HelpRequestRow">
+        SELECT h.id AS help_request_id, s.id AS student_id, s.name AS student_name,
+               CONCAT(c.name, ' ', c.cohort) AS course_label, h.created_at,
+               CONCAT(j.company_name, ' ', j.title) AS job_title, h.contact_method, h.memo, h.help_type,
+               h.status, h.closed_at, h.close_reason
+        FROM help_request h
+        JOIN student s ON s.id = h.student_id
+        JOIN course c ON c.id = s.course_id
+        LEFT JOIN recommendation_item ri ON ri.id = h.recommendation_item_id
+        LEFT JOIN job_posting j ON j.id = ri.job_posting_id
+        <if test="status != null">
+            WHERE h.status = #{status}
+        </if>
+        ORDER BY h.created_at DESC, h.id DESC
+    </select>
+</mapper>
