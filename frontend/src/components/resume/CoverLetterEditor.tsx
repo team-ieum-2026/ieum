@@ -6,14 +6,16 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import EvidencePanel from "@/components/resume/EvidencePanel";
 import SourceTag from "@/components/resume/SourceTag";
+import SentenceText from "@/components/resume/SentenceText";
+import DocumentHeading from "@/components/resume/DocumentHeading";
 import StudentPageHeading from "@/components/student/StudentPageHeading";
-import StudentIcon from "@/components/student/StudentIcon";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { studentHref } from "@/components/student/navigation";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument } from "@/lib/api/resume";
-import type { ApplicationDetail, ApplicationDocument, CoverLetterSection, Sentence } from "@/types/resume";
+import type { ApplicationDetail, ApplicationDocument, BasicSection, CoverLetterSection, Sentence } from "@/types/resume";
 import type { CompanyInfoStatus } from "@/types/student";
+import { useApplicationBreadcrumb } from "@/components/student/StudentShell";
 
 const findSentence = (document: ApplicationDocument, sentenceId: string) =>
   document.sections
@@ -22,6 +24,7 @@ const findSentence = (document: ApplicationDocument, sentenceId: string) =>
 
 export default function CoverLetterEditor({ applicationId, studentId }: { applicationId: number; studentId: number }) {
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
+  useApplicationBreadcrumb(detail?.status);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -86,27 +89,27 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
   const selected = selectedId ? findSentence(document, selectedId) : null;
   const sentences =
     document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER")?.sentences ?? [];
-  // 근거가 연결된 AI 문장에만 순서대로 "AI 1", "AI 2"… (문단이 나뉘어도 번호는 전체 기준)
-  const markers = new Map<string, string>();
-  sentences
-    .filter((s) => s.source === "AI" && s.evidence.length > 0)
-    .forEach((s, i) => markers.set(s.sentenceId, `AI ${i + 1}`));
+  const studentName = document.sections.find((section): section is BasicSection => section.section === "BASIC")?.fields.name;
+  const sourceCounts = (["AI", "USER", "REGISTERED"] as const).map(source => ({ source, count: sentences.filter(sentence => sentence.source === source).length }));
   const trimmed = draft.trim();
   const canApply = editable && selected !== null && trimmed !== "" && trimmed !== selected.text && saveState !== "SAVING";
 
   const select = (sentence: Sentence) => {
+    if (savingRef.current) return;
     setSelectedId(sentence.sentenceId);
     setDraft(sentence.text);
     setSaveError(null);
     // 고치던 내용은 버려지고 서류는 마지막 저장 상태 그대로다
     if (saveState === "ERROR") setSaveState("SAVED");
     requestAnimationFrame(() => {
-      // 선택한 문장이 앞 문단으로 옮겨 그려지며 포커스를 잃으므로 키보드 사용 중이면 되돌린다
+      // 키보드로 선택한 문장의 포커스를 유지한다.
       if (keyboardRef.current) {
         bodyRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus({ preventScroll: true });
       }
-      // 모바일에서 끼워 넣은 창이 화면 밖으로 나가지 않도록 (헤더 · 하단 버튼 높이는 scroll-margin 으로 뺀다)
-      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      // 좁은 화면에서만 근거 패널로 이동한다. 웹에서는 본문 스크롤 위치를 유지한다.
+      if (window.matchMedia("(max-width: 1023px)").matches) {
+        panelRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+      }
     });
   };
 
@@ -143,20 +146,21 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
 
   return (
     <div className="s-cover-page">
-      <StudentPageHeading title="나의 이야기에, 분명한 근거를." description={`${job.companyName} · 자기소개서`} back={backHref} />
-      <div className="s-document-toolbar"><div className="s-source-legend"><SourceTag source="AI" /><SourceTag source="REGISTERED" /><SourceTag source="USER" /></div><SaveStatus state={saveState} /></div>
-      <CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} />
+      <StudentPageHeading title="나의 이야기에, 분명한 근거를." description={<span className="s-cover-heading-description"><span>{job.companyName} · 자기소개서</span><SaveStatus state={saveState} /></span>} />
+      <div className="s-cover-notice-row"><CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} /></div>
       <div ref={bodyRef} onKeyDownCapture={() => { keyboardRef.current = true; }} onPointerDownCapture={() => { keyboardRef.current = false; }} className="s-cover-layout">
-        <article className="s-panel s-letter-document"><div className="s-letter-heading"><span>자기소개서</span><span>{job.companyName}</span></div><h2>{job.title}</h2><p>{editable ? "수정할 문장을 눌러보세요." : "문장을 눌러 출처와 근거를 확인해주세요."}</p>
-          {sentences.length ? <SentenceParagraph sentences={sentences} markers={markers} selectedId={selectedId} onSelect={select} /> : <p className="s-source-note">아직 작성된 문장이 없어요.</p>}
+        <article className="s-panel s-letter-document">
+          <DocumentHeading title="자기소개서" job={job} name={studentName} />
+          <div className="s-letter-document-meta">{sourceCounts.filter(({ count }) => count > 0).map(({ source, count }) => <SourceTag key={source} source={source} label={`${source === "AI" ? "AI 작성" : source === "USER" ? "직접 작성·수정" : "등록 자료"} ${count}문장`} />)}</div>
+          {sentences.length ? <SentenceParagraph sentences={sentences} selectedId={selectedId} onSelect={select} /> : <p className="s-source-note">아직 작성된 문장이 없어요.</p>}
           <p className="s-source-note">AI 작성 문장은 등록 자료와 확인된 기업 정보에 연결된 근거를 살펴볼 수 있어요.</p>
         </article>
-        <div ref={panelRef} className="s-panel s-letter-evidence"><h2>선택한 문장의 근거</h2>
+        <div ref={panelRef} className="s-panel s-letter-evidence" aria-busy={saveState === "SAVING"}><h2>문장 근거·출처</h2>
           {selected ? <>
-            {(selected.source !== "USER" || !editable) && <EvidencePanel sentence={selected} bare marker={markers.get(selected.sentenceId)} />}
-            {editable && <><label className="flex flex-col gap-2 text-xs font-medium text-ink-sub">문장 고치기<textarea value={draft} onChange={event => setDraft(event.target.value)} rows={7} className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink" /></label><p className="s-letter-note">고친 문장은 근거 표시 대신 ‘직접 입력’으로 표시돼요.</p>{saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={cancel} disabled={saveState === "SAVING"} className="s-button">취소</button><button type="button" onClick={apply} disabled={!canApply} aria-busy={saveState === "SAVING"} className="s-button s-button-primary">{saveState === "SAVING" ? "저장 중…" : "적용"}</button></div></>}
+            <div className="s-letter-selected-summary"><div className="s-letter-selection-tags"><SourceTag source={selected.source} label={selected.source === "USER" ? "직접 작성·수정" : undefined} /><span>{selected.evidence.length ? `근거 ${selected.evidence.length}개 연결` : selected.source === "USER" ? "직접 작성·수정한 내용" : "연결된 근거 없음"}</span></div><blockquote>{selected.text}</blockquote></div>
+            <EvidencePanel sentence={selected} bare />
+            {editable && <><label className="flex flex-col gap-2 text-xs font-medium text-ink-sub">문장 고치기<textarea value={draft} onChange={event => setDraft(event.target.value)} disabled={saveState === "SAVING"} rows={7} className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink" /></label><p className="s-letter-note">고친 문장은 ‘직접 작성·수정’으로 표시돼요.</p>{saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={cancel} disabled={saveState === "SAVING"} className="s-button">취소</button><button type="button" onClick={apply} disabled={!canApply} aria-busy={saveState === "SAVING"} className="s-button s-button-primary">{saveState === "SAVING" ? "저장 중…" : "적용"}</button></div></>}
           </> : <EvidencePanel sentence={null} bare />}
-          <Link href={backHref} className="s-text-link">이력서로 돌아가기<StudentIcon name="arrow" /></Link>
         </div>
       </div>
     </div>
@@ -196,8 +200,8 @@ function CompanyInfoNotice({ status, sentences }: { status: CompanyInfoStatus; s
 }
 
 /** 문장별 출처를 보여주고 선택한 문장을 근거 · 편집 패널에 연결한다. */
-function SentenceParagraph({ sentences, markers, selectedId, onSelect }: { sentences: Sentence[]; markers: Map<string, string>; selectedId: string | null; onSelect: (sentence: Sentence) => void }) {
-  return <div className="s-letter-sentences">{sentences.map(sentence => <button type="button" key={sentence.sentenceId} aria-pressed={selectedId === sentence.sentenceId} onClick={() => onSelect(sentence)} className={`s-letter-sentence${sentence.source === "AI" ? " is-ai" : ""}`}><SourceTag source={sentence.source} label={markers.get(sentence.sentenceId)} /><span>{sentence.text}</span></button>)}</div>;
+function SentenceParagraph({ sentences, selectedId, onSelect }: { sentences: Sentence[]; selectedId: string | null; onSelect: (sentence: Sentence) => void }) {
+  return <div className="s-letter-sentences">{sentences.map(sentence => <p key={sentence.sentenceId}><SentenceText sentence={sentence} selected={selectedId === sentence.sentenceId} onSelect={onSelect} presentation="document" /></p>)}</div>;
 }
 
 function Notice({ message, children }: { message: string; children?: React.ReactNode }) {

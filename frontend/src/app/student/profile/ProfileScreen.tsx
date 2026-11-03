@@ -261,8 +261,8 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       )}
 
       <div className="s-profile-layout"><aside className="s-panel s-identity"><div className="s-identity-heading"><span className="s-avatar">{basic.name.slice(1, 2) || basic.name.slice(0, 1)}</span><div><h2>{basic.name}</h2><p>청년취업사관학교 수료생</p></div></div><ProfileCurrentStatus key={studentId} studentId={studentId} /><dl className="s-profile-facts">{[["희망 직무", basic.desiredJob], ["희망 지역", basic.preferredRegion], ["이메일", basic.email], ["GitHub", basic.githubUrl], ["수료 과정", `${course.name} · ${course.cohort}`], ["캠퍼스", course.campus], ["수료일", basic.completedOn]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "미입력"}</dd></div>)}</dl><button type="button" className="s-button" onClick={() => { const card = rows.find(row => row.section === "BASIC"); if (card) setEditing(card); }}><StudentIcon name="edit" />기본 정보 수정</button></aside><div className="s-profile-main">
-      <StudentHelpRequests key={studentId} studentId={studentId} />
       <CompetencyCard profile={profile} extraction={extraction} />
+      <StudentHelpRequests key={studentId} studentId={studentId} />
       <div>
         <h2 className="s-profile-materials-heading">나의 등록 자료</h2>
         <SectionCardGroup>
@@ -370,9 +370,10 @@ function CompetencyCard({ profile, extraction }: { profile: StudentProfile; extr
   const cp = profile.competencyProfile;
   const tags = cp ? [...new Set([...cp.skills.map((s) => s.name), ...cp.certificates])] : [];
   return (
-    <section className="s-competency-card flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-bold">추천에 쓰이는 역량 프로필</h2>
+    <section className="s-competency-section" aria-labelledby="competency-profile-heading">
+      <h2 id="competency-profile-heading">추천에 쓰이는 역량 프로필</h2>
+      <div className="s-competency-card flex flex-col gap-2 rounded-2xl border-[1.5px] border-primary bg-surface px-4 py-3.5">
+      <div className="flex items-center justify-end gap-2">
         <SourceTag source="AI" label="AI 정리" />
       </div>
       {extraction && (
@@ -404,6 +405,7 @@ function CompetencyCard({ profile, extraction }: { profile: StudentProfile; extr
       ) : (
         <p className="text-[13px] text-ink-muted">아직 정리된 역량 프로필이 없어요. 아래 자료를 채우면 정리돼요.</p>
       )}
+      </div>
     </section>
   );
 }

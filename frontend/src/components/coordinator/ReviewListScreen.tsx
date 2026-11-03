@@ -214,7 +214,7 @@ export default function ReviewListScreen() {
             {visible.length === 0 && <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
           </div>
           <p className="shrink-0 p-[22px] text-xs text-(--coord-muted)">
-            근거 점검은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
+            근거 점검은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 매니저가 최종 판단해요.
           </p>
         </Panel>
       )}

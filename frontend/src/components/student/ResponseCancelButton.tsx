@@ -34,7 +34,7 @@ export default function ResponseCancelButton({ itemId, studentId, response, onCa
     } finally { busyRef.current = false; setBusy(false); }
   }
   return <>
-    <button type="button" className="s-response-cancel" aria-label={label} onClick={() => { setError(null); setOpen(true); }}>취소</button>
+    <button type="button" className="s-response-cancel" aria-label={label} onClick={() => { setError(null); setOpen(true); }}>취소하기</button>
     <BottomSheet open={open} title={`${label}할까요?`} onClose={close}>
       <p className="s-dialog-description">{response === "APPLY"
         ? "지원 준비를 취소하면 이 공고의 작성 중인 지원서가 삭제되고, 응답 전 상태로 돌아가요. 이미 검토를 요청한 지원서는 직접 취소할 수 없어요."

@@ -38,20 +38,23 @@ export default function StudentHelpRequests({ studentId }: { studentId: number }
     reload();
   }
 
-  return <section className="s-panel s-my-help" aria-labelledby={headingId}>
-    <div className="s-my-help-heading"><div><h2 id={headingId}>내 도움 요청</h2><p>담당자에게 보낸 요청을 확인하고, 필요한 요청만 유지할 수 있어요.</p></div></div>
+  return <section className="s-my-help" aria-labelledby={headingId}>
+    <div className="s-my-help-heading"><h2 id={headingId}>내 도움 요청</h2>
     <div className="s-my-help-filters" aria-label="도움 요청 조회 범위">{(["OPEN", "ALL"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setSelected(null); setMessage(""); }}>{value === "OPEN" ? "진행 중" : "전체 내역"}</button>)}</div>
+    </div>
+    <div className="s-panel s-my-help-content">
     <ApiState loading={loading} error={error} retry={reload} />
     <p className="s-my-help-message" role="status">{message}</p>
     {data && data.length > 0 && <ul className="s-my-help-list">{data.map(item => <li key={item.helpRequestId} data-help-request-id={item.helpRequestId}>
       <div className="s-my-help-meta"><span className="s-help-state" data-status={item.status}>{studentHelpStatusLabels[item.status]}</span><span>{item.helpType === null ? "미분류" : helpTypeLabels[item.helpType]}</span><time dateTime={item.createdAt}>{date(item.createdAt)} 요청</time></div>
       <h3>{item.jobTitle ?? "일반 도움 요청"}</h3>
       {item.memo && <p className="s-my-help-memo">{item.memo}</p>}
-      <div className="s-my-help-bottom">{item.status === "CLOSED" ? <p>{item.closedAt && `${date(item.closedAt)} 종료`}{item.closeReason && ` · ${helpCloseReasonLabels[item.closeReason]}`}</p> : item.status === "CONSULTATION_SCHEDULED" && item.consultationAt ? <p>상담 예정 · <time dateTime={item.consultationAt}>{dateTime(item.consultationAt)}</time></p> : <p>{item.contactMethod ? `선호 연락 · ${{ SMS: "문자", PHONE: "전화", EMAIL: "이메일" }[item.contactMethod]}` : "담당 코디네이터와 함께 확인해요."}</p>}
+      <div className="s-my-help-bottom">{item.status === "CLOSED" ? <p>{item.closedAt && `${date(item.closedAt)} 종료`}{item.closeReason && ` · ${helpCloseReasonLabels[item.closeReason]}`}</p> : item.status === "CONSULTATION_SCHEDULED" && item.consultationAt ? <p>상담 예정 · <time dateTime={item.consultationAt}>{dateTime(item.consultationAt)}</time></p> : <p>{item.contactMethod ? `선호 연락 · ${{ SMS: "문자", PHONE: "전화", EMAIL: "이메일" }[item.contactMethod]}` : "담당 매니저와 함께 확인해요."}</p>}
         {isActive(item) && <button type="button" className="s-text-link" onClick={() => { setSelected(item); setMessage(""); }}>요청 종료</button>}
       </div>
     </li>)}</ul>}
     {data && !data.length && !error && !loading && <div className="s-my-help-empty"><h3>{filter === "OPEN" ? "진행 중인 도움 요청이 없어요." : "아직 보낸 도움 요청이 없어요."}</h3><p>도움이 필요하면 상단의 ‘도움 요청’을 눌러주세요.</p></div>}
+    </div>
     {selected && <CloseHelpRequestDialog key={selected.helpRequestId} studentId={studentId} request={selected} onClose={() => setSelected(null)} onClosed={closed} onConflict={reload} />}
   </section>;
 }

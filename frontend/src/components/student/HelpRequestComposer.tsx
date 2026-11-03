@@ -49,7 +49,7 @@ export default function HelpRequestComposer({ studentId, job, onClose, onConflic
 
   return <BottomSheet open title="어떤 도움이 필요하세요?" onClose={close}>
     <form className="s-help-composer" onSubmit={submit}>
-      <p className="s-dialog-description">도움 유형을 골라주세요. 담당 코디네이터가 함께 살펴볼게요.</p>
+      <p className="s-dialog-description">도움 유형을 골라주세요. 담당 매니저가 함께 살펴볼게요.</p>
       <fieldset className="s-help-type-options" disabled={busy}>
         <legend>도움 유형 <span>(필수)</span></legend>
         {helpTypes.map(type => <label key={type} data-selected={helpType === type}>

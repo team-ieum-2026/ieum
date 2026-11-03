@@ -58,7 +58,7 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
           </div>
         </div>
         <ActionError message={actionError} />
-        {data.items.length ? <div className="s-job-grid" aria-busy={refreshing}>{data.items.map((item, index) => <JobCard key={item.itemId} item={item} studentId={studentId} imageVariant={index} onCancelled={() => { setData({ ...data, items: data.items.map(current => current.itemId === item.itemId ? { ...current, response: "NONE" } : current) }); reload(); activity.reload(); }} />)}</div> : <div className="s-empty"><StudentIcon name="sparkles" /><h2>지금은 추천할 공고가 없어요.</h2><p>관심 직무나 희망 지역이 바뀌었다면<br />내 프로필에서 수정해주세요.</p><Link className="s-button s-button-primary" href={studentHref("/student/profile", studentId)}>내 프로필 확인</Link></div>}
+        {data.items.length ? <div className="s-job-grid" aria-busy={refreshing}>{data.items.map(item => <JobCard key={item.itemId} item={item} studentId={studentId} onCancelled={() => { setData({ ...data, items: data.items.map(current => current.itemId === item.itemId ? { ...current, response: "NONE" } : current) }); reload(); activity.reload(); }} />)}</div> : <div className="s-empty"><StudentIcon name="sparkles" /><h2>지금은 추천할 공고가 없어요.</h2><p>관심 직무나 희망 지역이 바뀌었다면<br />내 프로필에서 수정해주세요.</p><Link className="s-button s-button-primary" href={studentHref("/student/profile", studentId)}>내 프로필 확인</Link></div>}
       </>}
     </section>
     {data && <>

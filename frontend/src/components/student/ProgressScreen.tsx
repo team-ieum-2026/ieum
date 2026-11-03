@@ -81,13 +81,13 @@ function ApplicationProgressScreen({ applicationId, studentId }: { applicationId
     }
   }
   return <StudentScreen><div className="s-progress">
-    {failed || error
-      ? <StudentPageHeading title={failed ? "초안 생성이 잠시 멈췄어요." : "서류 생성 상태를 확인하지 못했어요."} description="잠시 후 다시 시도해주세요." back={studentHref("/student/applications", studentId)} />
-      : <ApplicationLoading back={studentHref("/student/applications", studentId)} />}
+    {(failed || error) && <StudentPageHeading title={failed ? "초안 생성이 잠시 멈췄어요." : "서류 생성 상태를 확인하지 못했어요."} description="잠시 후 다시 시도해주세요." />}
+    <div className="s-progress-frame">
+    {!failed && !error && <ApplicationLoading />}
     <div className="s-panel s-progress-card"><div className="s-progress-intro"><progress aria-label="서류 생성 진행률" value={done} max={3} className="h-2 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-line [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary" /></div>
     <div className="s-progress-steps"><div className="sr-only" role="status">{done} / 3 단계 완료</div>{steps.map((step) => <div key={step.key} className="flex gap-3.5"><div aria-hidden="true" className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 ${step.state === "DONE" ? "border-primary bg-primary text-surface" : step.state === "RUNNING" ? "animate-pulse border-primary bg-primary-tint" : step.state === "FAILED" ? "border-danger text-danger" : "border-line"}`}>{step.state === "DONE" ? "✓" : step.state === "FAILED" ? "!" : ""}</div><div><h2 className="text-[15px] font-bold">{labels[step.key]} <span className="text-xs font-normal text-ink-sub">{stateLabels[step.state]}</span></h2><p className="mt-1 text-[13px] leading-relaxed text-ink-sub">{step.note ?? (step.state === "WAITING" ? "앞 단계가 끝나면 시작해요" : step.state === "DONE" ? "정리를 마쳤어요" : "등록한 자료를 공고에 맞게 정리하고 있어요")}</p></div></div>)}</div></div>
-    <p className="s-source-note">모든 문장은 등록한 자료나 기업 공식 정보에 근거해서 써요. 근거가 없는 내용은 쓰지 않아요.</p>
+    </div>
     <ActionError message={error} />
-    {(failed || error) && <div className="space-y-3"><Button className="w-full" variant="secondary" onClick={retry} disabled={retrying} aria-busy={retrying}>{retrying ? "생성 시작 중…" : "다시 시도"}</Button><p className="text-xs text-ink-muted">{failed ? "실패한 서류를 다시 만들어요. 계속 실패하면 담당 코디네이터에게 문의해 주세요." : "생성 상태를 다시 확인해요. 계속 실패하면 담당 코디네이터에게 문의해 주세요."}</p></div>}
+    {(failed || error) && <div className="space-y-3"><Button className="w-full" variant="secondary" onClick={retry} disabled={retrying} aria-busy={retrying}>{retrying ? "생성 시작 중…" : "다시 시도"}</Button><p className="text-xs text-ink-muted">{failed ? "실패한 서류를 다시 만들어요. 계속 실패하면 담당 매니저에게 문의해 주세요." : "생성 상태를 다시 확인해요. 계속 실패하면 담당 매니저에게 문의해 주세요."}</p></div>}
   </div></StudentScreen>;
 }

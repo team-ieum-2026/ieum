@@ -56,12 +56,12 @@ const ACTION: Record<Action, { button: string; title: string; description: strin
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
 
 /** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료 */
-const STEPS = ["AI 초안", "수료생 확인", "코디네이터 검토", "승인", "전달 완료"];
+const STEPS = ["AI 초안", "수료생 확인", "매니저 검토", "승인", "전달 완료"];
 const STAGE: Record<ApplicationStatus, number> = { GENERATING: 0, FAILED: 0, DRAFT: 1, REJECTED: 1, SUBMITTED: 2, APPROVED: 3, DELIVERED: 4 };
 
 /** 아래 행동 막대 왼쪽 설명 (현재 서버 상태 기준) */
 const STATUS_GUIDE: Record<ApplicationStatus, [string, string]> = {
-  SUBMITTED: ["코디네이터 검토 단계예요", "자기소개서 전체와 문장 근거를 확인한 뒤 승인하거나 수정을 요청하세요."],
+  SUBMITTED: ["매니저 검토 단계예요", "자기소개서 전체와 문장 근거를 확인한 뒤 승인하거나 수정을 요청하세요."],
   APPROVED: ["승인 완료 · 기관 추천 전달 대기", "기업 전달은 이음 밖에서 하고, 전달한 뒤 상태만 기록해요."],
   REJECTED: ["수정 요청을 기록했어요", "반려 처리 후 서류 상태가 변경됩니다. 현재 수정·재제출 기능은 지원하지 않습니다."],
   DELIVERED: ["기관 추천 전달 완료", "이 서류의 검토 · 전달이 끝났어요."],
@@ -427,7 +427,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                 />
               </dl>
             )}
-            <p className="mt-2.5 text-[11px] text-(--coord-muted)">AI 점검은 원본 자료와의 연결 여부예요. 사실의 진위와 추천 여부는 코디네이터가 최종 판단해요.</p>
+            <p className="mt-2.5 text-[11px] text-(--coord-muted)">AI 점검은 원본 자료와의 연결 여부예요. 사실의 진위와 추천 여부는 매니저가 최종 판단해요.</p>
           </section>
         </aside>
       </div>
