@@ -1,8 +1,8 @@
 "use client";
 // 주인: FE-B — 취업·지원 현황 (11/1 개편 목업 statsPage). 대시보드 API 한 번 + 수료생 목록 API(C2 와 같은 함수)로만 그린다.
 // ① 수료생 관리 현황(도넛 + 범례 3줄) ② 취업 지표(링 3개). '취업률'은 관리 상태 기준이며 공식 취업 성과가 아니다.
-// ③ 도움 요청 통계: 대시보드 helpRequests 는 접수(OPEN)만 오므로 '접수 중 요청 기준'으로만 센다.
-//    처리 중 · 상담 예정 · 연락 완료 · 요청 종료 건수와 필요한 도움(요청 유형)은 API 에 없어 '미연동' (공고 · 메모로 추측 분류하지 않음)
+// ③ 도움 요청 통계: 처리 상태별은 상태별 목록 API(ALL)로 접수 · 연락 완료 · 요청 종료 전체 건수를 센다 (처리 중 · 상담 예정은 서버에 없어 '미연동').
+//    선호 연락별 · 필요한 도움별은 대시보드 helpRequests(접수 OPEN) 기준. 유형이 없으면 '미분류' (공고 · 메모로 추측 분류하지 않음)
 // ④ 수료생 통합 현황: C2 목록 API(검색 · 관리 상태 · 페이지) + 지금 페이지만 C3 상세로 지원서류를 채운다. 도움 요청은 접수 중 건수
 // ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
 import Link from "next/link";
@@ -29,10 +29,18 @@ import {
 } from "@/components/coordinator/coordLabels";
 import { subStatusLabels } from "@/components/student/labels";
 import { ApiError } from "@/lib/api/client";
-import { getDashboard } from "@/lib/api/coordinatorReview";
+import { getCoordinatorHelpRequests, getDashboard } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
-import type { CoordStudentStatus, Dashboard } from "@/types/coordinator";
-import type { ApplicationStatus, ContactMethod, CoordinatorStudentList, CoordinatorStudentRow, StudentStatus, SubStatus } from "@/types/student";
+import type { CoordinatorHelpRequest, CoordStudentStatus, Dashboard } from "@/types/coordinator";
+import type {
+  ApplicationStatus,
+  ContactMethod,
+  CoordinatorStudentList,
+  CoordinatorStudentRow,
+  StudentHelpRequestStatus,
+  StudentStatus,
+  SubStatus,
+} from "@/types/student";
 
 const R = 54;
 const CIRC = 2 * Math.PI * R;
@@ -234,17 +242,37 @@ function Body({ data }: { data: Dashboard }) {
 
 // ---- ③ 도움 요청 통계 ----
 
-/** 목업 처리 상태. 서버 목록은 접수(OPEN)만 있다 */
-const HELP_STATES: { label: string; connected: boolean }[] = [
-  { label: helpLabels.OPEN, connected: true },
-  { label: "처리 중", connected: false },
-  { label: "상담 예정", connected: false },
-  { label: helpLabels.CONTACTED, connected: false },
-  { label: "요청 종료", connected: false },
+/** 목업 처리 상태 순서. status 가 없는 줄은 서버에 없는 상태값이라 미연동 */
+const HELP_STATES: { label: string; status?: StudentHelpRequestStatus }[] = [
+  { label: helpLabels.OPEN, status: "OPEN" },
+  { label: "처리 중" },
+  { label: "상담 예정" },
+  { label: helpLabels.CONTACTED, status: "CONTACTED" },
+  { label: helpLabels.CLOSED, status: "CLOSED" },
 ];
 const CONTACT_ORDER: (ContactMethod | "NONE")[] = ["PHONE", "SMS", "EMAIL", "NONE"];
 
 function HelpStats({ data }: { data: Dashboard }) {
+  // 처리 상태별은 상태별 목록 API(ALL)로 전체 요청을 센다. 실패하면 대시보드의 접수 건수만 보여 준다
+  const [all, setAll] = useState<CoordinatorHelpRequest[] | null>(null);
+  const [allFailed, setAllFailed] = useState(false);
+  useEffect(() => {
+    let ignore = false;
+    getCoordinatorHelpRequests("ALL")
+      .then((list) => {
+        if (!ignore) setAll(list);
+      })
+      .catch(() => {
+        if (!ignore) setAllFailed(true);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [data]);
+  const statusCount = (status: StudentHelpRequestStatus) =>
+    all ? all.filter((h) => h.status === status).length : status === "OPEN" ? data.helpRequests.length : null;
+  const statusTotal = all ? all.length : data.helpRequests.length;
+
   const open = data.helpRequests;
   // 건수(요청)와 인원(학생)을 따로 센다: 한 학생이 여러 건을 낼 수 있다
   const studentCount = new Set(open.map((h) => h.studentId)).size;
@@ -256,20 +284,31 @@ function HelpStats({ data }: { data: Dashboard }) {
   const byType = [...HELP_TYPE_ORDER, null].map((t) => ({ t, n: open.filter((h) => (h.helpType ?? null) === t).length }));
   return (
     <Panel label="도움 요청 통계" className="mt-3">
-      <PanelHead title="도움 요청 통계" sub="접수 중인 요청만 건수로 집계해요. 연락 완료 · 종료된 요청은 목록 API 가 없어 포함되지 않아요.">
+      <PanelHead
+        title="도움 요청 통계"
+        sub="처리 상태별은 지금까지 들어온 전체 요청, 선호 연락별 · 필요한 도움별은 접수 중인 요청만 건수로 집계해요."
+      >
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${toneClass("red")}`}>
           접수 중 요청 {open.length}건 · 수료생 {studentCount}명 기준
         </span>
       </PanelHead>
       <div className="grid grid-cols-3 divide-x divide-(--coord-line-soft)">
-        <StatColumn title="처리 상태별">
-          {HELP_STATES.map((s) =>
-            s.connected ? (
-              <StatRow key={s.label} label={<Badge tone={helpTone.OPEN}>{s.label}</Badge>} n={open.length} total={open.length} />
-            ) : (
-              <StatRow key={s.label} label={<span className="text-(--coord-muted)">{s.label}</span>} unlinked="상태별 목록 API 가 없어요" />
-            ),
-          )}
+        <StatColumn title="처리 상태별" note={all ? `전체 ${all.length}건 중` : undefined}>
+          {HELP_STATES.map(({ label, status }) => {
+            const n = status ? statusCount(status) : null;
+            if (status && n !== null) {
+              return <StatRow key={label} label={<Badge tone={helpTone[status]}>{label}</Badge>} n={n} total={statusTotal} />;
+            }
+            const loading = status && !all && !allFailed;
+            return (
+              <StatRow
+                key={label}
+                label={<span className="text-(--coord-muted)">{label}</span>}
+                unlinked={!status ? "서버에 없는 상태값이에요 (BE 확정 전)" : loading ? "불러오는 중" : "상태별 목록을 불러오지 못했어요"}
+                placeholder={loading ? "불러오는 중…" : allFailed && status ? "조회 실패" : undefined}
+              />
+            );
+          })}
         </StatColumn>
         <StatColumn title="선호 연락별" note={`접수 중 ${open.length}건 중`}>
           {byContact.map(({ m, n }) => (
@@ -298,8 +337,20 @@ function StatColumn({ title, note, children }: { title: string; note?: string; c
   );
 }
 
-/** 통계 한 줄: 이름 · 막대 · 건수. unlinked 이면 '— · 미연동' */
-function StatRow({ label, n = 0, total = 0, unlinked }: { label: React.ReactNode; n?: number; total?: number; unlinked?: string }) {
+/** 통계 한 줄: 이름 · 막대 · 건수. unlinked 이면 '— · 미연동' (placeholder 가 있으면 그 문구) */
+function StatRow({
+  label,
+  n = 0,
+  total = 0,
+  unlinked,
+  placeholder,
+}: {
+  label: React.ReactNode;
+  n?: number;
+  total?: number;
+  unlinked?: string;
+  placeholder?: string;
+}) {
   return (
     <li className="grid grid-cols-[110px_minmax(0,1fr)_64px] items-center gap-2.5 text-xs">
       <span className="truncate">{label}</span>
@@ -313,7 +364,7 @@ function StatRow({ label, n = 0, total = 0, unlinked }: { label: React.ReactNode
       )}
       {unlinked ? (
         <span title={unlinked} className="text-right text-[11px] text-(--coord-muted)">
-          — · 미연동
+          {placeholder ?? "— · 미연동"}
         </span>
       ) : (
         <b className="text-right text-[13px]">
