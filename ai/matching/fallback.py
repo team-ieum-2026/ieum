@@ -132,13 +132,20 @@ def build_reasons(
     """겹친 단어로 만든 추천 근거 (LLM 없음). 임시 추천 · 임베딩 추천이 같이 쓴다.
 
     - 보유 기술이 겹치면: 그 기술의 프로필 근거(PROJECT 등)
+    - 프로필 근거가 없는 기술이 겹치면: 따로 한 줄, 공고 근거 JOB_POSTING
     - 희망 직무 단어가 공고에 나오면: 공고 근거 JOB_POSTING(refId = jobPostingId)
+    순서: 근거 있는 기술 → 근거 없는 기술 → 희망 직무 (카드에는 앞의 2개만 보인다)
     겹친 게 없으면 [] (임베딩 추천은 별도 문장을 붙인다)
     """
     reasons: list[RecommendReason] = []
-    evidence = _skill_evidence(profile, matched_skills)
-    if matched_skills and evidence:
-        reasons.append(RecommendReason(text=f"보유 기술 {' · '.join(matched_skills)}이(가) 공고에 나옵니다", evidence=evidence))
+    backed = [name for name in matched_skills if _skill_evidence(profile, [name])]
+    unbacked = [name for name in matched_skills if name not in backed]
+    if backed:
+        reasons.append(RecommendReason(text=f"보유 기술 {' · '.join(backed)}이(가) 공고에 나옵니다",
+                                       evidence=_skill_evidence(profile, backed)))
+    if unbacked:
+        reasons.append(RecommendReason(text=f"프로필의 기술 {' · '.join(unbacked)}이(가) 공고에도 나옵니다",
+                                       evidence=[job_posting_ref(job_posting_id)]))
     if matched_terms:
         reasons.append(RecommendReason(
             text=f"희망 직무 '{' · '.join(matched_terms)}'와 공고 직무가 맞습니다",
