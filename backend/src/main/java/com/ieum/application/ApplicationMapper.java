@@ -35,4 +35,10 @@ public interface ApplicationMapper {
 
     /** 상태가 from 일 때만 to 로 바꾼다. 0 이면 이미 다른 상태 */
     int updateStatus(@Param("applicationId") Long applicationId, @Param("from") String from, @Param("to") String to);
+
+    /** staleMinutes 분 넘게 GENERATING 에 머문 지원서 번호 */
+    List<Long> selectStaleGenerating(@Param("staleMinutes") int staleMinutes);
+
+    /** 아직 staleMinutes 분 넘게 GENERATING 일 때만 FAILED 로. 그새 다시 생성을 시작했으면 0 */
+    int failStaleGenerating(@Param("applicationId") Long applicationId, @Param("staleMinutes") int staleMinutes);
 }

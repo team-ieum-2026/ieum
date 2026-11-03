@@ -34,4 +34,9 @@
     <update id="touchLastResponse">
         UPDATE student SET last_response_at = NOW() WHERE id = #{studentId}
     </update>
+
+    <update id="regenerate">
+        UPDATE application SET status = 'GENERATING'
+        WHERE id = #{applicationId} AND status = 'FAILED'
+    </update>
 </mapper>
