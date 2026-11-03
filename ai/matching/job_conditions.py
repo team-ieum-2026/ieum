@@ -150,6 +150,15 @@ _TITLE_RES = [(family, re.compile(rx, re.IGNORECASE)) for family, rx in [
 ]]
 # 괄호 안 우대 조건 "(Unity 우대)" 는 직무가 아니라서 직무군 판단에서 뺀다
 _PREFERRED_PAREN = re.compile(r"[(\[][^)\]]*우대[^)\]]*[)\]]")
+# "데이터 설계 및 프로그래머" 분류명에는 금형 · 판금 · 회로 같은 기계 · 전기 설계 공고도 섞여 있다.
+# 소프트웨어 신호 없이 설계 신호만 있으면 NON_IT. 희망 직무 표 · 호환표 어디에도 없어 늘 걸러진다 (None 은 필터를 통과해서 따로 둔다)
+_DATA_DESIGN_FIELD = "데이터 설계 및 프로그래머"
+_SOFTWARE_SIGNAL = re.compile(
+    r"데이터|(?<![A-Za-z])(?:DB|AI|ML|SW|SQL|LLM)(?![A-Za-z])|S/W|분석|머신\s*러닝|인공지능|프로그래머|프로그래밍|프로그램\s*개발"
+    r"|소프트웨어|개발자|(?i:python|java)|파이썬|자바"
+)
+_NON_IT_DESIGN = re.compile(r"설계|금형|판금|제관|회로|(?<![A-Za-z])(?:CAD|CAM)(?![A-Za-z])")
+_FIELD_LINE = re.compile(r"^\[직무\].*$", re.M)
 
 _REQ_HEAD = re.compile(r"자격\s*요건|지원\s*자격|자격\s*사항|필수\s*(요건|사항|역량)?|요구\s*사항")
 _PREF_HEAD = re.compile(r"우대")
@@ -278,6 +287,10 @@ def posting_family(title: str | None, match_text: str) -> str | None:
     lines = dict((m.group(1), m.group(2)) for m in _SECTION_LINE.finditer(match_text or ""))
     for field, text in (("공고", title or lines.get("공고") or ""), ("직무", lines.get("직무") or "")):
         if field == "직무" and text.strip() in JOB_FIELD_FAMILY:  # 제목으로 못 정하면 워크넷 분류명 표를 먼저
+            if text.strip() == _DATA_DESIGN_FIELD:
+                rest = f"{title or ''}\n{_FIELD_LINE.sub('', match_text or '')}"  # 분류명 자체의 "데이터 · 프로그래머"는 신호가 아니다
+                if _NON_IT_DESIGN.search(rest) and not _SOFTWARE_SIGNAL.search(rest):
+                    return "NON_IT"
             return JOB_FIELD_FAMILY[text.strip()]
         text = _PREFERRED_PAREN.sub(" ", text)
         titles = {family for family, rx in _TITLE_RES if rx.search(text)}

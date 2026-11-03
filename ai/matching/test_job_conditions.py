@@ -171,6 +171,24 @@ class FamilyTest(unittest.TestCase):
         self.assertFalse(jc.family_allowed("백엔드 개발", "소프트웨어 개발 직원 모집",
                                            "[직무] 산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)"))
 
+    def test_non_it_design_under_data_field_name(self):
+        field = "[직무] 데이터 설계 및 프로그래머"
+        # 실제 공고 6건과 같은 제목 (본문 없음). 소프트웨어 신호 없이 설계 신호만 있으면 NON_IT
+        for title in ["연구개발부문 경력직 모집 (하드웨어 및 회로설계,...", "CAD CAM", "자동화기기 설계사  모집",
+                      "제관설계,판금설계 / 코리아인더스- 레이저사업부 ...", "자동차시트 금형설계 정규직사원 채용 합니다.", "금형 설계관리"]:
+            self.assertEqual(jc.posting_family(title, f"[공고] {title}\n{field}"), "NON_IT", title)
+        # 소프트웨어 신호가 있으면 DATA 그대로 (분류명 자체의 "데이터 · 프로그래머"는 신호로 치지 않음)
+        self.assertEqual(jc.posting_family("데이터 엔지니어 채용", field), "DATA")
+        self.assertEqual(jc.posting_family("DB 설계 담당자", field), "DATA")
+        self.assertEqual(jc.posting_family("금형 설계", f"{field}\n[내용] 설계 데이터 관리 프로그램 개발"), "DATA")
+        self.assertEqual(jc.posting_family("신입 모집", field), "DATA")  # 설계 신호도 없으면 분류명대로
+
+    def test_non_it_is_allowed_for_no_desired_job(self):
+        self.assertNotIn("NON_IT", jc.DESIRED_JOB_FAMILY.values())
+        self.assertTrue(all("NON_IT" not in allowed for allowed in jc.COMPATIBLE_FAMILIES.values()))
+        for desired in jc.DESIRED_JOB_FAMILY:
+            self.assertFalse(jc.family_allowed(desired, "금형 설계관리", "[직무] 데이터 설계 및 프로그래머"), desired)
+
     def test_title_still_comes_before_job_field_name(self):
         self.assertEqual(jc.posting_family("클라우드 엔지니어 (신입 가능)", "[직무] 시스템 소프트웨어 개발자"), "INFRA")
         self.assertEqual(jc.posting_family("백엔드 개발자", "[직무] IT 기술지원 전문가"), "BE")
