@@ -1,5 +1,6 @@
 # 주인: AI-A
 """서류 조립(service.assemble) 테스트: 섹션 순서, 문장 id, 근거 변환, 제외 개수, 안내 문구, 자기소개서 대체.
+긴 자기소개서 문장 나누기(service.split_long_sentences) 테스트: 호출 여부, 바꿔 넣기, 숫자 확인, 호출 실패.
 
 LLM 은 부르지 않는다. 검증 결과를 직접 만들어 넣는다.
 실행: cd ai && .venv/bin/python -m unittest document.test_service -v
@@ -8,9 +9,11 @@ LLM 은 부르지 않는다. 검증 결과를 직접 만들어 넣는다.
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from document.llm_models import LlmDraft
-from document.service import SECTION_ORDER, assemble, company_note
+from common.llm import LLMError
+from document.llm_models import LlmDraft, LlmSplit
+from document.service import SECTION_ORDER, assemble, company_note, split_long_sentences
 from document.sources import build_sources
 from document.verify import verify
 from schemas.draft import DraftRequest
@@ -88,6 +91,52 @@ class AssembleTest(unittest.TestCase):
         partial = partial.model_copy(update={"company_info": partial.company_info.model_copy(
             update={"status": "PARTIAL", "recent_issue": None})})
         self.assertEqual(company_note(partial, "PARTIAL"), "온다랩의 최근 이슈를 찾지 못해 인재상 · 핵심 가치만 반영했어요")
+
+
+LONG = ("초기에는 평가셋 50건 중 9건에서 출력 형식 오류가 발생해, LLM 출력을 Pydantic schema로 정의하고 "
+        "검증 실패 시 오류 내용을 프롬프트에 넣어 최대 2회 재시도하는 로직을 구현했습니다.")
+SHORT = "온다랩의 인재상처럼 끝까지 확인하는 개발자입니다."
+
+
+def cover_draft(*texts: str) -> LlmDraft:
+    return LlmDraft.model_validate({"coverLetter": [{"text": t, "evidenceIds": ["E13"]} for t in texts]})
+
+
+class SplitLongSentencesTest(unittest.TestCase):
+    """긴 자기소개서 문장 나누기. generate_json 을 바꿔 끼워 LLM 을 부르지 않는다"""
+
+    def split_with(self, draft: LlmDraft, response):
+        with patch("document.service.generate_json") as fake:
+            if isinstance(response, Exception):
+                fake.side_effect = response
+            else:
+                fake.return_value = LlmSplit.model_validate(response)
+            result = split_long_sentences(draft, application_id=1)
+        return result, fake
+
+    def test_no_long_sentence_no_call(self):
+        draft = cover_draft(SHORT)
+        result, fake = self.split_with(draft, {"splits": []})
+        fake.assert_not_called()
+        self.assertIs(result, draft)
+
+    def test_split_replaces_and_keeps_evidence(self):
+        parts = ["초기에는 평가셋 50건 중 9건에서 출력 형식 오류가 발생했습니다.",
+                 "이를 해결하려고 LLM 출력을 Pydantic schema로 정의하고 최대 2회 재시도하는 로직을 구현했습니다."]
+        result, _ = self.split_with(cover_draft(SHORT, LONG), {"splits": [{"index": 1, "sentences": parts}]})
+        self.assertEqual([s.text for s in result.cover_letter], [SHORT, *parts])
+        self.assertTrue(all(s.evidence_ids == ["E13"] for s in result.cover_letter))
+
+    def test_changed_number_keeps_original(self):
+        parts = ["초기에는 평가셋 50건 중 8건에서 출력 형식 오류가 발생했습니다.",  # 9 → 8
+                 "이를 해결하려고 최대 2회 재시도하는 로직을 구현했습니다."]
+        result, _ = self.split_with(cover_draft(LONG), {"splits": [{"index": 0, "sentences": parts}]})
+        self.assertEqual([s.text for s in result.cover_letter], [LONG])
+
+    def test_llm_error_keeps_original(self):
+        draft = cover_draft(LONG)
+        result, _ = self.split_with(draft, LLMError("서버 오류"))
+        self.assertIs(result, draft)
 
 
 if __name__ == "__main__":

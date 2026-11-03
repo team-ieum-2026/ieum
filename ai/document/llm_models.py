@@ -40,6 +40,17 @@ class LlmCoverPlan(CamelModel):
     dropped_experiences: list[str] = []  # 공고와 이어지지 않아 뺄 경험
 
 
+class LlmSplitItem(CamelModel):
+    index: int  # 나눌 자기소개서 문장의 위치 (coverLetter 순서, 0부터)
+    sentences: list[str] = []  # 나눈 문장 2~3개
+
+
+class LlmSplit(CamelModel):
+    """긴 자기소개서 문장 나누기 응답 (service.split_long_sentences). 근거 번호는 원래 문장 것을 물려준다"""
+
+    splits: list[LlmSplitItem] = []
+
+
 class LlmDraft(CamelModel):
     skills_summary: list[LlmSentence] = []  # 기술 요약 3~5문장
     tags: list[str] = []  # 기술 태그. 등록 자료에 있는 기술만 남긴다 (verify.py)

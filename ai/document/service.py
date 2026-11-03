@@ -1,7 +1,7 @@
 # 주인: AI-A
 """서류 생성 전체 흐름과 조립 (AI-A-03 · 04 · 05).
 
-draft_document(req): 근거 후보 → 프롬프트 → LLM(서류 모델) → 검증 → 조립. 라우터가 부른다.
+draft_document(req): 근거 후보 → 프롬프트 → LLM(서류 모델) → 긴 자기소개서 문장 나누기 → 검증 → 조립. 라우터가 부른다.
 assemble(...): 검증 결과를 서류 JSON 으로 조립한다. LLM 을 쓰지 않아 테스트할 수 있다.
 - 섹션 순서는 서류 예시(eval/fixtures/document_draft.example.json)와 같다
 - 프로젝트는 LLM 이 정한 순서. bullet 이 모두 빠진 프로젝트는 빈 채로 둔다 (지어낸 문장으로 채우지 않음)
@@ -9,12 +9,22 @@ assemble(...): 검증 결과를 서류 JSON 으로 조립한다. LLM 을 쓰지 
 """
 
 import logging
+import re
+from collections import Counter
 from typing import cast
 
 from common.config import get_settings
-from common.llm import generate_json
-from document.llm_models import LlmDraft
-from document.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt, company_status
+from common.llm import LLMError, generate_json
+from document.llm_models import LlmDraft, LlmSentence, LlmSplit
+from document.prompts import (
+    COVER_SENTENCE_MAX,
+    PROMPT_VERSION,
+    SPLIT_PROMPT_VERSION,
+    SYSTEM_INSTRUCTION,
+    build_prompt,
+    build_split_prompt,
+    company_status,
+)
 from document.sections import registered_sections
 from document.sources import Source, build_sources, company_display_name
 from document.verify import CheckedSentence, VerifiedDraft, verify
@@ -106,6 +116,48 @@ def assemble(req: DraftRequest, sources: list[Source], verified: VerifiedDraft) 
     )
 
 
+_NUMBER = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _split_ok(original: str, parts: list[str]) -> bool:
+    """나눈 결과를 쓸지: 2~3문장, 각각 상한 이내, 숫자가 빠지거나 더해지지 않음"""
+    if not 2 <= len(parts) <= 3 or any(not p.strip() or len(p) > COVER_SENTENCE_MAX for p in parts):
+        return False
+    return Counter(_NUMBER.findall(original)) == Counter(_NUMBER.findall(" ".join(parts)))
+
+
+def split_long_sentences(draft: LlmDraft, application_id: int) -> LlmDraft:
+    """100자를 넘는 자기소개서 문장만 LLM 에 한 번 더 보내 나눈다. verify 앞에서 부른다.
+
+    - 긴 문장이 없으면 부르지 않는다
+    - 나눈 문장은 원래 문장의 근거 번호를 물려받는다 → verify 가 숫자 · 근거를 다시 확인한다
+    - 확인을 못 넘기거나 호출이 실패하면 원래 문장을 그대로 둔다 (서류 생성은 실패하지 않는다)
+    """
+    cover = draft.cover_letter
+    long_ones = [(i, s.text) for i, s in enumerate(cover) if len(s.text) > COVER_SENTENCE_MAX]
+    if not long_ones:
+        return draft
+    try:
+        result = generate_json(
+            build_split_prompt(long_ones), LlmSplit,
+            prompt_version=SPLIT_PROMPT_VERSION, model=get_settings().document_llm_model or None,
+        )
+    except LLMError:
+        logger.warning("split failed application=%d long=%d → keep original", application_id, len(long_ones))
+        return draft
+    targets = {i for i, _ in long_ones}
+    parts_by_index = {
+        item.index: item.sentences for item in result.splits
+        if item.index in targets and _split_ok(cover[item.index].text, item.sentences)
+    }
+    new_cover: list[LlmSentence] = []
+    for i, s in enumerate(cover):
+        parts = parts_by_index.get(i)
+        new_cover.extend([LlmSentence(text=p, evidence_ids=s.evidence_ids) for p in parts] if parts else [s])
+    logger.info("split application=%d long=%d split=%d", application_id, len(long_ones), len(parts_by_index))
+    return draft.model_copy(update={"cover_letter": new_cover})
+
+
 def draft_document(req: DraftRequest) -> Document:
     """LLM 을 부르는 전체 흐름. LLM 실패는 common.llm.LLMError 로 올라간다"""
     sources = build_sources(req)
@@ -114,4 +166,5 @@ def draft_document(req: DraftRequest) -> Document:
         system_instruction=SYSTEM_INSTRUCTION, prompt_version=PROMPT_VERSION,
         model=get_settings().document_llm_model or None,
     )
+    llm_draft = split_long_sentences(llm_draft, req.application_id)
     return assemble(req, sources, verify(llm_draft, req, sources))

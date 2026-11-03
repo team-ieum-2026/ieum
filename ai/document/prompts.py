@@ -26,6 +26,10 @@ from schemas.draft import DraftRequest
 PROMPT_VERSION = "document-draft-v3.8"
 
 # 자기소개서 문장 수: 원본 문장 수 기준으로 이만큼 줄이거나 늘릴 수 있다
+# 긴 자기소개서 문장 나누기 (service.split_long_sentences). 서류 프롬프트와 따로 버전을 올린다
+SPLIT_PROMPT_VERSION = "document-split-v1"
+COVER_SENTENCE_MAX = 100  # 자기소개서 문장 길이 상한 (공백 포함, 규칙 13)
+
 COVER_LETTER_MINUS = 1
 COVER_LETTER_PLUS = 2
 COVER_LETTER_MIN = 3
@@ -180,3 +184,17 @@ def build_prompt(req: DraftRequest, sources: list[Source]) -> str:
 <근거 후보>
 {render_sources(sources)}
 </근거 후보>"""
+
+
+def build_split_prompt(long_sentences: list[tuple[int, str]]) -> str:
+    """100자를 넘는 자기소개서 문장만 나눠 달라는 짧은 프롬프트. (위치, 문장) 목록을 받는다"""
+    lines = "\n".join(f"[{i}] {text}" for i, text in long_sentences)
+    return f"""아래 자기소개서 문장은 {COVER_SENTENCE_MAX}자를 넘는다. 각 문장을 2~3개의 문장으로 나눈다.
+- 뜻, 사실, 숫자, 기술 이름은 그대로 둔다. 새 내용을 더하지 않고, 있는 내용을 빼지 않는다.
+- 한 문장에는 한 가지 일만 쓴다. 예: 앞 문장은 한 일, 뒤 문장은 결과.
+- 나눈 문장은 각각 {COVER_SENTENCE_MAX}자 이내, 합니다체.
+- 이어 주는 말은 "이를 해결하려고", "그 결과", "이 과정에서" 정도만 쓴다.
+- splits 의 index 는 문장 앞 번호를 그대로 쓴다.
+
+문장:
+{lines}"""

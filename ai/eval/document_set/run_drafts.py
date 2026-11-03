@@ -9,6 +9,7 @@
 
 결과: eval/results/document_draft/<날짜>-<label>-<group>/ (커밋 안 됨)
 - s<수료생>.json: 배정 · 응답 시간 · LLM 원본 · 제외 이유별 문장 수 · 생성/남은 문장 수 · 서류
+  응답 시간(sec)은 긴 문장 나누기까지 합친 값. 나누기만 걸린 시간은 splitSec, 나누기 전 LLM 원본은 llmRawBeforeSplit
 - summary.json + 화면 요약표
 
 draft_document() 를 그대로 부르지 않고 단계를 나눠 부른다. 서류에는 제외 개수만 남고 이유별 개수는 없어서다.
@@ -27,7 +28,7 @@ from common.config import get_settings
 from common.llm import LLMError, generate_json
 from document.llm_models import LlmDraft
 from document.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
-from document.service import assemble
+from document.service import assemble, split_long_sentences
 from document.sources import build_sources
 from document.verify import verify
 from schemas.draft import DraftRequest
@@ -123,13 +124,20 @@ def run_one(row, req: DraftRequest, model: str | None, temperature: float) -> di
         result.update(ok=False, sec=round(time.perf_counter() - started, 1), error=str(e))
         return result
     sec = round(time.perf_counter() - started, 1)
+    # 서비스와 같이 긴 자기소개서 문장을 나눈다. 나누기 전 100자 초과 수와 나누기에 걸린 시간을 따로 남긴다
+    over_before = style_counts(draft)["coverOver100"]
+    split_started = time.perf_counter()
+    raw = draft
+    draft = split_long_sentences(draft, req.application_id)
+    split_sec = round(time.perf_counter() - split_started, 1)
     verified = verify(draft, req, sources)
     document = assemble(req, sources, verified)
     result.update(
-        ok=True, sec=sec,
+        ok=True, sec=round(sec + split_sec, 1), splitSec=split_sec,
         generated=generated_count(draft), kept=kept_count(verified),
         reasons=dict(verified.reasons),
-        style=style_counts(draft),
+        style={**style_counts(draft), "coverOver100Before": over_before},
+        llmRawBeforeSplit=raw.model_dump(by_alias=True) if raw is not draft else None,
         llmRaw=draft.model_dump(by_alias=True),
         document=document.model_dump(by_alias=True),
     )
@@ -182,7 +190,9 @@ def main():
         "documents": len(results), "failed": len(results) - len(ok),
         "generated": sum(r["generated"] for r in ok), "kept": sum(r["kept"] for r in ok),
         "excludedByReason": dict(reasons),
-        "style": {k: sum(r["style"][k] or 0 for r in ok) for k in ("bulletOver80", "bullets", "coverOver100", "coverSentences")},
+        "style": {k: sum(r["style"][k] or 0 for r in ok)
+                  for k in ("bulletOver80", "bullets", "coverOver100Before", "coverOver100", "coverSentences")},
+        "splitSecMax": max((r["splitSec"] for r in ok), default=None),
         "secMedian": statistics.median(secs) if secs else None, "secMax": max(secs) if secs else None,
     }
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
