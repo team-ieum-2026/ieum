@@ -195,6 +195,11 @@ export interface ApplicationProgress {
   steps: ProgressStep[];
 }
 
+export interface ApplicationRegenerateResult {
+  applicationId: number;
+  status: "GENERATING";
+}
+
 // ---- M7 지원 현황 ----
 export interface ApplicationListItem {
   applicationId: number;

@@ -93,8 +93,8 @@ R0 및 수료생 M1~M8. 기존 API 계약·데이터 모델·studentId 전달·�
 ## 글꼴·이미지 출처
 
 - Pretendard 공식: https://github.com/orioncactus/pretendard. SIL OFL, public/fonts/Pretendard-LICENSE.txt 포함.
-- Noto Sans KR 공식: https://github.com/google/fonts/tree/main/ofl/notosanskr. 기존과 같은 글꼴을 로컬로 전환해 Google Fonts 네트워크 실패를 해소. public/fonts/NotoSansKR-LICENSE.txt 포함.
-- 이미지 3개는 내장 image_gen으로 생성. 외부 기업 사진·로고 없음. WebP는 public/images/career/에 보관.
+- Noto Sans KR 공식: https://github.com/google/fonts/tree/main/ofl/notosanskr. 기존과 같은 글꼴을 로컬로 전환해 Google Fonts 네트워크 실패를 해소. 기본 WOFF2는 583,660바이트만 미리 받고, 드문 글자는 3,405,380바이트 확장 WOFF2를 필요할 때 받는다. 원본의 23,174개 문자 매핑과 굵기 100~900을 보존한다. public/fonts/NotoSansKR-LICENSE.txt와 재생성 안내 README.md 포함.
+- 기본 이미지 3개와 추가 이미지 4개는 내장 image_gen으로 생성. 외부 기업 사진·로고 없음. WebP는 public/images/career/에 보관. 추가 4종의 원본·프롬프트는 public/images/career/ADDITIONAL_ASSETS.md에 기록한다.
 - 이미지가 장식이므로 alt는 빈 값. 사용자 요청에 따라 이미지 위 설명 문구는 표시하지 않으며 생성 출처와 프롬프트는 이 문서에 보관한다.
 - 참고: 사용자 Wanted 브리프와 Toss UX 가이드(https://developers-apps-in-toss.toss.im/design/consumer-ux-guide). Wanted 직접 열람은 403으로 제한되어 사용자 제공 기준을 적용했다.
 
