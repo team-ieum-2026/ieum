@@ -1,13 +1,14 @@
 "use client";
 // 주인: FE-B — 도움 요청 목록 · 상세 · 처리 기록 (11/1 개편 목업 requestsPage).
-// 데이터는 상태별 목록 API(GET /api/coordinator/help-requests)를 ALL 로 한 번 받아 접수 · 연락 완료 · 요청 종료 탭으로 나눈다.
+// 데이터는 상태별 목록 API(GET /api/coordinator/help-requests)를 ALL 로 한 번 받아 접수 · 처리 중 · 상담 예정 · 연락 완료 · 요청 종료 탭으로 나눈다.
+// - 처리 상태 바꾸기: 진행 중 요청(접수 · 처리 중 · 상담 예정)을 처리 중 · 상담 예정(상담 일시 필수)으로 PATCH. 저장 뒤 그 탭으로 이동
 // - 전화 · 문자 · 이메일은 수료생이 앱에서 고른 '선호 연락 수단', memo 는 수료생이 남긴 요청 내용
 // - '연락 완료' → 확인 창 → PATCH /api/coordinator/help-requests/{id} { status: CONTACTED } 성공 뒤에만 목록 · 건수 갱신
 //   CONTACTED 는 '연락 완료'이지 '요청 종료(CLOSED)'가 아니다. 요청 종료는 수료생이 앱에서 한다. 이 API 는 메모를 받지 않아 메모를 저장하는 척하지 않는다
 // - 연락처(이메일) · 수료생 상담 기록은 C3 상세 API(GET)로 보여 준다. 상담 기록은 수료생 단위라 이 요청과 연결된 이력이 아니다
 // - 재요청 여부: 같은 수료생이 이 요청보다 먼저 남긴 요청 수 (상태 무관)
 // - 목업 모드는 목록 API JSON 이 없어 대시보드 helpRequests(접수)만 보인다
-// 미연동(BE 회신 전): 처리 중 · 상담 예정 · 처리 불가 상태, 요청별 처리 메모 · 후속 연락일 · 상담 예정일 · 처리 이력, 담당자, 전화번호
+// 미연동(BE 회신 전): 처리 불가 상태, 요청별 처리 메모 · 후속 연락일 · 단계별 처리 시각, 담당자, 전화번호
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
@@ -28,29 +29,25 @@ import { ApiError } from "@/lib/api/client";
 import { getCoordinatorHelpRequests, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
 import type { CoordinatorHelpRequest, HelpType } from "@/types/coordinator";
-import type { ContactLog, ContactMethod, ContactType, StudentHelpRequestStatus } from "@/types/student";
+import { ACTIVE_HELP_STATUSES, type ContactLog, type ContactMethod, type ContactType, type HelpRequestStatus, type StudentHelpRequestStatus } from "@/types/student";
 
 const CHANNELS: (ContactMethod | "ALL")[] = ["ALL", "PHONE", "SMS", "EMAIL"];
 const channelIcon: Record<ContactMethod, IconName> = { PHONE: "phone", SMS: "sms", EMAIL: "mail" };
 const contactTypeLabels: Record<ContactType, string> = { PHONE: "전화", MESSAGE: "문자", MEETING: "면담" };
 
-/** 목업 요청 상태 탭 순서. status 가 없는 탭은 서버에 없는 상태값이라 막는다 */
-const STATUS_TABS: { label: string; status?: StudentHelpRequestStatus }[] = [
-  { label: helpLabels.OPEN, status: "OPEN" },
-  { label: "처리 중" },
-  { label: "상담 예정" },
-  { label: helpLabels.CONTACTED, status: "CONTACTED" },
-  { label: helpLabels.CLOSED, status: "CLOSED" },
-];
+/** 목업 요청 상태 탭 순서 */
+const STATUS_TABS: StudentHelpRequestStatus[] = ["OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED", "CONTACTED", "CLOSED"];
 
 const EMPTY_TEXT: Record<StudentHelpRequestStatus, string> = {
   OPEN: "접수된 도움 요청이 없어요.",
+  IN_PROGRESS: "처리 중인 도움 요청이 없어요.",
+  CONSULTATION_SCHEDULED: "상담이 잡힌 도움 요청이 없어요.",
   CONTACTED: "연락을 마친 도움 요청이 없어요.",
   CLOSED: "종료된 도움 요청이 없어요.",
 };
 
-/** 처리 기록 폼의 상태 선택지. 저장 API 가 없어 모두 선택할 수 없다 */
-const RECORD_STATUSES = ["처리 중", "상담 예정", "연락 완료", "요청 종료", "처리 불가 · 연락 안 됨"];
+/** 연락 완료 전 진행 중 요청 (접수 · 처리 중 · 상담 예정): 처리 단계를 바꾸거나 연락 완료로 넘길 수 있다 */
+const isActiveHelp = (r: CoordinatorHelpRequest) => ACTIVE_HELP_STATUSES.includes(r.status);
 
 /** 선택한 요청의 수료생 연락처 · 상담 기록 (C3 상세 API) */
 type StudentInfo = { state: "error" } | { state: "ok"; email: string | null; logs: ContactLog[] };
@@ -73,6 +70,7 @@ export default function HelpRequestsScreen() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [done, setDone] = useState<{ name: string; studentId: number } | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   // 수동 '목록 새로고침': 선택한 요청(?id) · 선호 연락 필터는 그대로 두고 목록만 바꾼다. 실패하면 지금 목록을 그대로 둔다
   const [refreshing, setRefreshing] = useState(false);
@@ -170,6 +168,7 @@ export default function HelpRequestsScreen() {
       await updateHelpRequestStatus(r.helpRequestId, { status: "CONTACTED" });
       setConfirming(null);
       setNotice(null);
+      setSaved(null);
       setDone({ name: r.studentName, studentId: r.studentId });
       router.replace(pathname, { scroll: false });
       setReloadKey((k) => k + 1);
@@ -183,7 +182,7 @@ export default function HelpRequestsScreen() {
         notifyReviewQueueChanged();
       } else {
         // 실패하면 상태는 그대로 '접수'. 창에 오류를 보여 주고 다시 시도할 수 있게 둔다
-        setActionError(e instanceof ApiError ? e.message : "연락 완료로 바꾸지 못했어요. 요청 상태는 그대로 '접수'예요. 다시 시도해 주세요.");
+        setActionError(e instanceof ApiError ? e.message : `연락 완료로 바꾸지 못했어요. 요청 상태는 그대로 '${helpLabels[r.status]}'예요. 다시 시도해 주세요.`);
       }
     } finally {
       setBusy(false);
@@ -208,6 +207,12 @@ export default function HelpRequestsScreen() {
           </Link>
         </p>
       )}
+      {saved && (
+        <p role="status" className="mb-4 rounded-lg bg-(--coord-green-soft) px-3.5 py-3 text-xs text-(--coord-green-ink)">
+          {saved}
+          {IS_MOCK && <b className="ml-2 text-(--coord-attention)">{MOCK_SAVE_NOTE}</b>}
+        </p>
+      )}
       {notice && (
         <p role="status" className="mb-4 rounded-lg bg-(--coord-attention-soft) px-3.5 py-3 text-xs text-(--coord-attention)">
           {notice}
@@ -217,34 +222,20 @@ export default function HelpRequestsScreen() {
       <div className="grid min-h-[480px] grid-cols-[minmax(0,1.2fr)_minmax(380px,1fr)] gap-5 lg:h-[calc(100vh-290px)]">
         <Panel label="도움 요청 목록" className="flex min-h-0 flex-col">
           <div role="tablist" aria-label="요청 상태" className="flex flex-wrap items-center gap-1 border-b border-(--coord-line) px-5 pt-3.5 pb-3">
-            {STATUS_TABS.map(({ label, status }) =>
-              status ? (
-                <button
-                  key={label}
-                  type="button"
-                  role="tab"
-                  aria-selected={status === tab}
-                  onClick={() => pickTab(status)}
-                  className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
-                    status === tab ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
-                  }`}
-                >
-                  {label} <b className="ml-1 text-[10px]">{list.filter((r) => r.status === status).length}</b>
-                </button>
-              ) : (
-                <button
-                  key={label}
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  disabled
-                  title="서버에 없는 상태값이에요 (BE 확정 전)"
-                  className="cursor-not-allowed rounded-[7px] px-3 py-2 text-xs text-(--coord-muted) opacity-70"
-                >
-                  {label} <span className="ml-0.5 text-[10px]">미연동</span>
-                </button>
-              ),
-            )}
+            {STATUS_TABS.map((status) => (
+              <button
+                key={status}
+                type="button"
+                role="tab"
+                aria-selected={status === tab}
+                onClick={() => pickTab(status)}
+                className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
+                  status === tab ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
+                }`}
+              >
+                {helpLabels[status]} <b className="ml-1 text-[10px]">{list.filter((r) => r.status === status).length}</b>
+              </button>
+            ))}
             {IS_MOCK && <span className="ml-auto text-[11px] text-(--coord-muted)">목업 모드는 접수 요청만 있어요</span>}
           </div>
           <div className="flex flex-wrap items-center gap-2.5 border-b border-(--coord-line) px-5 py-3">
@@ -297,7 +288,11 @@ export default function HelpRequestsScreen() {
                         <p className="flex flex-wrap items-center gap-2 text-[11px] text-(--coord-muted)">
                           <ChannelChip method={r.contactMethod} />
                           <span>
-                            {r.status === "CLOSED" && r.closedAt ? `${monthDayTime(r.closedAt)} 종료` : `${monthDayTime(r.createdAt)} 접수`}
+                            {r.status === "CLOSED" && r.closedAt
+                              ? `${monthDayTime(r.closedAt)} 종료`
+                              : r.status === "CONSULTATION_SCHEDULED" && r.consultationAt
+                                ? `${monthDayTime(r.consultationAt)} 상담`
+                                : `${monthDayTime(r.createdAt)} 접수`}
                           </span>
                           {r.status === "OPEN" && sameStudent > 1 && (
                             <span className="font-semibold text-(--coord-red)">같은 수료생 접수 {sameStudent}건</span>
@@ -390,6 +385,15 @@ export default function HelpRequestsScreen() {
                   </dd>
                   <dt className="text-(--coord-muted)">접수 시각</dt>
                   <dd>{monthDayTime(selected.createdAt)}</dd>
+                  {selected.consultationAt && (
+                    <>
+                      <dt className="text-(--coord-muted)">상담 일시</dt>
+                      <dd>
+                        <b>{monthDayTime(selected.consultationAt)}</b>
+                        {selected.status !== "CONSULTATION_SCHEDULED" && <span className="ml-1.5 text-[11px] text-(--coord-muted)">(지난 상담 예정)</span>}
+                      </dd>
+                    </>
+                  )}
                 </dl>
                 <h3 className="mt-4 text-[13px] font-bold">요청 내용</h3>
                 <p className="mt-2 border-l-3 border-(--coord-chart-total) bg-(--coord-tint) px-3 py-2.5 text-xs leading-[1.7] whitespace-pre-wrap">
@@ -398,53 +402,32 @@ export default function HelpRequestsScreen() {
 
                 <div className="my-[18px] h-px bg-(--coord-line)" />
 
-                {/* 요청 1건의 처리 기록: 저장 API 가 없어 입력은 막고 미연동으로 안내 */}
-                <section aria-label="요청별 처리 기록">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-[13px] font-bold">요청별 처리 기록</h3>
-                    <Unlinked title="요청별 처리 기록 저장 API 가 아직 없어요" />
-                  </div>
-                  <p className="mt-2 rounded-lg bg-(--coord-head) px-3 py-2.5 text-[11px] leading-[1.6] text-(--coord-muted)">
-                    요청별 처리 메모 · 후속 연락일 · 상담 예정일을 저장하는 API 가 아직 없어 입력할 수 없어요. 지금은 아래 &lsquo;연락 완료&rsquo;로
-                    상태만 바꾸고, 상담 내용은 수료생 상담 기록에 남겨 주세요.
-                  </p>
-                  <fieldset disabled className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 text-xs opacity-60">
-                    <label className="col-span-2 flex flex-col gap-1 text-(--coord-muted)">
-                      처리 상태
-                      <select className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-(--coord-ink)" defaultValue="">
-                        <option value="">선택 (미연동)</option>
-                        {RECORD_STATUSES.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="col-span-2 flex flex-col gap-1 text-(--coord-muted)">
-                      처리 메모
-                      <textarea
-                        rows={2}
-                        placeholder="저장 API 연결 후 입력할 수 있어요"
-                        className="resize-none rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-(--coord-ink)"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-(--coord-muted)">
-                      후속 연락일
-                      <input type="date" className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-1.5 text-(--coord-ink)" />
-                    </label>
-                    <label className="flex flex-col gap-1 text-(--coord-muted)">
-                      상담 예정일
-                      <input type="datetime-local" className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-1.5 text-(--coord-ink)" />
-                    </label>
-                    <button type="button" className={`${btn.base} ${btn.outline} col-span-2`}>
-                      처리 기록 저장 (미연동)
-                    </button>
-                  </fieldset>
-                </section>
+                {/* 요청 1건의 처리 단계: 처리 중 · 상담 예정(일시)은 저장된다. 처리 메모 · 후속 연락일은 API 가 없어 미연동 */}
+                {isActiveHelp(selected) && (
+                  <ProgressForm
+                    key={`${selected.helpRequestId}:${selected.status}:${selected.consultationAt ?? ""}`}
+                    request={selected}
+                    onSaved={(status) => {
+                      setTab(status);
+                      setDone(null);
+                      setNotice(null);
+                      setSaved(`${selected.studentName} 님 요청을 '${helpLabels[status]}'(으)로 바꿨어요.`);
+                      setReloadKey((k) => k + 1);
+                      notifyReviewQueueChanged();
+                    }}
+                    onConflict={() => {
+                      setNotice("이미 처리됐거나 없는 요청이에요. 목록을 새로 불러왔어요.");
+                      setReloadKey((k) => k + 1);
+                      notifyReviewQueueChanged();
+                    }}
+                  />
+                )}
 
                 <div className="mt-4 flex gap-2">
                   <Link href={`/coordinator/students/${selected.studentId}?log=new`} className={`${btn.base} ${btn.outline} flex-1`}>
                     상담 기록 쓰기
                   </Link>
-                  {selected.status === "OPEN" && (
+                  {isActiveHelp(selected) && (
                     <button
                       type="button"
                       onClick={() => {
@@ -476,6 +459,12 @@ export default function HelpRequestsScreen() {
                     <li>
                       <b>{monthDayTime(selected.createdAt)}</b> 수료생 앱에서 도움 요청 접수
                     </li>
+                    {selected.status === "IN_PROGRESS" && <li className="mt-1">코디네이터 처리 중 (시각은 기록되지 않아요)</li>}
+                    {selected.consultationAt && (
+                      <li className="mt-1">
+                        <b>{monthDayTime(selected.consultationAt)}</b> 상담 예정
+                      </li>
+                    )}
                     {selected.status === "CONTACTED" && <li className="mt-1">코디네이터 연락 완료 (시각은 기록되지 않아요)</li>}
                     {selected.status === "CLOSED" && (
                       <li className="mt-1">
@@ -506,9 +495,117 @@ function Title({ action }: { action?: React.ReactNode }) {
   return <PageTitle title="도움 요청" description="필요한 도움부터 확인하고, 관련 서류와 이전 연락 기록을 이어 보세요." action={action} />;
 }
 
-/** 접수 탭은 먼저 접수된 순(오래 기다린 요청부터), 연락 완료 · 종료 탭은 최근 순 */
+/** 접수 · 처리 중 탭은 먼저 접수된 순(오래 기다린 요청부터), 상담 예정은 상담이 빠른 순, 연락 완료 · 종료 탭은 최근 순 */
 const sortRequests = (list: CoordinatorHelpRequest[], tab: StudentHelpRequestStatus) =>
-  [...list].sort((a, b) => (tab === "OPEN" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)));
+  [...list].sort((a, b) =>
+    tab === "CONSULTATION_SCHEDULED"
+      ? (a.consultationAt ?? "").localeCompare(b.consultationAt ?? "")
+      : tab === "OPEN" || tab === "IN_PROGRESS"
+        ? a.createdAt.localeCompare(b.createdAt)
+        : b.createdAt.localeCompare(a.createdAt),
+  );
+
+/** 처리 단계 선택지 (연락 완료는 아래 '연락 완료' 확인 창으로만) */
+const PROGRESS_CHOICES: HelpRequestStatus[] = ["IN_PROGRESS", "CONSULTATION_SCHEDULED"];
+
+/** "2026-11-05T14:00:00+09:00" → datetime-local 값 "2026-11-05T14:00" (서버가 +09:00 으로 준다) */
+const toLocalInput = (iso: string | null) => (iso ? iso.slice(0, 16) : "");
+
+/**
+ * 요청 1건의 처리 단계 바꾸기: 처리 중 · 상담 예정(상담 일시 필수). PATCH /api/coordinator/help-requests/{id}.
+ * 처리 메모 · 후속 연락일은 저장 API 가 없어 미연동으로 둔다. 저장 성공 뒤에만 onSaved, 404 · 409 면 onConflict
+ */
+function ProgressForm({
+  request,
+  onSaved,
+  onConflict,
+}: {
+  request: CoordinatorHelpRequest;
+  onSaved: (status: HelpRequestStatus) => void;
+  onConflict: () => void;
+}) {
+  const [target, setTarget] = useState<HelpRequestStatus>(request.status === "CONSULTATION_SCHEDULED" ? "CONSULTATION_SCHEDULED" : "IN_PROGRESS");
+  const [when, setWhen] = useState(toLocalInput(request.status === "CONSULTATION_SCHEDULED" ? request.consultationAt : null));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const scheduling = target === "CONSULTATION_SCHEDULED";
+  const unchanged = target === request.status && (!scheduling || when === toLocalInput(request.consultationAt));
+  const canSave = !busy && !unchanged && (!scheduling || when !== "");
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSave) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateHelpRequestStatus(request.helpRequestId, scheduling ? { status: target, consultationAt: `${when}:00+09:00` } : { status: target });
+      onSaved(target);
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 404 || err.status === 409)) onConflict();
+      else setError(err instanceof ApiError ? err.message : "처리 상태를 저장하지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section aria-label="처리 상태 바꾸기">
+      <h3 className="text-[13px] font-bold">처리 상태 바꾸기</h3>
+      <form onSubmit={save} className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-2.5 text-xs">
+        <fieldset className="col-span-2 flex flex-wrap gap-1.5" disabled={busy}>
+          <legend className="sr-only">처리 상태</legend>
+          {PROGRESS_CHOICES.map((s) => (
+            <label
+              key={s}
+              className={`cursor-pointer rounded-[7px] border px-3 py-1.5 ${
+                target === s ? "border-(--coord-green) bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "border-(--coord-line) text-(--coord-muted)"
+              }`}
+            >
+              <input type="radio" name={`progress-${request.helpRequestId}`} value={s} checked={target === s} onChange={() => setTarget(s)} className="sr-only" />
+              {helpLabels[s]}
+              {request.status === s && <span className="ml-1 text-[10px]">(현재)</span>}
+            </label>
+          ))}
+        </fieldset>
+        {scheduling && (
+          <label className="col-span-2 flex flex-col gap-1 text-(--coord-muted)">
+            상담 일시
+            <input
+              type="datetime-local"
+              required
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              disabled={busy}
+              className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-1.5 text-(--coord-ink)"
+            />
+          </label>
+        )}
+        <fieldset disabled className="col-span-2 grid grid-cols-2 gap-x-3 opacity-60" title="처리 메모 · 후속 연락일 저장 API 가 아직 없어요">
+          <label className="flex flex-col gap-1 text-(--coord-muted)">
+            <span>
+              처리 메모 <Unlinked title="처리 메모 저장 API 가 아직 없어요" />
+            </span>
+            <input placeholder="상담 내용은 수료생 상담 기록에" className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-1.5" />
+          </label>
+          <label className="flex flex-col gap-1 text-(--coord-muted)">
+            <span>
+              후속 연락일 <Unlinked title="후속 연락일 저장 API 가 아직 없어요" />
+            </span>
+            <input type="date" className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-1.5" />
+          </label>
+        </fieldset>
+        {error && (
+          <p role="alert" className="col-span-2 text-[12px] text-(--coord-red)">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={!canSave} aria-busy={busy} className={`${btn.base} ${btn.outline} col-span-2 disabled:opacity-50`}>
+          {busy ? "저장 중…" : unchanged ? "지금 상태와 같아요" : `'${helpLabels[target]}'(으)로 저장`}
+        </button>
+      </form>
+    </section>
+  );
+}
 
 /** API 가 없어 보여 줄 수 없는 값 */
 function Unlinked({ title }: { title: string }) {
@@ -623,7 +720,7 @@ function ContactedDialog({
         </dl>
         <ul className="list-disc pl-5 text-[13px] leading-[1.8] text-(--coord-muted)">
           <li>
-            요청 상태가 <b className="text-(--coord-ink)">접수 → 연락 완료</b>로 바뀌고 접수 목록에서 빠져요.
+            요청 상태가 <b className="text-(--coord-ink)">{helpLabels[request.status]} → 연락 완료</b>로 바뀌고 연락 완료 탭으로 옮겨져요.
           </li>
           <li>연락 완료는 요청 종료가 아니에요. 요청 종료는 아직 이 화면에서 할 수 없어요.</li>
           <li>처리 메모는 함께 저장되지 않아요. 상담 내용은 수료생 상담 기록에 따로 남겨 주세요.</li>

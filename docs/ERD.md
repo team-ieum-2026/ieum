@@ -138,9 +138,10 @@ erDiagram
         VARCHAR help_type "5개 유형 | null=미분류"
         VARCHAR contact_method
         TEXT memo
-        VARCHAR status "OPEN | CONTACTED | CLOSED"
+        VARCHAR status "OPEN | IN_PROGRESS | CONSULTATION_SCHEDULED | CONTACTED | CLOSED"
         DATETIME closed_at
         VARCHAR close_reason "EMPLOYED | NO_LONGER_NEEDED | OTHER"
+        DATETIME consultation_at "상담 예정 일시"
     }
     application {
         BIGINT id PK

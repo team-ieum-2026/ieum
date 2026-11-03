@@ -4,16 +4,22 @@ import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 
 import BottomSheet from "@/components/ui/BottomSheet";
 import { ApiError } from "@/lib/api/client";
 import { closeHelpRequest, getStudentHelpRequests, subscribeHelpRequestChanges } from "@/lib/api/student";
-import type { HelpRequestCloseReason, HelpRequestCloseResult, StudentHelpRequest, StudentHelpRequestFilter } from "@/types/student";
+import { ACTIVE_HELP_STATUSES, type HelpRequestCloseReason, type HelpRequestCloseResult, type StudentHelpRequest, type StudentHelpRequestFilter } from "@/types/student";
 import { helpCloseReasonLabels, helpCloseReasons, helpTypeLabels, studentHelpStatusLabels } from "./helpRequestLabels";
 import { ActionError, ApiState } from "./ScreenParts";
 import { errorMessage, useApi } from "./useApi";
 
 const date = (value: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+const dateTime = (value: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+/** 연락 완료 전 진행 중 요청 (접수 · 담당자 확인 중 · 상담 예정). 이 요청만 직접 종료할 수 있다 */
+const isActive = (item: StudentHelpRequest) => ACTIVE_HELP_STATUSES.includes(item.status);
 
 export default function StudentHelpRequests({ studentId }: { studentId: number }) {
   const [filter, setFilter] = useState<StudentHelpRequestFilter>("OPEN");
-  const load = useCallback(() => getStudentHelpRequests(studentId, filter), [studentId, filter]);
+  // "진행 중"은 서버 상태 하나가 아니라 접수 · 처리 중 · 상담 예정을 함께 보여 준다 (전체를 받아 거른다)
+  const load = useCallback(async () => filter === "OPEN"
+    ? (await getStudentHelpRequests(studentId, "ALL")).filter(isActive)
+    : getStudentHelpRequests(studentId, filter), [studentId, filter]);
   const { data, loading, error, reload, setData } = useApi(load);
   const [selected, setSelected] = useState<StudentHelpRequest | null>(null);
   const [message, setMessage] = useState("");
@@ -26,7 +32,7 @@ export default function StudentHelpRequests({ studentId }: { studentId: number }
   }, [reload]);
 
   function closed(result: HelpRequestCloseResult) {
-    if (data) setData(data.map(item => item.helpRequestId === result.helpRequestId ? { ...item, ...result } : item).filter(item => filter !== "OPEN" || item.status === "OPEN"));
+    if (data) setData(data.map(item => item.helpRequestId === result.helpRequestId ? { ...item, ...result } : item).filter(item => filter !== "OPEN" || isActive(item)));
     setSelected(null);
     setMessage("선택한 도움 요청을 종료했어요. 현재 상태와 다른 요청은 유지돼요.");
     reload();
@@ -34,18 +40,18 @@ export default function StudentHelpRequests({ studentId }: { studentId: number }
 
   return <section className="s-panel s-my-help" aria-labelledby={headingId}>
     <div className="s-my-help-heading"><div><h2 id={headingId}>내 도움 요청</h2><p>담당자에게 보낸 요청을 확인하고, 필요한 요청만 유지할 수 있어요.</p></div></div>
-    <div className="s-my-help-filters" aria-label="도움 요청 조회 범위">{(["OPEN", "ALL"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setSelected(null); setMessage(""); }}>{value === "OPEN" ? "접수 중" : "전체 내역"}</button>)}</div>
+    <div className="s-my-help-filters" aria-label="도움 요청 조회 범위">{(["OPEN", "ALL"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setSelected(null); setMessage(""); }}>{value === "OPEN" ? "진행 중" : "전체 내역"}</button>)}</div>
     <ApiState loading={loading} error={error} retry={reload} />
     <p className="s-my-help-message" role="status">{message}</p>
     {data && data.length > 0 && <ul className="s-my-help-list">{data.map(item => <li key={item.helpRequestId} data-help-request-id={item.helpRequestId}>
       <div className="s-my-help-meta"><span className="s-help-state" data-status={item.status}>{studentHelpStatusLabels[item.status]}</span><span>{item.helpType === null ? "미분류" : helpTypeLabels[item.helpType]}</span><time dateTime={item.createdAt}>{date(item.createdAt)} 요청</time></div>
       <h3>{item.jobTitle ?? "일반 도움 요청"}</h3>
       {item.memo && <p className="s-my-help-memo">{item.memo}</p>}
-      <div className="s-my-help-bottom">{item.status === "CLOSED" ? <p>{item.closedAt && `${date(item.closedAt)} 종료`}{item.closeReason && ` · ${helpCloseReasonLabels[item.closeReason]}`}</p> : <p>{item.contactMethod ? `선호 연락 · ${{ SMS: "문자", PHONE: "전화", EMAIL: "이메일" }[item.contactMethod]}` : "담당 코디네이터와 함께 확인해요."}</p>}
-        {item.status === "OPEN" && <button type="button" className="s-text-link" onClick={() => { setSelected(item); setMessage(""); }}>요청 종료</button>}
+      <div className="s-my-help-bottom">{item.status === "CLOSED" ? <p>{item.closedAt && `${date(item.closedAt)} 종료`}{item.closeReason && ` · ${helpCloseReasonLabels[item.closeReason]}`}</p> : item.status === "CONSULTATION_SCHEDULED" && item.consultationAt ? <p>상담 예정 · <time dateTime={item.consultationAt}>{dateTime(item.consultationAt)}</time></p> : <p>{item.contactMethod ? `선호 연락 · ${{ SMS: "문자", PHONE: "전화", EMAIL: "이메일" }[item.contactMethod]}` : "담당 코디네이터와 함께 확인해요."}</p>}
+        {isActive(item) && <button type="button" className="s-text-link" onClick={() => { setSelected(item); setMessage(""); }}>요청 종료</button>}
       </div>
     </li>)}</ul>}
-    {data && !data.length && !error && !loading && <div className="s-my-help-empty"><h3>{filter === "OPEN" ? "접수 중인 도움 요청이 없어요." : "아직 보낸 도움 요청이 없어요."}</h3><p>도움이 필요하면 상단의 ‘도움 요청’을 눌러주세요.</p></div>}
+    {data && !data.length && !error && !loading && <div className="s-my-help-empty"><h3>{filter === "OPEN" ? "진행 중인 도움 요청이 없어요." : "아직 보낸 도움 요청이 없어요."}</h3><p>도움이 필요하면 상단의 ‘도움 요청’을 눌러주세요.</p></div>}
     {selected && <CloseHelpRequestDialog key={selected.helpRequestId} studentId={studentId} request={selected} onClose={() => setSelected(null)} onClosed={closed} onConflict={reload} />}
   </section>;
 }

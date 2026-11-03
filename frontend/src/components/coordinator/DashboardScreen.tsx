@@ -1,10 +1,10 @@
 "use client";
 // 주인: FE-B — C1 오늘의 업무 (FE-B-07, 11/1 개편 목업). 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3).
 // - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 연락 필요(callList = 1주 무응답, 추가 확인 필요와 같은 대상)
-//   · 상담 예정(상담 일정 API 없음 → '미연동' 표시, 가짜 건수 없음)
+//   · 상담 예정(도움 요청 CONSULTATION_SCHEDULED 건수, 상태별 목록 API)
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
-// - 오늘 예정된 상담: 일정 API 연동 전이라 빈 상태 (demoAccount.ts 의 CONSULTATION_API_CONNECTED)
+// - 오늘 예정된 상담: 상담 예정 도움 요청 중 상담 일시가 오늘(asOf 날짜)인 것, 시각 순
 // - 서류 검토 현황 4단계: 검토 대기는 reviewQueue, 수정 요청 · 승인·전달 대기 · 전달 완료는 상태별 서류 목록 API 로 센다. 칸을 누르면 그 탭으로
 // - 수료생 관리 현황: totalStudents · statusSummary 로 계산
 // 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
@@ -29,7 +29,7 @@ import {
   monthDay,
   pct,
 } from "@/components/coordinator/coordLabels";
-import { getCoordinatorApplications, getDashboard } from "@/lib/api/coordinatorReview";
+import { getCoordinatorApplications, getCoordinatorHelpRequests, getDashboard } from "@/lib/api/coordinatorReview";
 import type { CoordinatorApplicationListItem, Dashboard } from "@/types/coordinator";
 
 /** 오늘 먼저 확인할 일 최대 건수 */
@@ -99,8 +99,37 @@ export default function DashboardScreen() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
-  // 상담 일정 조회 API 가 아직 없어서 비어 있다. 연동되면 오늘 일정을 여기에 넣는다 (가짜 일정 없음)
-  const consultations: ConsultationSchedule[] = [];
+  // 상담 예정 = 도움 요청 중 CONSULTATION_SCHEDULED (상담 일시 순). 대시보드를 새로 받으면(asOf) 다시 받는다. 받기 전 · 실패면 null
+  const asOf = data?.asOf ?? null;
+  const [consultations, setConsultations] = useState<ConsultationSchedule[] | null>(null);
+  useEffect(() => {
+    if (!asOf) return;
+    let ignore = false;
+    getCoordinatorHelpRequests("CONSULTATION_SCHEDULED")
+      .then((list) => {
+        if (ignore) return;
+        setConsultations(
+          list
+            .filter((h) => h.consultationAt)
+            .map((h) => ({
+              id: h.helpRequestId,
+              studentId: h.studentId,
+              studentName: h.studentName,
+              scheduledAt: h.consultationAt as string,
+              topic: helpTypeLabel(h.helpType),
+            }))
+            .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
+        );
+      })
+      .catch(() => {
+        if (!ignore) setConsultations(null);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [asOf]);
+  const today = asOf?.slice(0, 10) ?? "";
+  const todayConsultations = (consultations ?? []).filter((c) => c.scheduledAt.slice(0, 10) === today);
 
   if (!data) {
     return (
@@ -149,12 +178,13 @@ export default function DashboardScreen() {
           href="/coordinator/students?status=CHECK_REQUIRED"
           icon="phone"
         />
-        {/* 상담 일정 조회 API 가 없어서 미연동 표시 (가짜 건수 없음). 연동되면 consultations 길이로 바꾼다 */}
+        {/* 상담 예정 도움 요청 건수. 받기 전 · 실패면 '—' (가짜 건수 없음). 누르면 가장 빠른 상담 요청이 열린다 */}
         <Kpi
           label="상담 예정"
-          value={CONSULTATION_API_CONNECTED ? consultations.length : null}
+          value={CONSULTATION_API_CONNECTED && consultations ? consultations.length : null}
           unit="건"
-          sub={CONSULTATION_API_CONNECTED ? "예약된 상담 준비" : "상담 일정 기능 연결 전"}
+          sub={consultations ? `오늘 ${todayConsultations.length}건 · 상담 일시 순` : "상담 일정을 불러오는 중"}
+          href={consultations?.[0] ? `/coordinator/help-requests?id=${consultations[0].id}` : "/coordinator/help-requests"}
           icon="calendar"
         />
       </div>
@@ -162,7 +192,7 @@ export default function DashboardScreen() {
         <div className="flex min-h-0 flex-col gap-[11px]">
           <Tasks data={data} />
           <div className="grid shrink-0 grid-cols-2 gap-3">
-            <TodayConsultations items={consultations} />
+            <TodayConsultations items={todayConsultations} loaded={consultations !== null} />
             <DocStatus count={data.reviewQueue.length} asOf={data.asOf} />
           </div>
         </div>
@@ -372,10 +402,10 @@ function AllTasksModal({ tasks, onClose }: { tasks: Task[]; onClose: () => void 
 }
 
 /**
- * 오늘 예정된 상담 (목업 .agenda). 상담 일정 조회 API 가 없어서 지금은 빈 상태.
- * 연동되면 items 에 오늘 일정을 넘기면 된다 (가짜 일정을 실제 데이터처럼 보이지 않게)
+ * 오늘 예정된 상담 (목업 .agenda). 도움 요청 중 상담 예정(CONSULTATION_SCHEDULED)이고 상담 일시가 오늘인 것, 시각 순.
+ * 시각을 누르면 그 도움 요청, '기록'은 수료생 상담 기록으로 간다
  */
-function TodayConsultations({ items }: { items: ConsultationSchedule[] }) {
+function TodayConsultations({ items, loaded }: { items: ConsultationSchedule[]; loaded: boolean }) {
   return (
     <Panel label="오늘 예정된 상담" className="flex flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[18px] py-3">
@@ -384,14 +414,16 @@ function TodayConsultations({ items }: { items: ConsultationSchedule[] }) {
       </div>
       {items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3 text-center">
-          <p className="text-[13px] text-(--coord-muted)">예정된 상담이 없습니다.</p>
-          {!CONSULTATION_API_CONNECTED && <p className="text-[11px] text-(--coord-muted)">상담 일정 기능 연결 전 · 상담 내용은 수료생 상담 기록에</p>}
+          <p className="text-[13px] text-(--coord-muted)">{loaded ? "오늘 예정된 상담이 없어요." : "상담 일정을 불러오는 중이에요…"}</p>
+          <p className="text-[11px] text-(--coord-muted)">도움 요청에서 &lsquo;상담 예정&rsquo;으로 일시를 잡으면 여기에 보여요</p>
         </div>
       ) : (
         <ul className="max-h-[120px] overflow-y-auto">
           {items.map((c) => (
             <li key={c.id} className="flex items-start gap-3.5 border-b border-(--coord-line-soft) px-[18px] py-3 last:border-b-0">
-              <time className="border-r-2 border-(--coord-tint-line) pr-3.5 text-[13px] font-bold text-(--coord-green)">{c.scheduledAt.slice(11, 16)}</time>
+              <Link href={`/coordinator/help-requests?id=${c.id}`} className="border-r-2 border-(--coord-tint-line) pr-3.5 text-[13px] font-bold text-(--coord-green) hover:underline">
+                <time dateTime={c.scheduledAt}>{c.scheduledAt.slice(11, 16)}</time>
+              </Link>
               <div className="min-w-0">
                 <h3 className="truncate text-xs font-bold">
                   {c.studentName}

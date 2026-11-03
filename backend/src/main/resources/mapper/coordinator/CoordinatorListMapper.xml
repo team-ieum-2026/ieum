@@ -19,7 +19,7 @@
         SELECT h.id AS help_request_id, s.id AS student_id, s.name AS student_name,
                CONCAT(c.name, ' ', c.cohort) AS course_label, h.created_at,
                CONCAT(j.company_name, ' ', j.title) AS job_title, h.contact_method, h.memo, h.help_type,
-               h.status, h.closed_at, h.close_reason
+               h.status, h.closed_at, h.close_reason, h.consultation_at
         FROM help_request h
         JOIN student s ON s.id = h.student_id
         JOIN course c ON c.id = s.course_id

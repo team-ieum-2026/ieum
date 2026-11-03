@@ -19,8 +19,11 @@ export interface ConsultationSchedule {
   topic: string | null;
 }
 
-/** 상담 일정 조회 API 연동 여부. false 면 '상담 예정' 지표 · '오늘 예정된 상담'은 미연동 빈 상태로 보여 준다 (가짜 일정 없음) */
-export const CONSULTATION_API_CONNECTED = false;
+/**
+ * 상담 일정 연동 여부. 11/3 부터 도움 요청 상담 예정(CONSULTATION_SCHEDULED · consultationAt)으로 연결됐다.
+ * false 로 바꾸면 '상담 예정' 지표 · '오늘 예정된 상담'을 미연동 빈 상태로 보여 준다 (가짜 일정 없음)
+ */
+export const CONSULTATION_API_CONNECTED = true;
 
 /** 목업 모드 여부 (lib/api/client.ts 와 같은 조건: 값이 "false" 가 아니면 public/mock/ 을 읽는다). 안내 문구 표시에만 쓴다 */
 export const IS_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";

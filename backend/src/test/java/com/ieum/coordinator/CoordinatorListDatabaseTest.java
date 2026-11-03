@@ -138,7 +138,7 @@ class CoordinatorListDatabaseTest {
                 "최근 순");
         JsonNode closed = all.get(0);
         assertEquals(Set.of("helpRequestId", "studentId", "studentName", "courseLabel", "createdAt", "jobTitle",
-                "contactMethod", "memo", "helpType", "status", "closedAt", "closeReason"), keys(closed));
+                "contactMethod", "memo", "helpType", "status", "closedAt", "closeReason", "consultationAt"), keys(closed));
         assertEquals("EMPLOYED", closed.path("closeReason").asText());
         assertTrue(closed.path("closedAt").asText().endsWith("+09:00"));
         assertTrue(closed.get("jobTitle").isNull());

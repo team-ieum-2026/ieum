@@ -97,6 +97,8 @@ export interface CoordinatorHelpRequest extends DashboardHelpRequest {
   status: StudentHelpRequestStatus;
   closedAt: string | null;
   closeReason: HelpRequestCloseReason | null;
+  /** 상담 예정 일시. 다른 상태로 넘어가도 이력으로 남는다. 없으면 null */
+  consultationAt: string | null;
 }
 
 export interface CallListItem {
@@ -127,11 +129,14 @@ export interface Dashboard {
 // ---- C1 도움 요청 처리 ----
 export interface HelpRequestStatusUpdateRequest {
   status: HelpRequestStatus;
+  /** CONSULTATION_SCHEDULED 일 때만 필수 ("2026-11-05T14:00:00+09:00"). 다른 상태에서는 보내지 않는다 */
+  consultationAt?: string;
 }
 
 export interface HelpRequestStatusUpdateResult {
   helpRequestId: number;
   status: HelpRequestStatus;
+  consultationAt: string | null;
 }
 
 // ---- C4 서류 검토 ----

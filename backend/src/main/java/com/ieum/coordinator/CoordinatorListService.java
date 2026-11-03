@@ -14,13 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * C 서류 검토 · 도움 요청 상태별 목록 (조회만).
  * - 서류: 검토 요청 이후 단계만 보여 준다. 수료생이 작성 중인 GENERATING · DRAFT · FAILED 는 코디네이터 목록에 없다
- * - 도움 요청: OPEN · CONTACTED · CLOSED. 생략하거나 ALL 이면 전체
+ * - 도움 요청: OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED · CONTACTED · CLOSED. 생략하거나 ALL 이면 전체
  */
 @Service
 public class CoordinatorListService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final List<String> REVIEW_STAGES = List.of("SUBMITTED", "REJECTED", "APPROVED", "DELIVERED");
-    private static final Set<String> HELP_STATUSES = Set.of("OPEN", "CONTACTED", "CLOSED");
+    private static final Set<String> HELP_STATUSES = Set.of("OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED", "CONTACTED", "CLOSED");
 
     private final CoordinatorListMapper mapper;
 
@@ -51,13 +51,13 @@ public class CoordinatorListService {
     public List<CoordinatorListResponse.HelpRequest> helpRequests(String status) {
         String filter = status == null || "ALL".equals(status) ? null : status;
         if (filter != null && !HELP_STATUSES.contains(filter)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "status는 ALL, OPEN, CONTACTED, CLOSED 중 하나여야 해요.");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "status는 ALL, OPEN, IN_PROGRESS, CONSULTATION_SCHEDULED, CONTACTED, CLOSED 중 하나여야 해요.");
         }
         return mapper.findHelpRequests(filter).stream()
                 .map(row -> new CoordinatorListResponse.HelpRequest(row.getHelpRequestId(), row.getStudentId(),
                         row.getStudentName(), row.getCourseLabel(), seoulTime(row.getCreatedAt()), row.getJobTitle(),
                         row.getContactMethod(), row.getMemo(), row.getHelpType(), row.getStatus(),
-                        seoulTime(row.getClosedAt()), row.getCloseReason()))
+                        seoulTime(row.getClosedAt()), row.getCloseReason(), seoulTime(row.getConsultationAt())))
                 .toList();
     }
 

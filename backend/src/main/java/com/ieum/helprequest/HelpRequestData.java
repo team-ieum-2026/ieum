@@ -23,5 +23,6 @@ public final class HelpRequestData {
         private LocalDateTime closedAt;
         private String closeReason;
         private String jobTitle;
+        private LocalDateTime consultationAt;
     }
 }

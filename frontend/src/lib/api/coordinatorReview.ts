@@ -46,7 +46,7 @@ export const getCoordinatorHelpRequests = async (
   if (!USE_MOCK) return apiGet<CoordinatorHelpRequest[]>(`/api/coordinator/help-requests?status=${status}`, "");
   const { helpRequests } = await getDashboard();
   return helpRequests
-    .map((r) => ({ ...r, helpType: r.helpType ?? null, status: "OPEN" as const, closedAt: null, closeReason: null }))
+    .map((r) => ({ ...r, helpType: r.helpType ?? null, status: "OPEN" as const, closedAt: null, closeReason: null, consultationAt: null }))
     .filter((r) => status === "ALL" || r.status === status);
 };
 

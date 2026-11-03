@@ -251,7 +251,8 @@ export async function cancelItemResponse(itemId: number, expectedResponse: Cance
   if (expectedResponse === "HELP" && current !== "NONE") {
     const help = readSavedMockHelpRequests().filter(item => item.studentId === studentId && item.recommendationItemId === itemId).at(-1);
     if (help) {
-      if (help.status !== "OPEN") throw new ApiError("INVALID_STATUS", "이미 처리한 도움 요청은 직접 취소할 수 없어요.", 409);
+      // 연락 완료 전(접수 · 처리 중 · 상담 예정)만 취소할 수 있다 (types/student.ts ACTIVE_HELP_STATUSES 와 같은 값)
+      if (!["OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED"].includes(help.status)) throw new ApiError("INVALID_STATUS", "이미 처리한 도움 요청은 직접 취소할 수 없어요.", 409);
       await closeHelpRequest(help.helpRequestId, { studentId, closeReason: "NO_LONGER_NEEDED" });
     }
   }

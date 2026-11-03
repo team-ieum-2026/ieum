@@ -32,5 +32,6 @@ public final class CoordinatorListResponse {
             String helpType,
             String status,
             OffsetDateTime closedAt,
-            String closeReason) {}
+            String closeReason,
+            OffsetDateTime consultationAt) {}
 }

@@ -95,8 +95,9 @@ class HelpRequestControllerTest {
         assertTrue(data.isArray());
         assertEquals(1, data.size());
         JsonNode item = data.get(0);
-        assertEquals(11, item.size());
-        for (String field : List.of("recommendationItemId", "contactMethod", "memo", "closedAt", "closeReason", "jobTitle")) {
+        assertEquals(12, item.size());
+        for (String field : List.of("recommendationItemId", "contactMethod", "memo", "closedAt", "closeReason", "jobTitle",
+                "consultationAt")) {
             assertTrue(item.has(field));
             assertTrue(item.get(field).isNull());
         }
@@ -202,13 +203,28 @@ class HelpRequestControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"OPEN", "CONTACTED"})
+    @ValueSource(strings = {"OPEN", "IN_PROGRESS", "CONTACTED"})
     void coordinatorStatusMatchesExistingC1Contract(String status) throws Exception {
-        when(service.updateStatus(eq(4L), any())).thenReturn(new HelpRequestResult(4L, status));
+        when(service.updateStatus(eq(4L), any())).thenReturn(new HelpRequestStatusResult(4L, status, null));
         mvc.perform(patch("/api/coordinator/help-requests/4").contentType(MediaType.APPLICATION_JSON)
                         .content(json.createObjectNode().put("status", status).toString()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value(status));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value(status))
+                .andExpect(jsonPath("$.data.consultationAt").value(org.hamcrest.Matchers.nullValue()));
         verify(service).updateStatus(4L, new HelpRequestStatusUpdateRequest(status));
+    }
+
+    @Test
+    void coordinatorSchedulingPassesConsultationTime() throws Exception {
+        var at = java.time.OffsetDateTime.parse("2026-11-05T14:00:00+09:00");
+        when(service.updateStatus(eq(4L), any())).thenReturn(new HelpRequestStatusResult(4L, "CONSULTATION_SCHEDULED", at));
+        mvc.perform(patch("/api/coordinator/help-requests/4").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"CONSULTATION_SCHEDULED\",\"consultationAt\":\"2026-11-05T14:00:00+09:00\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CONSULTATION_SCHEDULED"))
+                .andExpect(jsonPath("$.data.consultationAt").value("2026-11-05T14:00:00+09:00"));
+        // Jackson 은 다른 오프셋으로 읽을 수 있다. 같은 순간이면 서비스가 서울 시각으로 저장한다
+        verify(service).updateStatus(eq(4L), argThat(r -> "CONSULTATION_SCHEDULED".equals(r.status())
+                && r.consultationAt() != null && r.consultationAt().isEqual(at)));
     }
 
     @ParameterizedTest

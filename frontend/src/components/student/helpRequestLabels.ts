@@ -10,7 +10,7 @@ export const helpTypeLabels: Record<HelpType, string> = {
 
 export const helpTypes: HelpType[] = ["RESUME_COVER_LETTER", "JOB_APPLICATION", "INTERVIEW_PREPARATION", "CAREER_COUNSELING", "OTHER"];
 export const studentHelpStatusLabels: Record<StudentHelpRequestStatus, string> = {
-  OPEN: "접수", CONTACTED: "연락 완료", CLOSED: "종료",
+  OPEN: "접수", IN_PROGRESS: "담당자 확인 중", CONSULTATION_SCHEDULED: "상담 예정", CONTACTED: "연락 완료", CLOSED: "종료",
 };
 export const helpCloseReasonLabels: Record<HelpRequestCloseReason, string> = {
   EMPLOYED: "취업했어요", NO_LONGER_NEEDED: "이제 도움이 필요하지 않아요", OTHER: "기타",
