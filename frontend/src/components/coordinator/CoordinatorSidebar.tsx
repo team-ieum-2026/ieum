@@ -70,23 +70,25 @@ export default function CoordinatorSidebar() {
   }, [pathname, refreshKey]);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 flex w-[212px] flex-col bg-(--coord-forest) px-4 py-[26px] text-(--coord-side-ink)">
-      <div className="flex items-center gap-2.5 px-3 text-[26px] leading-none font-bold tracking-[-1.5px] text-(--coord-surface)">
-        <span aria-hidden="true" className="relative inline-block h-[30px] w-7">
-          <span className="absolute top-1 left-0.5 h-[22px] w-3.5 -rotate-[28deg] rounded-[14px_3px_14px_3px] bg-(--coord-lime)" />
-          <span className="absolute top-0 left-[13px] h-[17px] w-[11px] rotate-[35deg] rounded-[14px_3px_14px_3px] bg-(--coord-chart-employed)" />
+    // 리뉴얼 .app-sidebar: 220px · 다크 포레스트 그린 · 활성 메뉴는 민트 바탕
+    <aside className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col border-r border-black/10 bg-(--coord-forest) px-3 py-4 text-(--coord-side-ink)">
+      <Link
+        href="/coordinator"
+        className="mb-4 flex items-center gap-2.5 rounded-md border-b border-(--coord-surface)/10 px-2 pt-1.5 pb-[18px] focus-visible:outline-3 focus-visible:outline-(--coord-lime)"
+      >
+        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-(--coord-side-logo) text-lg font-extrabold text-(--coord-side-logo-ink)">
+          이
         </span>
-        <span>
-          이음
-          <span className="mt-1 block text-[10px] font-medium tracking-[2px]">IEUM</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="flex items-center gap-1.5 text-[17px] font-extrabold tracking-[-0.3px] text-(--coord-surface)">
+            이음
+            <span className="rounded-[3px] bg-(--coord-surface)/20 px-[5px] py-px text-[11px] font-bold text-(--coord-side-tag)">IEUM</span>
+          </span>
+          <span className="mt-px text-[11px] whitespace-nowrap text-(--coord-side-muted)">청년취업사관학교 사후관리</span>
         </span>
-      </div>
-      <p className="mx-2.5 mt-[26px] mb-[27px] border-b border-(--coord-side-muted)/20 pb-[22px] text-[11px]">
-        <b className="mb-1 block text-xs text-(--coord-surface)">청년취업사관학교</b>
-        수료생 사후관리 워크스페이스
-      </p>
-      <p className="mx-3.5 mt-2 mb-2.5 text-[10px] tracking-[1.5px] text-(--coord-side-muted)">WORKSPACE</p>
-      <nav aria-label="코디네이터 메뉴" className="flex flex-col gap-1">
+      </Link>
+      <p className="px-2 pb-1.5 text-[11px] font-bold tracking-[0.8px] text-(--coord-side-muted)">WORKSPACE</p>
+      <nav aria-label="코디네이터 메뉴" className="flex flex-1 flex-col gap-1">
         {menu.map((item) => {
           const active = item.match(pathname);
           const count = item.count && counts && counts[item.count] > 0 ? counts[item.count] : null;
@@ -95,16 +97,20 @@ export default function CoordinatorSidebar() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-[11px] rounded-lg px-[13px] py-3 text-[13px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-lime) ${
-                active ? "bg-(--coord-lime) font-bold text-(--coord-forest)" : "hover:bg-(--coord-surface)/5"
+              className={`group flex items-center gap-[11px] rounded-md px-3 py-2.5 text-[14.5px] leading-[18px] transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-lime) ${
+                active
+                  ? "bg-(--coord-lime) font-extrabold text-(--coord-side-active-ink)"
+                  : "font-semibold hover:bg-(--coord-surface)/8 hover:text-(--coord-surface)"
               }`}
             >
-              <Icon name={item.icon} />
+              <span className={`flex ${active ? "" : "opacity-75 group-hover:opacity-100"}`}>
+                <Icon name={item.icon} className="size-[18px]" />
+              </span>
               {item.label}
               {count !== null && (
                 <span
-                  className={`ml-auto rounded-[5px] px-[5px] py-px text-[10px] ${
-                    active ? "bg-(--coord-forest)/10" : "bg-(--coord-surface)/10"
+                  className={`ml-auto min-w-[22px] rounded-full px-[7px] py-0.5 text-center text-[11px] font-extrabold ${
+                    active ? "bg-(--coord-side-active-ink)/15 text-(--coord-side-active-ink)" : "bg-(--coord-surface)/12 text-(--coord-surface)"
                   }`}
                 >
                   {count}
@@ -115,18 +121,20 @@ export default function CoordinatorSidebar() {
           );
         })}
       </nav>
-      <Link
-        href="/"
-        className="mt-auto flex min-h-11 items-center gap-2 rounded-lg px-[13px] text-[13px] hover:bg-(--coord-surface)/5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-lime)"
-      >
-        <span aria-hidden="true">←</span>
-        홈으로 돌아가기
-      </Link>
-      <p className="mt-4 px-3 text-[10px] leading-[1.8] text-(--coord-side-muted)">
-        작은 응답을, 다음 기회로.
-        <br />
-        IEUM COORDINATOR
-      </p>
+      <div className="flex flex-col gap-2 border-t border-(--coord-surface)/10 pt-3.5">
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] text-(--coord-side-muted) transition hover:bg-(--coord-surface)/8 hover:text-(--coord-surface) focus-visible:outline-3 focus-visible:outline-(--coord-lime)"
+        >
+          <Icon name="back" className="size-[15px]" />
+          홈으로 돌아가기
+        </Link>
+        <p className="px-2 text-[11px] leading-[1.4] text-(--coord-surface)/40">
+          작은 응답을, 다음 기회로.
+          <br />
+          IEUM COORDINATOR
+        </p>
+      </div>
     </aside>
   );
 }

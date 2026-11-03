@@ -1,56 +1,95 @@
-/* 주인: FE-B — 코디네이터 전용 디자인 토큰 (11/1 코디네이터 개편, 목업 ieum-coordinator-mockup_v6).
- * 공통 토큰(styles/tokens.css · FE-A)은 고치지 않고, 목업에서 새로 쓰거나 코디네이터에서만 다르게 쓰는 색만 둔다.
+/* 주인: FE-B — 코디네이터 전용 디자인 토큰 (11/3 UI 리뉴얼, design-reference/index.html · DESIGN_TOKENS.md 기준).
+ * 공통 토큰(styles/tokens.css · FE-A)은 고치지 않고, 코디네이터에서만 쓰는 색 · 글꼴만 둔다.
  * .coord-root(코디네이터 레이아웃) 안에서만 적용된다. :root 를 덮어쓰지 않으므로 수료생 화면 · 공통 부품에는 영향이 없다.
- * 화면에서는 Tailwind 의 변수 문법으로 쓴다: bg-(--coord-forest), text-(--coord-muted), border-(--coord-line) */
+ * 화면에서는 Tailwind 의 변수 문법으로 쓴다: bg-(--coord-forest), text-(--coord-muted), border-(--coord-line)
+ * 변수 이름은 11/1 개편 때와 같게 두고 값만 리뉴얼 팔레트로 바꿨다 (orange = 앰버 · 추가 확인 필요) */
+
+/* 프로젝트에 이미 있는 Pretendard 파일을 코디네이터 화면에서만 쓴다 (CDN · 새 라이브러리 없음) */
+@font-face {
+  font-family: "IEUM Coord Pretendard";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 .coord-root {
   /* 바탕 · 글자 · 선 */
-  --coord-page: #f4f6f3;
+  --coord-page: #f3f6f7;
   --coord-surface: var(--color-surface);
-  --coord-ink: #193329;
-  --coord-muted: #6d7d74;
-  --coord-line: #dfe6df;
-  --coord-line-soft: #edf0eb;
-  --coord-head: #f8faf6;
-  --coord-hover: #f1f7ed;
+  --coord-ink: #172b2b;
+  --coord-muted: #53636b;
+  --coord-faint: #76868f;
+  --coord-line: #e1e8e7;
+  --coord-line-soft: #edf1f0;
+  --coord-line-strong: #cad5d4;
+  --coord-head: #f8fafa;
+  --coord-hover: #f8fcfa;
+  --coord-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
 
   /* 주 색 */
-  --coord-forest: #123f32;
-  --coord-green: #16734e;
-  --coord-green-soft: #e6f3e8;
-  --coord-green-ink: #196844;
-  --coord-lime: #c9efaa;
-  --coord-tint: #eff5e9;
-  --coord-tint-line: #d6e2ce;
+  --coord-forest: #113e34;
+  --coord-green: #126b56;
+  --coord-green-hover: #0d5342;
+  --coord-green-soft: #d9f3e7;
+  --coord-green-ink: #0f5c48;
+  --coord-green-line: #baecd4;
+  --coord-lime: #d9f3e7;
+  --coord-tint: #eff9f4;
+  --coord-tint-line: #c8ebd8;
 
-  /* 사이드바 글자 */
-  --coord-side-ink: #c5d6ca;
-  --coord-side-muted: #83a193;
+  /* 사이드바 */
+  --coord-side-ink: rgb(255 255 255 / 0.78);
+  --coord-side-muted: rgb(255 255 255 / 0.5);
+  --coord-side-active-ink: #0f3d32;
+  --coord-side-logo: #19584b;
+  --coord-side-logo-ink: #72e5a8;
+  --coord-side-tag: #a2f3c8;
 
-  /* 상태 이름표 (주황 · 빨강 · 파랑 · 회색) */
-  --coord-orange: #94601f;
-  --coord-orange-soft: #fbf0dc;
-  --coord-red: #ac4939;
-  --coord-red-soft: #fbeae5;
-  --coord-blue: #37649a;
-  --coord-blue-soft: #eaf0fb;
-  --coord-gray: #627168;
-  --coord-gray-soft: #edf0ed;
+  /* 상태 이름표 (앰버 · 빨강 · 파랑 · 회색) */
+  --coord-orange: #b45309;
+  --coord-orange-soft: #fffbeb;
+  --coord-orange-line: #fde68a;
+  --coord-orange-tint: #fef3c7;
+  --coord-red: #d9383a;
+  --coord-red-soft: #fdf2f2;
+  --coord-red-line: #f9cbcb;
+  --coord-blue: #3079d5;
+  --coord-blue-soft: #eaf3fd;
+  --coord-gray: #53636b;
+  --coord-gray-soft: #eceff1;
 
-  /* 확인 필요 안내 상자 */
-  --coord-attention: #7b5816;
-  --coord-attention-soft: #fff9e8;
-  --coord-attention-line: #e9d89c;
+  /* 확인 필요 안내 상자 · 시연 배너 */
+  --coord-attention: #92400e;
+  --coord-attention-soft: #fef9e7;
+  --coord-attention-line: #fde68a;
 
-  /* 관리 상태 막대 · 도넛 · 링 (취업 완료 · 구직 중 · 도움 필요 · 추가 확인 필요) */
-  --coord-chart-employed: #3f9a6a;
-  --coord-chart-seeking: #5b86bd;
-  --coord-chart-help: #cf6b58;
-  --coord-chart-check: #e0a94f;
-  --coord-chart-resting: #a9b8ae;
+  /* 관리 상태 막대 · 도넛 · 링 (취업 완료 · 구직 중 · 도움 필요 · 추가 확인 필요 · 휴식) */
+  --coord-chart-employed: #126b56;
+  --coord-chart-seeking: #3079d5;
+  --coord-chart-help: #d9383a;
+  --coord-chart-check: #d97706;
+  --coord-chart-resting: #9eabb0;
   --coord-chart-total: #8cc5a3;
-  --coord-chart-track: #dae5d3;
+  --coord-chart-track: #e5eae9;
 
   background: var(--coord-page);
   color: var(--coord-ink);
-  letter-spacing: -0.3px;
+  font-family: "IEUM Coord Pretendard", var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.2px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 입력칸 기본 모양 (리뉴얼 input · select · textarea). base 층이라 화면의 Tailwind 클래스가 항상 이긴다 */
+@layer base {
+  .coord-root :is(input, select, textarea, button) {
+    font-family: inherit;
+  }
+  .coord-root :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+    border-color: var(--coord-green);
+    box-shadow: 0 0 0 3px rgb(18 107 86 / 0.12);
+    outline: none;
+  }
 }

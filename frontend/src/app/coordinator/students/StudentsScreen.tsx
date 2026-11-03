@@ -11,10 +11,9 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { apiErrorText, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Avatar, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import {
   MANAGE_ORDER,
-  courseName,
   docLabels,
   docTone,
   manageCounts,
@@ -23,7 +22,6 @@ import {
   monthDay,
   studentExtra,
   responseTagLabels,
-  responseTone,
 } from "@/components/coordinator/coordLabels";
 import { subStatusLabels } from "@/components/student/labels";
 import { getDashboard } from "@/lib/api/coordinatorReview";
@@ -49,15 +47,15 @@ const FILTERS: { value: string; label: string }[] = [
   ),
 ];
 
-/** 목업 열 비율 12 / 15 / 14 / 19 / 15 / 13 / 12 */
+/** 리뉴얼 HTML 표의 실측 열 비율 (1440 화면: 195 / 184 / 196 / 114 / 214 / 122 / 122px) */
 const COLUMNS: [string, string][] = [
-  ["수료생", "w-[12%]"],
-  ["교육과정", "w-[15%]"],
-  ["현재 상태", "w-[14%]"],
-  ["최근 응답", "w-[19%]"],
-  ["추천 공고 응답", "w-[15%]"],
-  ["도움 요청", "w-[13%]"],
-  ["서류", "w-[12%]"],
+  ["수료생", "w-[17%]"],
+  ["교육과정", "w-[16%]"],
+  ["현재 상태", "w-[17%]"],
+  ["최근 응답", "w-[10%]"],
+  ["추천 공고 응답", "w-[18.6%]"],
+  ["도움 요청", "w-[10.7%]"],
+  ["서류", "w-[10.7%]"],
 ];
 
 /** 한 수료생의 추천 응답 · 서류 (C3 상세 API 에서 뽑음). error: 그 수료생 상세 조회 실패 */
@@ -69,6 +67,8 @@ type RowExtra =
       /** 가장 최근 추천의 응답별 개수 (추천 이력이 없으면 null) */
       responses: Partial<Record<ResponseType, number>> | null;
       docs: { applicationId: number; status: ApplicationStatus }[];
+      /** 희망 직무 (같은 상세 응답의 student.desiredJob, 이름 아래 보조 줄) */
+      desiredJob: string | null;
     };
 
 export default function StudentsScreen() {
@@ -153,7 +153,7 @@ export default function StudentsScreen() {
           .flatMap((h) => h.items)
           .filter((item) => item.applicationId && item.applicationStatus)
           .map((item) => ({ applicationId: item.applicationId as number, status: item.applicationStatus as ApplicationStatus }));
-        next[ids[i]] = { state: "ok", responses, docs };
+        next[ids[i]] = { state: "ok", responses, docs, desiredJob: r.value.student.desiredJob };
       });
       setExtras(next);
     });
@@ -180,19 +180,20 @@ export default function StudentsScreen() {
   const lastPage = list ? Math.max(1, Math.ceil(list.total / list.size)) : 1;
 
   return (
-    // 머리 · 필터 · 페이지 이동은 고정하고 표 영역만 안에서 스크롤 (상단 막대 60 + 위아래 여백 70)
-    <div className="flex h-[calc(100vh-130px)] min-h-[560px] flex-col">
+    // 리뉴얼 C2: 제목 → 상태 요약 카드 4개 → 표 카드(머리 · 표 · 페이지 이동). 높이는 내용만큼 (10명이면 페이지가 스크롤)
+    <div>
       <PageTitle
         title="수료생 관리"
         description="최근 응답과 요청을 먼저 보고, 필요한 다음 행동으로 이어가세요."
         action={
-          <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary} px-4 py-3 text-sm`}>
-            <span aria-hidden="true">＋</span> 수료생 등록
+          <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary}`}>
+            <span aria-hidden="true">＋</span> 새 수료생 등록
           </button>
         }
       />
       {counts && (
-        <div role="group" aria-label="관리 상태 요약" className="mb-3 grid shrink-0 grid-cols-4 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface)">
+        // 리뉴얼 .segment-count-bar: 따로 떨어진 카드 4개 (간격 12px). 누르면 그 상태로 거르고, 다시 누르면 해제
+        <div role="group" aria-label="관리 상태 요약" className="mb-[18px] grid grid-cols-4 gap-3">
           {MANAGE_ORDER.map((s) => {
             const selected = status === s && !subStatus;
             return (
@@ -201,72 +202,68 @@ export default function StudentsScreen() {
                 type="button"
                 aria-pressed={selected}
                 onClick={() => setFilter(selected ? "" : s)}
-                className={`flex items-center justify-between gap-2.5 border-r border-(--coord-line) px-[18px] py-[9px] text-left transition last:border-r-0 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-(--coord-green) ${
-                  selected ? "bg-(--coord-green-soft) shadow-[inset_0_-3px_0_var(--coord-green)]" : "hover:bg-(--coord-hover)"
+                className={`flex items-center justify-between gap-2.5 rounded-md border px-4 py-3 text-left transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-green) ${
+                  selected ? "border-(--coord-green) bg-(--coord-tint)" : "border-(--coord-line) bg-(--coord-surface) hover:border-(--coord-green)"
                 }`}
               >
                 <Badge tone={manageTone[s]}>{manageLabels[s]}</Badge>
-                <b className="text-lg leading-[1.2] tracking-[-0.5px]">
+                <b className={`text-[22px] leading-[1.4] font-extrabold ${s === "CHECK_REQUIRED" ? "text-(--coord-chart-check)" : ""}`}>
                   {counts[s]}
-                  <small className="ml-[3px] text-[11px] font-medium text-(--coord-muted)">명</small>
+                  <small className="ml-0.5 text-[15px] font-semibold">명</small>
                 </b>
               </button>
             );
           })}
         </div>
       )}
-      <Panel label="관리 중인 수료생" className="flex min-h-0 flex-1 flex-col">
-        <PanelHead
-          title={
-            <>
-              관리 중인 수료생 {summary && <span className="text-(--coord-green)">{summary.totalStudents}</span>}
-            </>
-          }
-        >
-          <span className="text-xs text-(--coord-muted)">이름을 누르면 추천 응답 · 지원서류 · 상담 기록이 열려요</span>
-        </PanelHead>
-        <div className="flex shrink-0 flex-wrap items-end gap-[9px] border-b border-(--coord-line) px-5 py-3">
-          <form
-            className="flex items-center gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              changeQuery({ q: String(new FormData(event.currentTarget).get("q") ?? "").trim(), page: "1" });
-            }}
-          >
-            <input
-              key={q}
-              name="q"
-              type="search"
-              defaultValue={q}
-              aria-label="수료생 이름 검색"
-              placeholder="수료생 이름 검색"
-              className="w-[220px] rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-xs"
-            />
-            <button type="submit" aria-label="검색" className="grid size-9 place-items-center rounded-lg hover:bg-(--coord-hover)">
-              <Icon name="search" />
-            </button>
-          </form>
-          <label className="flex min-w-[180px] flex-col gap-0.5 text-[11px] font-semibold text-(--coord-muted)">
-            관리 상태
+      <Panel label="관리 중인 수료생">
+        {/* 리뉴얼 .table-toolbar-box: 왼쪽 제목 + 설명, 오른쪽 검색 · 관리 상태 · 초기화 */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-4">
+          <p className="min-w-0">
+            <b className="text-lg font-extrabold">관리 중인 수료생 {summary?.totalStudents ?? ""}</b>
+            <span className="ml-2.5 text-[13.5px] text-(--coord-muted)">이름을 누르면 추천 응답 · 지원서류 · 상담 기록이 열려요</span>
+          </p>
+          <div className="flex shrink-0 items-center gap-2.5">
+            <form
+              className="flex items-center gap-1.5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                changeQuery({ q: String(new FormData(event.currentTarget).get("q") ?? "").trim(), page: "1" });
+              }}
+            >
+              <input
+                key={q}
+                name="q"
+                type="search"
+                defaultValue={q}
+                aria-label="수료생 이름 검색"
+                placeholder="수료생 이름 검색"
+                className="w-[200px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px]"
+              />
+              <button type="submit" aria-label="검색" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+                <Icon name="search" className="size-3.5" />
+              </button>
+            </form>
             <select
               value={filterValue}
+              aria-label="관리 상태"
               onChange={(event) => setFilter(event.target.value)}
-              className="rounded-lg border border-(--coord-line) bg-(--coord-surface) px-2.5 py-2 text-xs font-normal text-(--coord-ink)"
+              className="rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px] text-(--coord-ink)"
             >
               {FILTERS.map((f) => (
                 <option key={f.value} value={f.value}>
-                  {f.label}
+                  {f.value ? f.label : "관리 상태 (전체)"}
                 </option>
               ))}
             </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => changeQuery({ status: undefined, subStatus: undefined, q: undefined, page: "1" })}
-            className="py-2 text-xs font-semibold text-(--coord-green)"
-          >
-            초기화
-          </button>
+            <button
+              type="button"
+              onClick={() => changeQuery({ status: undefined, subStatus: undefined, q: undefined, page: "1" })}
+              className={`${btn.base} ${btn.outline} ${btn.sm}`}
+            >
+              초기화
+            </button>
+          </div>
         </div>
         {!list ? (
           <LoadState
@@ -280,17 +277,18 @@ export default function StudentsScreen() {
         ) : (
           <>
             {error && (
-              <p role="alert" className="px-5 pt-3 text-xs font-bold text-(--coord-red)">
+              <p role="alert" className="px-5 pt-3 text-[13.5px] font-bold text-(--coord-red)">
                 {error}
               </p>
             )}
-            <div className="min-h-0 flex-1 overflow-auto">
-              <table className="w-full min-w-[1040px] table-fixed border-collapse text-left text-xs">
+            {/* 리뉴얼 table.data-table: 머리 13.5px 회색 · 본문 15px · 칸 여백 14px 16px · 행 hover. 행은 아바타 + 두 줄 정보 높이(약 74px) */}
+            <div className="overflow-x-auto">
+              <table className="w-full table-fixed border-collapse text-left text-[15px]">
                 <caption className="sr-only">수료생 목록: 수료생, 교육과정, 현재 상태, 최근 응답, 추천 공고 응답, 도움 요청, 서류</caption>
-                <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
+                <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
                   <tr>
                     {COLUMNS.map(([label, w]) => (
-                      <th key={label} scope="col" className={`${w} border-b border-(--coord-line-soft) px-[17px] py-3 font-medium`}>
+                      <th key={label} scope="col" className={`${w} border-b border-(--coord-line) px-4 py-3 font-bold whitespace-nowrap`}>
                         {label}
                       </th>
                     ))}
@@ -304,53 +302,61 @@ export default function StudentsScreen() {
                     const ext = studentExtra(s);
                     const helpCount = ext.openHelpRequestCount ?? help?.length ?? null;
                     return (
-                      <tr key={s.studentId} className="h-16 border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
-                        <td className="overflow-hidden px-[17px]">
+                      <tr key={s.studentId} className="h-[74px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                        <td className="overflow-hidden px-4 py-3.5">
+                          {/* 리뉴얼 .student-cell: 아바타 34px + 이름 15.5px + 희망 직무 */}
                           <Link
                             href={`/coordinator/students/${s.studentId}`}
-                            className="block truncate text-[13px] font-bold underline-offset-4 hover:text-(--coord-green) hover:underline focus-visible:outline-2 focus-visible:outline-(--coord-green)"
+                            className="group flex min-w-0 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-(--coord-green)"
                           >
-                            {s.name}
+                            <Avatar name={s.name} small />
+                            <span className="min-w-0">
+                              <b className="block truncate text-[15.5px] font-extrabold group-hover:text-(--coord-green) group-hover:underline">{s.name}</b>
+                              <span className="block truncate text-[12.5px] text-(--coord-faint)">
+                                {extra.state === "ok" ? (extra.desiredJob ?? "희망직무 미지정") : extra.state === "error" ? "—" : " "}
+                              </span>
+                            </span>
                           </Link>
                         </td>
-                        <td className="px-[17px] text-(--coord-ink)" title={s.courseLabel}>
-                          {/* 과정 이름이 길어 두 줄까지 보인다 (행 높이는 그대로) */}
-                          <span className="line-clamp-2 leading-[1.45]">{courseName(s.courseLabel)}</span>
+                        <td className="px-4 py-3.5">
+                          <CourseLabel label={s.courseLabel} />
                         </td>
-                        <td className="overflow-hidden px-[17px]">
-                          <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
+                        <td className="overflow-hidden px-4 py-3.5">
                           {ext.needsPassFollowUp ? (
-                            <span className="mt-[3px] block">
-                              <Badge tone="blue">연락 필요 · 연속 패스 {ext.consecutivePassCount ?? "—"}회</Badge>
+                            <span className="flex flex-col items-start gap-1">
+                              <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
+                              <Badge tone="blue" small>
+                                연락 필요 · 연속 패스 {ext.consecutivePassCount ?? "—"}회
+                              </Badge>
                             </span>
                           ) : (
-                            s.subStatus && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">{subStatusLabels[s.subStatus]}</span>
+                            <ManageStatus status={s.status} subStatus={s.subStatus} stacked />
                           )}
                         </td>
-                        <td className="overflow-hidden px-[17px]">
-                          <b className={`text-xs ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : "text-(--coord-green)"}`}>
+                        <td className="overflow-hidden px-4 py-3.5">
+                          <b className={`block text-sm whitespace-nowrap ${s.status === "CHECK_REQUIRED" ? "text-(--coord-red)" : ""}`}>
                             {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 응답` : "응답 기록 없음"}
                           </b>
-                          {s.hasNote && <span className="mt-[3px] block truncate text-[10px] text-(--coord-muted)">비고 있음</span>}
+                          {s.hasNote && <span className="mt-0.5 block truncate text-xs text-(--coord-muted)">비고 있음</span>}
                         </td>
-                        <td className="overflow-hidden px-[17px]">
+                        <td className="overflow-hidden px-4 py-3.5">
                           <ResponseCell extra={extra} />
                         </td>
-                        <td className="overflow-hidden px-[17px]">
+                        <td className="overflow-hidden px-4 py-3.5">
                           {helpCount === null ? (
-                            <span className="text-(--coord-muted)">조회 실패</span>
+                            <span className="text-[13px] text-(--coord-muted)">조회 실패</span>
                           ) : helpCount > 0 ? (
                             <Link
                               href={help?.[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"}
-                              className="font-semibold whitespace-nowrap text-(--coord-green) hover:underline"
+                              className="hover:brightness-95"
                             >
-                              접수 {helpCount}건
+                              <Badge tone="red">접수 {helpCount}건</Badge>
                             </Link>
                           ) : (
-                            <span className="text-(--coord-muted)">접수 없음</span>
+                            <span className="text-[13px] text-(--coord-faint)">접수 없음</span>
                           )}
                         </td>
-                        <td className="overflow-hidden px-[17px]">
+                        <td className="overflow-hidden px-4 py-3.5">
                           <DocCell extra={extra} />
                         </td>
                       </tr>
@@ -359,15 +365,15 @@ export default function StudentsScreen() {
                 </tbody>
               </table>
               {list.items.length === 0 && (
-                <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">조건에 맞는 수료생이 없어요. 필터를 초기화해 보세요.</p>
+                <p className="p-9 text-center text-[15px] text-(--coord-muted)">조건에 맞는 수료생이 없어요. 필터를 초기화해 보세요.</p>
               )}
             </div>
-            <div className="flex shrink-0 items-center justify-between border-t border-(--coord-line-soft) px-5 py-3 text-[11px] text-(--coord-muted)">
+            <div className="flex items-center justify-between px-5 py-3.5 text-[13.5px] text-(--coord-muted)">
               <span role="status">
                 {list.total}명 중 {list.total ? (page - 1) * list.size + 1 : 0}–{(page - 1) * list.size + list.items.length}명
-                <span className="ml-3">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
+                <span className="ml-3 text-(--coord-faint)">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 font-bold text-(--coord-ink)">
                 <button
                   type="button"
                   disabled={page <= 1}
@@ -399,19 +405,26 @@ export default function StudentsScreen() {
 
 const RESPONSE_ORDER: ResponseType[] = ["APPLY", "PASS", "HELP", "NONE"];
 
-/** 가장 최근 추천의 응답 개수 칩 (목업: 지원 1 · 패스 1 · 미응답 1) */
+/** 응답 칩 색 (리뉴얼 .pill-mini: 지원 초록 · 패스 회색 · 미응답 앰버, 도움 요청은 빨강) — 4px 모서리 + 테두리 */
+const PILL_CLASS: Record<ResponseType, string> = {
+  APPLY: "border-(--coord-green-line) bg-(--coord-green-soft) text-(--coord-green-ink)",
+  PASS: "border-(--coord-line-strong) bg-(--coord-gray-soft) text-(--coord-gray)",
+  NONE: "border-(--coord-orange-line) bg-(--coord-orange-soft) text-(--coord-orange)",
+  HELP: "border-(--coord-red-line) bg-(--coord-red-soft) text-(--coord-red)",
+};
+
+/** 가장 최근 추천의 응답 개수 칩 (리뉴얼: 지원 1 · 패스 1 · 미응답 1) */
 function ResponseCell({ extra }: { extra: RowExtra }) {
-  if (extra.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
-  if (extra.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
-  if (!extra.responses) return <span className="text-(--coord-muted)">추천 없음</span>;
+  if (extra.state === "loading") return <span className="text-[13px] text-(--coord-faint)">불러오는 중…</span>;
+  if (extra.state === "error") return <span className="text-[13px] text-(--coord-muted)">조회 실패</span>;
+  if (!extra.responses) return <span className={`rounded-[4px] border px-[7px] py-0.5 text-[11.5px] font-bold ${PILL_CLASS.PASS}`}>추천 없음</span>;
   const responses = extra.responses;
   return (
-    // 칩이 많으면 두 줄까지 (행 높이 64px 안)
-    <span className="flex max-h-[52px] flex-wrap gap-1 overflow-hidden">
+    <span className="flex flex-wrap items-center gap-1">
       {RESPONSE_ORDER.filter((r) => responses[r]).map((r) => (
-        <Badge key={r} tone={responseTone[r]}>
+        <span key={r} className={`rounded-[4px] border px-[7px] py-0.5 text-[11.5px] font-bold whitespace-nowrap ${PILL_CLASS[r]}`}>
           {responseTagLabels[r]} {responses[r]}
-        </Badge>
+        </span>
       ))}
     </span>
   );
@@ -419,14 +432,14 @@ function ResponseCell({ extra }: { extra: RowExtra }) {
 
 /** 가장 최근 지원서 상태 (여러 건이면 +N) */
 function DocCell({ extra }: { extra: RowExtra }) {
-  if (extra.state === "loading") return <span className="text-(--coord-muted)">불러오는 중…</span>;
-  if (extra.state === "error") return <span className="text-(--coord-muted)">조회 실패</span>;
+  if (extra.state === "loading") return <span className="text-[13px] text-(--coord-faint)">불러오는 중…</span>;
+  if (extra.state === "error") return <span className="text-[13px] text-(--coord-muted)">조회 실패</span>;
   const [first, ...rest] = extra.docs;
-  if (!first) return <span className="text-(--coord-muted)">제출 없음</span>;
+  if (!first) return <span className="text-[13px] text-(--coord-faint)">제출 없음</span>;
   return (
-    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex items-center gap-1 hover:brightness-95">
+    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex max-w-full items-center gap-1 hover:brightness-95">
       <Badge tone={docTone[first.status]}>{docLabels[first.status]}</Badge>
-      {rest.length > 0 && <span className="text-[10px] text-(--coord-muted)">+{rest.length}</span>}
+      {rest.length > 0 && <span className="text-xs text-(--coord-muted)">+{rest.length}</span>}
     </Link>
   );
 }

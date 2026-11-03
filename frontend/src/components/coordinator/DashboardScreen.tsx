@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Avatar, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, type IconName } from "@/components/coordinator/CoordUi";
 import { CONSULTATION_API_CONNECTED, type ConsultationSchedule } from "@/components/coordinator/demoAccount";
 import type { CoordTone } from "@/components/coordinator/coordLabels";
 import {
@@ -25,7 +25,6 @@ import {
   manageChartVar,
   manageCounts,
   manageLabels,
-  manageTone,
   monthDay,
   pct,
 } from "@/components/coordinator/coordLabels";
@@ -145,21 +144,21 @@ export default function DashboardScreen() {
   }
 
   return (
-    // 1440×900 에서 페이지 스크롤 없이 한눈에: 상단 막대 60 + 위아래 여백 70 + 반올림 여유
-    <div className="flex min-h-[680px] flex-col lg:h-[calc(100vh-140px)]">
+    // 리뉴얼 C1: 제목 → KPI 4개 → 좌(할 일 · 상담 · 서류 현황) 1.55 : 우(수료생 관리 현황) 1. 높이는 내용만큼 (페이지 스크롤 허용)
+    <div>
       <PageTitle
         title="오늘의 업무"
         description="요청의 맥락을 확인하고, 필요한 지원부터 이어가세요."
         action={
           <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh}>
-            <span className="inline-flex items-center gap-2 rounded-[7px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-xs">
-              <Icon name="calendar" className="size-4" />
+            <span className={`${btn.base} ${btn.outline} ${btn.sm} cursor-default hover:border-(--coord-line) hover:bg-(--coord-surface)`}>
+              <Icon name="calendar" className="size-3.5" />
               {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
             </span>
           </RefreshAction>
         }
       />
-      <div className="mb-3.5 grid shrink-0 grid-cols-4 gap-3.5">
+      <div className="mb-5 grid grid-cols-4 gap-4">
         <Kpi
           label="새 도움 요청"
           value={data.helpRequests.length}
@@ -167,9 +166,17 @@ export default function DashboardScreen() {
           sub="접수 상태 · 확인 후 연락"
           href="/coordinator/help-requests"
           icon="help"
-          urgent
+          tone="amber"
         />
-        <Kpi label="검토 대기 서류" value={data.reviewQueue.length} unit="건" sub="제출본과 근거 확인" href="/coordinator/applications" icon="doc" />
+        <Kpi
+          label="검토 대기 서류"
+          value={data.reviewQueue.length}
+          unit="건"
+          sub="제출본과 근거 확인"
+          href="/coordinator/applications"
+          icon="doc"
+          tone="green"
+        />
         <Kpi
           label="후속 연락 필요"
           value={data.callList.length}
@@ -177,6 +184,7 @@ export default function DashboardScreen() {
           sub="1주 무응답 · 전화 확인"
           href="/coordinator/students?status=CHECK_REQUIRED"
           icon="phone"
+          tone="blue"
         />
         {/* 상담 예정 도움 요청 건수. 받기 전 · 실패면 '—' (가짜 건수 없음). 누르면 가장 빠른 상담 요청이 열린다 */}
         <Kpi
@@ -186,12 +194,13 @@ export default function DashboardScreen() {
           sub={consultations ? `오늘 ${todayConsultations.length}건 · 상담 일시 순` : "상담 일정을 불러오는 중"}
           href={consultations?.[0] ? `/coordinator/help-requests?id=${consultations[0].id}` : "/coordinator/help-requests"}
           icon="calendar"
+          tone="gray"
         />
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.8fr)_minmax(300px,1fr)] gap-3.5">
-        <div className="flex min-h-0 flex-col gap-[11px]">
+      <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] items-start gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <Tasks data={data} />
-          <div className="grid shrink-0 grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <TodayConsultations items={todayConsultations} loaded={consultations !== null} />
             <DocStatus count={data.reviewQueue.length} asOf={data.asOf} />
           </div>
@@ -202,6 +211,15 @@ export default function DashboardScreen() {
   );
 }
 
+/** KPI 색 (리뉴얼 --kpi-accent): 아이콘 칸 · 마우스를 올리면 아래쪽에 보이는 3px 막대 */
+type KpiTone = "amber" | "green" | "blue" | "gray";
+const KPI_TONE: Record<KpiTone, { icon: string; bar: string }> = {
+  amber: { icon: "bg-(--coord-orange-tint) text-(--coord-chart-check)", bar: "bg-(--coord-chart-check)" },
+  green: { icon: "bg-(--coord-green-soft) text-(--coord-green)", bar: "bg-(--coord-green)" },
+  blue: { icon: "bg-(--coord-blue-soft) text-(--coord-blue)", bar: "bg-(--coord-blue)" },
+  gray: { icon: "bg-(--coord-gray-soft) text-(--coord-gray)", bar: "bg-(--coord-gray)" },
+};
+
 function Kpi({
   label,
   value,
@@ -209,7 +227,7 @@ function Kpi({
   sub,
   href,
   icon,
-  urgent = false,
+  tone,
 }: {
   label: string;
   /** null: 연동된 API 가 없어 건수를 모름 ('—' 표시) */
@@ -219,32 +237,29 @@ function Kpi({
   /** 없으면 이동하지 않는 카드 */
   href?: string;
   icon: IconName;
-  urgent?: boolean;
+  tone: KpiTone;
 }) {
-  const className = `relative rounded-xl border px-5 py-4 text-left transition focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green) ${
-    urgent
-      ? "border-(--coord-attention-line) bg-(--coord-attention-soft) hover:border-(--coord-orange)"
-      : href
-        ? "border-(--coord-line) bg-(--coord-surface) hover:border-(--coord-green)"
-        : "border-(--coord-line) bg-(--coord-surface)"
+  const look = KPI_TONE[tone];
+  const className = `group relative flex flex-col gap-3 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 text-left shadow-(--coord-shadow) transition focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green) ${
+    href ? "hover:-translate-y-px hover:border-(--coord-line-strong) hover:shadow-[0_4px_16px_rgb(18_107_86/0.08)]" : ""
   }`;
   const body = (
     <>
-      <span className="text-xs font-semibold">{label}</span>
-      <span
-        className={`absolute top-[15px] right-[17px] grid size-[30px] place-items-center rounded-lg ${
-          urgent ? "bg-(--coord-orange-soft) text-(--coord-orange)" : "bg-(--coord-green-soft) text-(--coord-green-ink)"
-        }`}
-      >
-        <Icon name={icon} />
+      <span className="flex items-start justify-between gap-2">
+        <span className="text-sm font-semibold text-(--coord-muted)">{label}</span>
+        <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${look.icon}`}>
+          <Icon name={icon} className="size-[18px]" />
+        </span>
       </span>
-      <span className="mt-[11px] mb-1.5 block text-[31px] leading-[1.2] font-bold tracking-[-1.5px]">
-        {value ?? <span className="text-(--coord-muted)">—</span>}
-        {value !== null && <small className="ml-[5px] text-[13px] font-medium tracking-normal text-(--coord-muted)">{unit}</small>}
+      <span className="block text-[40px] leading-none font-black tracking-[-1px]">
+        {value ?? <span className="text-(--coord-faint)">—</span>}
+        {value !== null && <small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">{unit}</small>}
       </span>
-      <span className="flex items-center gap-1 text-[11px] text-(--coord-muted)">
-        {value === null && <Badge>미연동</Badge>} {sub} {href && <Icon name="arrow" className="size-3.5" />}
+      <span className="-mt-1 flex items-center gap-1 text-[13px] text-(--coord-muted) group-hover:text-(--coord-green)">
+        {href && <Icon name="arrow" className="size-3" />}
+        {value === null && <Badge small>미연동</Badge>} {sub}
       </span>
+      {href && <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-[3px] opacity-0 transition group-hover:opacity-100 ${look.bar}`} />}
     </>
   );
   return href ? (
@@ -259,11 +274,11 @@ function Kpi({
 type TaskKind = "help" | "doc" | "pass";
 type Task = { kind: TaskKind; key: string; at: string; name: string; text: string; href: string };
 
-/** 할 일 종류별 표시: 아이콘 · 배지 · 시각 이름 · 버튼 */
-const TASK_LOOK: Record<TaskKind, { icon: IconName; iconClass: string; badge: string; tone: CoordTone; when: string; action: string }> = {
-  help: { icon: "help", iconClass: "bg-(--coord-red-soft) text-(--coord-red)", badge: "도움 요청", tone: "red", when: "접수", action: "요청 확인" },
-  doc: { icon: "doc", iconClass: "bg-(--coord-green-soft) text-(--coord-green-ink)", badge: "서류 검토", tone: "orange", when: "제출", action: "서류 검토" },
-  pass: { icon: "phone", iconClass: "bg-(--coord-blue-soft) text-(--coord-blue)", badge: "연락 필요", tone: "blue", when: "마지막 패스", action: "연락 기록" },
+/** 할 일 종류별 표시: 배지 · 시각 이름 · 버튼 (리뉴얼: 서류 검토 파랑 · 도움 요청 빨강, 아바타는 도움 요청만 빨강) */
+const TASK_LOOK: Record<TaskKind, { badge: string; tone: CoordTone; when: string; action: string }> = {
+  help: { badge: "도움 요청", tone: "red", when: "접수", action: "요청 확인" },
+  doc: { badge: "서류 검토", tone: "blue", when: "제출", action: "서류 검토" },
+  pass: { badge: "연락 필요", tone: "orange", when: "마지막 패스", action: "연락 기록" },
 };
 
 /** 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(백엔드 판정 passFollowUpList)을 건별로, 먼저 들어온 순 */
@@ -296,29 +311,28 @@ function buildTasks(data: Dashboard): Task[] {
   return [...help, ...docs, ...pass].sort((a, b) => a.at.localeCompare(b.at));
 }
 
-/** 할 일 한 줄 (목업 .task): 아이콘 · 이름 · 종류 · 내용 · 접수/제출 시각 · 이동 버튼 */
+/** 할 일 한 줄 (리뉴얼 .task-item-row): 아바타 · 이름 · 종류 배지 · 내용 / 접수·제출 시각 · 이동 버튼 */
 function TaskRow({ t }: { t: Task }) {
   const look = TASK_LOOK[t.kind];
   return (
-    <li className="flex items-center gap-2.5 border-b border-(--coord-line-soft) px-4 py-2 last:border-b-0">
-      <span className={`grid size-[31px] shrink-0 place-items-center rounded-[9px] ${look.iconClass}`}>
-        <Icon name={look.icon} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="flex items-center gap-[7px] text-[13px] font-bold">
-          {t.name} <Badge tone={look.tone}>{look.badge}</Badge>
-        </h3>
-        <p className="mt-1 truncate text-xs text-(--coord-muted)">{t.text}</p>
+    <li className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-4 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Avatar name={t.name} red={t.kind === "help"} />
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-center gap-2 text-[15.5px] font-extrabold">
+            {t.name} <Badge tone={look.tone}>{look.badge}</Badge>
+          </h3>
+          <p className="mt-[3px] truncate text-[13.5px] text-(--coord-muted)">{t.text}</p>
+        </div>
       </div>
-      <span className="mr-2 flex shrink-0 flex-col items-end leading-[1.35]">
-        <b className="text-xs font-semibold">
-          {monthDay(t.at)} {t.at.slice(11, 16)}
-        </b>
-        <small className="text-[10px] text-(--coord-muted)">{look.when}</small>
-      </span>
-      <Link href={t.href} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-        {look.action}
-      </Link>
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <span className="text-[12.5px] text-(--coord-faint)">
+          {monthDay(t.at)} {t.at.slice(11, 16)} {look.when}
+        </span>
+        <Link href={t.href} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+          {look.action}
+        </Link>
+      </div>
     </li>
   );
 }
@@ -328,27 +342,27 @@ function Tasks({ data }: { data: Dashboard }) {
   const rows = all.slice(0, TASK_LIMIT);
   const [showAll, setShowAll] = useState(false);
   return (
-    <Panel label="오늘 먼저 확인할 일" className="flex min-h-0 flex-1 flex-col">
+    <Panel label="오늘 먼저 확인할 일">
       <PanelHead
         title={
           <>
-            오늘 먼저 확인할 일 <Badge tone="green">총 {all.length}건</Badge>
+            오늘 먼저 확인할 일 <Badge tone={all.length > 0 ? "red" : "gray"}>총 {all.length}건 대기</Badge>
           </>
         }
       >
-        <span className="flex items-center gap-3">
-          <span className="text-xs text-(--coord-muted)">먼저 들어온 순 · 상위 {rows.length}건</span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="text-[13px] text-(--coord-faint)">먼저 들어온 순 · 상위 {rows.length}건</span>
           {all.length > 0 && (
-            <button type="button" onClick={() => setShowAll(true)} className="flex items-center gap-1.5 text-xs font-semibold text-(--coord-green)">
-              전체 보기 <Icon name="arrow" className="size-4" />
+            <button type="button" onClick={() => setShowAll(true)} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+              전체 보기 <Icon name="arrow" className="size-3.5" />
             </button>
           )}
         </span>
       </PanelHead>
       {rows.length === 0 ? (
-        <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
+        <p className="p-9 text-center text-[15px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-y-auto">
+        <ul>
           {rows.map((t) => (
             <TaskRow key={t.key} t={t} />
           ))}
@@ -380,17 +394,17 @@ function AllTasksModal({ tasks, onClose }: { tasks: Task[]; onClose: () => void 
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90vh] w-[720px] flex-col overflow-hidden rounded-[14px] border border-(--coord-line) bg-(--coord-surface) outline-none"
+        className="flex max-h-[90vh] w-[760px] flex-col overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) shadow-[0_20px_40px_rgb(0_0_0/0.16)] outline-none"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-4">
-          <h2 id={titleId} className="flex items-center gap-2 text-[17px] font-bold">
-            오늘 확인할 일 전체 <Badge tone="green">{tasks.length}건</Badge>
+        <div className="flex items-center justify-between gap-3 border-b border-(--coord-line) px-5 py-4">
+          <h2 id={titleId} className="flex items-center gap-2 text-[17px] font-extrabold">
+            오늘 확인할 일 전체 <Badge tone="red">{tasks.length}건</Badge>
           </h2>
-          <button type="button" onClick={onClose} aria-label="닫기" className="grid size-9 place-items-center rounded-lg hover:bg-(--coord-hover)">
+          <button type="button" onClick={onClose} aria-label="닫기" className="grid size-9 place-items-center rounded-full hover:bg-(--coord-page)">
             <Icon name="close" />
           </button>
         </div>
-        <p className="px-[22px] pt-3 text-xs text-(--coord-muted)">도움 요청과 검토 대기 서류를 먼저 들어온 순으로 모두 보여 줘요.</p>
+        <p className="border-b border-(--coord-line) px-5 py-2.5 text-[13.5px] text-(--coord-muted)">도움 요청과 검토 대기 서류를 먼저 들어온 순으로 모두 보여 줘요.</p>
         <ul className="min-h-0 flex-1 overflow-y-auto">
           {tasks.map((t) => (
             <TaskRow key={t.key} t={t} />
@@ -408,31 +422,37 @@ function AllTasksModal({ tasks, onClose }: { tasks: Task[]; onClose: () => void 
 function TodayConsultations({ items, loaded }: { items: ConsultationSchedule[]; loaded: boolean }) {
   return (
     <Panel label="오늘 예정된 상담" className="flex flex-col">
-      <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[18px] py-3">
-        <h2 className="text-[15px] font-bold">오늘 예정된 상담</h2>
-        {!CONSULTATION_API_CONNECTED && <Badge>일정 미연동</Badge>}
-      </div>
+      <PanelHead title="오늘 예정된 상담">
+        {!CONSULTATION_API_CONNECTED ? <Badge>일정 미연동</Badge> : loaded && <Badge tone="green">오늘 {items.length}건</Badge>}
+      </PanelHead>
       {items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3 text-center">
-          <p className="text-[13px] text-(--coord-muted)">{loaded ? "오늘 예정된 상담이 없어요." : "상담 일정을 불러오는 중이에요…"}</p>
-          <p className="text-[11px] text-(--coord-muted)">도움 요청에서 &lsquo;상담 예정&rsquo;으로 일시를 잡으면 여기에 보여요</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-5 text-center">
+          <p className="text-[15px] text-(--coord-muted)">{loaded ? "오늘 예정된 상담이 없어요." : "상담 일정을 불러오는 중이에요…"}</p>
+          <p className="text-[13px] text-(--coord-faint)">도움 요청에서 &lsquo;상담 예정&rsquo;으로 일시를 잡으면 여기에 보여요</p>
         </div>
       ) : (
-        <ul className="max-h-[120px] overflow-y-auto">
+        // 리뉴얼: 상담 한 건 = 회색 상자 (시각 · 이름 · 도움 유형 + 요청 열기 · 기록)
+        <ul className="flex max-h-[260px] flex-col gap-2.5 overflow-y-auto p-5">
           {items.map((c) => (
-            <li key={c.id} className="flex items-start gap-3.5 border-b border-(--coord-line-soft) px-[18px] py-3 last:border-b-0">
-              <Link href={`/coordinator/help-requests?id=${c.id}`} className="border-r-2 border-(--coord-tint-line) pr-3.5 text-[13px] font-bold text-(--coord-green) hover:underline">
-                <time dateTime={c.scheduledAt}>{c.scheduledAt.slice(11, 16)}</time>
-              </Link>
-              <div className="min-w-0">
-                <h3 className="truncate text-xs font-bold">
-                  {c.studentName}
-                  {c.topic && ` · ${c.topic}`}
-                </h3>
+            <li key={c.id} className="rounded-md border border-(--coord-line) bg-(--coord-head) p-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <b className="truncate text-[15px] text-(--coord-green)">
+                  <time dateTime={c.scheduledAt}>{c.scheduledAt.slice(11, 16)}</time> · {c.studentName}
+                </b>
+                {c.topic && (
+                  <Badge tone="blue" small>
+                    {c.topic}
+                  </Badge>
+                )}
               </div>
-              <Link href={`/coordinator/students/${c.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm} ml-auto`}>
-                기록
-              </Link>
+              <div className="mt-2.5 flex justify-end gap-2">
+                <Link href={`/coordinator/students/${c.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+                  기록
+                </Link>
+                <Link href={`/coordinator/help-requests?id=${c.id}`} className={`${btn.base} ${btn.primary} ${btn.sm}`}>
+                  요청 열기
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
@@ -446,6 +466,15 @@ function TodayConsultations({ items, loaded }: { items: ConsultationSchedule[]; 
  * 목록을 받기 전 · 못 받으면 '—' (0건으로 단정하지 않음). 칸을 누르면 서류 검토 화면의 그 탭이 열린다.
  * asOf 가 바뀌면(대시보드 새로고침) 다시 센다
  */
+/** 서류 단계 숫자 색 (리뉴얼: 검토 대기 앰버 · 수정 요청 빨강 · 승인 대기 파랑 · 전달 완료 초록) */
+const NUM_COLOR: Record<CoordTone, string> = {
+  orange: "text-(--coord-chart-check)",
+  red: "text-(--coord-red)",
+  blue: "text-(--coord-blue)",
+  green: "text-(--coord-green)",
+  gray: "text-(--coord-muted)",
+};
+
 function DocStatus({ count, asOf }: { count: number; asOf: string }) {
   const [list, setList] = useState<CoordinatorApplicationListItem[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -475,29 +504,33 @@ function DocStatus({ count, asOf }: { count: number; asOf: string }) {
   const pendingText = failed ? "조회 실패" : "불러오는 중";
   return (
     <Panel label="서류 검토 현황">
-      <div id={REVIEW_QUEUE_ANCHOR} className="flex scroll-mt-20 items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[18px] py-3">
-        <h2 className="text-[15px] font-bold">서류 검토 현황</h2>
-        <Link href="/coordinator/applications" className="flex items-center gap-1.5 text-xs font-semibold text-(--coord-green)">
-          전체 <Icon name="arrow" className="size-4" />
-        </Link>
+      <div id={REVIEW_QUEUE_ANCHOR} className="scroll-mt-20">
+        <PanelHead title="서류 검토 현황">
+          <Link href="/coordinator/applications" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+            전체 <Icon name="arrow" className="size-3.5" />
+          </Link>
+        </PanelHead>
       </div>
-      <ul className="grid grid-cols-4 gap-2 px-3 py-2.5">
+      {/* 리뉴얼 .doc-mini-box: 회색 칸 + 상태색 숫자. 검토 대기 칸만 앰버로 강조 */}
+      <ul className="grid grid-cols-4 gap-2.5 p-5">
         {stages.map((s) => {
           const box = (
             <>
-              <b className="text-[22px] leading-[1.2]">{s.count ?? "—"}</b>
-              <span className="text-[10.5px] font-semibold tracking-[-0.4px] whitespace-nowrap">
+              <b className={`text-xl leading-[1.3] font-extrabold ${s.count === null ? "text-(--coord-faint)" : NUM_COLOR[s.tone]}`}>{s.count ?? "—"}</b>
+              <span className="mt-0.5 text-xs leading-tight tracking-[-0.3px] break-keep text-(--coord-muted)">
                 {docLabels[s.status]}
                 {s.count === null && <span className="sr-only"> ({pendingText})</span>}
               </span>
               {s.count === null && (
-                <span aria-hidden="true" className="text-[10px] leading-none opacity-80">
+                <span aria-hidden="true" className="text-[11px] leading-none text-(--coord-faint)">
                   {pendingText}
                 </span>
               )}
             </>
           );
-          const cls = `flex flex-col items-center gap-1 rounded-[9px] px-1 py-2 text-center ${toneClass(s.tone)} ${s.count === null ? "opacity-70" : "hover:brightness-95"}`;
+          const cls = `flex flex-col items-center rounded-[4px] border px-1 py-2.5 text-center transition hover:border-(--coord-line-strong) ${
+            s.status === "SUBMITTED" ? "border-(--coord-orange-line) bg-(--coord-orange-soft)" : "border-(--coord-line) bg-(--coord-head)"
+          }`;
           return (
             <li key={s.status}>
               <Link href={`/coordinator/applications?status=${s.status}`} className={cls}>
@@ -516,67 +549,85 @@ function ManagementCard({ data }: { data: Dashboard }) {
   const counts = manageCounts(data.statusSummary);
   const known = knownCount(total, data.statusSummary);
   const check = data.statusSummary.CHECK_REQUIRED;
+  // 연락 대상 이름 칩: 대시보드 callList(1주 무응답) 실제 데이터에서 오래된 순으로 2명까지
+  const callChips = [...data.callList].sort((a, b) => b.daysSinceResponse - a.daysSinceResponse).slice(0, 2);
   return (
-    <section aria-label="수료생 관리 현황" className="flex min-h-0 flex-col overflow-y-auto rounded-xl border border-(--coord-tint-line) bg-(--coord-tint) px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-[15px] font-bold">수료생 관리 현황</h2>
-        <span className="text-xs text-(--coord-muted)">관리 중 수료생 {total}명</span>
-      </div>
-      <div className="my-[7px] flex items-center justify-between border-b border-(--coord-tint-line) pb-2.5">
-        <div>
-          <span className="text-xs text-(--coord-muted)">관리 상태 파악률</span>
-          <strong className="mt-[3px] block text-[30px] leading-[1.2]">
-            {pct(known, total)}
-            <small className="ml-[3px] text-[15px]">%</small>
+    <Panel label="수료생 관리 현황">
+      <PanelHead title="수료생 관리 현황" sub={<>관리 상태 파악률: <b className="text-(--coord-ink)">{pct(known, total).toFixed(1)}%</b></>}>
+        <Badge tone="green">총 {total}명 관리 중</Badge>
+      </PanelHead>
+      <div className="p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <strong className="text-[32px] leading-none font-extrabold text-(--coord-green)">
+            {Math.round(pct(known, total))}
+            <small className="text-lg">%</small>
           </strong>
+          <span className="text-right text-[13px] text-(--coord-muted)">
+            상태 분류된 수료생 <b className="text-(--coord-ink)">{known}명</b> / 전체 {total}명
+          </span>
         </div>
-        <p className="text-right text-[11px] leading-[1.7] text-(--coord-muted)">
-          상태가 분류된 수료생
-          <br />
-          <b className="text-(--coord-ink)">
-            {known}명 / 전체 {total}명
-          </b>
-        </p>
-      </div>
-      {total > 0 && (
+        {/* 상태 막대 (리뉴얼 .status-meter-wrap: 10px 알약) */}
         <div
-          className="my-3 flex h-[15px] overflow-hidden rounded-[5px]"
+          className="mt-3.5 mb-4 flex h-2.5 overflow-hidden rounded-full bg-(--coord-chart-track)"
           role="img"
           aria-label={`관리 상태 분포: ${MANAGE_ORDER.map((s) => `${manageLabels[s]} ${counts[s]}명`).join(", ")}`}
         >
-          {MANAGE_ORDER.filter((s) => counts[s] > 0).map((s) => (
-            <span key={s} style={{ width: `${pct(counts[s], total)}%`, background: manageChartVar[s] }} />
-          ))}
+          {total > 0 &&
+            MANAGE_ORDER.filter((s) => counts[s] > 0).map((s) => (
+              <span key={s} className="h-full" style={{ width: `${pct(counts[s], total)}%`, background: manageChartVar[s] }} />
+            ))}
         </div>
-      )}
-      {MANAGE_ORDER.map((s) => (
-        <Link key={s} href={`/coordinator/students?status=${s}`} className="flex h-[44px] w-full items-center rounded-md hover:bg-(--coord-hover)">
-          <Badge tone={manageTone[s]}>{manageLabels[s]}</Badge>
-          <b className="ml-auto flex items-center gap-2 text-[13px]">
-            {counts[s]}명
-            <em className="min-w-11 text-right text-[11px] font-medium text-(--coord-muted) not-italic">{pct(counts[s], total)}%</em>
-            <Icon name="arrow" className="size-4" />
+        <ul className="flex flex-col gap-2.5">
+          {MANAGE_ORDER.map((s) => {
+            const warn = s === "CHECK_REQUIRED";
+            return (
+              <li key={s}>
+                <Link
+                  href={`/coordinator/students?status=${s}`}
+                  className={`flex items-center justify-between rounded-[4px] border px-2.5 py-2 text-sm font-semibold transition hover:border-(--coord-line-strong) ${
+                    warn ? "border-(--coord-orange-line) bg-(--coord-orange-soft) text-(--coord-orange)" : "border-transparent bg-(--coord-head)"
+                  }`}
+                >
+                  <span className={`flex items-center gap-2 ${warn ? "font-bold" : ""}`}>
+                    <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: manageChartVar[s] }} />
+                    {manageLabels[s]}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <b>{counts[s]}명</b> ({Math.round(pct(counts[s], total))}%)
+                    <Icon name="arrow" className="size-3.5" />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {/* 연락 필요 안내 (리뉴얼 .alert-callout-box) */}
+        <div className="mt-3.5 rounded-md border border-(--coord-attention-line) bg-(--coord-orange-soft) p-3.5">
+          <b className="flex items-center gap-1.5 text-[14.5px] font-extrabold text-(--coord-attention)">
+            <Icon name="info" className="size-4" />
+            직접 연락이 필요한 수료생 {check}명 / 전체 {total}명
           </b>
+          <p className="mt-1 text-[13.5px] leading-[1.45] text-(--coord-attention)">
+            1주 넘게 앱 응답이 없어요. 나머지 {known}명은 앱 응답이나 도움 요청으로 상태가 분류돼 있어요.
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {callChips.map((c) => (
+              <Link key={c.studentId} href={`/coordinator/students/${c.studentId}`} className={`${btn.base} ${btn.outline} px-2! py-1! text-xs!`}>
+                {c.studentName} ({c.daysSinceResponse}일 전)
+              </Link>
+            ))}
+            <Link href="/coordinator/students?status=CHECK_REQUIRED" className={`${btn.base} ${btn.outline} px-2! py-1! text-xs!`}>
+              전체 {check}명 보기 <Icon name="arrow" className="size-3" />
+            </Link>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-[1.4] text-(--coord-faint)">
+          관리 상태 파악률은 앱 응답 · 도움 요청으로 상태가 분류된 비율이에요. 취업 여부를 직접 확인한 비율은 아니에요.
+        </p>
+        <Link href="/coordinator/stats" className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-(--coord-green) hover:underline">
+          취업·지원 현황 보기 <Icon name="arrow" className="size-3.5" />
         </Link>
-      ))}
-      <Link
-        href="/coordinator/students?status=CHECK_REQUIRED"
-        className="mt-3.5 mb-2.5 block rounded-lg border border-(--coord-attention-line) bg-(--coord-attention-soft) p-2.5"
-      >
-        <b className="block text-[13px] text-(--coord-attention)">
-          직접 연락이 필요한 수료생 {check}명 <span className="text-[11px] font-normal">/ 전체 {total}명</span>
-        </b>
-        <span className="mt-[5px] flex items-center gap-1 text-[11px] text-(--coord-attention)">
-          1주 넘게 앱 응답이 없어요. 나머지 {known}명은 앱 응답이나 도움 요청으로 상태가 분류돼 있어요.
-          <Icon name="arrow" className="size-[13px]" />
-        </span>
-      </Link>
-      <p className="my-2 text-[11px] leading-normal text-(--coord-muted)">
-        관리 상태 파악률은 앱 응답 · 도움 요청으로 상태가 분류된 비율이에요. 취업 여부를 직접 확인한 비율은 아니에요.
-      </p>
-      <Link href="/coordinator/stats" className="mt-auto flex items-center gap-1.5 text-xs font-semibold text-(--coord-green)">
-        취업·지원 현황 보기 <Icon name="arrow" className="size-4" />
-      </Link>
-    </section>
+      </div>
+    </Panel>
   );
 }

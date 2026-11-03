@@ -1,8 +1,11 @@
 // 주인: FE-B — 코디네이터 화면 공통 부품 (11/1 개편 목업). 공통 UI(components/ui · FE-A)를 고치지 않고 코디네이터 폴더에 따로 둔다.
 // 색은 coordinator.css 의 --coord-* 변수만 쓴다.
 import type { ReactNode } from "react";
-import type { CoordTone } from "@/components/coordinator/coordLabels";
+import { courseName, manageLabels, manageTone, type CoordTone } from "@/components/coordinator/coordLabels";
+import { subStatusLabels } from "@/components/student/labels";
 import { ApiError } from "@/lib/api/client";
+import type { CoordStudentStatus } from "@/types/coordinator";
+import type { SubStatus } from "@/types/student";
 
 const ICONS = {
   home: "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z",
@@ -23,6 +26,7 @@ const ICONS = {
   chevron: "m8 10 4 4 4-4",
   close: "M6 6l12 12M18 6 6 18",
   refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+  info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 8v4M12 16h.01",
 } as const;
 export type IconName = keyof typeof ICONS;
 
@@ -50,10 +54,23 @@ const TONE: Record<CoordTone, string> = {
 };
 export const toneClass = (tone: CoordTone) => TONE[tone];
 
-/** 상태 이름표 (목업 .badge) */
-export function Badge({ tone = "gray", children }: { tone?: CoordTone; children: ReactNode }) {
+/** 이름표 테두리: 앰버 · 빨강만 테두리가 있다 (리뉴얼 .badge.amber · .badge.red) */
+const TONE_BORDER: Record<CoordTone, string> = {
+  green: "border-transparent",
+  orange: "border-(--coord-orange-line)",
+  red: "border-(--coord-red-line)",
+  blue: "border-transparent",
+  gray: "border-transparent",
+};
+
+/** 상태 이름표 (리뉴얼 .badge, 알약 모양). small: 표 · 목록 안의 좁은 자리용 */
+export function Badge({ tone = "gray", small = false, children }: { tone?: CoordTone; small?: boolean; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-[5px] px-[7px] py-1 text-[11px] leading-[1.4] font-semibold whitespace-nowrap ${TONE[tone]}`}>
+    <span
+      className={`inline-flex items-center gap-[5px] rounded-full border leading-[1.2] font-bold whitespace-nowrap ${
+        small ? "px-2 py-[3px] text-xs" : "px-2.5 py-1 text-[13.5px]"
+      } ${TONE[tone]} ${TONE_BORDER[tone]}`}
+    >
       {children}
     </span>
   );
@@ -62,45 +79,77 @@ export function Badge({ tone = "gray", children }: { tone?: CoordTone; children:
 /** 페이지 제목 + 설명 (+ 오른쪽 동작) */
 export function PageTitle({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <div>
-        <h1 className="text-[27px] leading-[1.3] font-bold tracking-[-1px]">{title}</h1>
-        <p className="mt-2 text-[13px] text-(--coord-muted)">{description}</p>
+    <div className="mb-5 flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-[26px] leading-[1.3] font-extrabold tracking-[-0.4px]">{title}</h1>
+        <p className="mt-1 text-[14.5px] text-(--coord-muted)">{description}</p>
       </div>
-      {action}
+      {action && <div className="flex shrink-0 items-center gap-2.5">{action}</div>}
     </div>
   );
 }
 
-/** 흰 카드 (목업 .panel) */
+/** 흰 카드 (리뉴얼 .app-card) */
 export function Panel({ children, className = "", label }: { children: ReactNode; className?: string; label?: string }) {
   return (
-    <section aria-label={label} className={`overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface) ${className}`}>
+    <section
+      aria-label={label}
+      className={`overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) shadow-(--coord-shadow) ${className}`}
+    >
       {children}
     </section>
   );
 }
 
-/** 카드 머리 (목업 .panelhead) */
+/** 카드 머리 (리뉴얼 .app-card-header) */
 export function PanelHead({ title, children, sub }: { title: ReactNode; children?: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[22px] py-5">
-      <div>
-        <h2 className="flex items-center gap-2 text-[15px] font-bold">{title}</h2>
-        {sub && <p className="mt-1 text-[11px] text-(--coord-muted)">{sub}</p>}
+    <div className="flex items-center justify-between gap-3 border-b border-(--coord-line) px-5 py-4">
+      <div className="min-w-0">
+        <h2 className="flex items-center gap-2 text-[17px] font-extrabold">{title}</h2>
+        {sub && <p className="mt-[3px] text-[13px] text-(--coord-muted)">{sub}</p>}
       </div>
       {children}
     </div>
   );
 }
 
-/** 이름 첫 글자를 뺀 두 글자 (목업 아바타) */
-export function Avatar({ name, large = false }: { name: string; large?: boolean }) {
+/**
+ * 표의 교육과정 이름 (C2 · C6 공통). 원본 이름은 그대로 두고(끝의 ' N기'만 뗌) 단어 단위로 줄을 바꾼다.
+ * lines 줄을 넘으면 줄임표. 전체 이름은 마우스 안내(title)와 화면 낭독기로 확인할 수 있다
+ */
+export function CourseLabel({ label, lines = 2 }: { label: string; lines?: 1 | 2 }) {
+  const name = courseName(label);
+  return (
+    <span title={label} className={`block leading-[1.4] break-keep ${lines === 1 ? "truncate" : "line-clamp-2"}`}>
+      {name}
+    </span>
+  );
+}
+
+/**
+ * 관리 상태 배지 + 세부 상태 (C2 · C6 공통). 세부 상태는 지우지 않는다.
+ * stacked: 배지 아래 줄(C2, 행이 두 줄 높이) · 아니면 배지 옆 같은 줄(C6, 한 줄 행). 넘치면 줄임표 + 마우스 안내
+ */
+export function ManageStatus({ status, subStatus, stacked = false }: { status: CoordStudentStatus; subStatus: SubStatus | null; stacked?: boolean }) {
+  const sub = subStatus ? subStatusLabels[subStatus] : null;
+  return (
+    <span className={`flex min-w-0 ${stacked ? "flex-col items-start gap-0.5" : "items-center gap-1.5"}`} title={sub ? `${manageLabels[status]} · ${sub}` : undefined}>
+      <Badge tone={manageTone[status]}>{manageLabels[status]}</Badge>
+      {sub && <span className="max-w-full truncate text-xs text-(--coord-muted)">{sub}</span>}
+    </span>
+  );
+}
+
+/** 이름 첫 글자를 뺀 두 글자 (리뉴얼 .task-avatar). red: 도움 요청 행 */
+export function Avatar({ name, large = false, small = false, red = false }: { name: string; large?: boolean; small?: boolean; red?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-grid shrink-0 place-items-center rounded-full bg-(--coord-green-soft) font-semibold text-(--coord-green-ink) ${
-        large ? "size-[58px] text-xl" : "size-[34px] text-xs"
+      className={`inline-grid shrink-0 place-items-center rounded-full border font-extrabold ${
+        red ? "border-(--coord-red-line) bg-(--coord-red-soft) text-(--coord-red)" : "border-(--coord-tint-line) bg-(--coord-tint) text-(--coord-green)"
+      } ${
+        large ? "size-[60px] text-xl" : small ? "size-[34px] text-[13px]" : "size-10 text-sm"
       }`}
     >
       {name.length > 2 ? name.slice(1) : name}
@@ -121,7 +170,7 @@ export function apiErrorText(e: unknown, fallback: string) {
 
 export function LoadState({ error, onRetry, loadingText }: { error: string | null; onRetry: () => void; loadingText: string }) {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-sm text-(--coord-muted)">
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-[15px] text-(--coord-muted)">
       <p role={error ? "alert" : "status"}>{error ?? loadingText}</p>
       {error && (
         <button type="button" onClick={onRetry} className="font-bold text-(--coord-green) focus-visible:outline-2 focus-visible:outline-(--coord-green)">
@@ -132,13 +181,16 @@ export function LoadState({ error, onRetry, loadingText }: { error: string | nul
   );
 }
 
-/** 버튼 모양 (목업 .btn) */
+/** 버튼 모양 (리뉴얼 .btn: 4px 모서리 · 굵은 글자) */
 export const btn = {
-  base: "inline-flex items-center justify-center gap-[7px] rounded-lg border px-3.5 py-[9px] text-[13px] font-semibold whitespace-nowrap transition focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green) disabled:cursor-not-allowed disabled:opacity-50",
-  outline: "border-(--coord-line) bg-(--coord-surface) hover:bg-(--coord-hover)",
-  primary: "border-(--coord-green) bg-(--coord-green) text-(--coord-surface) hover:bg-(--coord-forest)",
-  danger: "border-(--coord-red-soft) bg-(--coord-red-soft) text-(--coord-red)",
-  sm: "px-2.5 py-1.5 text-xs",
+  base: "inline-flex items-center justify-center gap-[7px] rounded-[4px] border px-4 py-[9px] text-[14.5px] leading-[1.25] font-bold whitespace-nowrap transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-green) disabled:cursor-not-allowed disabled:opacity-50",
+  outline:
+    "border-(--coord-line) bg-(--coord-surface) text-(--coord-ink) hover:border-(--coord-line-strong) hover:bg-(--coord-page) disabled:hover:border-(--coord-line) disabled:hover:bg-(--coord-surface)",
+  primary:
+    "border-(--coord-green) bg-(--coord-green) text-(--coord-surface) hover:border-(--coord-green-hover) hover:bg-(--coord-green-hover) disabled:hover:bg-(--coord-green)",
+  danger: "border-(--coord-red-line) bg-(--coord-red-soft) text-(--coord-red) hover:bg-(--coord-red-line)/40",
+  /** base 의 크기와 겹치므로 ! 로 확실히 덮는다 (Tailwind 는 클래스 순서가 아니라 CSS 생성 순서로 이겨서 sm 이 무시될 수 있음) */
+  sm: "px-3! py-1.5! text-[13.5px]!",
 } as const;
 
 /**
@@ -149,13 +201,13 @@ export function RefreshAction({ busy, error, onRefresh, children }: { busy: bool
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       {error && (
-        <p role="alert" title={error} className="max-w-[420px] truncate text-xs font-semibold text-(--coord-red)">
+        <p role="alert" title={error} className="max-w-[420px] truncate text-[13px] font-semibold text-(--coord-red)">
           새로고침 실패 · {error}
         </p>
       )}
       {children}
-      <button type="button" onClick={onRefresh} disabled={busy} aria-busy={busy} className={`${btn.base} ${btn.outline}`}>
-        <Icon name="refresh" className={`size-4 ${busy ? "animate-spin" : ""}`} />
+      <button type="button" onClick={onRefresh} disabled={busy} aria-busy={busy} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+        <Icon name="refresh" className={`size-3.5 ${busy ? "animate-spin" : ""}`} />
         {busy ? "새로고침 중…" : "목록 새로고침"}
       </button>
     </div>

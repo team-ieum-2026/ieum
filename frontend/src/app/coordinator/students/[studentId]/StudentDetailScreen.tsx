@@ -1,14 +1,14 @@
 "use client";
-// 주인: FE-B — C3 수료생 상세 (11/1 역할 조정으로 FE-B, 11/1 개편 목업 studentDetail()).
-// 화면 높이에 맞춘 고정 배치: 위 요약(이름 · 상태 · 다음 행동 · 마지막 기록 활동)은 늘 보이고, 아래 두 열은 각각 안에서 스크롤.
-// 왼쪽: 추천 공고와 수료생 응답 · 진행 중인 지원서류 · 도움 요청(접수)
-// 오른쪽: 기본 정보 · 통화 · 상담 기록(+ 기록 추가) · 역량 프로필 · 등록 자료 (기존 C3 기능은 모두 유지)
+// 주인: FE-B — C3 수료생 상세 (11/1 역할 조정으로 FE-B, 11/3 리뉴얼 design-reference renderStudentDetailView).
+// 리뉴얼 배치: 목록으로 → 프로필 머리 카드(이름 · 상태 · 기록 추가 + NEXT ACTION + 마지막 기록 활동) → 2열 1.4 : 1
+// 왼쪽: 추천 공고와 수료생 응답 · 진행 중인 지원서류 · 도움 요청 이력(접수)
+// 오른쪽: 기본 정보 · 통화 · 상담 기록(타임라인 + 기록 추가) · 역량 프로필 · 등록 자료 (기존 C3 기능은 모두 유지)
 // 도움 요청은 대시보드 API 의 접수(OPEN) 목록에서 이 수료생 것만 거른다. ?log=new 로 들어오면 기록 추가 창을 바로 연다.
-// 취업 확인 경로 · 마지막 확인일 · 회사/직무 · 후속 연락일 · 상태 변경 이력 · '취업 상태 확인·변경'은 저장하는 곳이 없어 숨김.
+// 취업 확인 경로 · 마지막 확인일 · 회사/직무 · 후속 연락일 · 상태 변경 이력 · '취업 상태 변경'은 저장하는 곳(API)이 없어 숨김.
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Avatar, Badge, Icon, btn } from "@/components/coordinator/CoordUi";
+import { Badge, Icon, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import {
   contactLabels,
@@ -86,33 +86,30 @@ export default function StudentDetailScreen({ studentId }: { studentId: number }
   };
 
   return (
-    // 위: 핵심 정보 + 다음 행동 한 줄 / 아래 2열: 코디네이터 업무(추천 · 서류 · 도움 요청) | 기본 정보 · 상담 기록 · 역량 프로필 · 등록 자료
-    // 카드 안 목록은 각자 최대 높이 안에서 스크롤해 한쪽만 길어지지 않게 한다
     <div>
-      <Link
-        href={backHref}
-        onClick={goBack}
-        className="mb-3 inline-flex w-fit items-center gap-2 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-3.5 py-2 text-[13px] font-semibold text-(--coord-ink) hover:border-(--coord-green) hover:text-(--coord-green) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
-      >
-        <Icon name="back" className="size-4" /> 수료생 목록으로
-      </Link>
+      <div className="mb-3.5">
+        <Link href={backHref} onClick={goBack} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+          <Icon name="back" className="size-3.5" /> 수료생 목록으로
+        </Link>
+      </div>
       <ApiState loading={loading} error={error} retry={reload} notFoundHref={backHref} notFoundLabel="수료생 목록으로" />
       {data && (
         <>
           <Head data={data} help={help} onAddLog={openLog} />
           {saved && (
-            <p role="status" className="mt-3 rounded-lg bg-(--coord-green-soft) px-3.5 py-2.5 text-[13px] text-(--coord-green-ink)">
+            <p role="status" className="mb-4 rounded-md border border-(--coord-green-line) bg-(--coord-green-soft) px-4 py-3 text-sm text-(--coord-green-ink)">
               상담 기록을 저장했어요.
               {IS_MOCK && <b className="ml-2 text-(--coord-attention)">{MOCK_SAVE_NOTE}</b>}
             </p>
           )}
-          <div className="mt-3 grid grid-cols-[minmax(0,1.3fr)_minmax(380px,1fr)] items-start gap-4">
-            <div className="flex flex-col gap-3">
+          {/* 리뉴얼 .crm-grid-split: 1.4fr : 1fr, 간격 20px, 위쪽 정렬 */}
+          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-start gap-5">
+            <div className="flex min-w-0 flex-col gap-5">
               <Recommendations data={data} />
               <Documents data={data} />
               <HelpList help={help} />
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-5">
               <BasicInfo data={data} help={help} />
               <ContactLogs data={data} onAdd={openLog} />
               <Competency data={data} />
@@ -200,6 +197,9 @@ function lastActivity(data: CoordinatorStudentDetail): { at: string; text: strin
   return [...logs, ...responses].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
 }
 
+/** 회사 이름 첫 글자 ('(주)' 는 뗌) */
+const initialOf = (company: string) => company.replace(/^\(주\)\s*/, "").slice(0, 1);
+
 function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: DashboardHelpRequest[]; onAddLog: () => void }) {
   const s = data.student;
   const reviewDoc = historyItems(data).find((i) => i.applicationStatus === "SUBMITTED" && i.applicationId);
@@ -212,39 +212,46 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
     .sort((a, b) => (b.respondedAt as string).localeCompare(a.respondedAt as string))[0];
   // 다음 행동: 접수된 도움 요청 → 검토 대기 서류 → 연속 패스 연락 순 (있는 데이터로만 정하고, 없으면 버튼을 만들지 않는다)
   const next: { text: string; title: string; href?: string } | null = help[0]
-    ? { text: "도움 요청 확인", title: "접수된 도움 요청을 확인해 주세요", href: `/coordinator/help-requests?id=${help[0].helpRequestId}` }
+    ? { text: "요청 확인 바로가기", title: "접수된 도움 요청을 확인해 주세요", href: `/coordinator/help-requests?id=${help[0].helpRequestId}` }
     : reviewDoc
-      ? { text: "서류 검토", title: "검토 대기 서류를 확인해 주세요", href: `/coordinator/applications/${reviewDoc.applicationId}` }
+      ? { text: "서류 검토 바로가기", title: "검토 대기 서류를 확인해 주세요", href: `/coordinator/applications/${reviewDoc.applicationId}` }
       : ext.needsPassFollowUp
         ? { text: "통화 · 상담 기록", title: `추천 공고를 연속 ${ext.consecutivePassCount ?? "여러"}회 패스했어요. 연락해 주세요` }
         : null;
   const activity = lastActivity(data);
   return (
-    // 핵심 정보 | 다음 행동(또는 현재 진행 상태) | 기록 추가 를 한 줄에 둬 위쪽 높이를 줄인다
-    <section aria-label="수료생 요약" className="shrink-0 rounded-xl border border-(--coord-line) bg-(--coord-surface) px-5 py-4">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5">
-        <div className="flex items-center gap-[15px]">
-          <Avatar name={s.name} large />
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-[25px] leading-[1.3] font-bold tracking-[-1px]">{s.name}</h1>
+    // 리뉴얼 .profile-header-card: 8px 모서리 · 22px 24px 여백 · 세로 간격 16px
+    <section aria-label="수료생 요약" className="mb-5 flex flex-col gap-4 rounded-lg border border-(--coord-line) bg-(--coord-surface) px-6 py-[22px]">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <span
+            aria-hidden="true"
+            className="grid size-[58px] shrink-0 place-items-center rounded-full border-2 border-(--coord-green-line) bg-(--coord-green-soft) text-xl font-extrabold text-(--coord-green-ink)"
+          >
+            {s.name.length > 2 ? s.name.slice(1) : s.name}
+          </span>
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-center gap-2.5 text-[22px] leading-[1.35] font-extrabold">
+              {s.name}
               <Badge tone={manageTone[s.status]}>{manageLabels[s.status]}</Badge>
               {helpCount > 0 && <Badge tone="red">도움 요청 {helpCount}건</Badge>}
               {ext.needsPassFollowUp && <Badge tone="blue">연락 필요 · 연속 패스 {ext.consecutivePassCount ?? "—"}회</Badge>}
-            </div>
-            <p className="mt-1 text-xs text-(--coord-muted)">
-              {[courseName(s.courseLabel), s.desiredJob, s.subStatus && subStatusLabels[s.subStatus]].filter(Boolean).join(" · ")}
+            </h1>
+            <p className="mt-[3px] text-sm break-keep text-(--coord-muted)">
+              {[courseName(s.courseLabel), s.desiredJob ?? "희망직무 미지정", s.subStatus && subStatusLabels[s.subStatus]].filter(Boolean).join(" · ")}
             </p>
           </div>
         </div>
-      <div className="flex min-w-0 items-center justify-between gap-4 rounded-[10px] border border-(--coord-tint-line) bg-(--coord-tint) px-3.5 py-[9px]">
-        {/* 실제로 이동할 행동이 있을 때만 '다음 행동', 없으면 서버 상태 근거를 '현재 진행 상태'로 보여 준다 */}
-        <div>
-          <span className="text-[11px] font-bold tracking-[1.4px] text-(--coord-green)">{next ? "NEXT ACTION · 다음 행동" : "현재 진행 상태"}</span>
-          <h3 className="mt-[5px] text-[15px] font-bold">
-            {next ? next.title : (s.reason ?? manageLabels[s.status])}
-          </h3>
-          <p className="mt-[5px] text-xs text-(--coord-muted)">
+        <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.primary} shrink-0`}>
+          통화·상담 기록 추가
+        </button>
+      </div>
+      {/* 리뉴얼 .next-action-callout. 실제로 이동할 행동이 있을 때만 '다음 행동', 없으면 서버 상태 근거를 '현재 진행 상태'로 보여 준다 */}
+      <div className="flex items-center justify-between gap-4 rounded-md border border-(--coord-green-line) bg-(--coord-tint) px-[18px] py-3.5">
+        <div className="min-w-0">
+          <b className="text-xs font-extrabold tracking-[0.5px] text-(--coord-green)">{next ? "NEXT ACTION · 다음 행동" : "현재 진행 상태"}</b>
+          <h3 className="my-0.5 text-[16.5px] font-extrabold text-(--coord-forest)">{next ? next.title : (s.reason ?? manageLabels[s.status])}</h3>
+          <p className="text-[13.5px] text-(--coord-green-ink)">
             {next && s.reason ? `${s.reason} · ` : ""}
             {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 앱 응답` : "앱 응답 기록 없음"}
             {ext.consecutivePassCount !== null && ext.consecutivePassCount > 0 && ` · 연속 패스 ${ext.consecutivePassCount}회`}
@@ -254,39 +261,29 @@ function Head({ data, help, onAddLog }: { data: CoordinatorStudentDetail; help: 
         </div>
         {next &&
           (next.href ? (
-            <Link href={next.href} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
+            <Link href={next.href} className={`${btn.base} ${btn.primary} ${btn.sm} shrink-0`}>
               {next.text}
             </Link>
           ) : (
-            <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.primary} shrink-0 px-4 py-2.5 text-sm`}>
+            <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.primary} ${btn.sm} shrink-0`}>
               {next.text}
             </button>
           ))}
       </div>
-        <button type="button" onClick={onAddLog} className={`${btn.base} ${btn.outline} px-4 py-2.5 text-sm`}>
-          통화 · 상담 기록 추가
-        </button>
-      </div>
-      {activity && (
-        <p className="mt-2.5 text-xs leading-[1.7]">
-          <b>마지막 기록 활동</b>　{monthDayTime(activity.at)} · {activity.text}
-          <span className="text-(--coord-muted)"> · 저장된 응답 · 상담 기록 기준이며 실시간 접속 정보는 아니에요.</span>
-        </p>
-      )}
+      <p className="pt-1 text-[12.5px] text-(--coord-faint)">
+        마지막 기록 활동: {activity ? `${monthDayTime(activity.at)} · ${activity.text}` : "저장된 기록 없음"} · 저장된 응답 및 상담 기록 기준이며 실시간 접속 정보는 아니에요.
+      </p>
     </section>
   );
 }
 
-/** 목업 .panel + .panelhead. 데이터가 없으면 한 줄 안내만 (큰 빈 카드가 생기지 않게) */
+/** 리뉴얼 .app-card + .app-card-header. 데이터가 없으면 가운데 안내 한 줄 */
 function Card({ title, aside, empty, children }: { title: string; aside?: ReactNode; empty?: string | false; children?: ReactNode }) {
   return (
-    <section aria-label={title} className="shrink-0 overflow-hidden rounded-xl border border-(--coord-line) bg-(--coord-surface)">
-      <div className="flex items-center justify-between gap-3 border-b border-(--coord-line-soft) px-5 py-3">
-        <h2 className="text-[14px] font-bold">{title}</h2>
-        {aside}
-      </div>
-      {empty ? <p className="px-5 py-3 text-[13px] text-(--coord-muted)">{empty}</p> : children}
-    </section>
+    <Panel label={title}>
+      <PanelHead title={title}>{aside}</PanelHead>
+      {empty ? <p className="p-6 text-center text-[15px] text-(--coord-muted)">{empty}</p> : children}
+    </Panel>
   );
 }
 
@@ -295,34 +292,39 @@ function Recommendations({ data }: { data: CoordinatorStudentDetail }) {
   return (
     <Card
       title="추천 공고와 수료생 응답"
-      aside={<span className="text-xs text-(--coord-muted)">추천 → 선택 → 다음 행동</span>}
-      empty={items.length === 0 && "저장된 추천 공고 응답이 없어요."}
+      aside={<span className="text-[13px] text-(--coord-faint)">추천 → 선택 → 다음 행동</span>}
+      empty={items.length === 0 && "추천 공고 내역이 없어요."}
     >
-      <ul className="max-h-[236px] overflow-y-auto">
+      {/* 리뉴얼 .task-item-row. 이력이 길면 카드 안에서 스크롤 (약 6건 높이) */}
+      <ul className="max-h-[460px] overflow-y-auto">
         {items.map((item) => (
-          <li key={item.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line) px-5 py-3 last:border-b-0">
-            <span
-              aria-hidden="true"
-              className="grid size-[38px] shrink-0 place-items-center rounded-[9px] border border-(--coord-line) bg-(--coord-head) text-sm font-bold text-(--coord-green-ink)"
-            >
-              {item.companyName.replace(/^\(주\)\s*/, "").slice(0, 1)}
-            </span>
-            <div className="min-w-0">
-              <h3 className="truncate text-[13px] font-bold">
-                {item.companyName} · {item.title}
-              </h3>
-              <p className="mt-0.5 text-xs text-(--coord-muted)">
-                {dateLabel(item.recommendedAt)} 추천{item.respondedAt ? ` · ${dateLabel(item.respondedAt)} 응답` : " · 아직 응답하지 않았어요"}
-              </p>
-              {(item.passReason || item.passNote) && (
-                <p className="mt-0.5 text-xs text-(--coord-muted)">
-                  {[item.passReason && passLabels[item.passReason], item.passNote && `비고: ${item.passNote}`].filter(Boolean).join(" · ")}
+          <li key={item.itemId} className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-4 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="grid size-9 shrink-0 place-items-center rounded-full border border-(--coord-tint-line) bg-(--coord-tint) text-[13px] font-extrabold text-(--coord-green)"
+              >
+                {initialOf(item.companyName)}
+              </span>
+              <div className="min-w-0">
+                <h3 className="truncate text-[15px] font-extrabold" title={`${item.companyName} · ${item.title}`}>
+                  {item.companyName} · {item.title}
+                </h3>
+                <p className="mt-[3px] truncate text-[13.5px] text-(--coord-muted)">
+                  {dateLabel(item.recommendedAt)} 추천 ·{" "}
+                  {item.passReason || item.passNote ? (
+                    <span className="text-(--coord-red)">
+                      {[item.passReason && passLabels[item.passReason], item.passNote && `비고: ${item.passNote}`].filter(Boolean).join(" · ")}
+                    </span>
+                  ) : item.respondedAt ? (
+                    `${dateLabel(item.respondedAt)} 응답 완료`
+                  ) : (
+                    <span className="text-(--coord-red)">아직 응답하지 않았어요</span>
+                  )}
                 </p>
-              )}
+              </div>
             </div>
-            <span className="ml-auto">
-              <Badge tone={responseTone[item.response]}>{responseTagLabels[item.response]}</Badge>
-            </span>
+            <Badge tone={responseTone[item.response]}>{responseTagLabels[item.response]}</Badge>
           </li>
         ))}
       </ul>
@@ -333,23 +335,23 @@ function Recommendations({ data }: { data: CoordinatorStudentDetail }) {
 function Documents({ data }: { data: CoordinatorStudentDetail }) {
   const docs = historyItems(data).filter((i) => i.applicationId && i.applicationStatus);
   return (
-    <Card title="진행 중인 지원서류" aside={<Badge>{docs.length}건</Badge>} empty={docs.length === 0 && "지원한 서류가 없어요."}>
-      <ul className="max-h-[190px] overflow-y-auto">
+    <Card title="진행 중인 지원서류" aside={<Badge tone="blue">{docs.length}건</Badge>} empty={docs.length === 0 && "제출된 지원서류가 없어요."}>
+      {/* 리뉴얼: 서류 한 건 = 회색 상자 (공고 · 지원일 / 상태 배지 + 서류 보기) */}
+      <ul className="flex max-h-[420px] flex-col gap-2.5 overflow-y-auto p-5">
         {docs.map((d) => (
-          <li key={d.itemId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-3 last:border-b-0">
-            <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-green-soft) text-(--coord-green-ink)">
-              <Icon name="doc" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[13px] font-bold">
+          <li key={d.itemId} className="flex items-center justify-between gap-3 rounded-[4px] border border-(--coord-line) bg-(--coord-head) p-3.5">
+            <div className="min-w-0">
+              <b className="block truncate text-[15.5px]" title={`${d.companyName} · ${d.title}`}>
                 {d.companyName} · {d.title}
-              </h3>
-              {d.respondedAt && <p className="mt-0.5 text-xs text-(--coord-muted)">{dateLabel(d.respondedAt)} 지원</p>}
+              </b>
+              <p className="mt-0.5 text-[13px] text-(--coord-muted)">{d.respondedAt ? `지원일: ${dateLabel(d.respondedAt)}` : "지원일 기록 없음"}</p>
             </div>
-            {d.applicationStatus && <Badge tone={docTone[d.applicationStatus]}>{docLabels[d.applicationStatus]}</Badge>}
-            <Link href={`/coordinator/applications/${d.applicationId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-              서류 보기
-            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              {d.applicationStatus && <Badge tone={docTone[d.applicationStatus]}>{docLabels[d.applicationStatus]}</Badge>}
+              <Link href={`/coordinator/applications/${d.applicationId}`} className={`${btn.base} ${btn.primary} ${btn.sm}`}>
+                서류 보기
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
@@ -359,25 +361,26 @@ function Documents({ data }: { data: CoordinatorStudentDetail }) {
 
 function HelpList({ help }: { help: DashboardHelpRequest[] }) {
   return (
-    <Card title="도움 요청" aside={<span className="text-xs text-(--coord-muted)">접수된 요청</span>} empty={help.length === 0 && "접수된 도움 요청이 없어요."}>
-      <ul className="max-h-[170px] overflow-y-auto">
+    <Card
+      title="도움 요청 이력"
+      aside={<Badge tone={help.length > 0 ? "red" : "gray"}>{help.length > 0 ? `접수 ${help.length}건` : "접수 없음"}</Badge>}
+      empty={help.length === 0 && "접수된 도움 요청이 없어요."}
+    >
+      {/* 리뉴얼: 접수된 요청 = 빨간 상자 (유형 · 공고 / 요청 원문 / 요청 상세 열기). 접수(OPEN)만 있다 */}
+      <ul className="flex max-h-[420px] flex-col gap-2.5 overflow-y-auto p-5">
         {help.map((h) => (
-          <li key={h.helpRequestId} className="flex items-center gap-[13px] border-b border-(--coord-line-soft) px-5 py-3 last:border-b-0">
-            <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-(--coord-red-soft) text-(--coord-red)">
-              <Icon name="help" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[13px] font-bold">
-                <span className="mr-1.5 text-(--coord-red)">{helpTypeLabel(h.helpType)}</span>
-                {helpTitle(h)}
-              </h3>
+          <li key={h.helpRequestId} className="flex items-center justify-between gap-3 rounded-[4px] border border-(--coord-red-line) bg-(--coord-red-soft) p-3.5">
+            <div className="min-w-0">
+              <b className="block truncate text-[15px] text-(--coord-red)">
+                {helpTypeLabel(h.helpType)} · {helpTitle(h)}
+              </b>
+              <p className="mt-[3px] text-[13.5px] break-words text-(--coord-ink)">{h.memo ? `"${h.memo}"` : "남긴 메모가 없어요."}</p>
               <p className="mt-0.5 text-xs text-(--coord-muted)">
                 {h.contactMethod ? `${contactLabels[h.contactMethod]} 선호` : "선호 연락 없음"} · {monthDayTime(h.createdAt)} 접수
               </p>
             </div>
-            <Badge tone="red">접수</Badge>
-            <Link href={`/coordinator/help-requests?id=${h.helpRequestId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-              요청 보기
+            <Link href={`/coordinator/help-requests?id=${h.helpRequestId}`} className={`${btn.base} ${btn.danger} ${btn.sm} shrink-0`}>
+              요청 상세 열기
             </Link>
           </li>
         ))}
@@ -391,7 +394,7 @@ function BasicInfo({ data, help }: { data: CoordinatorStudentDetail; help: Dashb
   const pref = help.find((h) => h.contactMethod)?.contactMethod;
   const rows: [string, ReactNode][] = [
     ["이메일", s.email],
-    ["선호 연락", pref ? `${contactLabels[pref]} (도움 요청에서 고름)` : null],
+    ["선호 연락", pref ? <b className="text-(--coord-green)">{contactLabels[pref]} (도움 요청에서 고름)</b> : null],
     ["희망 직무", s.desiredJob],
     ["희망 지역", s.preferredRegion],
     ["교육과정", courseName(s.courseLabel)],
@@ -407,13 +410,12 @@ function BasicInfo({ data, help }: { data: CoordinatorStudentDetail; help: Dashb
   ];
   return (
     <Card title="기본 정보">
-      {/* 두 쌍씩 한 줄 (이름 · 값 · 이름 · 값) — 카드 높이를 반으로 */}
-      <dl className="grid grid-cols-[66px_minmax(0,1fr)_66px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-5 py-3.5 text-[12.5px]">
+      {/* 리뉴얼: 한 줄에 이름(왼쪽) · 값(오른쪽), 줄 사이 옅은 선 */}
+      <dl className="flex flex-col gap-3 p-5 text-[14.5px]">
         {rows.map(([label, value]) => (
-          <div key={label} className="contents">
-            <dt className="text-(--coord-muted)">{label}</dt>
-            {/* 이메일은 길어서 한 줄 전체를 쓴다 */}
-            <dd className={`break-all ${label === "이메일" ? "col-span-3" : ""}`}>{value || <span className="text-(--coord-muted)">기록 없음</span>}</dd>
+          <div key={label} className="flex items-center justify-between gap-4 border-b border-(--coord-line-soft) pb-2 last:border-b-0 last:pb-0">
+            <dt className="shrink-0 text-(--coord-muted)">{label}</dt>
+            <dd className="min-w-0 text-right font-semibold break-all">{value || <span className="font-normal text-(--coord-faint)">기록 없음</span>}</dd>
           </div>
         ))}
       </dl>
@@ -422,6 +424,7 @@ function BasicInfo({ data, help }: { data: CoordinatorStudentDetail; help: Dashb
 }
 
 function ContactLogs({ data, onAdd }: { data: CoordinatorStudentDetail; onAdd: () => void }) {
+  const s = data.student;
   return (
     <Card
       title="통화 · 상담 기록"
@@ -430,18 +433,35 @@ function ContactLogs({ data, onAdd }: { data: CoordinatorStudentDetail; onAdd: (
           기록 추가
         </button>
       }
-      empty={data.contactLogs.length === 0 && "아직 남긴 비고나 상담 기록이 없어요."}
     >
-      <ul className="max-h-[180px] overflow-y-auto px-5 py-3">
-        {data.contactLogs.map((log, index) => (
-          <li key={`${log.contactLogId}-${index}`} className="border-l border-(--coord-tint-line) pb-3 pl-4 last:pb-0">
-            <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{log.note}</p>
-            <small className="mt-1 block text-[11px] text-(--coord-muted)">
-              {monthDayTime(log.createdAt)} · {contactTypeLabels[log.contactType]}
-            </small>
+      {/* 리뉴얼 .crm-timeline-list: 왼쪽 세로선 + 점(초록 · 민트 테두리). 맨 아래는 수료일(실제 값) */}
+      <div className="max-h-[440px] overflow-y-auto p-5">
+        <ol className="relative flex flex-col pl-5 before:absolute before:top-1.5 before:bottom-1.5 before:left-[7px] before:w-0.5 before:bg-(--coord-line)">
+          {data.contactLogs.length === 0 && (
+            <li className="relative pb-5">
+              <span aria-hidden="true" className="absolute top-1 -left-5 size-3 rounded-full border-2 border-(--coord-surface) bg-(--coord-chart-resting)" />
+              <p className="text-[14.5px] text-(--coord-muted)">아직 남긴 비고나 상담 기록이 없어요.</p>
+            </li>
+          )}
+          {data.contactLogs.map((log, index) => (
+            <li key={`${log.contactLogId}-${index}`} className="relative pb-5">
+              <span
+                aria-hidden="true"
+                className="absolute top-1 -left-5 size-3 rounded-full border-2 border-(--coord-surface) bg-(--coord-green) shadow-[0_0_0_2px_var(--coord-green-soft)]"
+              />
+              <span className="block text-[12.5px] font-bold text-(--coord-faint)">
+                {monthDayTime(log.createdAt)} · {contactTypeLabels[log.contactType]}
+              </span>
+              <p className="mt-[3px] text-[14.5px] leading-[1.55] break-words whitespace-pre-wrap">{log.note}</p>
+            </li>
+          ))}
+          <li className="relative">
+            <span aria-hidden="true" className="absolute top-1 -left-5 size-3 rounded-full border-2 border-(--coord-surface) bg-(--coord-chart-resting)" />
+            <span className="block text-[12.5px] font-bold text-(--coord-faint)">{dateLabel(s.completedOn)} · 수료</span>
+            <p className="mt-[3px] text-[14.5px]">{courseName(s.courseLabel)} 수료</p>
           </li>
-        ))}
-      </ul>
+        </ol>
+      </div>
     </Card>
   );
 }
@@ -451,24 +471,21 @@ function Competency({ data }: { data: CoordinatorStudentDetail }) {
   return (
     <Card title="역량 프로필" aside={<Badge tone="blue">AI 정리</Badge>} empty={!cp && "아직 생성된 역량 프로필이 없어요."}>
       {cp && (
-        <div className="space-y-2.5 px-5 py-3.5 text-[13px]">
-          <p>
-            <span className="mr-2 text-xs font-bold text-(--coord-muted)">역할</span>
-            {cp.roles.join(", ") || "추출된 역할이 없어요."}
-          </p>
+        <div className="p-5">
+          <p className="mb-2 text-[13.5px] text-(--coord-muted)">역할: {cp.roles.join(", ") || "추출된 역할이 없어요."}</p>
           {cp.skills.length > 0 && (
-            <ul className="flex max-h-[84px] flex-wrap gap-1.5 overflow-y-auto" aria-label="역량 기술">
+            <ul className="flex max-h-[120px] flex-wrap gap-1.5 overflow-y-auto" aria-label="역량 기술">
               {cp.skills.map((skill) => (
-                <li key={skill.name} className="rounded-md border border-(--coord-line) px-2 py-1 text-xs">
-                  {skill.name}
+                <li key={skill.name}>
+                  <Badge small>{skill.name}</Badge>
                 </li>
               ))}
             </ul>
           )}
           {cp.achievements.length > 0 && (
-            <details>
-              <summary className="cursor-pointer text-xs font-bold text-(--coord-green)">성과 {cp.achievements.length}개 보기</summary>
-              <ul className="mt-2 list-disc space-y-1.5 pl-5">
+            <details className="mt-3">
+              <summary className="cursor-pointer text-[13.5px] font-bold text-(--coord-green)">성과 {cp.achievements.length}개 보기</summary>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm">
                 {cp.achievements.map((a) => (
                   <li key={a.text}>{a.text}</li>
                 ))}
@@ -491,7 +508,7 @@ function Registered({ data }: { data: CoordinatorStudentDetail }) {
   ];
   return (
     <Card title="등록 자료" aside={<Badge tone="green">등록 자료</Badge>}>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5 px-5 py-3 text-[12.5px]">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-2.5 p-5 text-[14.5px]">
         {rows.map(([label, value]) => (
           <div key={label} className="flex justify-between gap-2">
             <dt className="text-(--coord-muted)">{label}</dt>
