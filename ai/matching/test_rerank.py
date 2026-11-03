@@ -150,10 +150,11 @@ class FilterTest(RecommendCase):
 class RegionTest(RecommendCase):
     def setUp(self):
         super().setUp()
+        # 임베딩 유사도도 리랭커 점수와 같은 순서로 둔다 (지역 규칙만 보려고 · 정렬은 두 순위를 합친다)
         self.put({
-            1: entry("seoul-low", region="서울 마포구"),
-            2: entry("gyeonggi-high", region="경기 성남시"),
-            3: entry("incheon-mid", region="인천 연수구"),
+            1: entry("seoul-low", similarity=0.2, region="서울 마포구"),
+            2: entry("gyeonggi-high", similarity=0.9, region="경기 성남시"),
+            3: entry("incheon-mid", similarity=0.6, region="인천 연수구"),
         })
         self.scores = {"seoul-low": 0.2, "gyeonggi-high": 0.9, "incheon-mid": 0.6}
 
@@ -176,11 +177,11 @@ class RegionPolicyTest(RecommendCase):
 
     def setUp(self):
         super().setUp()
-        self.put({
-            1: entry("seoul", region="서울 마포구"),
-            2: entry("gyeonggi", region="경기 성남시"),
-            3: entry("incheon", region="인천 연수구"),
-            4: entry("busan", region="부산 해운대구"),
+        self.put({  # 유사도도 리랭커 점수와 같은 순서 (지역 규칙만 본다)
+            1: entry("seoul", similarity=0.2, region="서울 마포구"),
+            2: entry("gyeonggi", similarity=0.9, region="경기 성남시"),
+            3: entry("incheon", similarity=0.6, region="인천 연수구"),
+            4: entry("busan", similarity=0.95, region="부산 해운대구"),
         })
         self.scores = {"seoul": 0.2, "gyeonggi": 0.9, "incheon": 0.6, "busan": 0.95}
         self.policy = patch.object(config, "REGION_POLICY", "METRO")
@@ -229,6 +230,41 @@ class RegionPolicyTest(RecommendCase):
         self.assertEqual(fallback("부산"), [2])
         self.assertEqual(fallback("경기, 서울"), [1, 3])
         self.assertEqual(fallback(None), [1, 2, 3])
+
+
+class RrfOrderTest(RecommendCase):
+    """Top-3 정렬 = 1/(60 + 리랭커 순위) + 1/(60 + 임베딩 순위) 내림차순. 순위는 상위 K 안에서 1부터"""
+
+    def test_rrf_order_differs_from_rerank_only(self):
+        # 임베딩 순위 A1 · B2 · C3, 리랭커 순위 B1 · C2 · A3
+        # → A 1/63+1/61 · B 1/61+1/62 · C 1/62+1/63 → B · A · C (리랭커 점수만이면 B · C · A)
+        self.put({1: entry("A", 0.9), 2: entry("B", 0.8), 3: entry("C", 0.7)})
+        self.assertEqual(self.ids(self.run_rec({"A": 0.3, "B": 0.9, "C": 0.5})), [2, 1, 3])
+
+    def test_tie_goes_to_better_embedding_rank(self):
+        # X: 임베딩 1위 · 리랭커 2위, Y: 임베딩 2위 · 리랭커 1위 → 합친 점수가 같음 → 임베딩 순위가 앞선 X 먼저
+        self.put({1: entry("Y", 0.8), 2: entry("X", 0.9)})
+        self.assertEqual(self.ids(self.run_rec({"X": 0.4, "Y": 0.9})), [2, 1])
+
+    def test_below_threshold_is_excluded_but_still_ranked(self):
+        # D 는 임베딩 1위지만 리랭커 0.01 이라 빠진다. 순위는 D 를 포함해 매긴다 (A 임베딩 2위 · 리랭커 2위, B 3위 · 1위)
+        # → B 1/61+1/63 (0.032266) > A 1/62+1/62 (0.032258). D 를 빼고 매기면 A · B 가 동점이라 A 가 먼저였을 것
+        self.put({1: entry("D", 0.95), 2: entry("A", 0.9), 3: entry("B", 0.8)})
+        items = self.run_rec({"D": 0.01, "A": 0.5, "B": 0.6})
+        self.assertEqual(self.ids(items), [3, 2])
+
+    def test_one_candidate(self):
+        self.put({1: entry("A", 0.5)})
+        self.assertEqual(self.ids(self.run_rec({"A": 0.3})), [1])
+
+    def test_two_candidates(self):
+        self.put({1: entry("A", 0.9), 2: entry("B", 0.5)})
+        self.assertEqual(self.ids(self.run_rec({"A": 0.2, "B": 0.95})), [1, 2])  # 동점(1/61+1/62) → 임베딩 1위 A
+
+    def test_region_and_missing_skill_still_come_first(self):
+        # 희망 시 · 도 밖(경기)은 합친 점수가 높아도 뒤로
+        self.put({1: entry("far", 0.95, region="경기 성남시"), 2: entry("near", 0.5, region="서울 구로구")})
+        self.assertEqual(self.ids(self.run_rec({"far": 0.95, "near": 0.3})), [2, 1])
 
 
 class EmptyReasonTest(RecommendCase):

@@ -242,7 +242,8 @@ class RecommendOrderTest(unittest.TestCase):
 
     def test_missing_skill_goes_after_full_and_neutral(self):
         ids = self.run_recommend(
-            {"1": entry(MISSING), "2": entry(FULL), "3": entry(NEUTRAL)},
+            # 유사도도 리랭커 점수와 같은 순서로 둔다 (필수 기술 정렬만 본다)
+            {"1": entry(MISSING, similarity=0.9), "2": entry(FULL, similarity=0.6), "3": entry(NEUTRAL, similarity=0.7)},
             {MISSING: 0.9, FULL: 0.6, NEUTRAL: 0.7},
         )
         self.assertEqual(ids, [3, 2, 1])  # 중립(0.7) · 전부 충족(0.6)은 점수순, 일부 빠짐(0.9)은 뒤로
@@ -252,7 +253,8 @@ class RecommendOrderTest(unittest.TestCase):
         self.assertEqual(ids, [1, 2])
 
     def test_other_family_is_filtered_but_unknown_passes(self):
-        ids = self.run_recommend({"1": entry(FRONT), "2": entry(UNKNOWN), "3": entry(FULL)},
+        ids = self.run_recommend({"1": entry(FRONT, similarity=0.95), "2": entry(UNKNOWN, similarity=0.4),
+                                  "3": entry(FULL, similarity=0.6)},
                                  {FRONT: 0.95, UNKNOWN: 0.4, FULL: 0.6})
         self.assertEqual(ids, [3, 2])
 

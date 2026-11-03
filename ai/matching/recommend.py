@@ -12,7 +12,8 @@
 ④ 코사인 유사도 상위 config.CANDIDATE_K
 ⑤ 공용 rerank 로 후보 전부 점수 (0~1)
 ⑥ config.SCORE_THRESHOLD 미만 제외
-⑦ 회사명 · 제목 같은 공고 하나만 → 정렬(지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 점수) → 상위 topK
+⑦ 회사명 · 제목 같은 공고 하나만 → 정렬(지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 순위 합치기) → 상위 topK
+   순위 합치기(RRF) = 1/(60 + 리랭커 순위) + 1/(60 + 임베딩 순위). 순위는 ④의 상위 K 안에서 1부터. 같으면 임베딩 순위가 앞선 쪽
    필수 기술이 적히지 않은 공고는 감점하지 않는다 (전부 충족과 같은 순위, job_conditions.missing_required)
 ⑧ 0건이면 items: [] 와 이유(INDEX_EMPTY · PROFILE_EMPTY · NO_CANDIDATES · BELOW_THRESHOLD)를 로그로
 ⑨ reasons: LLM 없이 겹친 단어로 (fallback.build_reasons). 기술 → 프로필 근거, 희망 직무 → JOB_POSTING 근거
@@ -55,6 +56,8 @@ _DEFAULT: Any = object()
 
 # 기술 · 직무가 겹치지 않아도 의미가 가까워 추천된 공고에 붙이는 문장 (근거는 공고)
 GENERIC_REASON = "프로필의 직무 · 역량과 공고 내용이 잘 맞습니다"
+# 순위 합치기(RRF) 상수. 흔히 쓰는 60 (순위 차이가 점수에 너무 크게 반영되지 않게)
+RRF_K = 60
 
 
 class FallbackNeeded(Exception):
@@ -67,8 +70,15 @@ class Candidate:
     entry: Entry
     tier: int
     similarity: float = 0.0
-    score: float = 0.0
+    score: float = 0.0  # 리랭커 점수 (0~1). 기준선 · 로그에 쓴다
     missing_skill: bool = False  # 필수 기술이 적혔는데 하나라도 없음 (정렬에서 뒤로)
+    embed_rank: int = 0  # 상위 CANDIDATE_K 안의 코사인 순위 (1부터)
+    rerank_rank: int = 0  # 상위 CANDIDATE_K 안의 리랭커 순위 (1부터)
+
+    @property
+    def fused(self) -> float:
+        """RRF: 두 순위를 합친 정렬 점수. 리랭커가 공고 글 형식에 끌려도 임베딩 순위로 보완한다"""
+        return 1 / (RRF_K + self.rerank_rank) + 1 / (RRF_K + self.embed_rank)
 
 
 def default_query_embedder() -> QueryEmbedder:
@@ -204,6 +214,11 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
             # 공용 리랭커는 Sigmoid 로 0~1 을 보장한다. 아니면 기준선이 의미 없어 규칙 추천으로
             raise FallbackNeeded(f"rerank score out of range: {score}")
         shortlist[index].score = score
+    # 순위는 상위 CANDIDATE_K 전체(기준선 미만 포함) 안에서 매긴다. 리랭커 점수가 같으면 임베딩 순위가 앞선 쪽이 먼저
+    for i, c in enumerate(shortlist, start=1):
+        c.embed_rank = i
+    for i, c in enumerate(sorted(shortlist, key=lambda c: (-c.score, c.embed_rank)), start=1):
+        c.rerank_rank = i
 
     # ⑥ 기준선
     passed = [c for c in shortlist if c.score >= config.SCORE_THRESHOLD]
@@ -212,7 +227,8 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
         return _empty(req, "BELOW_THRESHOLD", reranked=len(shortlist), bestScore=round(best, 4),
                       threshold=config.SCORE_THRESHOLD)
 
-    # ⑦ 회사명 · 제목 같은 공고는 점수 높은 하나만 → 지역 우선 → 필수 기술 일부 빠짐은 뒤로 → 점수 → id
+    # ⑦ 회사명 · 제목 같은 공고는 점수 높은 하나만 → 지역 우선 → 필수 기술 일부 빠짐은 뒤로
+    #   → 순위 합치기(RRF) 점수 → 같으면 임베딩 순위
     picked: list[Candidate] = []
     seen: set[tuple[str, str]] = set()
     for c in sorted(passed, key=lambda c: (-c.score, c.job_posting_id)):
@@ -223,7 +239,7 @@ def _recommend(req, store, embed_query, rerank_fn, model_name, started) -> Recom
             seen.add((company, title))
         c.missing_skill = bool(missing_required(c.entry.get("matchText") or "", skill_names))
         picked.append(c)
-    picked.sort(key=lambda c: (c.tier, c.missing_skill, -c.score, c.job_posting_id))
+    picked.sort(key=lambda c: (c.tier, c.missing_skill, -c.fused, c.embed_rank))
     picked = picked[: max(req.top_k, 0)]
 
     # ⑨ reasons
