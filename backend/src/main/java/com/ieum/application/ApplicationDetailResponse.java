@@ -24,4 +24,8 @@ public record ApplicationDetailResponse(
     /** POST submit 응답 */
     public record Submitted(Long applicationId, String status) {
     }
+
+    /** POST regenerate 응답 (status 는 GENERATING) */
+    public record Regenerating(Long applicationId, String status) {
+    }
 }

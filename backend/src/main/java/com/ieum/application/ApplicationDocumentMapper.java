@@ -24,6 +24,9 @@ public interface ApplicationDocumentMapper {
 
     int touchLastResponse(@Param("studentId") Long studentId);
 
+    /** FAILED 일 때만 GENERATING 으로. 0 이면 상태가 맞지 않음 (동시에 여러 번 눌러도 한 번만 바뀐다) */
+    int regenerate(@Param("applicationId") Long applicationId);
+
     @Getter
     @Setter
     @NoArgsConstructor
