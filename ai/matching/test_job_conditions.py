@@ -194,6 +194,35 @@ class FamilyTest(unittest.TestCase):
                          "EMBEDDED")
         self.assertIsNone(jc.posting_family("Gmail솔루션 운영", ""))  # 앞에 영문이 붙으면 AI 가 아님
 
+    def test_embedded_answers_pass_for_embedded_student(self):
+        # LABELING.md 에 공개된 경기 임베디드 수료생의 2점 공고 4건과 같은 제목 · 직무 분류명 (가짜 본문)
+        postings = [
+            ("임베디드 시스템 엔지니어 모집", "[직무] 시스템 소프트웨어 개발자"),
+            ("임베디드 소프트웨어 개발자 모집", "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머"),
+            ("[모의 일자리박람회 참여] 미리내정밀 펌웨어 개발", "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머"),
+            ("[모의 일자리박람회 참여] 다온결모빌리티 시험장비 SW", "[직무] 시스템 소프트웨어 개발자(프로그래머)"),
+        ]
+        for title, text in postings:
+            self.assertTrue(jc.family_allowed("임베디드 개발", title, text), title)
+        self.assertEqual(jc.posting_family("임베디드 시스템 엔지니어 모집", ""), "EMBEDDED")  # "시스템 엔지니어"(INFRA)보다 먼저
+
+    def test_separate_families_still_filtered_for_others(self):
+        system_sw = ("시험장비 SW", "[직무] 시스템 소프트웨어 개발자(프로그래머)")
+        industrial = ("소프트웨어 개발 직원", "[직무] 산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)")
+        for job in ("백엔드 개발", "프론트엔드 개발", "AI 서비스 개발"):
+            self.assertFalse(jc.family_allowed(job, *system_sw), job)
+            self.assertFalse(jc.family_allowed(job, *industrial), job)
+        self.assertTrue(jc.family_allowed("임베디드 개발", *industrial))
+
+    def test_network_passes_for_infra_student(self):
+        network = ("네트워크 구축 엔지니어 모집", "[직무] 네트워크 시스템 개발자")
+        self.assertTrue(jc.family_allowed("클라우드 · 인프라 엔지니어", *network))
+        self.assertFalse(jc.family_allowed("백엔드 개발", *network))
+
+    def test_computer_vision_title_is_ai(self):
+        self.assertEqual(jc.posting_family("[스마트물류] 컴퓨터 비전 개발자 채용", "[직무] 데이터 설계 및 프로그래머"), "AI")
+        self.assertEqual(jc.posting_family("데이터 설계 담당", "[직무] 데이터 설계 및 프로그래머"), "DATA")
+
     def test_unknown_is_allowed(self):
         self.assertIsNone(jc.posting_family("신입 개발자 모집", UNKNOWN))
         self.assertTrue(jc.family_allowed("백엔드 개발", "신입 개발자 모집", UNKNOWN))

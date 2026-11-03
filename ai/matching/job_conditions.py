@@ -104,10 +104,13 @@ FAMILY_RULES: list[tuple[str, str]] = [
     ("FULLSTACK", r"풀스택|full\s*stack"), ("PUBLISHER", r"퍼블리셔|퍼블리싱"), ("DESIGN", r"디자이너|디자인"),
     ("FE", r"프론트|front|react|vue|next\.js"), ("BE", r"백엔드|back\s*-?end"),
     ("DATA", r"데이터\s*엔지니어|데이터\s*파이프라인|ETL"), ("ANALYST", r"데이터\s*분석|분석가"),
+    # 임베디드 · 펌웨어는 INFRA 의 "시스템 엔지니어"보다 먼저 본다 ("임베디드 시스템 엔지니어" → EMBEDDED)
+    ("EMBEDDED", r"임베디드|펌웨어"),
     ("INFRA", r"클라우드|인프라|devops|SRE|운영\s*엔지니어|시스템\s*엔지니어"), ("NETWORK", r"네트워크"),
-    ("EMBEDDED", r"임베디드|펌웨어"), ("GAME", r"게임|unity|언리얼"),
+    ("GAME", r"게임|unity|언리얼"),
     ("MOBILE", r"앱\s*개발|iOS|android|안드로이드|모바일|flutter"),
-    ("AI", r"\bAI\b|AI\s|(?<![A-Za-z])AI(?=솔루션|서비스|개발|엔지니어|모델|플랫폼|에이전트)|LLM|챗봇|인공지능|머신\s*러닝|딥\s*러닝|생성형|ML\b"),
+    ("AI", r"\bAI\b|AI\s|(?<![A-Za-z])AI(?=솔루션|서비스|개발|엔지니어|모델|플랫폼|에이전트)|LLM|챗봇|인공지능|머신\s*러닝|딥\s*러닝|생성형|ML\b"
+           r"|컴퓨터\s*비전|computer\s*vision"),
     # 서버 장비를 다루는 일 ("서버 · 스토리지 유지보수") 은 서버 개발(BE)이 아니라 인프라. "서버 개발 및 유지보수"는 BE 그대로
     ("INFRA", r"^(?!.*개발)(?=.*서버)(?=.*(?:유지\s*보수|스토리지|전산\s*장비))"),
     ("BE", r"서버|API|자바|java|spring|스프링|SI\b"),
@@ -288,8 +291,15 @@ def posting_family(title: str | None, match_text: str) -> str | None:
     return None
 
 
+# 수료생 직무군 → 함께 허용하는 공고 직무군 (자기 직무군 말고). 표에 없는 직무군은 자기 직무군만
+COMPATIBLE_FAMILIES: dict[str, set[str]] = {
+    "EMBEDDED": {"SYSTEM_SW", "INDUSTRIAL"},  # 시스템 · 산업 제어 소프트웨어는 임베디드와 같은 일을 많이 한다
+    "INFRA": {"NETWORK"},  # 네트워크 구축 · 운영은 인프라 직무의 일부
+}
+
+
 def family_allowed(desired_job: str | None, title: str | None, match_text: str) -> bool:
-    """수료생 직무군과 공고 직무군이 같거나, 어느 한쪽을 판단 못 하면 True"""
+    """수료생 직무군과 공고 직무군이 같거나 호환표에서 허용하거나, 어느 한쪽을 판단 못 하면 True"""
     student = DESIRED_JOB_FAMILY.get((desired_job or "").strip())
     posting = posting_family(title, match_text)
-    return student is None or posting is None or student == posting
+    return student is None or posting is None or posting == student or posting in COMPATIBLE_FAMILIES.get(student, set())
