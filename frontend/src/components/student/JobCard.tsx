@@ -38,12 +38,12 @@ export default function JobCard({ item, studentId, imageVariant, onCancelled }: 
     </div>
 
     <Link className="s-job-card-link" href={href} aria-labelledby={`${companyId} ${titleId}`}>
-      <CareerImage variant={imageVariant} />
+      <CareerImage variant={imageVariant} jobTitle={item.job.title} />
       <div className="s-job-card-body">
         <div className="s-company">
           <span className="s-card-company-copy">
             <strong id={companyId} title={item.job.companyName}>{item.job.companyName}</strong>
-            <small title={`${item.job.location} · ${item.job.employmentType}`}>{item.job.location} · {item.job.employmentType}</small>
+            <small title={item.job.location}>{item.job.location}</small>
           </span>
         </div>
         <h3 id={titleId} title={item.job.title}>{item.job.title}</h3>
