@@ -182,6 +182,28 @@ class ResponseTest(FallbackCase):
         # 모든 문장에 근거가 하나 이상 (API.md 3-2)
         self.assertTrue(all(r["evidence"] for i in items for r in i["reasons"]))
 
+    def test_skill_without_evidence_gets_job_posting_reason(self):
+        # 프로필 근거가 없는 기술은 "보유" 문장에 넣지 않고 따로, 공고 근거로
+        profile = {**PROFILE, "skills": [*PROFILE["skills"], {"name": "Python", "evidence": []}]}
+        self.put({1: entry("[공고] 백엔드 개발자\n[내용] Spring Boot, Python")})
+        reasons = self.recommend(profile=profile)[0]["reasons"]
+        self.assertEqual(reasons, [
+            {"text": "보유 기술 Spring Boot이(가) 공고에 나옵니다", "evidence": [{"refType": "PROJECT", "refId": 11}]},
+            {"text": "프로필의 기술 Python이(가) 공고에도 나옵니다", "evidence": [{"refType": "JOB_POSTING", "refId": 1}]},
+            {"text": "희망 직무 '백엔드'와 공고 직무가 맞습니다", "evidence": [{"refType": "JOB_POSTING", "refId": 1}]},
+        ])
+        self.assertNotIn("보유", reasons[1]["text"])
+
+    def test_only_skills_without_evidence(self):
+        profile = {"skills": [{"name": "Python", "evidence": []}, {"name": "Java", "evidence": []}], "desiredJob": "AI 서비스"}
+        self.put({1: entry("[공고] AI 서비스 개발\n[내용] Python, Java")})
+        reasons = self.recommend(profile=profile)[0]["reasons"]
+        self.assertEqual([r["text"] for r in reasons], [
+            "프로필의 기술 Python · Java이(가) 공고에도 나옵니다",
+            "희망 직무 'AI · 서비스'와 공고 직무가 맞습니다",
+        ])
+        self.assertTrue(all(r["evidence"] for r in reasons))
+
     def test_http_response_shape_is_unchanged(self):
         self.put({7: entry("[공고] 백엔드 Java"), 8: entry("[공고] Java"), 9: entry("[공고] MySQL")})
         client = TestClient(app)

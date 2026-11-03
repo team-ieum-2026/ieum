@@ -339,6 +339,24 @@ class ReasonTest(RecommendCase):
         # 겹친 단어가 없으면 공고 근거의 일반 문장
         self.assertEqual(items[1]["reasons"], [{"text": GENERIC_REASON, "evidence": [{"refType": "JOB_POSTING", "refId": 2}]}])
 
+    def test_skill_without_evidence_reason_keeps_cards(self):
+        # 근거 없는 기술이 있어도 카드 순서는 같고, 이유만 근거 있는 기술 → 근거 없는 기술 → 희망 직무 순
+        text_1, text_2 = "[공고] 백엔드 개발자\n[내용] MySQL, Python", "[공고] 백엔드 개발자\n[내용] Spring Boot"
+        self.put({1: entry(text_1), 2: entry(text_2)})
+        scores = {text_1: 0.6, text_2: 0.9}
+        before = self.run_rec(scores)
+        profile = {**PROFILE, "skills": [*PROFILE["skills"], {"name": "Python", "evidence": []}]}
+        items = self.run_rec(scores, profile=profile)
+        self.assertEqual(self.ids(items), self.ids(before))
+        reasons = next(i for i in items if i["jobPostingId"] == 1)["reasons"]
+        self.assertEqual([r["text"] for r in reasons], [
+            "보유 기술 MySQL이(가) 공고에 나옵니다",
+            "프로필의 기술 Python이(가) 공고에도 나옵니다",
+            "희망 직무 '백엔드'와 공고 직무가 맞습니다",
+        ])
+        self.assertEqual(reasons[1]["evidence"], [{"refType": "JOB_POSTING", "refId": 1}])
+        self.assertTrue(all(r["evidence"] for i in items for r in i["reasons"]))
+
 
 class QueryTest(unittest.TestCase):
     def test_build_query(self):
