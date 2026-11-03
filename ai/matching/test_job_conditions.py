@@ -67,6 +67,60 @@ class RequiredSkillsTest(unittest.TestCase):
     def test_angular_korean_spelling(self):
         self.assertCountEqual(jc.required_skills("< 자격요건 >\nㆍ 앵귤러 · 타입스크립트 사용 가능자"), ["Angular", "TypeScript"])
 
+    def test_added_ai_and_db_terms(self):
+        self.assertCountEqual(jc.required_skills("자격요건\n- Python · 벡터 데이터베이스 사용 가능자"), ["Python", "Vector DB"])
+        self.assertCountEqual(jc.required_skills("자격요건\n- Python, 사이킷런 등 머신러닝 라이브러리 사용 경험"), ["Python", "scikit-learn"])
+        self.assertEqual(jc.required_skills("자격요건\n- 파이토치 · 판다스"), ["PyTorch", "Pandas"])
+        self.assertEqual(jc.required_skills("자격요건\n- MS SQL 사용 가능자"), ["MS SQL"])  # "SQL" 로 또 세지 않음
+
+    def test_gpt_api_is_openai_only(self):
+        text = "자격요건\n- Python · GPT API 사용 가능자"
+        self.assertCountEqual(jc.required_skills(text), ["Python", "OpenAI API"])
+        self.assertFalse(jc.missing_required(text, ["Python", "OpenAI API"]))
+        self.assertTrue(jc.missing_required(text, ["Python", "Gemini API"]))  # Gemini 는 다른 기술
+
+    def test_react_native_is_not_react(self):
+        text = "자격요건\n- React Native 앱 개발 경험"
+        self.assertEqual(jc.required_skills(text), ["React Native"])
+        self.assertTrue(jc.missing_required(text, ["React"]))
+
+    def test_new_frameworks(self):
+        self.assertCountEqual(jc.required_skills("자격요건\n- Express.js 또는 NestJS, Nuxt.js · SvelteKit"),
+                              ["Express", "NestJS", "Nuxt", "SvelteKit"])
+        self.assertCountEqual(jc.required_skills("지원 자격 : Laravel · Ruby on Rails · ASP.NET Core · Gin · Ktor"),
+                              ["Laravel", "Ruby on Rails", "ASP.NET", "Gin", "Ktor"])
+
+    def test_grpc_and_go(self):
+        self.assertCountEqual(jc.required_skills("< 자격요건 >\nㆍ Go · gRPC · PostgreSQL 사용 가능자"), ["Go", "gRPC", "PostgreSQL"])
+        self.assertEqual(jc.required_skills("자격요건\n- grpc 통신 경험"), ["gRPC"])
+        for text in ("Go언어 사용 가능자", "Go 언어 경험", "Golang 개발", "Go+MySQL 기반 개발"):
+            self.assertIn("Go", jc.required_skills("자격요건\n- " + text), text)
+        self.assertTrue(jc.missing_required("자격요건\n- Go · gRPC · PostgreSQL", ["Java", "MySQL"]))  # PostgreSQL 만 인정
+
+    def test_go_false_positives(self):
+        for text in ("Google Cloud 사용 경험", "go 언어", "GO 문서", "Go to market 전략", "GTM(Go-To-Market) 수립",
+                     "https://www.anyang.go.kr"):
+            self.assertNotIn("Go", jc.required_skills("자격요건\n- " + text), text)
+
+    def test_gap_check_terms(self):
+        self.assertCountEqual(jc.required_skills("자격요건\n- Photoshop, Illustrator 활용 가능자\n- 프리미어 프로"),
+                              ["Photoshop", "Illustrator", "Premiere Pro"])
+        self.assertCountEqual(jc.required_skills("자격요건\n- C# 또는 .NET Framework, WPF · WinForms"), ["C#", ".NET", "WPF", "WinForms"])
+        self.assertEqual(jc.required_skills("자격요건\n- ASP.NET Core"), ["ASP.NET"])  # .NET 으로 또 세지 않음
+        self.assertCountEqual(jc.required_skills("자격요건\n- Linux(Ubuntu) · Windows · Unix"), ["Linux", "Ubuntu", "Windows", "Unix"])
+        self.assertCountEqual(jc.required_skills("지원 자격 : PHP · Scala · Azure · Tableau · RxJS · OpenCV"),
+                              ["PHP", "Scala", "Azure", "Tableau", "RxJS", "OpenCV"])
+
+    def test_student_spelling_is_matched_to_dictionary_name(self):
+        self.assertFalse(jc.missing_required("자격요건\n- scikit-learn", ["사이킷런"]))
+        self.assertFalse(jc.missing_required("자격요건\n- Vue.js", ["Vue"]))
+        self.assertFalse(jc.missing_required("자격요건\n- 벡터 데이터베이스", ["VectorDB"]))
+
+    def test_relational_db_aliases_follow_rubric(self):
+        self.assertFalse(jc.missing_required("자격요건\n- PostgreSQL", ["MySQL"]))
+        self.assertFalse(jc.missing_required("자격요건\n- SQL", ["MyBatis"]))
+        self.assertTrue(jc.missing_required("자격요건\n- MyBatis", ["MySQL"]))  # 매퍼 쪽으로는 인정하지 않음 (루브릭과 같게)
+
     def test_plain_line_body_is_unchanged(self):
         plain = "[내용] < 담당업무 >\nㆍ API 개발\n< 자격요건 >\nㆍ Java · MySQL 사용 가능자\n< 우대사항 >\nㆍ Redis"
         self.assertEqual(jc.required_text(plain), "ㆍ Java · MySQL 사용 가능자")  # "< 자격요건 >" 은 태그로 보지 않음
@@ -79,6 +133,21 @@ class FamilyTest(unittest.TestCase):
         self.assertEqual(jc.posting_family("백엔드 개발자 (AI 상담 서비스팀) 신입", ""), "BE")
         self.assertEqual(jc.posting_family(None, "[공고] AI 학습 챗봇 개발\n[직무] 응용 소프트웨어 개발자"), "AI")
         self.assertEqual(jc.posting_family("신입 모집", "[직무] 웹 디자이너"), "DESIGN")
+
+    def test_job_title_comes_before_domain_words(self):
+        self.assertEqual(jc.posting_family("프론트엔드 개발자 (디자인 시스템)", ""), "FE")
+        self.assertEqual(jc.posting_family("웹 퍼블리셔 · 프론트엔드 개발자 모집", ""), "FE")
+        self.assertEqual(jc.posting_family("백엔드 개발자 (게임 서버)", ""), "BE")
+
+    def test_front_and_back_together_is_fullstack(self):
+        self.assertEqual(jc.posting_family("웹 서비스 개발 (프론트 · 백엔드)", ""), "FULLSTACK")
+        self.assertEqual(jc.posting_family("풀스택 개발자", ""), "FULLSTACK")
+
+    def test_preferred_parenthesis_is_ignored(self):
+        self.assertIsNone(jc.posting_family("시뮬레이터 웹 대시보드 개발 (Unity 우대)", ""))
+        self.assertEqual(jc.posting_family("게임 플랫폼 웹 백엔드(Unity 우대)", ""), "BE")
+        self.assertEqual(jc.posting_family("모바일 앱 개발 [Flutter 우대]", ""), "MOBILE")
+        self.assertEqual(jc.posting_family("Unity 게임 클라이언트 개발", ""), "GAME")  # 괄호 밖이면 그대로
 
     def test_unknown_is_allowed(self):
         self.assertIsNone(jc.posting_family("신입 개발자 모집", UNKNOWN))

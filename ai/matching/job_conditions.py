@@ -4,7 +4,8 @@
 - 필수 기술: 자격요건 · 지원 자격 구간과 [필요 역량] 의 기타(...) 안에서만 찾는다. 우대 조건은 뺀다.
   기술이 하나도 안 적힌 공고는 판단하지 않는다 (None, 중립).
 - 보유 판정은 한 방향만 (ai/eval/LABELING.md 동의어 표와 같게): 공고가 넓은 표기("Spring")면 수료생의 구체 기술("Spring Boot")도 인정.
-- 직무군: 공고 제목 → [직무] 칸 순으로 키워드 규칙. 판단 못 하면 None (필터에서 통과).
+- 직무군: 공고 제목 → [직무] 칸 순으로 키워드 규칙. 직함(프론트엔드 · 백엔드 · 풀스택)을 먼저 보고, 괄호 안 "(… 우대)"는 뺀다.
+  판단 못 하면 None (필터에서 통과).
 LLM · 임베딩을 쓰지 않는다. 표나 규칙을 바꾸면 평가(eval_run · score_matching)로 다시 확인한다.
 """
 
@@ -30,14 +31,57 @@ TECH: dict[str, list[str]] = {
     "Terraform": ["Terraform"], "Elasticsearch": ["Elasticsearch"], "MongoDB": ["MongoDB"], "Servlet": ["Servlet"],
     "JSP": ["JSP"], "Storybook": ["Storybook"], "React Query": ["React Query"], "Redux": ["Redux"],
     "Tailwind CSS": ["Tailwind"], "Git": ["Git"], "REST API": ["REST API"],
+    # 11/3 추가: 공고에 흔히 나오는 프레임워크 · 라이브러리 · DB · AI 도구. 같은 기술의 다른 표기만 묶는다
+    "Express": ["Express", "Express.js", "ExpressJS"],  # Node.js 백엔드의 대표 프레임워크
+    "NestJS": ["NestJS", "Nest.js"],  # TypeScript 백엔드 프레임워크, 국내 스타트업 공고에 자주 나옴
+    "Nuxt": ["Nuxt", "Nuxt.js", "NuxtJS"],  # Vue 기반 SSR 프레임워크 (Next.js 의 Vue 판)
+    "Svelte": ["Svelte"], "SvelteKit": ["SvelteKit"],  # 프론트엔드 프레임워크와 그 앱 프레임워크 (서로 다른 기술)
+    "Remix": ["Remix"], "Gatsby": ["Gatsby", "Gatsby.js"],  # React 기반 웹 프레임워크
+    "Laravel": ["Laravel", "라라벨"],  # PHP 대표 웹 프레임워크
+    "Ruby on Rails": ["Ruby on Rails", "Rails"],  # Ruby 대표 웹 프레임워크
+    "ASP.NET": ["ASP.NET", "ASP.NET Core"],  # C# 웹 프레임워크, SI · 공공 공고에 흔함
+    "Gin": ["Gin"], "Ktor": ["Ktor"],  # Go · Kotlin 의 대표 웹 프레임워크
+    "React Native": ["React Native", "리액트 네이티브"],  # 모바일 앱 프레임워크. React 와는 다른 기술로 센다
+    "MariaDB": ["MariaDB", "마리아DB"], "MS SQL": ["MS SQL", "MSSQL", "SQL Server"],  # 국내 공고에 흔한 관계형 DB
+    "SQLite": ["SQLite"],  # 앱 · 임베디드에 흔한 내장 DB
+    "Vector DB": ["Vector DB", "VectorDB", "벡터 DB", "벡터DB", "벡터 데이터베이스", "Vector Database"],  # RAG 공고의 일반 용어
+    "Pinecone": ["Pinecone"], "FAISS": ["FAISS"], "ChromaDB": ["ChromaDB", "Chroma DB"],  # 흔한 벡터 DB 제품 (각각 다른 기술)
+    "Milvus": ["Milvus"], "Qdrant": ["Qdrant"], "pgvector": ["pgvector"],
+    "scikit-learn": ["scikit-learn", "sklearn", "사이킷런", "scikit learn"],  # 대표 머신러닝 라이브러리, 한글 표기가 흔함
+    "NumPy": ["NumPy", "넘파이"], "Keras": ["Keras", "케라스"],  # 데이터 · 딥러닝 기본 라이브러리
+    "Hugging Face": ["Hugging Face", "HuggingFace", "허깅페이스"],  # 모델 허브 · 라이브러리
+    "LlamaIndex": ["LlamaIndex"],  # LangChain 과 함께 흔한 RAG 프레임워크
 }
+# 이미 있던 항목의 한글 · 다른 표기 (공고에 한글로 쓰는 경우가 흔함). OpenAI API 의 GPT 표기는 OpenAI 쪽에만 둔다 (Gemini API 와는 다른 기술)
+TECH["LangChain"] += ["랭체인"]
+TECH["PyTorch"] += ["파이토치"]
+TECH["TensorFlow"] += ["텐서플로", "텐서플로우"]
+TECH["Pandas"] += ["판다스"]
+TECH["OpenAI API"] += ["GPT API", "ChatGPT API"]
+TECH["Go"] += ["Go"]  # 대소문자를 구분하는 전용 패턴(_EXACT_RE)으로만 찾는다
+TECH.update({
+    # 11/3 빈칸 점검(평가 공고 379건의 자격요건)에서 나온 흔하고 모호하지 않은 기술
+    "gRPC": ["gRPC", "grpc"],  # 백엔드 서비스 간 통신의 대표 프레임워크
+    "Photoshop": ["Photoshop", "포토샵"], "Illustrator": ["Illustrator", "일러스트레이터"],  # 디자인 공고의 기본 도구
+    "Premiere Pro": ["Premiere Pro", "프리미어 프로"],  # 영상 편집 기본 도구
+    "Windows": ["Windows"], "Ubuntu": ["Ubuntu", "우분투"], "Unix": ["Unix", "유닉스"],  # 운영체제 (Linux 와 다른 기술)
+    ".NET": [".NET", ".NET Framework", ".NET Core"],  # C# 플랫폼. ASP.NET 은 위에 따로 있다
+    "WPF": ["WPF"], "WinForms": ["WinForms", "Windows Forms"],  # .NET 데스크톱 UI 프레임워크
+    "PHP": ["PHP"], "Scala": ["Scala", "스칼라"],  # 흔한 프로그래밍 언어
+    "Azure": ["Azure", "애저"],  # AWS 와 다른 클라우드
+    "Tableau": ["Tableau", "태블로"],  # 대표 BI 도구
+    "RxJS": ["RxJS"], "OpenCV": ["OpenCV"],  # Angular · 컴퓨터 비전의 기본 라이브러리
+})
 
 # 공고의 넓은 표기 → 수료생이 가지고 있으면 인정하는 구체 기술 (ai/eval/LABELING.md 동의어 표 · rubric.SKILL_ALIASES 와 같게)
 BROAD: dict[str, set[str]] = {
     "spring": {"spring boot"},
     "llm api": {"gemini api", "openai api"},
-    "sql": {"mysql", "postgresql"},
-    "rdbms": {"mysql", "postgresql"},
+    # 관계형 DB 와 SQL 매퍼는 서로 인정한다 (rubric.SKILL_ALIASES 와 같게)
+    "sql": {"mysql", "postgresql", "mybatis"},
+    "rdbms": {"mysql", "postgresql", "mybatis"},
+    "mysql": {"postgresql", "mybatis"},
+    "postgresql": {"mysql", "mybatis"},
     "javascript": {"typescript", "react", "vue.js", "next.js", "node.js"},
     "html/css": {"react", "vue.js", "next.js"},
     "c/c++": {"c"},
@@ -67,6 +111,12 @@ FAMILY_RULES: list[tuple[str, str]] = [
     ("BE", r"서버|API|자바|java|spring|스프링|SI\b"),
 ]
 _FAMILY_RES = [(family, re.compile(rx, re.IGNORECASE)) for family, rx in FAMILY_RULES]
+# 직함. 제목에 있으면 위 규칙보다 먼저 본다 ("프론트엔드 개발자 (디자인 시스템)" → FE). 프론트와 백엔드가 함께 있으면 풀스택
+_TITLE_RES = [(family, re.compile(rx, re.IGNORECASE)) for family, rx in [
+    ("FULLSTACK", r"풀스택|full\s*stack"), ("FE", r"프론트|front\s*-?end"), ("BE", r"백엔드|back\s*-?end"),
+]]
+# 괄호 안 우대 조건 "(Unity 우대)" 는 직무가 아니라서 직무군 판단에서 뺀다
+_PREFERRED_PAREN = re.compile(r"[(\[][^)\]]*우대[^)\]]*[)\]]")
 
 _REQ_HEAD = re.compile(r"자격\s*요건|지원\s*자격|자격\s*사항|필수\s*(요건|사항|역량)?|요구\s*사항")
 _PREF_HEAD = re.compile(r"우대")
@@ -77,7 +127,14 @@ _LINE_TAG = re.compile(r"</?(?:br|p|li|div|ul|ol|tr|td|th|table|h[1-6])\b[^>]*>"
 _INLINE_TAG = re.compile(r"</?(?:b|strong|span|em|i|u|font)\b[^>]*>", re.IGNORECASE)
 
 
+# 대소문자를 구분해야 하는 표기. "Go" 는 대문자로 시작하는 독립된 단어만 (Google · go · GO · "Go to" · "Go-To" · go.kr 은 아님).
+# "Go+MySQL" 처럼 + 로 이어 쓴 것은 인정한다
+_EXACT_RE = {"Go": re.compile(r"(?<![0-9A-Za-z.])Go(?![0-9A-Za-z#\-.])(?!\s+to\b)")}
+
+
 def _spelling_re(spelling: str) -> re.Pattern[str]:
+    if spelling in _EXACT_RE:
+        return _EXACT_RE[spelling]
     # 영문은 앞뒤가 영문 · 숫자면 다른 단어 ("Java" ≠ "JavaScript"), 한글은 앞이 한글이면 다른 단어
     body = r"\s*".join(re.escape(part) for part in spelling.split())
     body = rf"(?<![0-9A-Za-z]){body}(?![0-9A-Za-z#+])" if spelling.isascii() else rf"(?<![가-힣]){body}"
@@ -140,8 +197,17 @@ def required_skills(text: str) -> list[str]:
     return techs_in(required_text(text))
 
 
+# 수료생 기술 표기 → 사전 대표 이름 (소문자). 수료생이 "사이킷런" · "Vue" 로 적어도 공고의 scikit-learn · Vue.js 와 맞춘다
+_SPELLING_TO_NAME = {re.sub(r"\s+", "", s).lower(): name.lower() for name, ss in TECH.items() for s in [name, *ss]}
+
+
+def _skill_name(skill: str) -> str:
+    key = skill.strip().lower()
+    return _SPELLING_TO_NAME.get(re.sub(r"\s+", "", key), key)
+
+
 def owns(required: str, skills: list[str]) -> bool:
-    owned = {s.strip().lower() for s in skills}
+    owned = {_skill_name(s) for s in skills}
     key = required.lower()
     return key in owned or bool(BROAD.get(key, set()) & owned)
 
@@ -158,6 +224,12 @@ def posting_family(title: str | None, match_text: str) -> str | None:
     """공고 직무군. 제목 → [직무] 칸 순. 판단 못 하면 None"""
     lines = dict((m.group(1), m.group(2)) for m in _SECTION_LINE.finditer(match_text or ""))
     for text in (title or lines.get("공고") or "", lines.get("직무") or ""):
+        text = _PREFERRED_PAREN.sub(" ", text)
+        titles = {family for family, rx in _TITLE_RES if rx.search(text)}
+        if "FULLSTACK" in titles or {"FE", "BE"} <= titles:
+            return "FULLSTACK"
+        if titles:
+            return titles.pop()
         for family, rx in _FAMILY_RES:
             if rx.search(text):
                 return family
