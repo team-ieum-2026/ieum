@@ -1,36 +1,53 @@
 "use client";
-// 주인: FE-B — 도움 요청 목록 · 상세 · 처리 기록 (11/1 개편 목업 requestsPage). 데이터는 대시보드 API 의 helpRequests(접수 OPEN 만).
+// 주인: FE-B — 도움 요청 목록 · 상세 · 처리 기록 (11/1 개편 목업 requestsPage).
+// 데이터는 상태별 목록 API(GET /api/coordinator/help-requests)를 ALL 로 한 번 받아 접수 · 연락 완료 · 요청 종료 탭으로 나눈다.
 // - 전화 · 문자 · 이메일은 수료생이 앱에서 고른 '선호 연락 수단', memo 는 수료생이 남긴 요청 내용
 // - '연락 완료' → 확인 창 → PATCH /api/coordinator/help-requests/{id} { status: CONTACTED } 성공 뒤에만 목록 · 건수 갱신
-//   CONTACTED 는 '연락 완료'이지 '요청 종료(CLOSED)'가 아니다. 이 API 는 메모를 받지 않아 메모를 저장하는 척하지 않는다
+//   CONTACTED 는 '연락 완료'이지 '요청 종료(CLOSED)'가 아니다. 요청 종료는 수료생이 앱에서 한다. 이 API 는 메모를 받지 않아 메모를 저장하는 척하지 않는다
 // - 연락처(이메일) · 수료생 상담 기록은 C3 상세 API(GET)로 보여 준다. 상담 기록은 수료생 단위라 이 요청과 연결된 이력이 아니다
-// 미연동(BE 회신 전): 요청 상태 필터(OPEN 외 목록), 처리 중 · 상담 예정 · 처리 불가 상태, 요청별 처리 메모 · 후속 연락일 · 상담 예정일 ·
-//   처리 이력, 담당자, 재요청 여부, 전화번호
+// - 재요청 여부: 같은 수료생이 이 요청보다 먼저 남긴 요청 수 (상태 무관)
+// - 목업 모드는 목록 API JSON 이 없어 대시보드 helpRequests(접수)만 보인다
+// 미연동(BE 회신 전): 처리 중 · 상담 예정 · 처리 불가 상태, 요청별 처리 메모 · 후속 연락일 · 상담 예정일 · 처리 이력, 담당자, 전화번호
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, btn, toneClass, type IconName } from "@/components/coordinator/CoordUi";
-import { contactLabels, courseName, helpLabels, helpTitle, helpTone, helpTypeLabel, monthDayTime } from "@/components/coordinator/coordLabels";
+import {
+  closeReasonLabels,
+  contactLabels,
+  courseName,
+  helpLabels,
+  helpTitle,
+  helpTone,
+  helpTypeLabel,
+  monthDayTime,
+} from "@/components/coordinator/coordLabels";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { ApiError } from "@/lib/api/client";
-import { getDashboard, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
+import { getCoordinatorHelpRequests, updateHelpRequestStatus } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent } from "@/lib/api/coordinatorStudents";
-import type { Dashboard, DashboardHelpRequest, HelpType } from "@/types/coordinator";
-import type { ContactLog, ContactMethod, ContactType } from "@/types/student";
+import type { CoordinatorHelpRequest, HelpType } from "@/types/coordinator";
+import type { ContactLog, ContactMethod, ContactType, StudentHelpRequestStatus } from "@/types/student";
 
 const CHANNELS: (ContactMethod | "ALL")[] = ["ALL", "PHONE", "SMS", "EMAIL"];
 const channelIcon: Record<ContactMethod, IconName> = { PHONE: "phone", SMS: "sms", EMAIL: "mail" };
 const contactTypeLabels: Record<ContactType, string> = { PHONE: "전화", MESSAGE: "문자", MEETING: "면담" };
 
-/** 목업 요청 상태 탭. 실제 목록은 접수(OPEN)만 있다 */
-const STATUS_TABS: { label: string; connected: boolean; reason?: string }[] = [
-  { label: "접수", connected: true },
-  { label: "처리 중", connected: false, reason: "서버에 없는 상태값이에요 (BE 확정 전)" },
-  { label: "상담 예정", connected: false, reason: "서버에 없는 상태값이에요 (BE 확정 전)" },
-  { label: "연락 완료", connected: false, reason: "연락 완료(CONTACTED) 목록을 주는 API 가 아직 없어요" },
-  { label: "요청 종료", connected: false, reason: "요청 종료(CLOSED) 목록을 주는 API 가 아직 없어요" },
+/** 목업 요청 상태 탭 순서. status 가 없는 탭은 서버에 없는 상태값이라 막는다 */
+const STATUS_TABS: { label: string; status?: StudentHelpRequestStatus }[] = [
+  { label: helpLabels.OPEN, status: "OPEN" },
+  { label: "처리 중" },
+  { label: "상담 예정" },
+  { label: helpLabels.CONTACTED, status: "CONTACTED" },
+  { label: helpLabels.CLOSED, status: "CLOSED" },
 ];
+
+const EMPTY_TEXT: Record<StudentHelpRequestStatus, string> = {
+  OPEN: "접수된 도움 요청이 없어요.",
+  CONTACTED: "연락을 마친 도움 요청이 없어요.",
+  CLOSED: "종료된 도움 요청이 없어요.",
+};
 
 /** 처리 기록 폼의 상태 선택지. 저장 API 가 없어 모두 선택할 수 없다 */
 const RECORD_STATUSES = ["처리 중", "상담 예정", "연락 완료", "요청 종료", "처리 불가 · 연락 안 됨"];
@@ -44,12 +61,14 @@ export default function HelpRequestsScreen() {
   const searchParams = useSearchParams();
   const selectedId = Number(searchParams.get("id")) || null;
 
-  const [list, setList] = useState<DashboardHelpRequest[] | null>(null);
+  const [list, setList] = useState<CoordinatorHelpRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // 고른 탭. 고르기 전에는 ?id 요청의 상태 탭(대시보드 · 알림에서 들어온 경우), 없으면 접수
+  const [pickedTab, setTab] = useState<StudentHelpRequestStatus | null>(null);
   const [channel, setChannel] = useState<ContactMethod | "ALL">("ALL");
   const [infos, setInfos] = useState<Record<number, StudentInfo>>({});
-  const [confirming, setConfirming] = useState<DashboardHelpRequest | null>(null);
+  const [confirming, setConfirming] = useState<CoordinatorHelpRequest | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -64,7 +83,7 @@ export default function HelpRequestsScreen() {
     setRefreshing(true);
     setRefreshError(null);
     try {
-      setList(sortRequests(await getDashboard()));
+      setList(await getCoordinatorHelpRequests("ALL"));
       setInfos({}); // 선택한 수료생의 연락처 · 상담 기록도 다시 받는다
       notifyReviewQueueChanged(); // 사이드바 · 상단 알림 건수도 같은 시점으로
     } catch (e) {
@@ -76,9 +95,9 @@ export default function HelpRequestsScreen() {
 
   useEffect(() => {
     let ignore = false;
-    getDashboard()
-      .then((d) => {
-        if (!ignore) setList(sortRequests(d));
+    getCoordinatorHelpRequests("ALL")
+      .then((next) => {
+        if (!ignore) setList(next);
       })
       .catch((e: unknown) => {
         if (!ignore) setError(apiErrorText(e, "도움 요청을 불러오지 못했어요."));
@@ -88,7 +107,9 @@ export default function HelpRequestsScreen() {
     };
   }, [reloadKey]);
 
-  const filtered = (list ?? []).filter((r) => channel === "ALL" || r.contactMethod === channel);
+  const tab = pickedTab ?? list?.find((r) => r.helpRequestId === selectedId)?.status ?? "OPEN";
+  const inTab = sortRequests((list ?? []).filter((r) => r.status === tab), tab);
+  const filtered = inTab.filter((r) => channel === "ALL" || r.contactMethod === channel);
   const selected = filtered.find((r) => r.helpRequestId === selectedId) ?? filtered[0] ?? null;
   const selectedStudentId = selected?.studentId ?? null;
   const info = selectedStudentId === null ? undefined : infos[selectedStudentId];
@@ -126,8 +147,15 @@ export default function HelpRequestsScreen() {
   }
 
   const select = (id: number) => router.replace(`${pathname}?id=${id}`, { scroll: false });
-  /** 같은 수료생이 접수 상태로 남긴 요청 수 (재요청 여부가 아님) */
-  const openCount = (studentId: number) => list.filter((r) => r.studentId === studentId).length;
+  const pickTab = (next: StudentHelpRequestStatus) => {
+    setTab(next);
+    if (selectedId !== null) router.replace(pathname, { scroll: false }); // 다른 탭의 요청 선택은 풀고 첫 요청을 보여 준다
+  };
+  /** 같은 수료생이 접수 상태로 남긴 요청 수 */
+  const openCount = (studentId: number) => list.filter((r) => r.studentId === studentId && r.status === "OPEN").length;
+  /** 같은 수료생이 이 요청보다 먼저 남긴 요청 수 (상태 무관) = 재요청 여부 */
+  const earlierCount = (r: CoordinatorHelpRequest) =>
+    list.filter((o) => o.studentId === r.studentId && o.helpRequestId !== r.helpRequestId && o.createdAt < r.createdAt).length;
 
   const closeConfirm = () => {
     if (busy) return;
@@ -135,7 +163,7 @@ export default function HelpRequestsScreen() {
     setActionError(null);
   };
 
-  const markContacted = async (r: DashboardHelpRequest) => {
+  const markContacted = async (r: CoordinatorHelpRequest) => {
     setBusy(true);
     setActionError(null);
     try {
@@ -189,30 +217,35 @@ export default function HelpRequestsScreen() {
       <div className="grid min-h-[480px] grid-cols-[minmax(0,1.2fr)_minmax(380px,1fr)] gap-5 lg:h-[calc(100vh-290px)]">
         <Panel label="도움 요청 목록" className="flex min-h-0 flex-col">
           <div role="tablist" aria-label="요청 상태" className="flex flex-wrap items-center gap-1 border-b border-(--coord-line) px-5 pt-3.5 pb-3">
-            {STATUS_TABS.map((t) =>
-              t.connected ? (
-                <span
-                  key={t.label}
+            {STATUS_TABS.map(({ label, status }) =>
+              status ? (
+                <button
+                  key={label}
+                  type="button"
                   role="tab"
-                  aria-selected="true"
-                  className="rounded-[7px] bg-(--coord-green-soft) px-3.5 py-2 text-xs font-semibold text-(--coord-forest)"
+                  aria-selected={status === tab}
+                  onClick={() => pickTab(status)}
+                  className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
+                    status === tab ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
+                  }`}
                 >
-                  {t.label} <b className="ml-1 text-[10px]">{list.length}</b>
-                </span>
+                  {label} <b className="ml-1 text-[10px]">{list.filter((r) => r.status === status).length}</b>
+                </button>
               ) : (
                 <button
-                  key={t.label}
+                  key={label}
                   type="button"
                   role="tab"
                   aria-selected="false"
                   disabled
-                  title={t.reason}
+                  title="서버에 없는 상태값이에요 (BE 확정 전)"
                   className="cursor-not-allowed rounded-[7px] px-3 py-2 text-xs text-(--coord-muted) opacity-70"
                 >
-                  {t.label} <span className="ml-0.5 text-[10px]">미연동</span>
+                  {label} <span className="ml-0.5 text-[10px]">미연동</span>
                 </button>
               ),
             )}
+            {IS_MOCK && <span className="ml-auto text-[11px] text-(--coord-muted)">목업 모드는 접수 요청만 있어요</span>}
           </div>
           <div className="flex flex-wrap items-center gap-2.5 border-b border-(--coord-line) px-5 py-3">
             <span className="text-[11px] font-bold text-(--coord-muted)">선호 연락</span>
@@ -228,14 +261,14 @@ export default function HelpRequestsScreen() {
                   }`}
                 >
                   {ch === "ALL" ? "전체" : contactLabels[ch]}
-                  <b className="ml-1.5 text-[10px]">{list.filter((r) => ch === "ALL" || r.contactMethod === ch).length}</b>
+                  <b className="ml-1.5 text-[10px]">{inTab.filter((r) => ch === "ALL" || r.contactMethod === ch).length}</b>
                 </button>
               ))}
             </div>
           </div>
           {filtered.length === 0 ? (
             <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">
-              {list.length === 0 ? "접수된 도움 요청이 없어요." : "이 조건의 요청이 없어요."}
+              {inTab.length === 0 ? EMPTY_TEXT[tab] : "이 조건의 요청이 없어요."}
             </p>
           ) : (
             <ul className="min-h-0 flex-1 overflow-y-auto">
@@ -263,12 +296,16 @@ export default function HelpRequestsScreen() {
                         </h3>
                         <p className="flex flex-wrap items-center gap-2 text-[11px] text-(--coord-muted)">
                           <ChannelChip method={r.contactMethod} />
-                          <span>{monthDayTime(r.createdAt)} 접수</span>
-                          {sameStudent > 1 && <span className="font-semibold text-(--coord-red)">같은 수료생 접수 {sameStudent}건</span>}
+                          <span>
+                            {r.status === "CLOSED" && r.closedAt ? `${monthDayTime(r.closedAt)} 종료` : `${monthDayTime(r.createdAt)} 접수`}
+                          </span>
+                          {r.status === "OPEN" && sameStudent > 1 && (
+                            <span className="font-semibold text-(--coord-red)">같은 수료생 접수 {sameStudent}건</span>
+                          )}
                         </p>
                       </div>
                       <div>
-                        <Badge tone={helpTone.OPEN}>{helpLabels.OPEN}</Badge>
+                        <Badge tone={helpTone[r.status]}>{helpLabels[r.status]}</Badge>
                       </div>
                     </button>
                   </li>
@@ -297,8 +334,19 @@ export default function HelpRequestsScreen() {
                   <dd>{courseName(selected.courseLabel)}</dd>
                   <dt className="text-(--coord-muted)">요청 상태</dt>
                   <dd>
-                    <Badge tone={helpTone.OPEN}>{helpLabels.OPEN}</Badge>
+                    <Badge tone={helpTone[selected.status]}>{helpLabels[selected.status]}</Badge>
                   </dd>
+                  {selected.status === "CLOSED" && (
+                    <>
+                      <dt className="text-(--coord-muted)">종료</dt>
+                      <dd>
+                        {selected.closedAt ? monthDayTime(selected.closedAt) : "—"} · 수료생이 직접 종료
+                        {selected.closeReason && (
+                          <span className="block text-[11px] text-(--coord-muted)">사유: {closeReasonLabels[selected.closeReason]}</span>
+                        )}
+                      </dd>
+                    </>
+                  )}
                   <dt className="text-(--coord-muted)">담당자</dt>
                   <dd>
                     <Unlinked title="요청별 담당자 필드가 아직 없어요" />
@@ -311,7 +359,11 @@ export default function HelpRequestsScreen() {
                   <dd>{selected.jobTitle ?? <span className="text-(--coord-muted)">공고 없는 일반 도움 요청</span>}</dd>
                   <dt className="text-(--coord-muted)">재요청 여부</dt>
                   <dd className="flex flex-wrap items-center gap-2">
-                    <Unlinked title="지난 요청(연락 완료 · 종료) 목록이 없어 재요청인지 알 수 없어요" />
+                    {earlierCount(selected) > 0 ? (
+                      <Badge tone="orange">재요청 · 이전 요청 {earlierCount(selected)}건</Badge>
+                    ) : (
+                      <span>첫 요청</span>
+                    )}
                     {openCount(selected.studentId) > 1 && (
                       <span className="text-[11px] text-(--coord-muted)">접수 중인 요청 {openCount(selected.studentId)}건</span>
                     )}
@@ -392,20 +444,24 @@ export default function HelpRequestsScreen() {
                   <Link href={`/coordinator/students/${selected.studentId}?log=new`} className={`${btn.base} ${btn.outline} flex-1`}>
                     상담 기록 쓰기
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActionError(null);
-                      setConfirming(selected);
-                    }}
-                    aria-haspopup="dialog"
-                    aria-label={`${selected.studentName} 도움 요청 연락 완료`}
-                    className={`${btn.base} ${btn.primary} flex-1`}
-                  >
-                    연락 완료
-                  </button>
+                  {selected.status === "OPEN" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActionError(null);
+                        setConfirming(selected);
+                      }}
+                      aria-haspopup="dialog"
+                      aria-label={`${selected.studentName} 도움 요청 연락 완료`}
+                      className={`${btn.base} ${btn.primary} flex-1`}
+                    >
+                      연락 완료
+                    </button>
+                  )}
                 </div>
                 <p className="mt-2 text-[11px] leading-[1.6] text-(--coord-muted)">
+                  {selected.status === "CONTACTED" && "이미 연락을 마친 요청이에요. 요청 종료는 수료생이 앱에서 해요. "}
+                  {selected.status === "CLOSED" && "수료생이 종료한 요청이에요. 기록으로만 남아요. "}
                   실제 전화·문자·이메일 발송은 이음에서 하지 않아요. &lsquo;상담 기록 쓰기&rsquo;는 수료생 상세(C3)의 상담 기록으로 이동해요.
                 </p>
 
@@ -420,6 +476,12 @@ export default function HelpRequestsScreen() {
                     <li>
                       <b>{monthDayTime(selected.createdAt)}</b> 수료생 앱에서 도움 요청 접수
                     </li>
+                    {selected.status === "CONTACTED" && <li className="mt-1">코디네이터 연락 완료 (시각은 기록되지 않아요)</li>}
+                    {selected.status === "CLOSED" && (
+                      <li className="mt-1">
+                        <b>{selected.closedAt ? monthDayTime(selected.closedAt) : "—"}</b> 수료생이 요청 종료
+                      </li>
+                    )}
                   </ol>
                   <h3 className="mt-4 text-[13px] font-bold">수료생 상담 기록 (참고)</h3>
                   <p className="mt-1 text-[11px] text-(--coord-muted)">수료생 전체 상담 기록이에요. 이 요청과 연결된 기록은 아니에요.</p>
@@ -444,8 +506,9 @@ function Title({ action }: { action?: React.ReactNode }) {
   return <PageTitle title="도움 요청" description="필요한 도움부터 확인하고, 관련 서류와 이전 연락 기록을 이어 보세요." action={action} />;
 }
 
-/** 접수 중 도움 요청: 먼저 접수된 순 */
-const sortRequests = (d: Dashboard) => [...d.helpRequests].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+/** 접수 탭은 먼저 접수된 순(오래 기다린 요청부터), 연락 완료 · 종료 탭은 최근 순 */
+const sortRequests = (list: CoordinatorHelpRequest[], tab: StudentHelpRequestStatus) =>
+  [...list].sort((a, b) => (tab === "OPEN" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)));
 
 /** API 가 없어 보여 줄 수 없는 값 */
 function Unlinked({ title }: { title: string }) {
@@ -511,7 +574,7 @@ function ContactedDialog({
   onConfirm,
   onClose,
 }: {
-  request: DashboardHelpRequest;
+  request: CoordinatorHelpRequest;
   busy: boolean;
   error: string | null;
   onConfirm: () => void;

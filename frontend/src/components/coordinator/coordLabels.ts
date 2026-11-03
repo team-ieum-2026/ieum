@@ -1,7 +1,7 @@
 // 주인: FE-B — 코디네이터 전용 이름표 · 색 · 집계 (11/1 개편). 서버 값은 그대로 두고 화면 이름만 정한다.
 // 수료생 화면용 components/student/labels.ts 는 고치지 않는다 (applicationLabels 등은 수료생 문구).
 import type { CoordStudentExtra, CoordStudentStatus, DashboardHelpRequest, HelpType, StatusSummary } from "@/types/coordinator";
-import type { ApplicationStatus, ContactMethod, HelpRequestStatus, ResponseType } from "@/types/student";
+import type { ApplicationStatus, ContactMethod, HelpRequestCloseReason, ResponseType, StudentHelpRequestStatus } from "@/types/student";
 
 export type CoordTone = "green" | "orange" | "red" | "blue" | "gray";
 
@@ -77,9 +77,16 @@ export const docTone: Record<ApplicationStatus, CoordTone> = {
   FAILED: "gray",
 };
 
-/** 도움 요청 상태 — CONTACTED 는 '연락 완료'(요청 완료 아님). CLOSED 는 백엔드가 지원하면 추가 */
-export const helpLabels: Record<HelpRequestStatus, string> = { OPEN: "접수", CONTACTED: "연락 완료" };
-export const helpTone: Record<HelpRequestStatus, CoordTone> = { OPEN: "red", CONTACTED: "orange" };
+/** 도움 요청 상태 — CONTACTED 는 '연락 완료'(요청 완료 아님). CLOSED 는 수료생이 직접 종료한 요청 */
+export const helpLabels: Record<StudentHelpRequestStatus, string> = { OPEN: "접수", CONTACTED: "연락 완료", CLOSED: "요청 종료" };
+export const helpTone: Record<StudentHelpRequestStatus, CoordTone> = { OPEN: "red", CONTACTED: "orange", CLOSED: "gray" };
+
+/** 수료생이 도움 요청을 종료한 사유 */
+export const closeReasonLabels: Record<HelpRequestCloseReason, string> = {
+  EMPLOYED: "취업해서 더 이상 필요 없어요",
+  NO_LONGER_NEEDED: "도움이 더 이상 필요 없어요",
+  OTHER: "기타",
+};
 
 /** 수료생이 고른 선호 연락 수단 */
 export const contactLabels: Record<ContactMethod, string> = { PHONE: "전화", SMS: "문자", EMAIL: "이메일" };
