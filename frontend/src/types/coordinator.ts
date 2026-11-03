@@ -4,7 +4,9 @@ import type {
   ApplicationStatus,
   CompanyInfoStatus,
   ContactMethod,
+  HelpRequestCloseReason,
   HelpRequestStatus,
+  StudentHelpRequestStatus,
   StudentStatus,
 } from "@/types/student";
 import type { ApplicationDocument, JobBrief } from "@/types/resume";
@@ -65,6 +67,36 @@ export interface ReviewQueueItem {
   studentName: string;
   jobTitle: string;
   submittedAt: string;
+  /** 공고 마감일 "2026-11-30". 없으면 null. 이전 목업 JSON 에는 키가 없을 수 있다 */
+  deadlineOn?: string | null;
+  /** 채용 시 마감 공고 */
+  untilFilled?: boolean;
+}
+
+// ---- C4 · 도움 요청 상태별 목록 (GET /api/coordinator/applications · /api/coordinator/help-requests) ----
+/** 서류 목록 상태 필터. 검토 요청 이후 단계만 (작성 중 GENERATING · DRAFT · FAILED 는 없다) */
+export type CoordinatorApplicationFilter = "ALL" | "SUBMITTED" | "REJECTED" | "APPROVED" | "DELIVERED";
+
+export interface CoordinatorApplicationListItem {
+  applicationId: number;
+  studentId: number;
+  studentName: string;
+  jobTitle: string;
+  status: Exclude<CoordinatorApplicationFilter, "ALL">;
+  submittedAt: string;
+  reviewedAt: string | null;
+  deliveredAt: string | null;
+  deadlineOn: string | null;
+  untilFilled: boolean;
+}
+
+export type CoordinatorHelpRequestFilter = StudentHelpRequestStatus | "ALL";
+
+/** 도움 요청 목록 항목 = 대시보드 항목 + 상태 · 종료 정보 */
+export interface CoordinatorHelpRequest extends DashboardHelpRequest {
+  status: StudentHelpRequestStatus;
+  closedAt: string | null;
+  closeReason: HelpRequestCloseReason | null;
 }
 
 export interface CallListItem {
