@@ -117,7 +117,7 @@ export interface ItemResponseResult {
   applicationId: number | null;
 }
 
-/** 신규 취소 API 제안 계약. 백엔드 구현 전에는 실제 취소되지 않는다. */
+/** docs/API.md 2-1: 현재 응답과 일치할 때만 취소하는 기존 DELETE 계약. */
 export type CancellableResponse = Extract<ResponseType, "APPLY" | "PASS" | "HELP">;
 export interface ItemResponseCancelResult {
   itemId: number;
@@ -126,9 +126,42 @@ export interface ItemResponseCancelResult {
 }
 
 // ---- M2 → M4 도움 요청 ----
-export interface HelpRequestCreateRequest {
+export type HelpType = "RESUME_COVER_LETTER" | "JOB_APPLICATION" | "INTERVIEW_PREPARATION" | "CAREER_COUNSELING" | "OTHER";
+
+// 코디네이터의 OPEN/CONTACTED 전이 타입은 유지하고 학생 조회 상태만 확장한다.
+export type StudentHelpRequestStatus = HelpRequestStatus | "CLOSED";
+export type StudentHelpRequestFilter = StudentHelpRequestStatus | "ALL";
+export type HelpRequestCloseReason = "EMPLOYED" | "NO_LONGER_NEEDED" | "OTHER";
+
+export type HelpRequestCreateRequest = { studentId: number } & (
+  | { recommendationItemId: number; helpType?: HelpType | null }
+  | { recommendationItemId: null; helpType: HelpType }
+);
+
+export interface StudentHelpRequest {
+  helpRequestId: number;
   studentId: number;
-  recommendationItemId: number;
+  recommendationItemId: number | null;
+  helpType: HelpType | null;
+  status: StudentHelpRequestStatus;
+  contactMethod: ContactMethod | null;
+  memo: string | null;
+  createdAt: string;
+  closedAt: string | null;
+  closeReason: HelpRequestCloseReason | null;
+  jobTitle: string | null;
+}
+
+export interface HelpRequestCloseRequest {
+  studentId: number;
+  closeReason: HelpRequestCloseReason;
+}
+
+export interface HelpRequestCloseResult {
+  helpRequestId: number;
+  status: "CLOSED";
+  closedAt: string;
+  closeReason: HelpRequestCloseReason;
 }
 
 export interface HelpRequestCreateResult {

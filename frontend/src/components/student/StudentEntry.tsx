@@ -44,7 +44,6 @@ export default function StudentEntry({ onNeedHelp }: { onNeedHelp: () => void })
           if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
         }}>
           <button className="dialog-close" type="button" aria-label="수료생 ID 입력 닫기" disabled={busy} onClick={close}><StudentIcon name="close" className="icon" /></button>
-          <span className="dialog-icon"><StudentIcon name="cap" className="icon" /></span>
           <h2 id="student-entry-title">수료생으로 시작하기</h2>
           <form id="student-entry-form" autoComplete="off" noValidate aria-busy={busy} onSubmit={async (event) => {
             event.preventDefault();
@@ -61,10 +60,10 @@ export default function StudentEntry({ onNeedHelp }: { onNeedHelp: () => void })
               setError(errorMessage(error)); setBusy(false); submitting.current = false;
             }
           }}>
-            <label htmlFor="student-entry-id">수료생 ID</label>
+            <label htmlFor="student-entry-id" className="sr-only">수료생 ID</label>
             <p className="field-hint" id="student-entry-id-help">담당 코디네이터에게 안내받은 ID를 입력해주세요.</p>
             <div className={`input-wrap${error ? " is-error" : ""}`}>
-              <StudentIcon name="user" className="icon" />
+              <StudentIcon name="cap" className="icon" />
               <input ref={inputRef} id="student-entry-id" name="studentId" type="text" inputMode="numeric" autoComplete="off" pattern="[0-9]+" placeholder="수료생 ID 입력" required value={studentId} disabled={busy} onChange={(event) => { setStudentId(event.target.value); setError(null); }} aria-invalid={Boolean(error)} aria-describedby={error ? "student-entry-id-help student-entry-error" : "student-entry-id-help"} />
             </div>
             {error && <p id="student-entry-error" role="alert">{error}</p>}

@@ -16,7 +16,7 @@ export default function HelpRequestScreen({ helpRequestId, studentId }: { helpRe
   const [memo, setMemo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  return <StudentScreen><div className="s-help-page"><StudentPageHeading eyebrow="TOGETHER, ONE STEP FURTHER" title="다음 걸음, 함께 고민해요." description="담당 코디네이터에게 도움 요청을 남겼어요." back={studentHref("/student", studentId)} /><form className="s-panel" onSubmit={async (event) => {
+  return <StudentScreen><div className="s-help-page"><StudentPageHeading title="다음 걸음, 함께 고민해요." description="담당 코디네이터에게 도움 요청을 남겼어요." back={studentHref("/student", studentId)} /><form className="s-panel" onSubmit={async (event) => {
     event.preventDefault(); if (busy) return;
     setBusy(true); setError(null);
     try { await updateHelpRequest(helpRequestId, { contactMethod: method, memo: memo.trim() || null }); router.push(studentHref("/student", studentId)); }

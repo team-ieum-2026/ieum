@@ -9,6 +9,10 @@ import type {
   HelpRequestCreateResult,
   HelpRequestUpdateRequest,
   HelpRequestUpdateResult,
+  HelpRequestCloseRequest,
+  HelpRequestCloseResult,
+  StudentHelpRequest,
+  StudentHelpRequestFilter,
   ItemResponseRequest,
   ItemResponseResult,
   CancellableResponse,
@@ -184,7 +188,7 @@ export const respondToItem = async (itemId: number, body: ItemResponseRequest, s
   return { ...result, itemId, applicationId };
 };
 
-/** 제안 API: 응답 취소. 실제 서버의 DELETE 구현은 별도 작업이다. */
+/** 응답 취소. expectedResponse로 다른 화면에서 바뀐 응답의 오취소를 막는다. */
 export async function cancelItemResponse(itemId: number, expectedResponse: CancellableResponse, studentId = DEMO_STUDENT_ID): Promise<ItemResponseCancelResult> {
   if (expectedResponse !== "APPLY" && expectedResponse !== "PASS" && expectedResponse !== "HELP") {
     throw new ApiError("INVALID_REQUEST", "지원·패스·도움 요청한 공고만 취소할 수 있어요.", 400);
@@ -214,13 +218,48 @@ export async function cancelItemResponse(itemId: number, expectedResponse: Cance
   return { itemId, response: "NONE", applicationId: null };
 }
 
-/** M2 도움 요청 생성 → M4 */
-export const createHelpRequest = (body: HelpRequestCreateRequest) =>
-  apiPost<HelpRequestCreateResult>("/api/help-requests", "M4_help_request_create.json", body);
+const helpRequestsChanged = "ieum:help-requests-changed";
+
+function requireLiveHelpRequests() {
+  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
+    throw new ApiError("REAL_API_REQUIRED", "도움 요청을 확인하고 저장하려면 실제 서버에 연결해주세요.", 0);
+  }
+}
+
+export function subscribeHelpRequestChanges(listener: () => void) {
+  window.addEventListener(helpRequestsChanged, listener);
+  return () => window.removeEventListener(helpRequestsChanged, listener);
+}
+
+/** 학생 본인 요청 목록. data는 목록 객체가 아닌 배열이다. */
+export async function getStudentHelpRequests(studentId: number, status: StudentHelpRequestFilter = "OPEN") {
+  requireLiveHelpRequests();
+  return apiGet<StudentHelpRequest[]>(`/api/help-requests?studentId=${studentId}&status=${status}`, "");
+}
+
+/** 개별 종료는 추천 응답 취소나 현재 상태 선택과 독립적인 API다. */
+export async function closeHelpRequest(helpRequestId: number, body: HelpRequestCloseRequest) {
+  requireLiveHelpRequests();
+  const result = await apiPost<HelpRequestCloseResult>(`/api/help-requests/${helpRequestId}/close`, "", body);
+  window.dispatchEvent(new Event(helpRequestsChanged));
+  return result;
+}
+
+/** 유형을 선택한 도움 요청 생성 → 기존 M4 */
+export async function createHelpRequest(body: HelpRequestCreateRequest) {
+  requireLiveHelpRequests();
+  const result = await apiPost<HelpRequestCreateResult>("/api/help-requests", "M4_help_request_create.json", body);
+  window.dispatchEvent(new Event(helpRequestsChanged));
+  return result;
+}
 
 /** M4 연락 방법 · 메모 추가 */
-export const updateHelpRequest = (helpRequestId: number, body: HelpRequestUpdateRequest) =>
-  apiPatch<HelpRequestUpdateResult>(`/api/help-requests/${helpRequestId}`, "M4_help_request_update.json", body);
+export async function updateHelpRequest(helpRequestId: number, body: HelpRequestUpdateRequest) {
+  requireLiveHelpRequests();
+  const result = await apiPatch<HelpRequestUpdateResult>(`/api/help-requests/${helpRequestId}`, "M4_help_request_update.json", body);
+  window.dispatchEvent(new Event(helpRequestsChanged));
+  return result;
+}
 
 /** M5 서류 생성 진행 상태 (2초마다 조회) */
 const mockProgressStartedAt = new Map<number, number>();

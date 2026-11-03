@@ -1,5 +1,5 @@
 // 주인: FE-B — M8 내 프로필 응답 타입 (M8_student_profile.json)
-import type { CompetencyProfile, MilitaryStatus, Source } from "@/types/student";
+import type { CompetencyProfile, MilitaryStatus, Source, SubStatus } from "@/types/student";
 import type { SectionItemInput, SectionName } from "@/types/resume";
 
 export interface ProfileBasic {
@@ -88,4 +88,14 @@ export interface ProfileItemRequest {
 
 export interface CoverLetterUpdateRequest {
   content: string;
+}
+
+/** docs/API.md 2-2: 서버가 지원하는 본인 상태 선택값. */
+export type SelectableStudentStatus = "EMPLOYED" | "SEEKING" | "RESTING";
+
+export interface StudentCurrentStatus {
+  studentId: number;
+  status: SelectableStudentStatus | "CHECK_REQUIRED";
+  subStatus: SubStatus | null;
+  updatedAt: string | null;
 }

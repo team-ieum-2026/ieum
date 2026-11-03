@@ -1,10 +1,20 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 import StudentEntry from "./StudentEntry";
 import StudentIcon from "./StudentIcon";
+
+const headingLines = ["배움의 다음은,", "당신의 가능성."] as const;
+
+function revealCharacters(text: string, offset = 0) {
+  return Array.from(text).map((character, index) => <span
+    key={index}
+    aria-hidden="true"
+    className={`entry-heading-character${character === "," || character === "." ? " entry-heading-punctuation" : ""}`}
+    style={{ "--entry-character-index": offset + index } as CSSProperties}
+  >{character}</span>);
+}
 
 export default function EntryScreen() {
   const helpRef = useRef<HTMLDialogElement>(null);
@@ -15,22 +25,18 @@ export default function EntryScreen() {
       <main className="entry-page">
         <header className="header">
           <Link className="brand" href="/" aria-label="이음 시작 화면">
-            <span className="brand-mark"><StudentIcon name="sprout" className="icon" /></span>
+            <span className="brand-mark"><StudentIcon name="sparkles" className="icon" /></span>
             <span>이음</span>
           </Link>
         </header>
-
+        <div className="entry-layout">
+        <div className="entry-copy">
         <section className="hero" aria-labelledby="entry-heading">
-          <p className="eyebrow">YOUR NEXT CHAPTER</p>
-          <h1 id="entry-heading">당신의 다음 기회를<br /><em>이음이 연결할게요.</em></h1>
-          <p className="hero-description">교육 이후의 취업 준비부터<br className="mobile-break" /> 성장 관리까지</p>
-          <div className="hero-art">
-            <Image src="/images/entry-hero.png" width={1536} height={1024} sizes="(max-width: 700px) 100vw, 90vw" priority alt="새싹 캐릭터가 초록색 입체 이음 글씨에 기대어 웃고 있는 모습" />
-          </div>
+          <h1 id="entry-heading" aria-label={headingLines.join(" ")}>{revealCharacters(headingLines[0])}<br /><em className="entry-heading-second-line">{revealCharacters(headingLines[1], headingLines[0].length)}</em></h1>
         </section>
 
         <section className="roles" aria-labelledby="role-select-heading">
-          <h2 id="role-select-heading">어떤 역할로 시작하시나요?</h2>
+          <h2 id="role-select-heading">어떤 역할로 시작할까요?</h2>
           <div className="role-list">
             <StudentEntry onNeedHelp={openHelp} />
             <Link className="role-card coordinator-card" href="/coordinator">
@@ -40,11 +46,10 @@ export default function EntryScreen() {
             </Link>
           </div>
         </section>
+        </div>
+        </div>
 
-        <footer className="footer">
-          <p>청년취업사관학교 수료생 사후관리 서비스</p>
-          <div><span><strong>SeSAC</strong><span className="footer-cross">×</span>이음</span><small>수료 후에도, 함께.</small></div>
-        </footer>
+        <p className="entry-service-caption">청년취업사관학교 사후관리 서비스</p>
       </main>
 
       <dialog ref={helpRef} className="entry-help-dialog" aria-labelledby="entry-help-heading" onClick={(event) => {
