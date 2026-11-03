@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiErrorText, RefreshAction, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Avatar, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDay, monthDayTime } from "@/components/coordinator/coordLabels";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { IS_MOCK } from "@/components/coordinator/demoAccount";
@@ -33,16 +33,16 @@ const EMPTY_TEXT: Record<CoordinatorApplicationFilter, string> = {
   DELIVERED: "전달을 마친 서류가 없어요.",
 };
 
-/** 목업 열: 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 점검 · 수료생 수정 · 검토 상태 · 상세 */
+/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 점검 · 수료생 수정 · 검토 상태 · 상세 검토 */
 const COLUMNS: [string, string][] = [
   ["수료생", "w-[11%]"],
-  ["지원 공고", "w-[22%]"],
-  ["제출일자", "w-[11%]"],
-  ["마감일정", "w-[10%]"],
+  ["지원 공고", "w-[24%]"],
+  ["제출일자", "w-[10%]"],
+  ["마감일정", "w-[12%]"],
   ["근거 점검", "w-[15%]"],
-  ["수료생 수정", "w-[10%]"],
+  ["수료생 수정", "w-[9%]"],
   ["검토 상태", "w-[10%]"],
-  ["상세", "w-[11%]"],
+  ["상세 검토", "w-[9%]"],
 ];
 
 /** 서류 한 건의 검증 요약 (C4 상세 API) */
@@ -137,9 +137,9 @@ export default function ReviewListScreen() {
           }}
         />
       ) : (
-        // 목업처럼 표 카드가 화면 높이를 채우고 안내 문구는 카드 아래쪽에 붙는다 (표가 길면 표 안에서 스크롤)
-        <Panel label="서류 목록" className="flex min-h-[420px] flex-col lg:h-[calc(100vh-234px)]">
-          <div role="tablist" aria-label="서류 상태" className="flex shrink-0 flex-wrap items-center gap-1 border-b border-(--coord-line) px-5 py-3.5">
+        // 리뉴얼 reviewsPage: 상태 버튼 줄 · 표 · 아래 안내 (카드는 내용만큼 높이)
+        <Panel label="서류 목록">
+          <div role="tablist" aria-label="서류 상태" className="flex flex-wrap items-center gap-2 border-b border-(--coord-line) px-5 py-4">
             {TABS.map((t) => {
               const active = t.status === tab;
               const count = items.filter((r) => t.status === "ALL" || r.status === t.status).length;
@@ -150,70 +150,68 @@ export default function ReviewListScreen() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setTab(t.status)}
-                  className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
-                    active ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
-                  }`}
+                  className={`${btn.base} ${active ? btn.primary : btn.outline} ${btn.sm}`}
                 >
-                  {t.label} <b className="ml-1 text-[10px]">{count}</b>
+                  {t.label} {count}
                 </button>
               );
             })}
-            {IS_MOCK && <span className="ml-auto text-[11px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
+            {IS_MOCK && <span className="ml-auto text-[13px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <table className="w-full table-fixed border-collapse text-left text-xs">
-              <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 점검, 수료생 수정, 검토 상태</caption>
-              <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
-                <tr>
-                  {COLUMNS.map(([label, w]) => (
-                    <th key={label} scope="col" className={`${w} px-[17px] py-[13px] font-medium ${label === "상세" ? "text-right" : ""}`}>
-                      {label === "상세" ? <span className="sr-only">상세</span> : label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => {
-                  const c = checks[r.applicationId] ?? { state: "loading" };
-                  return (
-                    <tr key={r.applicationId} className="h-[58px] border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
-                      <td className="px-[17px]">
-                        <Link
-                          href={`/coordinator/applications/${r.applicationId}`}
-                          className="block truncate text-[13px] font-bold underline-offset-4 hover:text-(--coord-green) hover:underline"
-                        >
+          <table className="w-full table-fixed border-collapse text-left text-[15px]">
+            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 점검, 수료생 수정, 검토 상태</caption>
+            <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
+              <tr>
+                {COLUMNS.map(([label, w]) => (
+                  <th key={label} scope="col" className={`${w} border-b border-(--coord-line) px-4 py-3 font-bold whitespace-nowrap`}>
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => {
+                const c = checks[r.applicationId] ?? { state: "loading" };
+                return (
+                  <tr key={r.applicationId} className="h-[63px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                    <td className="overflow-hidden px-4 py-3">
+                      <Link href={`/coordinator/applications/${r.applicationId}`} className="group flex min-w-0 items-center gap-2.5">
+                        <Avatar name={r.studentName} small />
+                        <span className="truncate text-[15.5px] font-extrabold underline-offset-4 group-hover:text-(--coord-green) group-hover:underline">
                           {r.studentName}
-                        </Link>
-                      </td>
-                      <td className="px-[17px]">
-                        <span className="line-clamp-2 leading-[1.45] font-semibold">{r.jobTitle}</span>
-                      </td>
-                      <td className="px-[17px]">{monthDayTime(r.submittedAt)}</td>
-                      <td className="px-[17px]">
-                        <DeadlineCell deadlineOn={r.deadlineOn} untilFilled={r.untilFilled} />
-                      </td>
-                      <td className="px-[17px]">
-                        <EvidenceCell check={c} />
-                      </td>
-                      <td className="px-[17px]">
-                        <EditedCell check={c} />
-                      </td>
-                      <td className="px-[17px]">
-                        <Badge tone={docTone[r.status]}>{docLabels[r.status]}</Badge>
-                      </td>
-                      <td className="px-[17px] text-right">
-                        <Link href={`/coordinator/applications/${r.applicationId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-                          {r.status === "SUBMITTED" ? "상세 검토" : "서류 보기"}
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {visible.length === 0 && <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
-          </div>
-          <p className="shrink-0 p-[22px] text-xs text-(--coord-muted)">
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="line-clamp-2 leading-[1.4] font-bold break-keep" title={r.jobTitle}>
+                        {r.jobTitle}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{monthDayTime(r.submittedAt)}</td>
+                    <td className="px-4 py-3">
+                      <DeadlineCell deadlineOn={r.deadlineOn} untilFilled={r.untilFilled} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EvidenceCell check={c} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditedCell check={c} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge tone={docTone[r.status]}>{docLabels[r.status]}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/coordinator/applications/${r.applicationId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+                        {r.status === "SUBMITTED" ? "상세 검토" : "서류 보기"}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {visible.length === 0 && <p className="p-9 text-center text-[14.5px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
+          <p className="border-t border-(--coord-line) px-5 py-3.5 text-[13px] text-(--coord-muted)">
             근거 점검은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
           </p>
         </Panel>
@@ -235,17 +233,14 @@ function DeadlineCell({ deadlineOn, untilFilled }: { deadlineOn: string | null; 
     return <span className="text-(--coord-muted)">{untilFilled ? "채용 시 마감" : "—"}</span>;
   }
   const left = daysLeft(deadlineOn);
+  // 리뉴얼은 마감이 가까우면 빨강 굵게 ("11.03 (D-1 마감)"). 지난 마감 · 여유 있는 마감은 기본색
+  const urgent = left >= 0 && left <= 3;
   return (
     <span className="flex flex-col gap-0.5">
-      <span className="flex items-center gap-1.5">
-        {monthDay(deadlineOn)}
-        {left < 0 ? (
-          <span className="text-[10px] text-(--coord-muted)">마감</span>
-        ) : (
-          <b className={`text-[10px] ${left <= 3 ? "text-(--coord-red)" : "text-(--coord-muted)"}`}>{left === 0 ? "D-day" : `D-${left}`}</b>
-        )}
-      </span>
-      {untilFilled && <span className="text-[10px] text-(--coord-muted)">채용 시 마감</span>}
+      <b className={`whitespace-nowrap ${urgent ? "text-(--coord-red)" : left < 0 ? "font-normal text-(--coord-muted)" : ""}`}>
+        {monthDay(deadlineOn)} ({left < 0 ? "마감" : left === 0 ? "D-day" : `D-${left}`})
+      </b>
+      {untilFilled && <span className="text-[12px] text-(--coord-faint)">채용 시 마감</span>}
     </span>
   );
 }
@@ -262,7 +257,7 @@ function EvidenceCell({ check }: { check: Check }) {
       근거 연결 {linked}/{total}
     </Badge>
   ) : (
-    <Badge tone="red">근거 확인 필요 {total - linked}문장</Badge>
+    <Badge tone="orange">근거 확인 필요 {total - linked}문장</Badge>
   );
 }
 
