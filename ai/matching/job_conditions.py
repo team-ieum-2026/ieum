@@ -107,9 +107,39 @@ FAMILY_RULES: list[tuple[str, str]] = [
     ("INFRA", r"클라우드|인프라|devops|SRE|운영\s*엔지니어|시스템\s*엔지니어"), ("NETWORK", r"네트워크"),
     ("EMBEDDED", r"임베디드|펌웨어"), ("GAME", r"게임|unity|언리얼"),
     ("MOBILE", r"앱\s*개발|iOS|android|안드로이드|모바일|flutter"),
-    ("AI", r"\bAI\b|AI\s|LLM|챗봇|인공지능|머신\s*러닝|딥\s*러닝|생성형|ML\b"),
+    ("AI", r"\bAI\b|AI\s|(?<![A-Za-z])AI(?=솔루션|서비스|개발|엔지니어|모델|플랫폼|에이전트)|LLM|챗봇|인공지능|머신\s*러닝|딥\s*러닝|생성형|ML\b"),
+    # 서버 장비를 다루는 일 ("서버 · 스토리지 유지보수") 은 서버 개발(BE)이 아니라 인프라. "서버 개발 및 유지보수"는 BE 그대로
+    ("INFRA", r"^(?!.*개발)(?=.*서버)(?=.*(?:유지\s*보수|스토리지|전산\s*장비))"),
     ("BE", r"서버|API|자바|java|spring|스프링|SI\b"),
 ]
+# React Native 는 FE 의 react 규칙보다 먼저 모바일로 본다
+FAMILY_RULES.insert(next(i for i, (f, _) in enumerate(FAMILY_RULES) if f == "FE"),
+                    ("MOBILE", r"react\s*-?\s*native|리액트\s*네이티브"))
+
+# [직무] 칸의 워크넷 직무 분류명 → 직무군. 분류명의 뜻만 보고 정했다 (dev 결과에 맞추지 않음).
+# 응용 소프트웨어 개발자 · 웹 개발자 · 범용 응용 소프트웨어 프로그래머처럼 직무를 정할 수 없는 넓은 분류는 넣지 않는다 (판단 못 함 → 통과).
+# 직무군 이름 중 INDUSTRIAL · SYSTEM_SW · WEB_OPS · QA · PLANNER · CONSULTING 은 수료생 희망 직무에 없어서, 다른 직무군처럼 걸러진다
+JOB_FIELD_FAMILY: dict[str, str] = {
+    "웹 디자이너": "DESIGN",
+    "IT 기술지원 전문가": "INFRA",
+    "정보보안 전문가": "INFRA",
+    "정보시스템 운영자": "INFRA",
+    "데이터베이스 운영·관리자": "INFRA",
+    "시스템 소프트웨어 개발자": "SYSTEM_SW",  # 운영체제 · 컴파일러 · 미들웨어 등 시스템 소프트웨어
+    "시스템 소프트웨어 개발자(프로그래머)": "SYSTEM_SW",
+    "데이터 설계 및 프로그래머": "DATA",
+    "웹 운영자(홈페이지 관리자)": "WEB_OPS",  # 홈페이지 내용 관리 (개발 아님)
+    "펌웨어 및 임베디드 소프트웨어 프로그래머": "EMBEDDED",
+    "통신기술 개발자 및 통신망 운영 기술자": "NETWORK",
+    "통신기기·장비 개발자 및 연구원": "NETWORK",
+    "네트워크 시스템 개발자": "NETWORK",
+    "기타 네트워크 및 정보 보안 전문가(디지털 포렌식 전문가 등)": "NETWORK",
+    "기타 컴퓨터 시스템 및 소프트웨어 전문가(IT 테스터 및 IT QA 전문가 등)": "QA",
+    "산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)": "INDUSTRIAL",  # 산업 · 제어 소프트웨어
+    "모바일 애플리케이션 프로그래머(앱·어플 개발)": "MOBILE",
+    "웹 기획자": "PLANNER",
+    "IT 컨설턴트": "CONSULTING",
+}
 _FAMILY_RES = [(family, re.compile(rx, re.IGNORECASE)) for family, rx in FAMILY_RULES]
 # 직함. 제목에 있으면 위 규칙보다 먼저 본다 ("프론트엔드 개발자 (디자인 시스템)" → FE). 프론트와 백엔드가 함께 있으면 풀스택
 _TITLE_RES = [(family, re.compile(rx, re.IGNORECASE)) for family, rx in [
@@ -223,7 +253,9 @@ def missing_required(text: str, skills: list[str]) -> bool | None:
 def posting_family(title: str | None, match_text: str) -> str | None:
     """공고 직무군. 제목 → [직무] 칸 순. 판단 못 하면 None"""
     lines = dict((m.group(1), m.group(2)) for m in _SECTION_LINE.finditer(match_text or ""))
-    for text in (title or lines.get("공고") or "", lines.get("직무") or ""):
+    for field, text in (("공고", title or lines.get("공고") or ""), ("직무", lines.get("직무") or "")):
+        if field == "직무" and text.strip() in JOB_FIELD_FAMILY:  # 제목으로 못 정하면 워크넷 분류명 표를 먼저
+            return JOB_FIELD_FAMILY[text.strip()]
         text = _PREFERRED_PAREN.sub(" ", text)
         titles = {family for family, rx in _TITLE_RES if rx.search(text)}
         if "FULLSTACK" in titles or {"FE", "BE"} <= titles:

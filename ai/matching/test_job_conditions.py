@@ -149,6 +149,39 @@ class FamilyTest(unittest.TestCase):
         self.assertEqual(jc.posting_family("모바일 앱 개발 [Flutter 우대]", ""), "MOBILE")
         self.assertEqual(jc.posting_family("Unity 게임 클라이언트 개발", ""), "GAME")  # 괄호 밖이면 그대로
 
+    def test_job_field_name_is_mapped(self):
+        self.assertEqual(jc.posting_family("소프트웨어 개발 직원 모집",
+                                           "[직무] 산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)"), "INDUSTRIAL")
+        self.assertEqual(jc.posting_family("헬프데스크 채용", "[직무] IT 기술지원 전문가"), "INFRA")
+        self.assertEqual(jc.posting_family("보안 관제 요원", "[직무] 정보보안 전문가"), "INFRA")
+        self.assertEqual(jc.posting_family("연구소 신입", "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머"), "EMBEDDED")
+        self.assertIsNone(jc.posting_family("신입 개발자", "[직무] 응용 소프트웨어 개발자"))  # 넓은 분류는 판단 안 함
+        self.assertFalse(jc.family_allowed("백엔드 개발", "소프트웨어 개발 직원 모집",
+                                           "[직무] 산업특화 응용 소프트웨어 프로그래머(국방,항공,교통,에너지,금융,자동차 등)"))
+
+    def test_title_still_comes_before_job_field_name(self):
+        self.assertEqual(jc.posting_family("클라우드 엔지니어 (신입 가능)", "[직무] 시스템 소프트웨어 개발자"), "INFRA")
+        self.assertEqual(jc.posting_family("백엔드 개발자", "[직무] IT 기술지원 전문가"), "BE")
+
+    def test_react_native_is_mobile(self):
+        self.assertEqual(jc.posting_family("React Native 앱 개발자 신입", ""), "MOBILE")
+        self.assertEqual(jc.posting_family("모바일 앱 개발자(React Native)", ""), "MOBILE")
+        self.assertEqual(jc.posting_family("React 웹 개발자", ""), "FE")
+        self.assertEqual(jc.posting_family("프론트엔드 개발자 (React Native 우대)", ""), "FE")  # 직함 우선 · 우대 괄호 제외
+
+    def test_server_equipment_is_infra(self):
+        self.assertEqual(jc.posting_family("서버,스토리지(S/E) 등 전산장비 유지보수 및 기술지원", ""), "INFRA")
+        self.assertEqual(jc.posting_family("API 서버 개발 및 유지보수", ""), "BE")  # 서버 개발은 BE 그대로
+        self.assertEqual(jc.posting_family("결제 서버 개발", ""), "BE")
+
+    def test_ai_followed_by_korean(self):
+        self.assertEqual(jc.posting_family("(신입/경력) AI솔루션 개발자 채용", ""), "AI")
+        self.assertEqual(jc.posting_family("AI서비스 개발", ""), "AI")
+        self.assertIsNone(jc.posting_family("AI융합기술연구소 신입 및 경력", ""))  # 기관 이름은 직무가 아님
+        self.assertEqual(jc.posting_family("AI융합기술연구소 신입 및 경력", "[직무] 펌웨어 및 임베디드 소프트웨어 프로그래머"),
+                         "EMBEDDED")
+        self.assertIsNone(jc.posting_family("Gmail솔루션 운영", ""))  # 앞에 영문이 붙으면 AI 가 아님
+
     def test_unknown_is_allowed(self):
         self.assertIsNone(jc.posting_family("신입 개발자 모집", UNKNOWN))
         self.assertTrue(jc.family_allowed("백엔드 개발", "신입 개발자 모집", UNKNOWN))
