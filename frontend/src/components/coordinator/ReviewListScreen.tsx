@@ -1,6 +1,6 @@
 "use client";
 // 주인: FE-B — C4 서류 검토 목록 (11/1 개편 목업 reviewsPage). 목록은 상태별 목록 API(GET /api/coordinator/applications)를 ALL 로 한 번 받아 탭별로 나눈다.
-// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 수정 요청(REJECTED) · 승인·전달 대기(APPROVED) · 전달 완료(DELIVERED).
+// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 보완 필요(REJECTED) · 승인 완료(APPROVED) · 전달 완료(DELIVERED).
 //   첫 화면은 ?status= 의 탭 (대시보드 서류 검토 현황에서 이동), 없으면 검토 대기
 // - 근거 점검 · 수료생 수정: 목록에 없어 지금 탭에 보이는 서류만 C4 상세 API 의 verification 을 병렬로 불러 채운다 (한 번 받은 서류는 다시 받지 않음)
 //   근거 점검은 'AI 문장이 원본 자료와 연결됐는지'만 뜻하고, 사실 검증 완료가 아니다
@@ -28,21 +28,21 @@ const TABS: { status: CoordinatorApplicationFilter; label: string }[] = [
 const EMPTY_TEXT: Record<CoordinatorApplicationFilter, string> = {
   ALL: "검토를 요청한 서류가 없어요.",
   SUBMITTED: "검토할 서류가 없어요.",
-  REJECTED: "수정을 요청한 서류가 없어요.",
-  APPROVED: "전달을 기다리는 서류가 없어요.",
+  REJECTED: "보완 필요로 처리한 서류가 없어요.",
+  APPROVED: "승인 완료한 서류가 없어요.",
   DELIVERED: "전달을 마친 서류가 없어요.",
 };
 
-/** 목업 열: 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 점검 · 수료생 수정 · 검토 상태 · 상세 */
+/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 점검 · 수료생 수정 · 검토 상태 · 상세 검토 */
 const COLUMNS: [string, string][] = [
   ["수료생", "w-[11%]"],
-  ["지원 공고", "w-[22%]"],
-  ["제출일자", "w-[11%]"],
-  ["마감일정", "w-[10%]"],
-  ["근거 점검", "w-[15%]"],
-  ["수료생 수정", "w-[10%]"],
+  ["지원 공고", "w-[24%]"],
+  ["제출일자", "w-[10%]"],
+  ["마감일정", "w-[12%]"],
+  ["근거 연결 현황", "w-[15%]"],
+  ["수료생 수정", "w-[9%]"],
   ["검토 상태", "w-[10%]"],
-  ["상세", "w-[11%]"],
+  ["상세 검토", "w-[9%]"],
 ];
 
 /** 서류 한 건의 검증 요약 (C4 상세 API) */
@@ -124,7 +124,6 @@ export default function ReviewListScreen() {
     <>
       <PageTitle
         title="서류 검토"
-        description="자기소개서 전체 맥락과 문장별 근거를 보고, 개입할 지점을 판단하세요."
         action={items && <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />}
       />
       {!items ? (
@@ -137,9 +136,9 @@ export default function ReviewListScreen() {
           }}
         />
       ) : (
-        // 목업처럼 표 카드가 화면 높이를 채우고 안내 문구는 카드 아래쪽에 붙는다 (표가 길면 표 안에서 스크롤)
-        <Panel label="서류 목록" className="flex min-h-[420px] flex-col lg:h-[calc(100vh-234px)]">
-          <div role="tablist" aria-label="서류 상태" className="flex shrink-0 flex-wrap items-center gap-1 border-b border-(--coord-line) px-5 py-3.5">
+        // 리뉴얼 reviewsPage: 상태 버튼 줄 · 표 · 아래 안내 (카드는 내용만큼 높이)
+        <Panel label="서류 목록">
+          <div role="tablist" aria-label="서류 상태" className="flex flex-wrap items-center gap-2 border-b border-(--coord-line) px-5 py-4">
             {TABS.map((t) => {
               const active = t.status === tab;
               const count = items.filter((r) => t.status === "ALL" || r.status === t.status).length;
@@ -150,71 +149,69 @@ export default function ReviewListScreen() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setTab(t.status)}
-                  className={`rounded-[7px] px-3.5 py-2 text-xs focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
-                    active ? "bg-(--coord-green-soft) font-semibold text-(--coord-forest)" : "text-(--coord-muted) hover:bg-(--coord-hover)"
-                  }`}
+                  className={`${btn.base} ${active ? btn.primary : btn.outline} ${btn.sm}`}
                 >
-                  {t.label} <b className="ml-1 text-[10px]">{count}</b>
+                  {t.label} {count}
                 </button>
               );
             })}
-            {IS_MOCK && <span className="ml-auto text-[11px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
+            {IS_MOCK && <span className="ml-auto text-[13px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <table className="w-full table-fixed border-collapse text-left text-xs">
-              <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 점검, 수료생 수정, 검토 상태</caption>
-              <thead className="sticky top-0 z-[1] bg-(--coord-head) text-[11px] text-(--coord-muted)">
-                <tr>
-                  {COLUMNS.map(([label, w]) => (
-                    <th key={label} scope="col" className={`${w} px-[17px] py-[13px] font-medium ${label === "상세" ? "text-right" : ""}`}>
-                      {label === "상세" ? <span className="sr-only">상세</span> : label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => {
-                  const c = checks[r.applicationId] ?? { state: "loading" };
-                  return (
-                    <tr key={r.applicationId} className="h-[58px] border-b border-(--coord-line-soft) hover:bg-(--coord-hover)">
-                      <td className="px-[17px]">
-                        <Link
-                          href={`/coordinator/applications/${r.applicationId}`}
-                          className="block truncate text-[13px] font-bold underline-offset-4 hover:text-(--coord-green) hover:underline"
-                        >
+          <table className="w-full table-fixed border-collapse text-left text-[15px]">
+            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 연결 현황, 수료생 수정, 검토 상태</caption>
+            <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
+              <tr>
+                {COLUMNS.map(([label, w]) => (
+                  <th key={label} scope="col" className={`${w} border-b border-(--coord-line) px-4 py-3 font-bold whitespace-nowrap`}>
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => {
+                const c = checks[r.applicationId] ?? { state: "loading" };
+                return (
+                  <tr key={r.applicationId} className="h-[63px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                    <td className="overflow-hidden px-4 py-3">
+                      {/* 1차 피드백: 이름 아바타 없음 */}
+                      <Link href={`/coordinator/applications/${r.applicationId}`} className="group flex min-w-0 items-center">
+                        <span className="truncate text-[15.5px] font-extrabold underline-offset-4 group-hover:text-(--coord-green) group-hover:underline">
                           {r.studentName}
-                        </Link>
-                      </td>
-                      <td className="px-[17px]">
-                        <span className="line-clamp-2 leading-[1.45] font-semibold">{r.jobTitle}</span>
-                      </td>
-                      <td className="px-[17px]">{monthDayTime(r.submittedAt)}</td>
-                      <td className="px-[17px]">
-                        <DeadlineCell deadlineOn={r.deadlineOn} untilFilled={r.untilFilled} />
-                      </td>
-                      <td className="px-[17px]">
-                        <EvidenceCell check={c} />
-                      </td>
-                      <td className="px-[17px]">
-                        <EditedCell check={c} />
-                      </td>
-                      <td className="px-[17px]">
-                        <Badge tone={docTone[r.status]}>{docLabels[r.status]}</Badge>
-                      </td>
-                      <td className="px-[17px] text-right">
-                        <Link href={`/coordinator/applications/${r.applicationId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-                          {r.status === "SUBMITTED" ? "상세 검토" : "서류 보기"}
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {visible.length === 0 && <p className="p-[35px] text-center text-[13px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
-          </div>
-          <p className="shrink-0 p-[22px] text-xs text-(--coord-muted)">
-            근거 점검은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 매니저가 최종 판단해요.
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="line-clamp-2 leading-[1.4] font-bold break-keep" title={r.jobTitle}>
+                        {r.jobTitle}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{monthDayTime(r.submittedAt)}</td>
+                    <td className="px-4 py-3">
+                      <DeadlineCell deadlineOn={r.deadlineOn} untilFilled={r.untilFilled} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EvidenceCell check={c} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditedCell check={c} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge tone={docTone[r.status]}>{docLabels[r.status]}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/coordinator/applications/${r.applicationId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+                        {r.status === "SUBMITTED" ? "상세 검토" : "서류 보기"}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {visible.length === 0 && <p className="p-9 text-center text-[14.5px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
+          <p className="border-t border-(--coord-line) px-5 py-3.5 text-[13px] text-(--coord-muted)">
+            근거 연결 현황은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 매니저가 최종 판단해요.
           </p>
         </Panel>
       )}
@@ -235,17 +232,14 @@ function DeadlineCell({ deadlineOn, untilFilled }: { deadlineOn: string | null; 
     return <span className="text-(--coord-muted)">{untilFilled ? "채용 시 마감" : "—"}</span>;
   }
   const left = daysLeft(deadlineOn);
+  // 리뉴얼은 마감이 가까우면 빨강 굵게 ("11.03 (D-1 마감)"). 지난 마감 · 여유 있는 마감은 기본색
+  const urgent = left >= 0 && left <= 3;
   return (
     <span className="flex flex-col gap-0.5">
-      <span className="flex items-center gap-1.5">
-        {monthDay(deadlineOn)}
-        {left < 0 ? (
-          <span className="text-[10px] text-(--coord-muted)">마감</span>
-        ) : (
-          <b className={`text-[10px] ${left <= 3 ? "text-(--coord-red)" : "text-(--coord-muted)"}`}>{left === 0 ? "D-day" : `D-${left}`}</b>
-        )}
-      </span>
-      {untilFilled && <span className="text-[10px] text-(--coord-muted)">채용 시 마감</span>}
+      <b className={`whitespace-nowrap ${urgent ? "text-(--coord-red)" : left < 0 ? "font-normal text-(--coord-muted)" : ""}`}>
+        {monthDay(deadlineOn)} ({left < 0 ? "마감" : left === 0 ? "D-day" : `D-${left}`})
+      </b>
+      {untilFilled && <span className="text-[12px] text-(--coord-faint)">채용 시 마감</span>}
     </span>
   );
 }
@@ -259,10 +253,10 @@ function EvidenceCell({ check }: { check: Check }) {
   if (total === 0) return <span className="text-(--coord-muted)">AI 문장 없음</span>;
   return linked === total ? (
     <Badge tone="green">
-      근거 연결 {linked}/{total}
+      AI 문장 근거 연결 {linked}/{total}
     </Badge>
   ) : (
-    <Badge tone="red">근거 확인 필요 {total - linked}문장</Badge>
+    <Badge tone="orange">근거 확인 필요 {total - linked}문장</Badge>
   );
 }
 

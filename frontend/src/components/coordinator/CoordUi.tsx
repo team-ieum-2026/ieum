@@ -27,6 +27,11 @@ const ICONS = {
   close: "M6 6l12 12M18 6 6 18",
   refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
   info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 8v4M12 16h.01",
+  /** 새싹 (수료생 화면 StudentIcon 의 sprout 과 같은 모양) */
+  sprout: "M12 21v-8M12 15C4 15 3 10 4 6c6 0 9 3 8 9ZM12 12c0-6 3-9 8-9 1 6-2 10-8 10",
+  pencil: "M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z",
+  checkCircle: "M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14l-3-3",
+  user: "M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z",
 } as const;
 export type IconName = keyof typeof ICONS;
 
@@ -76,14 +81,11 @@ export function Badge({ tone = "gray", small = false, children }: { tone?: Coord
   );
 }
 
-/** 페이지 제목 + 설명 (+ 오른쪽 동작) */
-export function PageTitle({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
+/** 페이지 제목 (+ 오른쪽 동작). 1차 피드백: 제목 아래 설명은 두지 않고 제목만 30px 로 키운다 */
+export function PageTitle({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div className="mb-5 flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-[26px] leading-[1.3] font-extrabold tracking-[-0.4px]">{title}</h1>
-        <p className="mt-1 text-[14.5px] text-(--coord-muted)">{description}</p>
-      </div>
+    <div className="mb-5 flex items-center justify-between gap-4">
+      <h1 className="min-w-0 text-[30px] leading-[1.3] font-extrabold tracking-[-0.5px]">{title}</h1>
       {action && <div className="flex shrink-0 items-center gap-2.5">{action}</div>}
     </div>
   );
@@ -192,6 +194,10 @@ export const btn = {
   /** base 의 크기와 겹치므로 ! 로 확실히 덮는다 (Tailwind 는 클래스 순서가 아니라 CSS 생성 순서로 이겨서 sm 이 무시될 수 있음) */
   sm: "px-3! py-1.5! text-[13.5px]!",
 } as const;
+
+/** '목록으로' 돌아가기 링크 (2차 피드백: 배경 · 테두리 없이 아이콘과 글씨만, C3 · C4 공용) */
+export const backLink =
+  "inline-flex items-center gap-1.5 rounded-[4px] text-[14.5px] font-bold text-(--coord-muted) transition-colors hover:text-(--coord-ink) focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-green)";
 
 /**
  * 제목 오른쪽 '목록 새로고침' (C1 · C4 목록 · 도움 요청). 페이지 전체가 아니라 그 화면의 조회 API 만 다시 부른다.

@@ -1,19 +1,15 @@
 "use client";
-// 주인: FE-B — 취업·지원 현황 (11/1 개편 목업 statsPage). 대시보드 API 한 번 + 수료생 목록 API(C2 와 같은 함수)로만 그린다.
+// 주인: FE-B — 통계 (11/1 개편 목업 statsPage, 1차 피드백으로 메뉴 이름 '취업·지원 현황' → '통계'). 대시보드 API 로 그린다.
 // ① 수료생 관리 현황(도넛 + 범례 3줄) ② 취업 지표(링 3개). '취업률'은 관리 상태 기준이며 공식 취업 성과가 아니다.
 // ③ 도움 요청 통계: 처리 상태별은 상태별 목록 API(ALL)로 접수 · 처리 중 · 상담 예정 · 연락 완료 · 요청 종료 전체 건수를 센다.
 //    선호 연락별 · 필요한 도움별은 대시보드 helpRequests(접수 OPEN) 기준. 유형이 없으면 '미분류' (공고 · 메모로 추측 분류하지 않음)
-// ④ 수료생 통합 현황: C2 목록 API(검색 · 관리 상태 · 페이지) + 지금 페이지만 C3 상세로 지원서류를 채운다. 도움 요청은 접수 중 건수
-// ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
-import Link from "next/link";
+// 수료생 통합 현황 표는 C2 수료생 관리와 겹쳐 1차 피드백으로 뺐다. 전체 명단 CSV 는 C2 로 옮김 (studentCsv.ts)
 import { useEffect, useId, useState } from "react";
-import { apiErrorText, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn } from "@/components/coordinator/CoordUi";
 import { IS_MOCK } from "@/components/coordinator/demoAccount";
 import {
   MANAGE_ORDER,
   contactLabels,
-  docLabels,
-  docTone,
   HELP_TYPE_ORDER,
   helpLabels,
   helpTone,
@@ -21,25 +17,11 @@ import {
   knownCount,
   manageChartVar,
   manageCounts,
-  manageLabels,
-  monthDay,
   pct,
-  studentExtra,
 } from "@/components/coordinator/coordLabels";
-import { subStatusLabels } from "@/components/student/labels";
-import { ApiError } from "@/lib/api/client";
 import { getCoordinatorHelpRequests, getDashboard } from "@/lib/api/coordinatorReview";
-import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
-import type { CoordinatorHelpRequest, CoordStudentStatus, Dashboard } from "@/types/coordinator";
-import type {
-  ApplicationStatus,
-  ContactMethod,
-  CoordinatorStudentList,
-  CoordinatorStudentRow,
-  StudentHelpRequestStatus,
-  StudentStatus,
-  SubStatus,
-} from "@/types/student";
+import type { CoordinatorHelpRequest, Dashboard } from "@/types/coordinator";
+import type { ContactMethod, StudentHelpRequestStatus } from "@/types/student";
 
 const R = 54;
 const CIRC = 2 * Math.PI * R;
@@ -67,7 +49,7 @@ export default function StatsScreen() {
 
   return (
     <>
-      <PageTitle title="취업·지원 현황" description="관리 상태 분포와 취업 지표를 한눈에 살펴보세요." />
+      <PageTitle title="통계" />
       {data ? (
         <Body data={data} />
       ) : (
@@ -217,7 +199,6 @@ function Body({ data }: { data: Dashboard }) {
         </p>
       </div>
       <HelpStats data={data} />
-      <StudentRoster data={data} />
     </>
   );
 }
@@ -382,361 +363,4 @@ function StatRow({
       )}
     </li>
   );
-}
-
-// ---- ④ 수료생 통합 현황 ----
-
-const PAGE_SIZE = 10;
-/** 목록 API 가 허용하는 가장 큰 페이지 크기 (BE: size ≤ 100) */
-const EXPORT_PAGE_SIZE = 100;
-
-/** 관리 상태 필터 값: "EMPLOYED" · "SEEKING" · "SEEKING:APPLYING" … (C2 와 같은 값) */
-const FILTERS: { value: string; label: string }[] = [
-  { value: "", label: "전체" },
-  ...MANAGE_ORDER.flatMap((s) =>
-    s === "SEEKING"
-      ? [
-          { value: s, label: manageLabels[s] },
-          ...(Object.keys(subStatusLabels) as SubStatus[]).map((sub) => ({ value: `${s}:${sub}`, label: `　└ ${subStatusLabels[sub]}` })),
-        ]
-      : [{ value: s, label: manageLabels[s] }],
-  ),
-];
-
-const ROSTER_COLUMNS: [string, string][] = [
-  // 교육과정 · 관리 상태(배지 + 세부 상태 한 줄)에 폭을 더 준다 (실제 과정명이 길다)
-  ["수료생", "w-[11%]"],
-  ["교육과정", "w-[26%]"],
-  ["관리 상태", "w-[20%]"],
-  ["최근 응답 · 활동", "w-[16%]"],
-  ["도움 요청", "w-[11%]"],
-  ["지원서류", "w-[16%]"],
-];
-
-/** 한 수료생의 지원서류 (C3 상세 API) */
-type DocExtra = { state: "error" } | { state: "ok"; docs: { applicationId: number; status: ApplicationStatus }[] };
-
-type Query = { status?: CoordStudentStatus; subStatus?: SubStatus; q: string; page: number };
-
-/** 목록 API 는 status=RESTING 을 지원한다 (docs/API.md). FE-A 쿼리 타입(StudentStatus)에 RESTING 이 아직 없어 여기서만 넘긴다 */
-const listStatus = (s: CoordStudentStatus | undefined) => s as StudentStatus | undefined;
-
-function StudentRoster({ data }: { data: Dashboard }) {
-  const [query, setQuery] = useState<Query>({ q: "", page: 1 });
-  const [list, setList] = useState<CoordinatorStudentList | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [docs, setDocs] = useState<Record<number, DocExtra>>({});
-  const [exporting, setExporting] = useState(false);
-  const [exportMessage, setExportMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    let ignore = false;
-    getCoordinatorStudents({ status: listStatus(query.status), subStatus: query.subStatus, q: query.q, page: query.page, size: PAGE_SIZE })
-      .then((d) => {
-        if (!ignore) {
-          setList(d);
-          setError(null);
-        }
-      })
-      .catch((e: unknown) => {
-        if (!ignore) setError(apiErrorText(e, "수료생 목록을 불러오지 못했어요."));
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [query, reloadKey]);
-
-  // 지금 페이지에서 아직 안 불러온 수료생만 상세를 불러 지원서류 열을 채운다 (페이지를 오가도 다시 부르지 않음)
-  useEffect(() => {
-    if (!list) return;
-    const ids = list.items.map((s) => s.studentId).filter((id) => !docs[id]);
-    if (ids.length === 0) return;
-    let ignore = false;
-    Promise.allSettled(ids.map((id) => getCoordinatorStudent(id))).then((results) => {
-      if (ignore) return;
-      const next: Record<number, DocExtra> = {};
-      results.forEach((r, i) => {
-        next[ids[i]] =
-          r.status === "rejected"
-            ? { state: "error" }
-            : {
-                state: "ok",
-                docs: r.value.history
-                  .flatMap((h) => h.items)
-                  .filter((item) => item.applicationId && item.applicationStatus)
-                  .map((item) => ({ applicationId: item.applicationId as number, status: item.applicationStatus as ApplicationStatus })),
-              };
-      });
-      setDocs((m) => ({ ...m, ...next }));
-    });
-    return () => {
-      ignore = true;
-    };
-  }, [list, docs]);
-
-  const openHelp = (studentId: number) => data.helpRequests.filter((h) => h.studentId === studentId);
-  // 접수 중 도움 요청 건수: 서버 openHelpRequestCount 우선, 없는 응답(이전 목업)은 대시보드 helpRequests 로 센다
-  const helpCount = (row: CoordinatorStudentRow) => studentExtra(row).openHelpRequestCount ?? openHelp(row.studentId).length;
-  const filterValue = query.status ? (query.subStatus ? `${query.status}:${query.subStatus}` : query.status) : "";
-  const lastPage = list ? Math.max(1, Math.ceil(list.total / list.size)) : 1;
-  const conditionLabel = [FILTERS.find((f) => f.value === filterValue)?.label.replace("　└ ", "") ?? "전체", query.q && `"${query.q}"`]
-    .filter(Boolean)
-    .join(" · ");
-
-  const exportAll = async () => {
-    setExporting(true);
-    setExportMessage(null);
-    try {
-      // 100명씩 끝까지 받는다. 받는 중 인원이 바뀌어도 studentId 로 중복을 빼고, 빈 페이지가 오면 멈춘다
-      const rows = new Map<number, CoordinatorStudentRow>();
-      let total = 0;
-      for (let page = 1; ; page++) {
-        const d = await getCoordinatorStudents({ status: listStatus(query.status), subStatus: query.subStatus, q: query.q, page, size: EXPORT_PAGE_SIZE });
-        total = d.total;
-        d.items.forEach((s) => rows.set(s.studentId, s));
-        if (d.items.length === 0 || page * EXPORT_PAGE_SIZE >= d.total) break;
-      }
-      const all = [...rows.values()];
-      downloadCsv(all, helpCount, `수료생_전체명단_${today()}.csv`);
-      setExportMessage(
-        all.length === total ? `전체 명단 ${all.length}명을 내려받았어요.` : `서버 인원 ${total}명 중 ${all.length}명을 받았어요. 받는 중 명단이 바뀌었을 수 있어요.`,
-      );
-    } catch (e) {
-      setExportMessage(e instanceof ApiError ? e.message : "전체 명단을 받지 못했어요. 파일은 만들지 않았어요.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  return (
-    <Panel label="수료생 통합 현황" className="mt-5 flex flex-col">
-      {/* 리뉴얼 .table-toolbar-box: 제목 18px + 설명, 오른쪽에 CSV. 다음 줄에 검색 · 상태 필터 · 초기화 */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-4">
-        <p className="min-w-0">
-          <b className="text-lg font-extrabold">수료생 통합 현황</b>
-          <span className="ml-2.5 text-[13.5px] text-(--coord-muted)">
-            관리 상태 · 최근 응답 · 접수 중 도움 요청 · 지원서류를 한 줄로 봐요. 이름을 누르면 수료생 상세로 이동해요.
-          </span>
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            disabled={!list || list.items.length === 0}
-            onClick={() => list && downloadCsv(list.items, helpCount, `수료생_명단_${query.page}쪽_${today()}.csv`)}
-            className={`${btn.base} ${btn.outline} ${btn.sm}`}
-          >
-            현재 페이지 CSV
-          </button>
-          <button type="button" disabled={exporting || !list} onClick={exportAll} aria-busy={exporting} className={`${btn.base} ${btn.primary} ${btn.sm}`}>
-            {exporting ? "받는 중…" : `전체 명단 CSV (${conditionLabel})`}
-          </button>
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2.5 border-b border-(--coord-line) bg-(--coord-head) px-5 py-3">
-        <form
-          className="flex items-center gap-1.5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const q = String(new FormData(event.currentTarget).get("q") ?? "").trim();
-            setQuery((cur) => ({ ...cur, q, page: 1 }));
-          }}
-        >
-          <input
-            key={query.q}
-            name="q"
-            type="search"
-            defaultValue={query.q}
-            aria-label="수료생 이름 검색"
-            placeholder="수료생 이름 검색"
-            className="w-[220px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px]"
-          />
-          <button type="submit" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-            <Icon name="search" className="size-3.5" />
-            검색
-          </button>
-        </form>
-        <select
-          value={filterValue}
-          aria-label="관리 상태"
-          onChange={(event) => {
-            const [s, sub] = event.target.value.split(":");
-            setQuery((cur) => ({ ...cur, status: (s || undefined) as CoordStudentStatus | undefined, subStatus: sub as SubStatus | undefined, page: 1 }));
-          }}
-          className="min-w-[190px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px] text-(--coord-ink)"
-        >
-          {FILTERS.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.value ? f.label : "관리 상태 (전체)"}
-            </option>
-          ))}
-        </select>
-        <button type="button" onClick={() => setQuery({ q: "", page: 1 })} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-          초기화
-        </button>
-        {exportMessage && (
-          <p role="status" className="ml-auto text-[13px] text-(--coord-muted)">
-            {exportMessage}
-          </p>
-        )}
-      </div>
-      {!list ? (
-        <LoadState
-          error={error}
-          loadingText="수료생 목록을 불러오는 중이에요…"
-          onRetry={() => {
-            setError(null);
-            setReloadKey((k) => k + 1);
-          }}
-        />
-      ) : (
-        <>
-          {error && (
-            <p role="alert" className="px-5 pt-3 text-[13.5px] font-bold text-(--coord-red)">
-              {error}
-            </p>
-          )}
-          {/* 리뉴얼 table.data-table: 머리 13.5px 회색 바탕 · 본문 15px · 행 hover */}
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-collapse text-left text-[15px]">
-              <caption className="sr-only">수료생 통합 현황: 수료생, 교육과정, 관리 상태, 최근 응답 · 활동, 도움 요청, 지원서류</caption>
-              <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
-                <tr>
-                  {ROSTER_COLUMNS.map(([label, w]) => (
-                    <th key={label} scope="col" className={`${w} border-b border-(--coord-line) px-4 py-3 font-bold whitespace-nowrap`}>
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {list.items.map((s) => {
-                  const help = openHelp(s.studentId);
-                  const count = helpCount(s);
-                  return (
-                    <tr key={s.studentId} className="border-b border-(--coord-line) hover:bg-(--coord-hover)">
-                      <td className="overflow-hidden px-4 py-3.5">
-                        <Link
-                          href={`/coordinator/students/${s.studentId}`}
-                          className="block truncate text-[15.5px] font-extrabold text-(--coord-green) underline-offset-4 hover:underline"
-                        >
-                          {s.name}
-                        </Link>
-                      </td>
-                      {/* 리뉴얼 C6 표는 한 줄 행(약 54px): 교육과정 · 세부 상태 · 비고는 같은 줄에 두고 넘치면 줄임표 + 마우스 안내 */}
-                      <td className="px-4 py-3.5">
-                        <CourseLabel label={s.courseLabel} lines={1} />
-                      </td>
-                      <td className="overflow-hidden px-4 py-3.5">
-                        <ManageStatus status={s.status} subStatus={s.subStatus} />
-                      </td>
-                      <td className="overflow-hidden px-4 py-3.5 whitespace-nowrap">
-                        <b className={`text-sm ${s.status === "CHECK_REQUIRED" ? "text-(--coord-orange)" : ""}`}>
-                          {s.lastResponseAt ? `${monthDay(s.lastResponseAt)} 응답` : "응답 기록 없음"}
-                        </b>
-                        {s.hasNote && <span className="ml-1.5 text-xs text-(--coord-muted)">비고 있음</span>}
-                      </td>
-                      <td className="overflow-hidden px-4 py-3.5">
-                        {count > 0 ? (
-                          <Link href={help[0] ? `/coordinator/help-requests?id=${help[0].helpRequestId}` : "/coordinator/help-requests"} className="hover:brightness-95">
-                            <Badge tone="red">접수 {count}건</Badge>
-                          </Link>
-                        ) : (
-                          <span className="text-[13px] text-(--coord-faint)">접수 없음</span>
-                        )}
-                      </td>
-                      <td className="overflow-hidden px-4 py-3.5">
-                        <DocCell extra={docs[s.studentId]} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {list.items.length === 0 && <p className="p-9 text-center text-[15px] text-(--coord-muted)">조건에 맞는 수료생이 없어요.</p>}
-          </div>
-          <div className="flex shrink-0 items-center justify-between px-5 py-3.5 text-[13.5px] text-(--coord-muted)">
-            <span role="status">
-              {list.total}명 중 {list.total ? (query.page - 1) * list.size + 1 : 0}–{(query.page - 1) * list.size + list.items.length}명
-              <span className="ml-3 text-(--coord-faint)">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
-            </span>
-            <div className="flex items-center gap-2 font-bold text-(--coord-ink)">
-              <button
-                type="button"
-                disabled={query.page <= 1}
-                onClick={() => setQuery((cur) => ({ ...cur, page: cur.page - 1 }))}
-                className={`${btn.base} ${btn.outline} ${btn.sm}`}
-              >
-                이전
-              </button>
-              <span>
-                {query.page} / {lastPage}
-              </span>
-              <button
-                type="button"
-                disabled={query.page >= lastPage}
-                onClick={() => setQuery((cur) => ({ ...cur, page: cur.page + 1 }))}
-                className={`${btn.base} ${btn.outline} ${btn.sm}`}
-              >
-                다음
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </Panel>
-  );
-}
-
-/** 가장 최근 지원서 상태 (여러 건이면 +N) */
-function DocCell({ extra }: { extra: DocExtra | undefined }) {
-  if (!extra) return <span className="text-[13px] text-(--coord-faint)">불러오는 중…</span>;
-  if (extra.state === "error") return <span className="text-[13px] text-(--coord-muted)">조회 실패</span>;
-  const [first, ...rest] = extra.docs;
-  if (!first) return <span className="text-[13px] text-(--coord-faint)">제출 없음</span>;
-  return (
-    <Link href={`/coordinator/applications/${first.applicationId}`} className="inline-flex max-w-full items-center gap-1 hover:brightness-95">
-      <Badge tone={docTone[first.status]}>{docLabels[first.status]}</Badge>
-      {rest.length > 0 && <span className="text-xs text-(--coord-muted)">+{rest.length}</span>}
-    </Link>
-  );
-}
-
-// ---- ⑤ CSV ----
-
-const today = () => {
-  const d = new Date();
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-};
-
-/** 목록 API 값 + 접수 중 도움 요청 수만 담는다. 엑셀에서 한글이 깨지지 않게 BOM 을 붙인다 */
-function downloadCsv(rows: CoordinatorStudentRow[], helpCount: (row: CoordinatorStudentRow) => number, fileName: string) {
-  const cell = (v: string | number) => {
-    const s = String(v);
-    // 쉼표 · 따옴표 · 줄바꿈은 따옴표로 감싸고, 수식으로 읽히는 첫 글자는 막는다
-    const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
-    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
-  const header = ["이름", "교육과정", "수료일", "관리 상태", "세부 상태", "최근 응답일", "비고 있음", "접수 중 도움 요청"];
-  const lines = rows.map((s) =>
-    [
-      s.name,
-      s.courseLabel,
-      s.completedOn,
-      manageLabels[s.status],
-      s.subStatus ? subStatusLabels[s.subStatus] : "",
-      s.lastResponseAt ? s.lastResponseAt.slice(0, 10) : "",
-      s.hasNote ? "예" : "아니요",
-      helpCount(s),
-    ]
-      .map(cell)
-      .join(","),
-  );
-  const blob = new Blob(["﻿" + [header.join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(url);
 }

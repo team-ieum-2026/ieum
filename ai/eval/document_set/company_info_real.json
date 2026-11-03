@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "collectedOn": "2026-11-02",
+    "collectedBy": "AI-A (웹 검색으로 직접 수집. ai/company/ 의 검색 수집은 아직 TODO)",
+    "purpose": "서류 평가의 실제 공고 회사 기업 정보. 보조 세트(test 4, 17, 20번) 3곳은 11/2, dev 실제 공고 4곳은 11/3 수집. 주 지표와 섞지 않는다",
+    "rule": "공식 홈페이지, 채용 사이트의 회사 작성 문구만 쓴다. 회사 주소를 공고 근무지와 맞춰 같은 회사인지 확인했다. 세 항목(인재상, 핵심 가치, 6개월 안 최근 이슈) 중 찾은 것만 채우고 없으면 비운다",
+    "statusNote": "세 회사 모두 세 항목이 다 있지 않아 FOUND 는 없다. 앤서레이는 공식 홈페이지를 열지 못해(인증서 오류) 기업 정보를 보내지 않는다(NOT_FOUND)"
+  },
+  "companies": [
+    {
+      "companyName": "파인트리파트너스주식회사",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": [
+        "인터랙션: 프로세스와 도구보다는 구성원간의 상호작용을",
+        "레노베이션: 완전한 새로움 보다는 기존 기반의 새로운 것을",
+        "어질리티: 계획에 따르기보다는 변화에 대응하기를",
+        "콜라보레이션: 협상보다는 고객과 구성원과의 협력을"
+      ],
+      "recentIssue": null,
+      "sources": [
+        {
+          "item": "coreValues",
+          "url": "https://www.pine-partners.com/pinetree-is",
+          "collectedAt": "2026-11-02T16:00:00+09:00"
+        }
+      ],
+      "collectedAt": "2026-11-02T16:00:00+09:00"
+    },
+    {
+      "companyName": "더블유피솔루션즈 주식회사",
+      "status": "PARTIAL",
+      "talentKeywords": [],
+      "coreValues": [],
+      "recentIssue": "2026 STK AI+ Smart Factory Show 참가 (2026년 6월 10일~12일)",
+      "sources": [
+        {
+          "item": "recentIssue",
+          "url": "http://www.wpsol.co.kr/board/board_list?code=news",
+          "collectedAt": "2026-11-02T16:00:00+09:00"
+        }
+      ],
+      "collectedAt": "2026-11-02T16:00:00+09:00"
+    },
+    {
+      "companyName": "(주) 비트컴퓨터",
+      "status": "FOUND",
+      "talentKeywords": [
+        "벤처정신이 살아있는 사람",
+        "적극적으로 도전하는 패기있는 사람",
+        "창의력을 갖춘 인재"
+      ],
+      "coreValues": [
+        "기업의 건전성",
+        "투명함",
+        "사회적 책임"
+      ],
+      "recentIssue": "AI 심사청구 통합검색 에이전트 'Medigent AI' 출시 (2026년 10월 19일)",
+      "sources": [
+        {
+          "item": "talentKeywords",
+          "url": "https://www.bit.kr/contents/company_recruit.php",
+          "collectedAt": "2026-11-03T10:00:00+09:00"
+        },
+        {
+          "item": "coreValues",
+          "url": "https://www.bit.kr",
+          "collectedAt": "2026-11-03T10:00:00+09:00"
+        },
+        {
+          "item": "recentIssue",
+          "url": "https://www.bit.kr/contents/pr_news.php",
+          "collectedAt": "2026-11-03T10:00:00+09:00"
+        }
+      ],
+      "collectedAt": "2026-11-03T10:00:00+09:00"
+    }
+  ],
+  "notFound": [
+    {
+      "companyName": "주식회사 앤서레이(Answeray Inc.)",
+      "why": "공식 홈페이지(www.answeray.com) 인증서 오류로 열지 못함. 잡코리아 회사 소개에 '창의와 열정', '서로 협력' 문구가 있으나 인재상 항목은 아님. 최근 소식은 2024년 인증이 마지막"
+    },
+    {
+      "companyName": "주식회사 몽키소프트",
+      "why": "공식 홈페이지(monkeysoft.co.kr)에 인재상, 핵심 가치, 소식 메뉴가 없음. 사업 소개 문구만 있음"
+    },
+    {
+      "companyName": "아이클루드 주식회사",
+      "why": "공식 홈페이지(aiclude.com/about)에 인재상, 핵심 가치가 없고 날짜가 있는 소식도 없음. 비전 문구('10년의 표준')만 있는데 세 항목에 해당하지 않음"
+    },
+    {
+      "companyName": "주식회사 한국오토파츠",
+      "why": "공식 홈페이지를 찾지 못함. 검색 결과가 같은 주소의 다른 업체뿐"
+    }
+  ]
+}
