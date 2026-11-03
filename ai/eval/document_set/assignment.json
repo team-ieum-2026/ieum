@@ -1,0 +1,201 @@
+{
+  "_meta": {
+    "madeOn": "2026-11-03",
+    "seed": 20261103,
+    "testOrder": [
+      18,
+      9,
+      4,
+      12,
+      11,
+      16,
+      20,
+      19,
+      7,
+      6
+    ],
+    "rule": "make_assignment.py 첫 주석 참고. 결과를 보기 전에 커밋한다"
+  },
+  "rows": [
+    {
+      "group": "test",
+      "studentId": 4,
+      "jobPostingId": 900216,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)올빼미인사이트",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "test",
+      "studentId": 6,
+      "jobPostingId": 900226,
+      "postingOrigin": "EVAL",
+      "companyName": "미르솔정보(주)",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 7,
+      "jobPostingId": 900232,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)가온결정보통신",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 9,
+      "jobPostingId": 900241,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)헬스노트",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "test",
+      "studentId": 11,
+      "jobPostingId": 900248,
+      "postingOrigin": "EVAL",
+      "companyName": "주식회사 펭귄로그",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 12,
+      "jobPostingId": 900255,
+      "postingOrigin": "EVAL",
+      "companyName": "데이터웨이브(주)",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 16,
+      "jobPostingId": 900270,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)모래시계랩",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 18,
+      "jobPostingId": 900279,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)바른셈회계솔루션",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "test",
+      "studentId": 19,
+      "jobPostingId": 900282,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)여울빛유통",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "test",
+      "studentId": 20,
+      "jobPostingId": 900287,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)솔방울에이아이",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "real",
+      "studentId": 4,
+      "jobPostingId": 613,
+      "postingOrigin": "REAL",
+      "companyName": "더블유피솔루션즈 주식회사",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/eval/document_set/company_info_real.json"
+    },
+    {
+      "group": "real",
+      "studentId": 17,
+      "jobPostingId": 671,
+      "postingOrigin": "REAL",
+      "companyName": "주식회사 앤서레이(Answeray Inc.)",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "real",
+      "studentId": 20,
+      "jobPostingId": 625,
+      "postingOrigin": "REAL",
+      "companyName": "파인트리파트너스주식회사",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/eval/document_set/company_info_real.json"
+    },
+    {
+      "group": "dev",
+      "studentId": 1,
+      "jobPostingId": 900201,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)온다랩",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "dev",
+      "studentId": 2,
+      "jobPostingId": 900206,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)결빛페이먼츠",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "dev",
+      "studentId": 3,
+      "jobPostingId": 900211,
+      "postingOrigin": "EVAL",
+      "companyName": "(주)온결디자인",
+      "companyInfoStatus": "PARTIAL",
+      "companyInfoFrom": "ai/data/eval/companies.json"
+    },
+    {
+      "group": "dev",
+      "studentId": 5,
+      "jobPostingId": 666,
+      "postingOrigin": "REAL",
+      "companyName": "(주) 비트컴퓨터",
+      "companyInfoStatus": "FOUND",
+      "companyInfoFrom": "ai/eval/document_set/company_info_real.json"
+    },
+    {
+      "group": "dev",
+      "studentId": 8,
+      "jobPostingId": 683,
+      "postingOrigin": "REAL",
+      "companyName": "주식회사 몽키소프트",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "dev",
+      "studentId": 14,
+      "jobPostingId": 711,
+      "postingOrigin": "REAL",
+      "companyName": "아이클루드 주식회사",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    },
+    {
+      "group": "dev",
+      "studentId": 15,
+      "jobPostingId": 621,
+      "postingOrigin": "REAL",
+      "companyName": "주식회사 한국오토파츠",
+      "companyInfoStatus": "NOT_FOUND",
+      "companyInfoFrom": null
+    }
+  ]
+}
