@@ -14,11 +14,13 @@ import { SECTION_FIELDS, isEditableSection, type EditableItem } from "@/componen
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
-import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
+import type { ApplicationDetail, BasicSection, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
 import type { Source } from "@/types/student";
 import StudentPageHeading from "@/components/student/StudentPageHeading";
 import StudentIcon from "@/components/student/StudentIcon";
 import ApplicationStatusBadge from "@/components/student/ApplicationStatusBadge";
+import { useApplicationBreadcrumb } from "@/components/student/StudentShell";
+import DocumentHeading from "@/components/resume/DocumentHeading";
 
 const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
 const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
@@ -31,6 +33,7 @@ const secondaryButton =
 export default function ResumeDraft({ applicationId, studentId }: { applicationId: number; studentId: number }) {
   const router = useRouter();
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
+  useApplicationBreadcrumb(detail?.status);
   // notFound: 404 APPLICATION_NOT_FOUND — 다시 불러와도 같으므로 "다시 시도" 대신 지원 현황으로 보낸다
   const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -173,11 +176,12 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
   const resumeCards = cards.filter((c) => c.section !== "PORTFOLIO");
   const portfolioCard = cards.find((c) => c.section === "PORTFOLIO");
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
+  const studentName = document.sections.find((section): section is BasicSection => section.section === "BASIC")?.fields.name;
 
   return (
     <div className="s-resume-page">
-      <StudentPageHeading title="나의 경험으로 채우는 지원서" description={`${job.companyName} · ${job.title}`} back={studentHref("/student/applications", studentId)} />
-      <div className="s-resume-layout"><div className="s-resume-content">
+      <div className="s-resume-heading"><StudentPageHeading title={`${job.companyName} · ${job.title}`} /></div>
+      <div className="s-resume-toolbar-row">
         <div className="s-document-toolbar">
         {/* 출처 태그 설명: 이력서 · 포트폴리오 · 자기소개서 모두에 적용되는 화면 공통 설명 */}
         <div className="s-source-legend">
@@ -193,10 +197,12 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
         </div>
         <SaveStatus state={saveState} />
         </div>
+      </div>
+      <div className="s-resume-layout"><div className="s-resume-content">
 
         {coverLetter && <CoverLetterCard applicationId={applicationId} studentId={studentId} section={coverLetter} />}
 
-        <h2 className="s-document-section-heading">이력서</h2>
+        <div className="s-resume-document-heading"><DocumentHeading title="이력서" job={job} name={studentName} /></div>
         {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험) */}
         <SectionCardGroup>
           {resumeCards.map((card) => (
@@ -216,9 +222,9 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
       </div>
 
       <aside className="s-panel s-action-panel">
-        <ApplicationStatusBadge status={status} />
+        {status === "DRAFT" ? <div className="s-resume-draft-status-space" aria-hidden="true" /> : <ApplicationStatusBadge status={status} />}
         <h2>{canSubmit ? "서류를 한 번 더 살펴봐요." : "검토 요청한 서류예요."}</h2>
-        <p>{canSubmit ? "기본정보와 경험을 확인하고, 자기소개서의 근거도 살펴보세요." : "제출한 내용을 확인할 수 있어요. 진행 상황은 지원 현황에서 확인해주세요."}</p>
+        {canSubmit ? <div className="s-resume-guidance-space" aria-hidden="true" /> : <p>제출한 내용을 확인할 수 있어요. 진행 상황은 지원 현황에서 확인해주세요.</p>}
         <ul className="s-check-list"><li><StudentIcon name="file" />이력서 항목별 확인·편집</li><li><StudentIcon name="shield" />AI 작성 문장의 출처·근거 확인</li><li><StudentIcon name="check" />병역은 비워두어도 제출 가능</li></ul>
         {coverLetter && <Link href={studentHref(`/student/applications/${applicationId}/cover-letter`, studentId)} className="s-button">자기소개서와 근거 보기</Link>}
         <button
@@ -229,11 +235,7 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
         >
           담당자에게 검토 요청
         </button>
-        <p className="s-source-note">
-          {canSubmit
-            ? "검토 후 기관 추천으로 전달돼요 · 기업에 바로 가지 않아요"
-            : "이미 검토를 요청한 서류예요 · 지원 현황에서 확인할 수 있어요"}
-        </p>
+        {!canSubmit && <p className="s-source-note">이미 검토를 요청한 서류예요 · 지원 현황에서 확인할 수 있어요</p>}
       </aside></div>
 
       {listTarget ? (
@@ -265,7 +267,7 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
       <BottomSheet
         open={confirmingSubmit && canSubmit}
         title="담당자에게 서류를 보낼까요?"
-        description={`${job.companyName} · ${job.title} 지원 서류가 담당 코디네이터 검토 단계로 넘어가요. 기업에 바로 보내지는 않아요.`}
+        description={`${job.companyName} · ${job.title} 지원 서류가 담당 매니저 검토 단계로 넘어가요. 기업에 바로 보내지는 않아요.`}
         onClose={closeSubmitSheet}
         actions={
           <>
@@ -338,18 +340,16 @@ function CoverLetterCard({
           <b className="mr-auto text-sm">자기소개서</b>
           {aiCount > 0 && <SourceTag source="AI" label={`AI 작성 ${aiCount}문장`} />}
           {registeredCount > 0 && <SourceTag source="REGISTERED" label={`등록 ${registeredCount}문장`} />}
-          {userCount > 0 && <SourceTag source="USER" label={`직접 입력 ${userCount}문장`} />}
+          {userCount > 0 && <SourceTag source="USER" label={`직접 작성·수정 ${userCount}문장`} />}
         </span>
         {note && <span className="-mt-1 text-[11px] text-ink-muted">{note}</span>}
         {section.sentences.length > 0 ? (
-          // 문장을 이어 붙여 최대 3줄, 넘치면 말줄임표. AI 문장은 밑줄 강조
+          // 문장을 일반 본문으로 이어 붙인다. 출처는 위 요약 태그로 구분한다.
           <span className="line-clamp-3 text-[13px] leading-[1.6] text-ink-sub">
             {section.sentences.map((s, i) => (
               <span key={s.sentenceId}>
                 {i > 0 && " "}
-                <span className={s.source === "AI" ? "border-b-2 border-primary bg-primary-tint" : undefined}>
-                  {s.text}
-                </span>
+                {s.text}
               </span>
             ))}
           </span>

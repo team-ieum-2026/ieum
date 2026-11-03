@@ -62,7 +62,7 @@ const ACTION: Record<Action, { button: string; title: string; description: strin
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
 
 /** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료 */
-const STEPS = ["AI 초안", "수료생 확인", "코디네이터 검토", "승인", "전달 완료"];
+const STEPS = ["AI 초안", "수료생 확인", "매니저 검토", "승인", "전달 완료"];
 /**
  * 상태별 단계: done = 완료(✓)한 단계 수, current = 지금 단계(없으면 null).
  * REJECTED 는 ②로 되돌리지 않고 ③ 코디네이터 검토에서 '보완 필요'로 끝난 것으로 보인다 (④ · ⑤ 미완료).
@@ -277,7 +277,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
       {/* 보완 필요는 다음 단계로 이어지지 않는 끝 상태라 따로 알린다 (자동 연락 없음) */}
       {status === "REJECTED" && (
         <p role="note" className="-mt-2 mb-5 rounded-[6px] border border-(--coord-red-line) bg-(--coord-red-soft) px-4 py-3 text-[14px] font-semibold text-(--coord-red)">
-          보완이 필요한 서류입니다. 코디네이터가 수료생에게 별도로 연락하여 보완 사항을 안내합니다.
+          보완이 필요한 서류입니다. 매니저가 수료생에게 별도로 연락하여 보완 사항을 안내합니다.
         </p>
       )}
 

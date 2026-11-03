@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "Unselected document has no sentence boxes, numbers, or automatic highlighting; metadata and source labels are visible",
+    "Selecting a sentence highlights only its text and shows exact evidence and origin",
+    "Keyboard selection retains focus",
+    "Applying edits preserves the API contract and updates source to USER",
+    "Save failures retain unsaved input and the previous sentence source",
+    "Submitted documents remain read only while evidence can still be inspected",
+    "Long documents keep the evidence panel in view without moving the desktop reading position",
+    "Mobile stacks the panels without horizontal overflow",
+    "Resume keeps all nine section editors; narrative rows and cover preview have no automatic boxes or highlighting",
+    "Generation container is centered in the viewport with one border and no back link"
+  ],
+  "patchCount": 2,
+  "realDatabaseWrites": 0,
+  "failures": []
+}

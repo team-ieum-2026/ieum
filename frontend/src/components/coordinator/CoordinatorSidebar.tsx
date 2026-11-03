@@ -89,7 +89,7 @@ export default function CoordinatorSidebar() {
         </span>
       </Link>
       <p className="px-2 pb-1.5 text-[11px] font-bold tracking-[0.8px] text-(--coord-side-muted)">WORKSPACE</p>
-      <nav aria-label="코디네이터 메뉴" className="flex flex-1 flex-col gap-1">
+      <nav aria-label="매니저 메뉴" className="flex flex-1 flex-col gap-1">
         {menu.map((item) => {
           const active = item.match(pathname);
           const count = item.count && counts && counts[item.count] > 0 ? counts[item.count] : null;

@@ -61,7 +61,7 @@ export default function StudentEntry({ onNeedHelp }: { onNeedHelp: () => void })
             }
           }}>
             <label htmlFor="student-entry-id" className="sr-only">수료생 ID</label>
-            <p className="field-hint" id="student-entry-id-help">담당 코디네이터에게 안내받은 ID를 입력해주세요.</p>
+            <p className="field-hint" id="student-entry-id-help">담당 매니저에게 안내받은 ID를 입력해주세요.</p>
             <div className={`input-wrap${error ? " is-error" : ""}`}>
               <StudentIcon name="cap" className="icon" />
               <input ref={inputRef} id="student-entry-id" name="studentId" type="text" inputMode="numeric" autoComplete="off" pattern="[0-9]+" placeholder="수료생 ID 입력" required value={studentId} disabled={busy} onChange={(event) => { setStudentId(event.target.value); setError(null); }} aria-invalid={Boolean(error)} aria-describedby={error ? "student-entry-id-help student-entry-error" : "student-entry-id-help"} />

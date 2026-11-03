@@ -211,7 +211,7 @@ export default function ReviewListScreen() {
           </table>
           {visible.length === 0 && <p className="p-9 text-center text-[14.5px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
           <p className="border-t border-(--coord-line) px-5 py-3.5 text-[13px] text-(--coord-muted)">
-            근거 연결 현황은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
+            근거 연결 현황은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 매니저가 최종 판단해요.
           </p>
         </Panel>
       )}

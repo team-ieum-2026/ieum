@@ -9,6 +9,8 @@ interface SentenceTextProps {
   onSelect?: (sentence: Sentence) => void;
   /** 문장 끝 작은 표시 (예: "AI 1"). USER 문장은 항상 "직접"을 붙이므로 무시 */
   marker?: string;
+  /** 수료생 문서에서는 선택 전 강조 없이 본문과 작은 출처 표시만 보여 준다. */
+  presentation?: "highlighted" | "document";
 }
 
 const SOURCE_STYLE: Record<Sentence["source"], string> = {
@@ -23,7 +25,25 @@ const SOURCE_TEXT: Record<Sentence["source"], string> = {
   REGISTERED: "등록 자료",
 };
 
-export default function SentenceText({ sentence, selected = false, onSelect, marker }: SentenceTextProps) {
+export default function SentenceText({ sentence, selected = false, onSelect, marker, presentation = "highlighted" }: SentenceTextProps) {
+  if (presentation === "document") {
+    const label = sentence.source === "USER" ? "직접 작성·수정" : SOURCE_TEXT[sentence.source];
+    return <span
+      className="s-document-sentence"
+      data-sentence-id={sentence.sentenceId}
+      data-source={sentence.source}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-pressed={onSelect ? selected : undefined}
+      onClick={onSelect ? () => onSelect(sentence) : undefined}
+      onKeyDown={onSelect ? event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(sentence);
+        }
+      } : undefined}
+    ><span className="s-document-sentence-dot" title={label} aria-hidden="true" /><span className="sr-only">{label}: </span><span className="s-document-sentence-text">{sentence.text}</span></span>;
+  }
   const style = selected && sentence.source === "AI" ? "border-b-2 border-primary bg-primary-soft" : SOURCE_STYLE[sentence.source];
   const base = `box-decoration-clone px-0.5 ${style}`;
   const content = (

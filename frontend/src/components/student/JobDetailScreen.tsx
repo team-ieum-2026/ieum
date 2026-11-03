@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
-import { getRecommendationItem, respondToItem } from "@/lib/api/student";
+import { getRecommendationItem, getStudentApplications, respondToItem } from "@/lib/api/student";
+import { getApplication } from "@/lib/api/resume";
 import { ActionError, ApiState, StudentScreen } from "./ScreenParts";
 import { deadlineLabel, studentHref } from "./navigation";
 import { responseLabels } from "./labels";
@@ -38,17 +39,38 @@ export default function JobDetailScreen({ itemId, studentId }: { itemId: number;
       rememberResponse(studentId, itemId, "APPLY"); router.push(studentHref(`/student/applications/${result.applicationId}/progress`, studentId));
     } catch (error) { setActionError(errorMessage(error)); busyRef.current = false; setBusy(false); setApplying(false); }
   }
+  async function openApplication() {
+    if (!data || busyRef.current) return;
+    busyRef.current = true; setBusy(true); setActionError(null);
+    try {
+      const result = await getStudentApplications(studentId);
+      const candidates = result.applications
+        .filter(application => application.companyName === data.job.companyName && application.title === data.job.title)
+        .sort((left, right) => Number(right.status === "DRAFT") - Number(left.status === "DRAFT"));
+      for (const candidate of candidates) {
+        const application = await getApplication(candidate.applicationId);
+        if (application.job.jobPostingId !== data.job.jobPostingId) continue;
+        const progress = application.status === "GENERATING" || application.status === "FAILED";
+        router.push(studentHref(`/student/applications/${candidate.applicationId}${progress ? "/progress" : ""}`, studentId));
+        return;
+      }
+      throw new Error("이 공고의 지원서를 찾지 못했어요. 지원 현황을 확인해주세요.");
+    } catch (error) {
+      setActionError(errorMessage(error));
+    } finally {
+      busyRef.current = false; setBusy(false);
+    }
+  }
   if (applying) return <StudentScreen><ApplicationLoading fullHeight /></StudentScreen>;
   return <StudentScreen>
-    <StudentPageHeading title="나의 경험과 연결되는 기회" description="공고 조건과 추천 근거를 확인하고 선택해주세요." back={studentHref("/student", studentId)} />
+    <div className="s-job-detail-heading"><StudentPageHeading title={data?.job.companyName ?? ""} description={data ? [data.job.location, data.job.employmentType].filter(Boolean).join(" · ") : undefined} back={studentHref("/student", studentId)} /></div>
     <ApiState loading={loading} error={error} retry={reload} notFoundHref={studentHref("/student", studentId)} notFoundLabel="맞춤 공고로" />
-    {data && <div className="s-detail-layout"><article className="s-panel s-job-detail"><CareerImage variant={itemId} /><div className="s-company"><span className="s-company-mark" aria-hidden="true">{data.job.companyName.replace(/^\(주\)\s*/, "").slice(0, 1)}</span><span><strong>{data.job.companyName}</strong><small>{data.job.location} · {data.job.employmentType}</small></span></div><h2 className="s-detail-title">{data.job.title}</h2>
+    {data && <div className="s-detail-layout"><article className="s-panel s-job-detail"><CareerImage variant={data.rank - 1} jobTitle={data.job.title} /><h2 className="s-detail-title">{data.job.title}</h2>
       <dl className="s-job-facts">{[["근무지", data.job.workAddress || data.job.location], ["고용 형태", data.job.employmentType], ["경력", data.job.career], ["학력", data.job.education], ["급여", data.job.salaryText]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "정보 없음"}</dd></div>)}<div><dt>마감</dt><dd>{data.job.deadlineOn ? `${data.job.deadlineOn} · ${deadlineLabel(data.job.dDay)}` : deadlineLabel(data.job.dDay)}{data.job.untilFilled && <span className="block">채용 시 마감</span>}</dd></div></dl>
       <section className="s-detail-section"><h2>이 공고를 추천한 이유</h2>{data.reasons.map((reason, index) => <div className="s-reason-detail" key={index}><p><StudentIcon name="sparkles" /><span>{reason.text}</span></p>{reason.evidence.map((evidence, i) => <details className="s-evidence-details" key={i}><summary>근거 · {evidence.label || "등록 자료"}</summary><blockquote>{evidence.quote || "근거 원문이 제공되지 않았어요."}</blockquote>{evidence.collectedAt && <small>수집일 · {evidence.collectedAt}</small>}</details>)}</div>)}</section>
       <section className="s-detail-section"><h2>공고 요약</h2><ul>{data.summary.map(text => <li key={text}>{text}</li>)}</ul>{data.job.description && <details className="s-full-description" open><summary>공고 내용 자세히 보기</summary><p>{data.job.description}</p></details>}</section><p className="s-source-note">데이터 출처 · {data.job.sourceLabel}</p>
-    </article><aside className="s-panel s-action-panel"><h2>어떤 선택이든 괜찮아요.</h2><p>지원서를 준비하거나, 잠시 패스하거나,<br />담당자와 함께 살펴볼 수 있어요.</p><ActionError message={actionError} />
-      {data.response !== "NONE" ? <div className="s-action-stack"><span className={`s-response-badge s-response-${data.response}`}>{responseLabels[data.response]}</span><p className="s-letter-note">이미 응답한 공고예요.</p>{data.response === "APPLY" && <Link className="s-button s-button-primary" href={studentHref("/student/applications", studentId)}>지원 현황 보기<StudentIcon name="arrow" /></Link>}</div> : <div className="s-action-stack"><button className="s-button s-button-primary" type="button" disabled={busy} onClick={apply}>{busy ? "처리 중…" : "지원 서류 준비하기"}<StudentIcon name="arrow" /></button><Link aria-disabled={busy} tabIndex={busy ? -1 : undefined} className={`s-button${busy ? " pointer-events-none opacity-50" : ""}`} href={studentHref(`/student/jobs/${itemId}/pass`, studentId)}>이번엔 패스</Link><button className="s-button" type="button" disabled={busy} onClick={() => setHelpOpen(true)}><StudentIcon name="message" />담당자에게 도움 요청</button></div>}
-      <p className="s-source-note">어떤 선택이든 따로 설명하지 않아도 괜찮아요. 지원 서류는 먼저 확인한 뒤 검토를 요청해요.</p>
+    </article><aside className="s-panel s-action-panel"><ActionError message={actionError} />
+      {data.response !== "NONE" ? <div className="s-action-stack"><span className={`s-response-badge s-response-${data.response}`}>{responseLabels[data.response]}</span><p className="s-letter-note">이미 응답한 공고예요.</p>{data.response === "APPLY" && <button className="s-button s-button-primary" type="button" disabled={busy} onClick={openApplication}>{busy ? "확인 중…" : "지원 현황 보기"}<StudentIcon name="arrow" /></button>}</div> : <div className="s-action-stack"><div className="s-ai-apply"><button className="s-button s-button-primary" type="button" disabled={busy} onClick={apply}>{busy ? "처리 중…" : "AI로 지원서 초안 만들기"}<StudentIcon name="arrow" /></button></div><Link aria-disabled={busy} tabIndex={busy ? -1 : undefined} className={`s-button${busy ? " pointer-events-none opacity-50" : ""}`} href={studentHref(`/student/jobs/${itemId}/pass`, studentId)}>이 공고는 넘어가기</Link><button className="s-button" type="button" disabled={busy} onClick={() => setHelpOpen(true)}><StudentIcon name="message" />담당자에게 도움 요청</button></div>}
       <ResponseCancelButton itemId={itemId} studentId={studentId} response={data.response} onCancelled={() => { setData({ ...data, response: "NONE" }); reload(); }} />
     </aside></div>}
     {helpOpen && data && <HelpRequestComposer key={`${studentId}-${itemId}`} studentId={studentId} job={{ itemId, companyName: data.job.companyName, title: data.job.title }} onClose={() => setHelpOpen(false)} onConflict={reload} />}

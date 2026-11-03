@@ -12,10 +12,9 @@ const responseLabels: Record<ResponseType, string> = {
   NONE: "미응답", APPLY: "지원 서류 준비", HELP: "도움 요청 완료", PASS: "패스",
 };
 
-export default function JobCard({ item, studentId, imageVariant, onCancelled }: {
+export default function JobCard({ item, studentId, onCancelled }: {
   item: RecommendationItemSummary;
   studentId: number;
-  imageVariant: number;
   onCancelled: () => void;
 }) {
   // 펼치기 상태는 터치 화면의 명시적 버튼에만 사용한다. Hover·키보드 확장은 CSS가 맡는다.
@@ -28,7 +27,7 @@ export default function JobCard({ item, studentId, imageVariant, onCancelled }: 
   return <article className="s-job-card s-job-card-interactive" data-reasons-open={reasonsOpen} aria-labelledby={titleId}>
     <div className="s-card-top">
       <div className="s-response-actions">
-        <span className="s-recommend-rank"><StudentIcon name="sparkles" />추천 {String(item.rank).padStart(2, "0")}</span>
+        <span className="s-recommend-rank"><StudentIcon name="sparkles" /><span style={{ wordSpacing: "1px" }}>AI 추천</span></span>
         <span className={`s-response-badge s-response-${item.response}`}>{responseLabels[item.response]}</span>
         <ResponseCancelButton itemId={item.itemId} studentId={studentId} response={item.response} onCancelled={onCancelled} />
       </div>
@@ -38,7 +37,7 @@ export default function JobCard({ item, studentId, imageVariant, onCancelled }: 
     </div>
 
     <Link className="s-job-card-link" href={href} aria-labelledby={`${companyId} ${titleId}`}>
-      <CareerImage variant={imageVariant} jobTitle={item.job.title} />
+      <CareerImage variant={item.rank - 1} jobTitle={item.job.title} />
       <div className="s-job-card-body">
         <div className="s-company">
           <span className="s-card-company-copy">

@@ -255,7 +255,7 @@ function SentenceList({
   };
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="s-resume-sentence-list flex flex-col gap-4">
       {sentences.map((s) =>
         editingId === s.sentenceId ? (
           <li key={s.sentenceId} className="flex flex-col gap-2 rounded-[10px] border-[1.5px] border-primary p-3">
@@ -292,11 +292,11 @@ function SentenceList({
         ) : (
           <li
             key={s.sentenceId}
-            className="flex items-start gap-2 rounded-[10px] border-[1.5px] border-line py-2.5 pl-3 pr-1.5"
+            className="s-resume-sentence-row flex items-start gap-3 py-1"
           >
             <span className="min-w-0 flex-1 text-sm leading-relaxed text-ink">{s.text}</span>
             <span className="mt-0.5 flex shrink-0 items-center gap-1">
-              <SourceTag source={s.source} />
+              <SourceTag source={s.source} label={s.source === "USER" ? "직접 작성·수정" : undefined} />
               {editable && (
                 <IconButton
                   label="문장 수정"

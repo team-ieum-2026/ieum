@@ -41,7 +41,7 @@ export default function EntryScreen() {
             <StudentEntry onNeedHelp={openHelp} />
             <Link className="role-card coordinator-card" href="/coordinator">
               <span className="role-icon"><StudentIcon name="people" className="icon" /></span>
-              <span className="role-copy"><strong>코디네이터</strong><span>수료생 현황과 지원 업무 관리</span></span>
+              <span className="role-copy"><strong>매니저</strong><span>수료생 현황과 지원 업무 관리</span></span>
               <StudentIcon name="chevron" className="icon role-arrow" />
             </Link>
           </div>
@@ -59,8 +59,8 @@ export default function EntryScreen() {
         <button className="dialog-close" type="button" aria-label="닫기" onClick={() => helpRef.current?.close()}><StudentIcon name="close" className="icon" /></button>
         <span className="dialog-icon"><StudentIcon name="sprout" className="icon" /></span>
         <h2 id="entry-help-heading">이음, 이렇게 시작해요.</h2>
-        <p>수료생은 역할 카드를 누른 뒤 안내받은 ID를 입력해주세요. ID를 모른다면 수료한 캠퍼스 담당 코디네이터에게 문의해주세요.</p>
-        <p>코디네이터는 코디네이터 카드를 선택해 시작할 수 있어요.</p>
+        <p>수료생은 역할 카드를 누른 뒤 안내받은 ID를 입력해주세요. ID를 모른다면 수료한 캠퍼스 담당 매니저에게 문의해주세요.</p>
+        <p>매니저는 매니저 카드를 선택해 시작할 수 있어요.</p>
         <button className="primary-button" type="button" onClick={() => helpRef.current?.close()}>확인했어요<StudentIcon name="check" className="icon" /></button>
       </dialog>
     </div>

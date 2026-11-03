@@ -54,12 +54,12 @@ export default function ProfileCurrentStatus({ studentId }: { studentId: number 
       setError(null); setMessage(""); setOpen(true);
     }}>변경</button></div>
     <span className="s-profile-status-value" data-status={data?.status ?? "UNSET"}>{data ? labels[data.status] : loading ? "불러오는 중…" : "상태를 확인하지 못했어요"}</span>
-    <p className="s-profile-status-note">담당 코디네이터와 공유되는 현재 상태예요.</p>
+    <p className="s-profile-status-note">담당 매니저와 공유되는 현재 상태예요.</p>
     {loadError && <><ActionError message={loadError.message} /><button type="button" className="s-text-link" onClick={reload}>다시 확인</button></>}
     <p role="status" className="s-profile-status-note">{message}</p>
     <BottomSheet open={open} onClose={close} title="현재 상태를 선택해주세요">
       <p className="s-dialog-description">지금 나에게 맞는 상태를 골라주세요. 언제든 바꿀 수 있어요.</p>
-      <p className="s-source-note">저장한 상태는 담당 코디네이터도 확인할 수 있어요. 기존 도움 요청은 그대로 유지돼요.</p>
+      <p className="s-source-note">저장한 상태는 담당 매니저도 확인할 수 있어요. 기존 도움 요청은 그대로 유지돼요.</p>
       <fieldset className="s-profile-status-options" disabled={busy}><legend className="sr-only">현재 상태</legend>{choices.map(choice => <label key={choice.value} className="s-profile-status-option" data-selected={selected === choice.value}>
         <input type="radio" name={radioName} value={choice.value} checked={selected === choice.value} onChange={() => { setSelected(choice.value); setError(null); }} />
         <span><strong>{choice.label}</strong><small>{choice.description}</small></span>

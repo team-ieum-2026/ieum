@@ -486,9 +486,9 @@ export default function HelpRequestsScreen() {
                     </div>
                     <ol className="flex flex-col gap-3 border-l-2 border-dashed border-(--coord-line) pl-4 text-[13.5px]">
                       <TimelineItem at={monthDayTime(selected.createdAt)}>수료생 앱에서 도움 요청 접수</TimelineItem>
-                      {selected.status === "IN_PROGRESS" && <TimelineItem at="시각 기록 없음">코디네이터 처리 중</TimelineItem>}
+                      {selected.status === "IN_PROGRESS" && <TimelineItem at="시각 기록 없음">매니저 처리 중</TimelineItem>}
                       {selected.consultationAt && <TimelineItem at={monthDayTime(selected.consultationAt)}>상담 예정</TimelineItem>}
-                      {selected.status === "CONTACTED" && <TimelineItem at="시각 기록 없음">코디네이터 연락 완료</TimelineItem>}
+                      {selected.status === "CONTACTED" && <TimelineItem at="시각 기록 없음">매니저 연락 완료</TimelineItem>}
                       {selected.status === "CLOSED" && (
                         <TimelineItem at={selected.closedAt ? monthDayTime(selected.closedAt) : "—"}>수료생이 요청 종료</TimelineItem>
                       )}
