@@ -71,4 +71,17 @@
         UPDATE application SET status = #{to}
         WHERE id = #{applicationId} AND status = #{from}
     </update>
+
+    <!-- updated_at 은 GENERATING 이 된 시각 (생성 중에는 지원서 행을 바꾸지 않는다) -->
+    <select id="selectStaleGenerating" resultType="long">
+        SELECT id FROM application
+        WHERE status = 'GENERATING' AND updated_at &lt; NOW() - INTERVAL #{staleMinutes} MINUTE
+        ORDER BY id
+    </select>
+
+    <update id="failStaleGenerating">
+        UPDATE application SET status = 'FAILED'
+        WHERE id = #{applicationId} AND status = 'GENERATING'
+          AND updated_at &lt; NOW() - INTERVAL #{staleMinutes} MINUTE
+    </update>
 </mapper>

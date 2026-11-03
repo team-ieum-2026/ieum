@@ -36,6 +36,7 @@ import type { Source } from "@/types/student";
 import StudentPageHeading from "@/components/student/StudentPageHeading";
 import StudentIcon from "@/components/student/StudentIcon";
 import ProfileCurrentStatus from "@/components/student/ProfileCurrentStatus";
+import StudentHelpRequests from "@/components/student/StudentHelpRequests";
 import { useStudentProfile } from "@/components/student/StudentShell";
 
 const DESCRIPTION = "적용을 누르면 바로 저장되고, 다음 추천부터 반영돼요.";
@@ -245,7 +246,7 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
 
   return (
     <div className="s-profile-page">
-      <StudentPageHeading eyebrow="YOUR STORY, CONNECTED" title="경험이 모여, 나만의 가능성으로." description="수료 때 등록한 자료부터 새로 쌓은 경험까지, 이곳에서 이어가요." />
+      <StudentPageHeading title="경험이 모여, 나만의 가능성으로." description="수료 때 등록한 자료부터 새로 쌓은 경험까지, 이곳에서 이어가요." />
 
       {banner && (
         <p
@@ -260,6 +261,7 @@ export default function ProfileScreen({ studentId }: { studentId: number }) {
       )}
 
       <div className="s-profile-layout"><aside className="s-panel s-identity"><div className="s-identity-heading"><span className="s-avatar">{basic.name.slice(1, 2) || basic.name.slice(0, 1)}</span><div><h2>{basic.name}</h2><p>청년취업사관학교 수료생</p></div></div><ProfileCurrentStatus key={studentId} studentId={studentId} /><dl className="s-profile-facts">{[["희망 직무", basic.desiredJob], ["희망 지역", basic.preferredRegion], ["이메일", basic.email], ["GitHub", basic.githubUrl], ["수료 과정", `${course.name} · ${course.cohort}`], ["캠퍼스", course.campus], ["수료일", basic.completedOn]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "미입력"}</dd></div>)}</dl><button type="button" className="s-button" onClick={() => { const card = rows.find(row => row.section === "BASIC"); if (card) setEditing(card); }}><StudentIcon name="edit" />기본 정보 수정</button></aside><div className="s-profile-main">
+      <StudentHelpRequests key={studentId} studentId={studentId} />
       <CompetencyCard profile={profile} extraction={extraction} />
       <div>
         <h2 className="s-profile-materials-heading">나의 등록 자료</h2>

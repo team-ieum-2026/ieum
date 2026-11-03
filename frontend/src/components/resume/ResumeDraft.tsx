@@ -176,7 +176,7 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
 
   return (
     <div className="s-resume-page">
-      <StudentPageHeading eyebrow="EXPERIENCE INTO OPPORTUNITY" title="나의 경험으로 채우는 지원서" description={`${job.companyName} · ${job.title}`} back={studentHref("/student/applications", studentId)} />
+      <StudentPageHeading title="나의 경험으로 채우는 지원서" description={`${job.companyName} · ${job.title}`} back={studentHref("/student/applications", studentId)} />
       <div className="s-resume-layout"><div className="s-resume-content">
         <div className="s-document-toolbar">
         {/* 출처 태그 설명: 이력서 · 포트폴리오 · 자기소개서 모두에 적용되는 화면 공통 설명 */}
@@ -216,7 +216,7 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
       </div>
 
       <aside className="s-panel s-action-panel">
-        <p className="s-eyebrow">APPLICATION GUIDE</p><ApplicationStatusBadge status={status} />
+        <ApplicationStatusBadge status={status} />
         <h2>{canSubmit ? "서류를 한 번 더 살펴봐요." : "검토 요청한 서류예요."}</h2>
         <p>{canSubmit ? "기본정보와 경험을 확인하고, 자기소개서의 근거도 살펴보세요." : "제출한 내용을 확인할 수 있어요. 진행 상황은 지원 현황에서 확인해주세요."}</p>
         <ul className="s-check-list"><li><StudentIcon name="file" />이력서 항목별 확인·편집</li><li><StudentIcon name="shield" />AI 작성 문장의 출처·근거 확인</li><li><StudentIcon name="check" />병역은 비워두어도 제출 가능</li></ul>

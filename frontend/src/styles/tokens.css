@@ -1,7 +1,42 @@
 /* 주인: FE-A — 디자인 토큰. 색 · 글꼴은 여기 한 곳에만 둔다. 화면 코드에 색값을 직접 쓰지 않는다 (ALL-03). */
 /* Tailwind v4: 아래 토큰이 bg-primary, text-ink-sub, border-line 같은 유틸리티로 바로 쓰인다. */
 @theme {
-  /* 글꼴: Noto Sans KR (app/layout.tsx 에서 next/font/google 로 로드) */
+  /* 수료생 2026 리뉴얼. 기존 코디네이터 테마와 독립적으로 사용한다. */
+  --color-career-bg: #ffffff;
+  --color-career-soft: #f7f8fa;
+  --color-career-muted: #f2f4f7;
+  --color-career-ink: #191f28;
+  --color-career-sub: #4e5968;
+  --color-career-caption: #667281;
+  --color-career-placeholder: #8b95a1;
+  --color-career-line: #e5e8eb;
+  --color-career-blue: #3182f6;
+  --color-career-blue-deep: #1b64da;
+  --color-career-blue-soft: #edf4ff;
+  --color-career-purple: #8057f5;
+  --color-career-purple-deep: #6941c6;
+  --color-career-purple-soft: #f3efff;
+  --color-career-reason-surface: #f3eeff;
+  --color-career-coral: #ff6b6b;
+  --color-career-danger: #c73540;
+  --color-career-danger-soft: #fff0f0;
+  --color-career-orange: #ff9f43;
+  --color-career-amber: #ffb020;
+  --color-career-warn: #92570b;
+  --color-career-warn-soft: #fff6e8;
+  --color-career-cyan: #22b8cf;
+  --color-career-success: #12b886;
+  --color-career-success-ink: #087f5b;
+  --color-career-success-soft: #e8faf2;
+  --color-career-backdrop: #191f285c;
+  --color-career-shadow: #191f280a;
+  --color-career-hero: #edf2ff;
+  --color-career-hero-ink: #24447c;
+  --color-career-cover: #ffffffd9;
+  --shadow-career-card: 0 8px 28px #191f280a;
+  --shadow-career-dialog: 0 24px 80px #191f2826;
+  --spacing-career-content: 1240px;
+  /* 글꼴: Noto Sans KR (app/layout.tsx 에서 next/font/local 로 로드) */
   --font-sans: var(--font-noto-sans-kr), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
   /* 주 색 */

@@ -46,4 +46,14 @@ public class ApplicationDocumentController {
             @Parameter(description = "지원서 번호", example = "7") @PathVariable("applicationId") Long applicationId) {
         return ApiResponse.of(applicationDocumentService.submit(applicationId));
     }
+
+    @Operation(summary = "실패한 서류 다시 생성",
+            description = "FAILED → GENERATING 후 서류를 다시 만든다. 진행은 GET /progress로 본다. "
+                    + "이미 생성 중(GENERATING)이거나 FAILED가 아니면 409, 없는 지원서면 404. "
+                    + "서버 재시작 등으로 5분 넘게 멈춘 생성은 자동으로 FAILED가 되어 다시 생성할 수 있다.")
+    @PostMapping("/regenerate")
+    public ApiResponse<ApplicationDetailResponse.Regenerating> regenerate(
+            @Parameter(description = "지원서 번호", example = "7") @PathVariable("applicationId") Long applicationId) {
+        return ApiResponse.of(applicationDocumentService.regenerate(applicationId));
+    }
 }

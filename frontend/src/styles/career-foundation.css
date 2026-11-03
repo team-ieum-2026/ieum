@@ -1,0 +1,56 @@
+@font-face {
+  font-family: "IEUM Pretendard";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 수료생·진입 화면 안에서만 유틸리티 색과 폰트를 연결한다. */
+:is(.student-app, .entry-app) {
+  --font-sans: "IEUM Pretendard", var(--font-noto-sans-kr), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --color-primary: var(--color-career-blue-deep);
+  --color-primary-strong: var(--color-career-blue-deep);
+  --color-primary-soft: var(--color-career-blue-soft);
+  --color-primary-tint: var(--color-career-blue-soft);
+  --color-page: var(--color-career-soft);
+  --color-surface: var(--color-career-bg);
+  --color-surface-warm: var(--color-career-muted);
+  --color-ink: var(--color-career-ink);
+  --color-ink-sub: var(--color-career-sub);
+  --color-ink-muted: var(--color-career-caption);
+  --color-line: var(--color-career-line);
+  --color-danger: var(--color-career-danger);
+  --color-danger-bg: var(--color-career-danger-soft);
+  --color-warn-bg: var(--color-career-warn-soft);
+  --color-warn-ink: var(--color-career-warn);
+  --color-pass-bg: var(--color-career-purple-soft);
+  --color-pass-ink: var(--color-career-purple-deep);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -.02em;
+  background: var(--color-career-bg);
+  -webkit-font-smoothing: antialiased;
+}
+:is(.student-app, .entry-app) *,
+:is(.student-app, .entry-app) *::before,
+:is(.student-app, .entry-app) *::after { box-sizing: border-box; }
+:is(.student-app, .entry-app) :is(button, input, select, textarea) { font-family: inherit; }
+:is(.student-app, .entry-app) :is(button, a) { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:is(.student-app, .entry-app) button:not(:disabled) { cursor: pointer; }
+:is(.student-app, .entry-app) button:disabled { cursor: not-allowed; }
+:is(.student-app, .entry-app) :is(a, button, input, select, textarea):focus-visible { outline: 3px solid var(--color-career-blue); outline-offset: 4px; }
+:is(.student-app, .entry-app) :is(input, select, textarea) { accent-color: var(--color-primary); }
+:is(.student-app, .entry-app) :is(input, textarea)::placeholder { color: var(--color-career-placeholder); }
+:is(.student-app, .entry-app) :is(h1, h2, h3) { text-wrap: pretty; }
+.s-career-image { position: relative; overflow: hidden; aspect-ratio: 1.65; background: var(--color-career-blue-soft); }
+.s-career-image[data-variant="1"] { background: var(--color-career-warn-soft); }
+.s-career-image[data-variant="2"] { background: var(--color-career-purple-soft); }
+.s-career-image img { object-fit: cover; transition: transform .3s ease; }
+.s-image-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: var(--color-career-blue-deep); }
+.s-image-fallback .s-icon { width: 64px; height: 64px; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.student-app, .entry-app) *, :is(.student-app, .entry-app) *::before, :is(.student-app, .entry-app) *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

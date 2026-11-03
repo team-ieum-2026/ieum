@@ -39,6 +39,8 @@ public final class CoordinatorDashboardData {
         private String studentName;
         private String jobTitle;
         private LocalDateTime submittedAt;
+        private LocalDate deadlineOn;
+        private boolean untilFilled;
     }
 
     @Getter @Setter

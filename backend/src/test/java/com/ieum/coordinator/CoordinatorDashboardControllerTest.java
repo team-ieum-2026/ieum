@@ -111,7 +111,10 @@ class CoordinatorDashboardControllerTest {
         assertEquals(AS_OF.minusHours(1), OffsetDateTime.parse(help.get("createdAt").textValue()));
         assertTrue(help.get("createdAt").textValue().endsWith("+09:00"));
         JsonNode review = data.get("reviewQueue").get(0);
-        assertEquals(Set.of("applicationId", "studentName", "jobTitle", "submittedAt"), keys(review));
+        assertEquals(Set.of("applicationId", "studentName", "jobTitle", "submittedAt", "deadlineOn", "untilFilled"),
+                keys(review));
+        assertTrue(review.get("deadlineOn").isNull());
+        assertFalse(review.get("untilFilled").booleanValue());
         assertEquals(AS_OF.minusHours(2), OffsetDateTime.parse(review.get("submittedAt").textValue()));
         assertTrue(review.get("submittedAt").textValue().endsWith("+09:00"));
         JsonNode call = data.get("callList").get(0);

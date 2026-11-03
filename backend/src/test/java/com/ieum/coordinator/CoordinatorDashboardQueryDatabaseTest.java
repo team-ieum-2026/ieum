@@ -112,8 +112,8 @@ class CoordinatorDashboardQueryDatabaseTest {
                 ),
                 job_posting AS (
                     SELECT 701 AS id, '모의 비활성 기업' AS company_name, '모의 공고 가' AS title,
-                           0 AS is_active
-                    UNION ALL SELECT 702, '모의 활성 기업', '모의 공고 나', 1
+                           0 AS is_active, CAST('2026-11-06' AS DATE) AS deadline_on, 1 AS until_filled
+                    UNION ALL SELECT 702, '모의 활성 기업', '모의 공고 나', 1, NULL, 0
                 ),
                 application AS (
                     SELECT 201 AS id, 1 AS student_id, 701 AS job_posting_id, 'SUBMITTED' AS status,
@@ -131,6 +131,8 @@ class CoordinatorDashboardQueryDatabaseTest {
 
         assertEquals(List.of(201L, 202L, 205L), ids(rows, "application_id"));
         assertEquals("모의 비활성 기업 모의 공고 가", rows.get(0).get("job_title"));
+        assertEquals("2026-11-06", String.valueOf(rows.get(0).get("deadline_on")));
+        assertNull(rows.get(1).get("deadline_on"));
     }
 
     @Test

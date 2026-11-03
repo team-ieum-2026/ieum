@@ -143,7 +143,7 @@ test("패스 사유·도움 요청·연락 기록이 추천, 학생 상태와 �
   assert.deepEqual(rec.items.map((entry) => entry.job.jobPostingId), [504]);
   const help = await r("/api/help-requests", "POST", { studentId: 1, recommendationItemId: rec.items[0].itemId });
   await r(`/api/help-requests/${help.helpRequestId}`, "PATCH", { contactMethod: "SMS", memo: null });
-  assert.equal((await r("/api/coordinator/students/1")).student.status, "NEED_HELP");
+  assert.equal((await r("/api/coordinator/students/1")).student.status, "SEEKING");
   assert.ok((await r("/api/coordinator/dashboard")).helpRequests.some((entry) => entry.helpRequestId === help.helpRequestId && entry.contactMethod === "SMS" && entry.memo === null));
   await r(`/api/coordinator/help-requests/${help.helpRequestId}`, "PATCH", { status: "CONTACTED" });
   assert.equal((await r("/api/coordinator/students/1")).student.status, "SEEKING");

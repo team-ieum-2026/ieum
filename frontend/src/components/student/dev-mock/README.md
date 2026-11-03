@@ -26,6 +26,12 @@ node frontend/src/components/student/dev-mock/server.mjs 4001
 | HTTP 목업 | `false` | `http://localhost:4000` (대체 포트 사용 시 변경) |
 | 실제 BE | `false` | 실제 BE 주소 |
 
+정적 목업에서도 도움 요청 생성·조회·연락 방법/메모 수정·개별 종료와 현재 상태 선택이 동작한다.
+초기 데이터는 기존 공용 JSON을 사용하고 변경 내용은 학생별로 브라우저 `localStorage`에 저장한다.
+도움 요청을 생성·종료해도 현재 상태 선택은 바뀌지 않는다. 새로고침 후에도 저장값을 유지한다.
+정적 목업을 초기화하려면 개발자 도구에서 `ieum:mock-help-requests:v1`과
+`ieum:mock-student-status:<studentId>` 저장값을 삭제한다.
+
 ```powershell
 cd frontend
 npm run dev
@@ -50,6 +56,7 @@ npm run dev
 | POST /api/help-requests | M4_help_request_create.json |
 | PATCH /api/help-requests/{helpRequestId} | M4_help_request_update.json |
 | GET /api/applications/{applicationId}/progress | M5_application_progress_generating.json, M5_application_progress_done.json |
+| POST /api/applications/{applicationId}/regenerate | FAILED만 GENERATING으로 바꾸고 같은 진행 상태 API로 결과 확인 |
 | GET /api/applications/{applicationId} | M6_application_document.json |
 | PATCH /api/applications/{applicationId}/document | M6_application_document.json의 document (응답은 `{data:{document:...}}`) |
 | POST /api/applications/{applicationId}/submit | M6_submit.json |
@@ -81,7 +88,7 @@ npm run dev
   실제 공고 수집 및 AI 매칭은 수행하지 않는다.
 - 지원서 101/102는 SUBMITTED, 103은 APPROVED, 104는 DELIVERED를 유지한다.
   학생 1에게 목업 전용 지원서 7이나 응답 이력을 추가하지 않는다.
-- 날짜 함수는 서버 시작 시 서울 날짜를 기준으로 해석한다. 상태는 응답/도움 요청/지원서로 계산한다.
+- 날짜 함수는 서버 시작 시 서울 날짜를 기준으로 해석한다. 상태는 최근 취업·휴식·지원 의사와 응답 시각/지원서로 계산하며, 열린 도움 요청은 별도로 유지한다.
   원본의 상대 날짜, ID, 근거 참조와 서류 본문을 유지한다.
 - 새 ID는 원본 최대 ID 다음부터 발급한다. 지원서 생성은 105부터 시작한다.
 - 원본에 없는 상세 필드는 `null`, 빈 목록은 `[]`로 반환한다.
@@ -132,6 +139,18 @@ npm run dev
 ```powershell
 node --test frontend/src/components/student/dev-mock/server.test.mjs frontend/src/components/student/dev-mock/seed.test.mjs
 ```
+
+정적 목업 API와 실제 API 분기 회귀 검사는 `student-support.test.mjs`와
+`response-cancel.test.mjs`를 함께 실행한다. M5 브라우저 검사는 프런트 서버를 실행한 뒤
+아래 명령으로 확인한다. Chrome의 해당 세션에서 API를 대체하므로 실제 DB에는 쓰지 않는다.
+
+```powershell
+node frontend/src/components/student/qa/progress-regenerate.mjs
+```
+
+기본 화면 주소는 `http://localhost:3000`이다. 프로덕션 빌드를 다른 포트에서 검사하면
+`IEUM_QA_ORIGIN`에 그 주소를 지정한다. 생성 요청 지연 중 중복 클릭, 성공 후 진행 조회와 M6 이동,
+503·409, 생성 재실패, 조회만 재시도, 요청 중 화면 이탈을 검증한다.
 
 시드 테스트는 전체 적재·관계·상태·날짜와 HTTP 응답을 검증한다. 기존 흐름 테스트는
 `dataSource: "fixtures"`로 공용 목업 기반 회귀 시나리오를 검증한다.

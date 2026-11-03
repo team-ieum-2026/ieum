@@ -26,7 +26,7 @@
 
     <select id="findReviewQueue" resultType="com.ieum.coordinator.CoordinatorDashboardData$ReviewQueueItem">
         SELECT a.id AS application_id, s.name AS student_name,
-               CONCAT(j.company_name, ' ', j.title) AS job_title, a.submitted_at
+               CONCAT(j.company_name, ' ', j.title) AS job_title, a.submitted_at, j.deadline_on, j.until_filled
         FROM application a
         JOIN student s ON s.id = a.student_id
         JOIN job_posting j ON j.id = a.job_posting_id

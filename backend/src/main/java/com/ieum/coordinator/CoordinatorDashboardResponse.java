@@ -2,6 +2,7 @@
 package com.ieum.coordinator;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -59,7 +60,13 @@ public record CoordinatorDashboardResponse(
             Long applicationId,
             String studentName,
             String jobTitle,
-            OffsetDateTime submittedAt) {}
+            OffsetDateTime submittedAt,
+            LocalDate deadlineOn,
+            boolean untilFilled) {
+        public ReviewQueueItem(Long applicationId, String studentName, String jobTitle, OffsetDateTime submittedAt) {
+            this(applicationId, studentName, jobTitle, submittedAt, null, false);
+        }
+    }
 
     public record CallListItem(
             Long studentId,

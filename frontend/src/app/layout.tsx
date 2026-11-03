@@ -1,12 +1,16 @@
 // 주인: FE-A — 루트 레이아웃 (글꼴 · 전역 스타일)
 import type { Metadata } from "next";
-import { Noto_Sans_KR } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import "@/styles/font-extended.css";
 
-const notoSansKr = Noto_Sans_KR({
+const notoSansKr = localFont({
+  src: "../../public/fonts/NotoSansKR-common.woff2",
   variable: "--font-noto-sans-kr",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: "100 900",
+  display: "swap",
+  fallback: ["Noto Sans KR Extended", "Arial", "sans-serif"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {

@@ -21,7 +21,7 @@ export default function ApplicationsScreen({ studentId }: { studentId: number })
   const visible = applications.filter(application => filter === "ALL" || application.status === filter);
   const counts = [applications.filter(a => ["GENERATING", "DRAFT", "FAILED", "REJECTED"].includes(a.status)).length, applications.filter(a => ["SUBMITTED", "APPROVED"].includes(a.status)).length, applications.filter(a => a.status === "DELIVERED").length];
   return <StudentScreen>
-    <StudentPageHeading eyebrow="ONE STEP AT A TIME" title="한 걸음씩, 나의 지원 여정." description="서류 준비부터 기관 추천 전달까지 진행 상황을 확인해요." />
+    <StudentPageHeading title="한 걸음씩, 나의 지원 여정." description="서류 준비부터 기관 추천 전달까지 진행 상황을 확인해요." />
     <ApiState loading={loading} error={error} retry={reload} />
     {data && <>
       <div className="s-summary-grid">{["서류 준비·보완", "담당자 검토·승인", "기관 추천 전달"].map((label, i) => <section className="s-summary-card" key={label}><h2>{label}</h2><strong>{counts[i]}<small>건</small></strong></section>)}</div>

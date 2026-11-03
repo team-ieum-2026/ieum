@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * - 수정: DRAFT 일 때만. JSON 변경은 DocumentEditor, saveToProfile 이면 BE-B ProfileService 를 같은 트랜잭션에서 호출
  *   (프로필 저장이 실패하면 서류 수정도 되돌린다)
  * - 제출: DRAFT → SUBMITTED + last_response_at 갱신 + ApplicationSubmittedEvent (BE-B-06 상태 재계산용)
+ * - 다시 생성: FAILED → GENERATING + 생성 재시작 (DocumentGenerationListener)
  */
 @Service
 public class ApplicationDocumentService {
@@ -29,13 +30,16 @@ public class ApplicationDocumentService {
     private final ProfileService profileService;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher events;
+    private final DocumentGenerationListener generation;
 
     public ApplicationDocumentService(ApplicationDocumentMapper mapper, ProfileService profileService,
-                                      ObjectMapper objectMapper, ApplicationEventPublisher events) {
+                                      ObjectMapper objectMapper, ApplicationEventPublisher events,
+                                      DocumentGenerationListener generation) {
         this.mapper = mapper;
         this.profileService = profileService;
         this.objectMapper = objectMapper;
         this.events = events;
+        this.generation = generation;
     }
 
     public ApplicationDetailResponse getDetail(Long applicationId) {
@@ -79,6 +83,23 @@ public class ApplicationDocumentService {
         mapper.touchLastResponse(row.getStudentId());
         events.publishEvent(new ApplicationSubmittedEvent(row.getStudentId(), applicationId));
         return new ApplicationDetailResponse.Submitted(applicationId, "SUBMITTED");
+    }
+
+    /**
+     * 실패한 서류 다시 생성: FAILED → GENERATING 후 생성을 줄 세운다. 트랜잭션 없이 상태부터 바꿔(바로 커밋)
+     * 생성 스레드가 GENERATING 을 보게 한다. 조건부 UPDATE 라 동시에 여러 번 불러도 한 번만 시작한다.
+     * 이미 생성 중이면 '이미 만들고 있어요' 409, 그 밖의 상태도 409.
+     */
+    public ApplicationDetailResponse.Regenerating regenerate(Long applicationId) {
+        ApplicationDocumentMapper.Row row = require(mapper.selectDetail(applicationId));
+        if (mapper.regenerate(applicationId) == 0) {
+            if (DocumentGenerationService.GENERATING.equals(row.getStatus())) {
+                throw new BusinessException(ErrorCode.INVALID_STATUS, "이미 서류를 만들고 있어요.");
+            }
+            throw new BusinessException(ErrorCode.INVALID_STATUS);
+        }
+        generation.start(applicationId);
+        return new ApplicationDetailResponse.Regenerating(applicationId, DocumentGenerationService.GENERATING);
     }
 
     private void saveToProfile(Long studentId, DocumentEditor.ProfileAction action, DocumentEditor editor) {
