@@ -57,13 +57,13 @@ export function studentExtra(row: object): CoordStudentExtra {
   };
 }
 
-/** 서류 상태 (코디네이터 이름) — 검토 대기=주황 · 수정 요청=빨강 · 승인 · 전달 대기=파랑 · 전달 완료=초록 */
+/** 서류 상태 (코디네이터 이름) — 검토 대기=주황 · 보완 필요=빨강 · 승인 완료=파랑 · 전달 완료=초록. 수료생 화면 이름(labels.ts)과는 별개 */
 export const docLabels: Record<ApplicationStatus, string> = {
   GENERATING: "서류 생성 중",
   DRAFT: "초안 작성 중",
   SUBMITTED: "검토 대기",
-  REJECTED: "수정 요청",
-  APPROVED: "승인 · 전달 대기",
+  REJECTED: "보완 필요",
+  APPROVED: "승인 완료",
   DELIVERED: "전달 완료",
   FAILED: "생성 실패",
 };

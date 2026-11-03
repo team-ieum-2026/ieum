@@ -11,7 +11,9 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { apiErrorText, Avatar, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
+import { downloadCsv, fetchAllStudents, today } from "@/components/coordinator/studentCsv";
+import { ApiError } from "@/lib/api/client";
 import {
   MANAGE_ORDER,
   docLabels,
@@ -27,7 +29,7 @@ import { subStatusLabels } from "@/components/student/labels";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 import { getCoordinatorStudent, getCoordinatorStudents } from "@/lib/api/coordinatorStudents";
 import type { CoordStudentStatus, Dashboard } from "@/types/coordinator";
-import type { ApplicationStatus, CoordinatorStudentList, ResponseType, StudentStatus, SubStatus } from "@/types/student";
+import type { ApplicationStatus, CoordinatorStudentList, CoordinatorStudentRow, ResponseType, StudentStatus, SubStatus } from "@/types/student";
 
 const PAGE_SIZE = 10;
 
@@ -176,7 +178,29 @@ export default function StudentsScreen() {
     changeQuery({ status: s || undefined, subStatus: sub, page: "1" });
   };
   const filterValue = status ? (subStatus ? `${status}:${subStatus}` : status) : "";
+  const conditionLabel = [FILTERS.find((f) => f.value === filterValue)?.label.replace("　└ ", "") ?? "전체", q && `"${q}"`].filter(Boolean).join(" · ");
   const counts = summary ? manageCounts(summary.statusSummary) : null;
+
+  // 접수 중 도움 요청 수: 서버 openHelpRequestCount 우선, 없는 응답은 대시보드 helpRequests 로 센다. 둘 다 없으면 모름(null, CSV 빈칸)
+  const helpCountOf = (row: CoordinatorStudentRow) =>
+    studentExtra(row).openHelpRequestCount ?? summary?.helpRequests.filter((h) => h.studentId === row.studentId).length ?? null;
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const exportAll = async () => {
+    setExporting(true);
+    setExportMessage(null);
+    try {
+      const { rows, total } = await fetchAllStudents({ status, subStatus, q });
+      downloadCsv(rows, helpCountOf, `수료생_전체명단_${today()}.csv`);
+      setExportMessage(
+        rows.length === total ? `전체 명단 ${rows.length}명을 내려받았어요.` : `서버 인원 ${total}명 중 ${rows.length}명을 받았어요. 받는 중 명단이 바뀌었을 수 있어요.`,
+      );
+    } catch (e) {
+      setExportMessage(e instanceof ApiError ? e.message : "전체 명단을 받지 못했어요. 파일은 만들지 않았어요.");
+    } finally {
+      setExporting(false);
+    }
+  };
   const lastPage = list ? Math.max(1, Math.ceil(list.total / list.size)) : 1;
 
   return (
@@ -184,11 +208,21 @@ export default function StudentsScreen() {
     <div>
       <PageTitle
         title="수료생 관리"
-        description="최근 응답과 요청을 먼저 보고, 필요한 다음 행동으로 이어가세요."
         action={
-          <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary}`}>
-            <span aria-hidden="true">＋</span> 새 수료생 등록
-          </button>
+          <>
+            {exportMessage && (
+              <p role="status" className="max-w-[360px] truncate text-[13px] text-(--coord-muted)" title={exportMessage}>
+                {exportMessage}
+              </p>
+            )}
+            {/* 1차 피드백: C6 에 있던 '전체 명단 CSV'를 옮김. 지금 검색 · 관리 상태 조건의 전체 명단을 받는다 */}
+            <button type="button" disabled={exporting} onClick={exportAll} aria-busy={exporting} className={`${btn.base} ${btn.primary}`}>
+              {exporting ? "받는 중…" : `전체 명단 CSV (${conditionLabel})`}
+            </button>
+            <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary}`}>
+              <span aria-hidden="true">＋</span> 새 수료생 등록
+            </button>
+          </>
         }
       />
       {counts && (
@@ -221,7 +255,6 @@ export default function StudentsScreen() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-4">
           <p className="min-w-0">
             <b className="text-lg font-extrabold">관리 중인 수료생 {summary?.totalStudents ?? ""}</b>
-            <span className="ml-2.5 text-[13.5px] text-(--coord-muted)">이름을 누르면 추천 응답 · 지원서류 · 상담 기록이 열려요</span>
           </p>
           <div className="flex shrink-0 items-center gap-2.5">
             <form
@@ -304,12 +337,11 @@ export default function StudentsScreen() {
                     return (
                       <tr key={s.studentId} className="h-[74px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
                         <td className="overflow-hidden px-4 py-3.5">
-                          {/* 리뉴얼 .student-cell: 아바타 34px + 이름 15.5px + 희망 직무 */}
+                          {/* 리뉴얼 .student-cell: 이름 15.5px + 희망 직무. 1차 피드백: 이름 아바타 없음 */}
                           <Link
                             href={`/coordinator/students/${s.studentId}`}
-                            className="group flex min-w-0 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-(--coord-green)"
+                            className="group flex min-w-0 items-center focus-visible:outline-2 focus-visible:outline-(--coord-green)"
                           >
-                            <Avatar name={s.name} small />
                             <span className="min-w-0">
                               <b className="block truncate text-[15.5px] font-extrabold group-hover:text-(--coord-green) group-hover:underline">{s.name}</b>
                               <span className="block truncate text-[12.5px] text-(--coord-faint)">

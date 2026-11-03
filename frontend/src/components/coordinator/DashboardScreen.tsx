@@ -5,13 +5,13 @@
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
 // - 오늘 예정된 상담: 상담 예정 도움 요청 중 상담 일시가 오늘(asOf 날짜)인 것, 시각 순
-// - 서류 검토 현황 4단계: 검토 대기는 reviewQueue, 수정 요청 · 승인·전달 대기 · 전달 완료는 상태별 서류 목록 API 로 센다. 칸을 누르면 그 탭으로
+// - 서류 검토 현황 4단계: 검토 대기는 reviewQueue, 보완 필요 · 승인 완료 · 전달 완료는 상태별 서류 목록 API 로 센다. 칸을 누르면 그 탭으로
 // - 수료생 관리 현황: totalStudents · statusSummary 로 계산
 // 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { apiErrorText, RefreshAction, Avatar, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, type IconName } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, type IconName } from "@/components/coordinator/CoordUi";
 import { CONSULTATION_API_CONNECTED, type ConsultationSchedule } from "@/components/coordinator/demoAccount";
 import type { CoordTone } from "@/components/coordinator/coordLabels";
 import {
@@ -148,7 +148,6 @@ export default function DashboardScreen() {
     <div>
       <PageTitle
         title="오늘의 업무"
-        description="요청의 맥락을 확인하고, 필요한 지원부터 이어가세요."
         action={
           <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh}>
             <span className={`${btn.base} ${btn.outline} ${btn.sm} cursor-default hover:border-(--coord-line) hover:bg-(--coord-surface)`}>
@@ -246,7 +245,8 @@ function Kpi({
   const body = (
     <>
       <span className="flex items-start justify-between gap-2">
-        <span className="text-sm font-semibold text-(--coord-muted)">{label}</span>
+        {/* 1차 피드백: 이름 · 보조 문구를 잘 보이게 키운다 (색은 그대로) */}
+        <span className="text-[17px] font-bold text-(--coord-muted)">{label}</span>
         <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${look.icon}`}>
           <Icon name={icon} className="size-[18px]" />
         </span>
@@ -255,8 +255,8 @@ function Kpi({
         {value ?? <span className="text-(--coord-faint)">—</span>}
         {value !== null && <small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">{unit}</small>}
       </span>
-      <span className="-mt-1 flex items-center gap-1 text-[13px] text-(--coord-muted) group-hover:text-(--coord-green)">
-        {href && <Icon name="arrow" className="size-3" />}
+      <span className="-mt-1 flex items-center gap-1 text-[15px] font-semibold text-(--coord-muted) group-hover:text-(--coord-green)">
+        {href && <Icon name="arrow" className="size-3.5" />}
         {value === null && <Badge small>미연동</Badge>} {sub}
       </span>
       {href && <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-[3px] opacity-0 transition group-hover:opacity-100 ${look.bar}`} />}
@@ -311,13 +311,12 @@ function buildTasks(data: Dashboard): Task[] {
   return [...help, ...docs, ...pass].sort((a, b) => a.at.localeCompare(b.at));
 }
 
-/** 할 일 한 줄 (리뉴얼 .task-item-row): 아바타 · 이름 · 종류 배지 · 내용 / 접수·제출 시각 · 이동 버튼 */
+/** 할 일 한 줄 (리뉴얼 .task-item-row): 이름 · 종류 배지 · 내용 / 접수·제출 시각 · 이동 버튼. 1차 피드백: 이름 아바타 없음 */
 function TaskRow({ t }: { t: Task }) {
   const look = TASK_LOOK[t.kind];
   return (
-    <li className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-4 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar name={t.name} red={t.kind === "help"} />
+    <li className="flex items-center justify-between gap-4 border-b border-(--coord-line) px-5 py-3.5 transition last:border-b-0 hover:bg-(--coord-hover)">
+      <div className="flex min-w-0 flex-1 items-center">
         <div className="min-w-0 flex-1">
           <h3 className="flex items-center gap-2 text-[15.5px] font-extrabold">
             {t.name} <Badge tone={look.tone}>{look.badge}</Badge>
@@ -466,7 +465,7 @@ function TodayConsultations({ items, loaded }: { items: ConsultationSchedule[]; 
  * 목록을 받기 전 · 못 받으면 '—' (0건으로 단정하지 않음). 칸을 누르면 서류 검토 화면의 그 탭이 열린다.
  * asOf 가 바뀌면(대시보드 새로고침) 다시 센다
  */
-/** 서류 단계 숫자 색 (리뉴얼: 검토 대기 앰버 · 수정 요청 빨강 · 승인 대기 파랑 · 전달 완료 초록) */
+/** 서류 단계 숫자 색 (리뉴얼: 검토 대기 앰버 · 보완 필요 빨강 · 승인 완료 파랑 · 전달 완료 초록) */
 const NUM_COLOR: Record<CoordTone, string> = {
   orange: "text-(--coord-chart-check)",
   red: "text-(--coord-red)",
@@ -621,11 +620,8 @@ function ManagementCard({ data }: { data: Dashboard }) {
             </Link>
           </div>
         </div>
-        <p className="mt-3 text-xs leading-[1.4] text-(--coord-faint)">
-          관리 상태 파악률은 앱 응답 · 도움 요청으로 상태가 분류된 비율이에요. 취업 여부를 직접 확인한 비율은 아니에요.
-        </p>
         <Link href="/coordinator/stats" className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-(--coord-green) hover:underline">
-          취업·지원 현황 보기 <Icon name="arrow" className="size-3.5" />
+          통계 보기 <Icon name="arrow" className="size-3.5" />
         </Link>
       </div>
     </Panel>

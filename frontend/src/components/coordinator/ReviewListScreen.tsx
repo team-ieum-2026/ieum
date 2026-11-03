@@ -1,6 +1,6 @@
 "use client";
 // 주인: FE-B — C4 서류 검토 목록 (11/1 개편 목업 reviewsPage). 목록은 상태별 목록 API(GET /api/coordinator/applications)를 ALL 로 한 번 받아 탭별로 나눈다.
-// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 수정 요청(REJECTED) · 승인·전달 대기(APPROVED) · 전달 완료(DELIVERED).
+// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 보완 필요(REJECTED) · 승인 완료(APPROVED) · 전달 완료(DELIVERED).
 //   첫 화면은 ?status= 의 탭 (대시보드 서류 검토 현황에서 이동), 없으면 검토 대기
 // - 근거 점검 · 수료생 수정: 목록에 없어 지금 탭에 보이는 서류만 C4 상세 API 의 verification 을 병렬로 불러 채운다 (한 번 받은 서류는 다시 받지 않음)
 //   근거 점검은 'AI 문장이 원본 자료와 연결됐는지'만 뜻하고, 사실 검증 완료가 아니다
@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiErrorText, RefreshAction, Avatar, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
+import { apiErrorText, RefreshAction, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDay, monthDayTime } from "@/components/coordinator/coordLabels";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { IS_MOCK } from "@/components/coordinator/demoAccount";
@@ -28,8 +28,8 @@ const TABS: { status: CoordinatorApplicationFilter; label: string }[] = [
 const EMPTY_TEXT: Record<CoordinatorApplicationFilter, string> = {
   ALL: "검토를 요청한 서류가 없어요.",
   SUBMITTED: "검토할 서류가 없어요.",
-  REJECTED: "수정을 요청한 서류가 없어요.",
-  APPROVED: "전달을 기다리는 서류가 없어요.",
+  REJECTED: "보완 필요로 처리한 서류가 없어요.",
+  APPROVED: "승인 완료한 서류가 없어요.",
   DELIVERED: "전달을 마친 서류가 없어요.",
 };
 
@@ -39,7 +39,7 @@ const COLUMNS: [string, string][] = [
   ["지원 공고", "w-[24%]"],
   ["제출일자", "w-[10%]"],
   ["마감일정", "w-[12%]"],
-  ["근거 점검", "w-[15%]"],
+  ["근거 연결 현황", "w-[15%]"],
   ["수료생 수정", "w-[9%]"],
   ["검토 상태", "w-[10%]"],
   ["상세 검토", "w-[9%]"],
@@ -124,7 +124,6 @@ export default function ReviewListScreen() {
     <>
       <PageTitle
         title="서류 검토"
-        description="자기소개서 전체 맥락과 문장별 근거를 보고, 개입할 지점을 판단하세요."
         action={items && <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />}
       />
       {!items ? (
@@ -159,7 +158,7 @@ export default function ReviewListScreen() {
             {IS_MOCK && <span className="ml-auto text-[13px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
           </div>
           <table className="w-full table-fixed border-collapse text-left text-[15px]">
-            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 점검, 수료생 수정, 검토 상태</caption>
+            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 연결 현황, 수료생 수정, 검토 상태</caption>
             <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
               <tr>
                 {COLUMNS.map(([label, w]) => (
@@ -175,8 +174,8 @@ export default function ReviewListScreen() {
                 return (
                   <tr key={r.applicationId} className="h-[63px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
                     <td className="overflow-hidden px-4 py-3">
-                      <Link href={`/coordinator/applications/${r.applicationId}`} className="group flex min-w-0 items-center gap-2.5">
-                        <Avatar name={r.studentName} small />
+                      {/* 1차 피드백: 이름 아바타 없음 */}
+                      <Link href={`/coordinator/applications/${r.applicationId}`} className="group flex min-w-0 items-center">
                         <span className="truncate text-[15.5px] font-extrabold underline-offset-4 group-hover:text-(--coord-green) group-hover:underline">
                           {r.studentName}
                         </span>
@@ -212,7 +211,7 @@ export default function ReviewListScreen() {
           </table>
           {visible.length === 0 && <p className="p-9 text-center text-[14.5px] text-(--coord-muted)">{EMPTY_TEXT[tab]}</p>}
           <p className="border-t border-(--coord-line) px-5 py-3.5 text-[13px] text-(--coord-muted)">
-            근거 점검은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
+            근거 연결 현황은 AI 문장이 원본 자료와 연결됐는지만 보여 줘요. 사실의 진위와 기관 추천 여부는 코디네이터가 최종 판단해요.
           </p>
         </Panel>
       )}
@@ -254,7 +253,7 @@ function EvidenceCell({ check }: { check: Check }) {
   if (total === 0) return <span className="text-(--coord-muted)">AI 문장 없음</span>;
   return linked === total ? (
     <Badge tone="green">
-      근거 연결 {linked}/{total}
+      AI 문장 근거 연결 {linked}/{total}
     </Badge>
   ) : (
     <Badge tone="orange">근거 확인 필요 {total - linked}문장</Badge>

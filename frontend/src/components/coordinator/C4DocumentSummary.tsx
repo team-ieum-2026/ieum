@@ -98,6 +98,10 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
 
   // 기술 요약 · 프로젝트 문장은 접어 두고 필요할 때 펼쳐 근거를 본다
   const skillSentences = [...(skills?.summary ?? []), ...(projects?.items.flatMap((p) => p.bullets) ?? [])];
+  const skillCounts = {
+    ai: skillSentences.filter((s) => s.source === "AI").length,
+    user: skillSentences.filter((s) => s.source === "USER").length,
+  };
 
   return (
     // 정보는 짧게, 여백은 넉넉하게 (읽기 편한 문서). 한 화면 맞춤보다 가독성 우선
@@ -193,7 +197,14 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
               skillSentences.length > 0 && (
                 <details className="mt-2">
                   <summary className="cursor-pointer text-[13px] font-bold text-primary">
-                    AI 문장 {skillSentences.length}개 · 눌러서 근거 보기
+                    {/* AI 문장(source AI, 목록 'AI 문장 근거 연결'과 같은 기준)과 수료생 작성 문장(USER)을 나눠 센다. 0개인 쪽은 뺀다 */}
+                    {[
+                      skillCounts.ai > 0 && `AI 문장 ${skillCounts.ai}개`,
+                      skillCounts.user > 0 && `수료생 작성 ${skillCounts.user}개`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || `문장 ${skillSentences.length}개`}{" "}
+                    · 눌러서 보기
                   </summary>
                   <ul className="mt-2 flex flex-col gap-2 leading-[1.9]">
                     {skillSentences.map((s) => (
