@@ -372,10 +372,12 @@ export class MockModel {
     const student = this.student(studentId); const { row } = student;
     const items = this.ownItems(studentId);
     const latestPass = items.filter((item) => item.response === "PASS").sort((a, b) => String(b.respondedAt).localeCompare(String(a.respondedAt)))[0];
+    const latestIntent = items.filter((item) => item.response === "APPLY" || item.response === "PASS" && ["ALREADY_EMPLOYED", "TAKING_BREAK"].includes(item.passReason))
+      .sort((a, b) => String(b.respondedAt).localeCompare(String(a.respondedAt)))[0];
     row.hasNote = items.some((item) => item.passNote) || student.logs.length > 0;
     let reason;
-    if (items.some((item) => item.passReason === "ALREADY_EMPLOYED")) { row.status = "EMPLOYED"; reason = "패스 사유 ALREADY_EMPLOYED"; }
-    else if ([...this.state.helps.values()].some((help) => help.studentId === studentId && help.status === "OPEN")) { row.status = "NEED_HELP"; reason = "열린 도움 요청 있음"; }
+    if (latestIntent?.passReason === "ALREADY_EMPLOYED") { row.status = "EMPLOYED"; reason = "패스 사유 ALREADY_EMPLOYED"; }
+    else if (latestIntent?.passReason === "TAKING_BREAK") { row.status = "RESTING"; reason = "패스 사유 TAKING_BREAK"; }
     else if (row.lastResponseAt === null || this.now() - Date.parse(row.lastResponseAt) >= 7 * DAY) { row.status = "CHECK_REQUIRED"; reason = "7일 이상 응답 없음"; }
     else { row.status = "SEEKING"; reason = "최근 응답 있음"; }
     row.subStatus = row.status === "SEEKING" ? [...this.state.applications.values()].some((app) => app.studentId === studentId && ["SUBMITTED", "APPROVED", "DELIVERED"].includes(app.status))
@@ -384,7 +386,7 @@ export class MockModel {
   }
   coordinatorStudents(query) {
     const { status, subStatus, q, page = "1", size = "20" } = Object.fromEntries(query);
-    if (status) choice(status, ["EMPLOYED", "SEEKING", "NEED_HELP", "CHECK_REQUIRED"]);
+    if (status) choice(status, ["EMPLOYED", "SEEKING", "RESTING", "NEED_HELP", "CHECK_REQUIRED"]);
     if (subStatus) choice(subStatus, ["APPLYING", "WAITING", "OTHER"]);
     const pageNumber = id(page); const pageSize = id(size); requireValue(pageSize <= 100);
     for (const studentId of this.state.students.keys()) this.recalculate(studentId);
@@ -416,7 +418,7 @@ export class MockModel {
       helpRequests: [...this.state.helps.values()].filter((help) => help.status === "OPEN").map((help) => ({ helpRequestId: help.helpRequestId, studentId: help.studentId,
         studentName: this.student(help.studentId).row.name, courseLabel: help.courseLabel, createdAt: help.createdAt, jobTitle: help.jobTitle, contactMethod: help.contactMethod, memo: help.memo })),
       statusSummary: { EMPLOYED: count("EMPLOYED"), SEEKING: { total: count("SEEKING"), ...Object.fromEntries(["APPLYING", "WAITING", "OTHER"].map((sub) => [sub, students.filter((row) => row.subStatus === sub).length])) },
-        NEED_HELP: count("NEED_HELP"), CHECK_REQUIRED: count("CHECK_REQUIRED") },
+        NEED_HELP: count("NEED_HELP"), RESTING: count("RESTING"), CHECK_REQUIRED: count("CHECK_REQUIRED") },
       reviewQueue: [...this.state.applications.values()].filter((app) => app.status === "SUBMITTED").map((app) => ({ applicationId: app.applicationId,
         studentName: this.student(app.studentId).row.name, jobTitle: app.job.title, submittedAt: app.submittedAt })),
       callList: students.filter((row) => row.status === "CHECK_REQUIRED").sort((a, b) => String(a.lastResponseAt).localeCompare(String(b.lastResponseAt))).map((row) => ({ studentId: row.studentId,
@@ -479,6 +481,13 @@ export class MockModel {
       const applicationId = id(p[2]);
       if (p.length === 3 && method === "GET") return this.applicationDetail(applicationId);
       if (p[3] === "progress" && method === "GET") return this.progress(applicationId);
+      if (p[3] === "regenerate" && method === "POST") {
+        keys(body, []);
+        const app = this.application(applicationId);
+        this.expectStatus(app, "FAILED");
+        Object.assign(app, { status: "GENERATING", createdAt: this.now(), document: null });
+        return { applicationId, status: "GENERATING" };
+      }
       if (p[3] === "document" && method === "PATCH") return this.patchDocument(applicationId, body);
       if (p[3] === "submit" && method === "POST") { keys(body, []); return this.submit(applicationId); }
     }

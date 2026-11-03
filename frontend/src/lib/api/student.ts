@@ -3,6 +3,7 @@ import { ApiError, apiDelete, apiGet, apiPatch, apiPost, DEMO_STUDENT_ID } from 
 import { getProfile } from "@/lib/api/profile";
 import type {
   ApplicationProgress,
+  ApplicationRegenerateResult,
   ApplicationListItem,
   ApplicationStatus,
   HelpRequestCreateRequest,
@@ -39,6 +40,7 @@ export async function getStudentName(studentId: number): Promise<string> {
 const mockApplicationsKey = "ieum:mock-applications:v1";
 const mockApplicationSequenceKey = "ieum:mock-application-sequence:v1";
 const mockPassesKey = "ieum:mock-passes:v1";
+const mockHelpRequestsKey = "ieum:mock-help-requests:v1";
 const mockRecommendationsKey = (studentId: number) => `ieum:mock-recommendations:${studentId}`;
 const mockCancelledResponseKey = (studentId: number, itemId: number) => `ieum:mock-cancelled-response:${studentId}:${itemId}`;
 const applicationsChanged = "ieum:applications-changed";
@@ -54,12 +56,46 @@ function readMockApplications(): MockApplication[] {
   return value ? JSON.parse(value) as MockApplication[] : [];
 }
 
+function readSavedMockHelpRequests(): StudentHelpRequest[] {
+  return JSON.parse(localStorage.getItem(mockHelpRequestsKey) ?? "[]") as StudentHelpRequest[];
+}
+
+async function readMockHelpRequests(): Promise<StudentHelpRequest[]> {
+  if (localStorage.getItem(mockHelpRequestsKey) !== null) return readSavedMockHelpRequests();
+  const dashboard = await apiGet<{ helpRequests: StudentHelpRequest[] }>("", "C1_coordinator_dashboard.json");
+  // 공용 JSON에 없는 새 필드도 실제 API처럼 null로 유지한다.
+  const initial = dashboard.helpRequests.map(item => ({
+    helpRequestId: item.helpRequestId, studentId: item.studentId,
+    recommendationItemId: item.recommendationItemId ?? null, helpType: item.helpType ?? null,
+    status: item.status ?? "OPEN", contactMethod: item.contactMethod ?? null, memo: item.memo ?? null,
+    createdAt: item.createdAt, closedAt: item.closedAt ?? null, closeReason: item.closeReason ?? null,
+    jobTitle: item.jobTitle ?? null,
+  }));
+  // 동시에 시작한 조회가 사용자가 저장한 요청을 덮어쓰지 않게 한다.
+  if (localStorage.getItem(mockHelpRequestsKey) !== null) return readSavedMockHelpRequests();
+  localStorage.setItem(mockHelpRequestsKey, JSON.stringify(initial));
+  return initial;
+}
+
+function writeMockHelpRequests(requests: StudentHelpRequest[]) {
+  localStorage.setItem(mockHelpRequestsKey, JSON.stringify(requests));
+  window.dispatchEvent(new Event(helpRequestsChanged));
+  window.dispatchEvent(new Event(applicationsChanged));
+}
+
+function findMockHelpRequest(requests: StudentHelpRequest[], helpRequestId: number) {
+  const request = requests.find(item => item.helpRequestId === helpRequestId);
+  if (!request) throw new ApiError("HELP_REQUEST_NOT_FOUND", "도움 요청을 찾을 수 없어요.", 404);
+  return request;
+}
+
 /** 실제 API 모드에서는 서버가 내려준 응답 상태를 그대로 사용한다. */
 export function getMockRecommendationResponse(studentId: number, itemId: number, fallback: ResponseType): ResponseType {
   if (process.env.NEXT_PUBLIC_USE_MOCK === "false") return fallback;
   if (readMockApplications().some((item) => item.studentId === studentId && item.itemId === itemId)) return "APPLY";
   if (readMockPasses().some((item) => item.studentId === studentId && item.itemId === itemId)) return "PASS";
   if (localStorage.getItem(mockCancelledResponseKey(studentId, itemId)) === "true") return "NONE";
+  if (readSavedMockHelpRequests().some(item => item.studentId === studentId && item.recommendationItemId === itemId)) return "HELP";
   return fallback;
 }
 
@@ -212,6 +248,13 @@ export async function cancelItemResponse(itemId: number, expectedResponse: Cance
   if (application && !["GENERATING", "DRAFT", "FAILED"].includes(application.status)) {
     throw new ApiError("INVALID_STATUS", "이미 검토를 요청한 지원서는 직접 취소할 수 없어요. 담당자에게 문의해주세요.", 409);
   }
+  if (expectedResponse === "HELP" && current !== "NONE") {
+    const help = readSavedMockHelpRequests().filter(item => item.studentId === studentId && item.recommendationItemId === itemId).at(-1);
+    if (help) {
+      if (help.status !== "OPEN") throw new ApiError("INVALID_STATUS", "이미 처리한 도움 요청은 직접 취소할 수 없어요.", 409);
+      await closeHelpRequest(help.helpRequestId, { studentId, closeReason: "NO_LONGER_NEEDED" });
+    }
+  }
   localStorage.setItem(mockCancelledResponseKey(studentId, itemId), "true");
   localStorage.setItem(mockPassesKey, JSON.stringify(readMockPasses().filter(item => item.studentId !== studentId || item.itemId !== itemId)));
   writeMockApplications(applications.filter(item => item.studentId !== studentId || item.itemId !== itemId));
@@ -220,26 +263,41 @@ export async function cancelItemResponse(itemId: number, expectedResponse: Cance
 
 const helpRequestsChanged = "ieum:help-requests-changed";
 
-function requireLiveHelpRequests() {
-  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
-    throw new ApiError("REAL_API_REQUIRED", "도움 요청을 확인하고 저장하려면 실제 서버에 연결해주세요.", 0);
-  }
-}
-
 export function subscribeHelpRequestChanges(listener: () => void) {
+  const storageListener = (event: StorageEvent) => {
+    if (event.key === mockHelpRequestsKey || event.key === null) listener();
+  };
   window.addEventListener(helpRequestsChanged, listener);
-  return () => window.removeEventListener(helpRequestsChanged, listener);
+  window.addEventListener("storage", storageListener);
+  return () => {
+    window.removeEventListener(helpRequestsChanged, listener);
+    window.removeEventListener("storage", storageListener);
+  };
 }
 
 /** 학생 본인 요청 목록. data는 목록 객체가 아닌 배열이다. */
 export async function getStudentHelpRequests(studentId: number, status: StudentHelpRequestFilter = "OPEN") {
-  requireLiveHelpRequests();
+  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
+    const requests = await readMockHelpRequests();
+    return requests.filter(item => item.studentId === studentId && (status === "ALL" || item.status === status)).reverse();
+  }
   return apiGet<StudentHelpRequest[]>(`/api/help-requests?studentId=${studentId}&status=${status}`, "");
 }
 
 /** 개별 종료는 추천 응답 취소나 현재 상태 선택과 독립적인 API다. */
 export async function closeHelpRequest(helpRequestId: number, body: HelpRequestCloseRequest) {
-  requireLiveHelpRequests();
+  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
+    const requests = await readMockHelpRequests();
+    const request = findMockHelpRequest(requests, helpRequestId);
+    if (request.studentId !== body.studentId) throw new ApiError("INVALID_REQUEST", "본인의 도움 요청만 종료할 수 있어요.", 400);
+    if (!["EMPLOYED", "NO_LONGER_NEEDED", "OTHER"].includes(body.closeReason)) throw new ApiError("INVALID_REQUEST", "종료 사유를 확인해주세요.", 400);
+    if (request.status === "CONTACTED") throw new ApiError("INVALID_STATUS", "담당자가 이미 연락한 요청이에요.", 409);
+    const result: HelpRequestCloseResult = { helpRequestId, status: "CLOSED",
+      closedAt: request.closedAt ?? new Date().toISOString(), closeReason: request.closeReason ?? body.closeReason };
+    Object.assign(request, result);
+    writeMockHelpRequests(requests);
+    return result;
+  }
   const result = await apiPost<HelpRequestCloseResult>(`/api/help-requests/${helpRequestId}/close`, "", body);
   window.dispatchEvent(new Event(helpRequestsChanged));
   return result;
@@ -247,7 +305,23 @@ export async function closeHelpRequest(helpRequestId: number, body: HelpRequestC
 
 /** 유형을 선택한 도움 요청 생성 → 기존 M4 */
 export async function createHelpRequest(body: HelpRequestCreateRequest) {
-  requireLiveHelpRequests();
+  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
+    const requests = await readMockHelpRequests();
+    if (body.recommendationItemId === null && !body.helpType) throw new ApiError("INVALID_REQUEST", "도움 유형을 선택해주세요.", 400);
+    const detail = body.recommendationItemId === null ? null : await getRecommendationItem(body.recommendationItemId);
+    if (detail && getMockRecommendationResponse(body.studentId, detail.itemId, detail.response) !== "NONE") {
+      throw new ApiError("ALREADY_RESPONDED", "이미 응답한 공고예요.", 409);
+    }
+    // 상세 조회를 기다리는 동안 저장된 다른 요청도 보존한다.
+    const latest = readSavedMockHelpRequests();
+    const helpRequestId = Math.max(0, ...requests.map(item => item.helpRequestId), ...latest.map(item => item.helpRequestId)) + 1;
+    latest.push({ helpRequestId, studentId: body.studentId, recommendationItemId: body.recommendationItemId,
+      helpType: body.helpType ?? null, status: "OPEN", contactMethod: null, memo: null,
+      createdAt: new Date().toISOString(), closedAt: null, closeReason: null, jobTitle: detail?.job.title ?? null });
+    if (detail) localStorage.removeItem(mockCancelledResponseKey(body.studentId, detail.itemId));
+    writeMockHelpRequests(latest);
+    return { helpRequestId, status: "OPEN" } satisfies HelpRequestCreateResult;
+  }
   const result = await apiPost<HelpRequestCreateResult>("/api/help-requests", "M4_help_request_create.json", body);
   window.dispatchEvent(new Event(helpRequestsChanged));
   return result;
@@ -255,7 +329,15 @@ export async function createHelpRequest(body: HelpRequestCreateRequest) {
 
 /** M4 연락 방법 · 메모 추가 */
 export async function updateHelpRequest(helpRequestId: number, body: HelpRequestUpdateRequest) {
-  requireLiveHelpRequests();
+  if (process.env.NEXT_PUBLIC_USE_MOCK !== "false") {
+    const requests = await readMockHelpRequests();
+    const request = findMockHelpRequest(requests, helpRequestId);
+    if (request.status === "CLOSED") throw new ApiError("INVALID_STATUS", "이미 종료한 도움 요청이에요.", 409);
+    const status = request.status;
+    Object.assign(request, body);
+    writeMockHelpRequests(requests);
+    return { helpRequestId, status, contactMethod: request.contactMethod, memo: request.memo } satisfies HelpRequestUpdateResult;
+  }
   const result = await apiPatch<HelpRequestUpdateResult>(`/api/help-requests/${helpRequestId}`, "M4_help_request_update.json", body);
   window.dispatchEvent(new Event(helpRequestsChanged));
   return result;
@@ -263,6 +345,24 @@ export async function updateHelpRequest(helpRequestId: number, body: HelpRequest
 
 /** M5 서류 생성 진행 상태 (2초마다 조회) */
 const mockProgressStartedAt = new Map<number, number>();
+
+/** M5 실패한 서류 다시 생성. 성공한 POST 뒤에만 진행 상태 조회를 재시작한다. */
+export async function regenerateApplication(applicationId: number): Promise<ApplicationRegenerateResult> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK === "false") {
+    const result = await apiPost<ApplicationRegenerateResult>(`/api/applications/${applicationId}/regenerate`, "");
+    if (result?.applicationId !== applicationId || result.status !== "GENERATING") {
+      throw new ApiError("INVALID_RESPONSE", "서류 생성 시작을 확인하지 못했어요. 다시 확인해주세요.", 502);
+    }
+    return result;
+  }
+  const application = readMockApplications().find(item => item.applicationId === applicationId);
+  if (!application) throw new ApiError("APPLICATION_NOT_FOUND", "지원서를 찾을 수 없어요.", 404);
+  if (application.status !== "FAILED") throw new ApiError("INVALID_STATUS", "실패한 서류만 다시 만들 수 있어요.", 409);
+  mockProgressStartedAt.set(applicationId, Date.now());
+  updateMockApplicationStatus(applicationId, "GENERATING");
+  return { applicationId, status: "GENERATING" };
+}
+
 export const getApplicationProgress = async (applicationId: number) => {
   if (process.env.NEXT_PUBLIC_USE_MOCK === "false") {
     return apiGet<ApplicationProgress>(`/api/applications/${applicationId}/progress`, "M5_application_progress_done.json");

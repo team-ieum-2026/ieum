@@ -53,6 +53,9 @@ test("기본 HTTP 서버는 시드 50명과 명세의 응답 구조를 반환한
   assert.equal((await request("/api/coordinator/students?page=3")).items.length, 10);
   const dashboard = await request("/api/coordinator/dashboard");
   assert.equal(dashboard.totalStudents, 50); assert.equal(dashboard.helpRequests.length, 4);
+  assert.equal(dashboard.statusSummary.NEED_HELP, 0);
+  assert.equal(dashboard.statusSummary.RESTING, 1);
+  assert.deepEqual((await request("/api/coordinator/students?status=RESTING")).items.map(student => student.studentId), [32]);
   assert.deepEqual(dashboard.reviewQueue.map((a) => a.applicationId), [101, 102]);
   const batch = await request("/api/students/1/recommendations/current");
   assert.deepEqual(batch.items.map((i) => i.job.jobPostingId), [501, 502, 503]);
@@ -87,4 +90,20 @@ test("시드 기반 새 지원서 생성·편집·제출은 ID 충돌 없이 동
   dispatch("/api/applications/105/submit", "POST");
   assert.equal(dispatch("/api/coordinator/applications/105").status, "SUBMITTED");
   assert.equal(dispatch("/api/applications/101").status, "SUBMITTED");
+});
+
+test("실패한 서류의 HTTP 목업 재생성은 중복 시작을 막고 진행 조회 후 초안을 만든다", () => {
+  let clock = now;
+  const model = new MockModel({ now: () => clock });
+  const dispatch = (path, method = "GET") => model.dispatch(method, url(path), {});
+  const app = model.state.applications.get(101);
+  Object.assign(app, { status: "FAILED", document: null });
+  assert.deepEqual(dispatch("/api/applications/101/regenerate", "POST"), { applicationId: 101, status: "GENERATING" });
+  assert.equal(dispatch("/api/applications/101/progress").status, "GENERATING");
+  assert.throws(() => dispatch("/api/applications/101/regenerate", "POST"), error => error.status === 409);
+  clock += 2300;
+  assert.equal(dispatch("/api/applications/101/progress").status, "DRAFT");
+  assert.ok(dispatch("/api/applications/101").document);
+  assert.throws(() => dispatch("/api/applications/101/regenerate", "POST"), error => error.status === 409);
+  assert.throws(() => dispatch("/api/applications/99999/regenerate", "POST"), error => error.status === 404);
 });

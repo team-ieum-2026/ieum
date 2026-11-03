@@ -2,12 +2,15 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import "@/styles/font-extended.css";
 
 const notoSansKr = localFont({
-  src: "../../public/fonts/NotoSansKR.ttf",
+  src: "../../public/fonts/NotoSansKR-common.woff2",
   variable: "--font-noto-sans-kr",
   weight: "100 900",
   display: "swap",
+  fallback: ["Noto Sans KR Extended", "Arial", "sans-serif"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
