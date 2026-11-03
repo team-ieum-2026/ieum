@@ -1,7 +1,7 @@
 "use client";
 // 주인: FE-B — 취업·지원 현황 (11/1 개편 목업 statsPage). 대시보드 API 한 번 + 수료생 목록 API(C2 와 같은 함수)로만 그린다.
 // ① 수료생 관리 현황(도넛 + 범례 3줄) ② 취업 지표(링 3개). '취업률'은 관리 상태 기준이며 공식 취업 성과가 아니다.
-// ③ 도움 요청 통계: 처리 상태별은 상태별 목록 API(ALL)로 접수 · 연락 완료 · 요청 종료 전체 건수를 센다 (처리 중 · 상담 예정은 서버에 없어 '미연동').
+// ③ 도움 요청 통계: 처리 상태별은 상태별 목록 API(ALL)로 접수 · 처리 중 · 상담 예정 · 연락 완료 · 요청 종료 전체 건수를 센다.
 //    선호 연락별 · 필요한 도움별은 대시보드 helpRequests(접수 OPEN) 기준. 유형이 없으면 '미분류' (공고 · 메모로 추측 분류하지 않음)
 // ④ 수료생 통합 현황: C2 목록 API(검색 · 관리 상태 · 페이지) + 지금 페이지만 C3 상세로 지원서류를 채운다. 도움 요청은 접수 중 건수
 // ⑤ CSV: 현재 페이지 / 전체 명단(지금 검색 조건, 100명씩 끝까지 받아 studentId 로 중복 제거). 목록 API 값 + 접수 중 도움 요청 수만 담는다
@@ -245,8 +245,8 @@ function Body({ data }: { data: Dashboard }) {
 /** 목업 처리 상태 순서. status 가 없는 줄은 서버에 없는 상태값이라 미연동 */
 const HELP_STATES: { label: string; status?: StudentHelpRequestStatus }[] = [
   { label: helpLabels.OPEN, status: "OPEN" },
-  { label: "처리 중" },
-  { label: "상담 예정" },
+  { label: helpLabels.IN_PROGRESS, status: "IN_PROGRESS" },
+  { label: helpLabels.CONSULTATION_SCHEDULED, status: "CONSULTATION_SCHEDULED" },
   { label: helpLabels.CONTACTED, status: "CONTACTED" },
   { label: helpLabels.CLOSED, status: "CLOSED" },
 ];

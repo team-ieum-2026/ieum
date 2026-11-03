@@ -13,6 +13,7 @@ import com.ieum.recommendation.RecommendationRows;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -263,12 +264,12 @@ class HelpRequestServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"OPEN", "CONTACTED"})
+    @ValueSource(strings = {"OPEN", "IN_PROGRESS", "CONTACTED"})
     void sameCoordinatorStatusIsIdempotentAndStillRefreshesStatus(String status) {
         when(mapper.findForUpdate(19L)).thenReturn(existing(status));
-        assertEquals(new HelpRequestResult(19L, status),
+        assertEquals(new HelpRequestStatusResult(19L, status, null),
                 service.updateStatus(19L, new HelpRequestStatusUpdateRequest(status)));
-        verify(mapper, never()).updateStatus(any(), any());
+        verify(mapper, never()).updateStatus(any(), any(), any());
         verify(mapper, never()).touchLastResponse(any(), any());
         verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
     }
@@ -324,5 +325,102 @@ class HelpRequestServiceTest {
         assertEquals("NO_LONGER_NEEDED", row.getCloseReason());
         assertEquals(LocalDateTime.of(2026, 10, 28, 10, 0), row.getClosedAt());
         verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
+    }
+
+    // ---- 처리 중 · 상담 예정 (11/3) ----
+
+    @Test
+    void schedulingStoresConsultationInSeoulTime() {
+        when(mapper.findForUpdate(19L)).thenReturn(existing("IN_PROGRESS"));
+        when(mapper.updateStatus(eq(19L), any(), any())).thenReturn(1);
+
+        var result = service.updateStatus(19L, new HelpRequestStatusUpdateRequest("CONSULTATION_SCHEDULED",
+                OffsetDateTime.parse("2026-11-05T05:00:30.500Z")));
+
+        verify(mapper).updateStatus(19L, "CONSULTATION_SCHEDULED", LocalDateTime.of(2026, 11, 5, 14, 0, 30));
+        assertEquals(new HelpRequestStatusResult(19L, "CONSULTATION_SCHEDULED",
+                OffsetDateTime.parse("2026-11-05T14:00:30+09:00")), result);
+        verify(mapper, never()).touchLastResponse(any(), any());
+        verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
+    }
+
+    @Test
+    void schedulingWithoutTimeAndTimeWithoutSchedulingAreRejected() {
+        var missing = assertThrows(BusinessException.class,
+                () -> service.updateStatus(19L, new HelpRequestStatusUpdateRequest("CONSULTATION_SCHEDULED", null)));
+        assertEquals(ErrorCode.INVALID_REQUEST, missing.getErrorCode());
+        var extra = assertThrows(BusinessException.class, () -> service.updateStatus(19L,
+                new HelpRequestStatusUpdateRequest("IN_PROGRESS", OffsetDateTime.parse("2026-11-05T14:00:00+09:00"))));
+        assertEquals(ErrorCode.INVALID_REQUEST, extra.getErrorCode());
+        verify(mapper, never()).findForUpdate(any());
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void movingOnFromScheduledKeepsConsultationHistory() {
+        var row = existing("CONSULTATION_SCHEDULED");
+        row.setConsultationAt(LocalDateTime.of(2026, 11, 5, 14, 0));
+        when(mapper.findForUpdate(19L)).thenReturn(row);
+        when(mapper.updateStatus(eq(19L), any(), any())).thenReturn(1);
+
+        var result = service.updateStatus(19L, new HelpRequestStatusUpdateRequest("CONTACTED"));
+
+        verify(mapper).updateStatus(19L, "CONTACTED", LocalDateTime.of(2026, 11, 5, 14, 0));
+        assertEquals(OffsetDateTime.parse("2026-11-05T14:00:00+09:00"), result.consultationAt());
+    }
+
+    @Test
+    void reschedulingSameStatusUpdatesOnlyTheTime() {
+        var row = existing("CONSULTATION_SCHEDULED");
+        row.setConsultationAt(LocalDateTime.of(2026, 11, 5, 14, 0));
+        when(mapper.findForUpdate(19L)).thenReturn(row);
+        when(mapper.updateStatus(eq(19L), any(), any())).thenReturn(1);
+
+        service.updateStatus(19L, new HelpRequestStatusUpdateRequest("CONSULTATION_SCHEDULED",
+                OffsetDateTime.parse("2026-11-06T10:00:00+09:00")));
+
+        verify(mapper).updateStatus(19L, "CONSULTATION_SCHEDULED", LocalDateTime.of(2026, 11, 6, 10, 0));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"IN_PROGRESS", "CONSULTATION_SCHEDULED"})
+    void studentCanCloseRequestStillInProgress(String status) {
+        when(mapper.findForUpdate(19L)).thenReturn(existing(status));
+        when(mapper.close(any())).thenReturn(1);
+
+        var result = service.close(19L, new HelpRequestCloseRequest(7L, "NO_LONGER_NEEDED"));
+
+        assertEquals("CLOSED", result.status());
+        assertEquals("NO_LONGER_NEEDED", result.closeReason());
+        verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"IN_PROGRESS", "CONSULTATION_SCHEDULED"})
+    void cancelledResponseClosesRequestStillInProgress(String status) {
+        var row = existing(status);
+        row.setRecommendationItemId(11L);
+        when(mapper.findLatestByItemForUpdate(11L)).thenReturn(row);
+        when(mapper.close(row)).thenReturn(1);
+
+        service.closeForCancelledResponse(7L, 11L);
+
+        assertEquals("CLOSED", row.getStatus());
+        verify(events).publishEvent(new HelpRequestChangedEvent(7L, 19L));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"IN_PROGRESS", "CONSULTATION_SCHEDULED"})
+    void listAcceptsNewStatusFilters(String status) {
+        when(mapper.findStudentId(7L)).thenReturn(7L);
+        var row = existing(status);
+        row.setConsultationAt(LocalDateTime.of(2026, 11, 5, 14, 0));
+        row.setCreatedAt(LocalDateTime.of(2026, 11, 3, 9, 0));
+        when(mapper.findByStudent(7L, status)).thenReturn(List.of(row));
+
+        var item = service.list(7L, status).get(0);
+
+        assertEquals(status, item.status());
+        assertEquals(OffsetDateTime.parse("2026-11-05T14:00:00+09:00"), item.consultationAt());
     }
 }

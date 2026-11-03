@@ -77,9 +77,21 @@ export const docTone: Record<ApplicationStatus, CoordTone> = {
   FAILED: "gray",
 };
 
-/** 도움 요청 상태 — CONTACTED 는 '연락 완료'(요청 완료 아님). CLOSED 는 수료생이 직접 종료한 요청 */
-export const helpLabels: Record<StudentHelpRequestStatus, string> = { OPEN: "접수", CONTACTED: "연락 완료", CLOSED: "요청 종료" };
-export const helpTone: Record<StudentHelpRequestStatus, CoordTone> = { OPEN: "red", CONTACTED: "orange", CLOSED: "gray" };
+/** 도움 요청 상태 — 접수 → 처리 중 · 상담 예정 → 연락 완료(요청 완료 아님). CLOSED 는 수료생이 직접 종료한 요청 */
+export const helpLabels: Record<StudentHelpRequestStatus, string> = {
+  OPEN: "접수",
+  IN_PROGRESS: "처리 중",
+  CONSULTATION_SCHEDULED: "상담 예정",
+  CONTACTED: "연락 완료",
+  CLOSED: "요청 종료",
+};
+export const helpTone: Record<StudentHelpRequestStatus, CoordTone> = {
+  OPEN: "red",
+  IN_PROGRESS: "blue",
+  CONSULTATION_SCHEDULED: "green",
+  CONTACTED: "orange",
+  CLOSED: "gray",
+};
 
 /** 수료생이 도움 요청을 종료한 사유 */
 export const closeReasonLabels: Record<HelpRequestCloseReason, string> = {

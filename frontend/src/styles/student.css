@@ -351,7 +351,8 @@
   .s-my-help-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--color-ink-muted); font-size: 12px; }
   .s-my-help-meta time { margin-left: auto; }
   .s-help-state { padding: 4px 8px; border-radius: 4px; color: var(--color-ink-sub); background: var(--color-page); font-weight: 600; }
-  .s-help-state[data-status="OPEN"] { color: var(--color-primary); background: var(--color-career-blue-soft); }
+  .s-help-state[data-status="OPEN"], .s-help-state[data-status="IN_PROGRESS"] { color: var(--color-primary); background: var(--color-career-blue-soft); }
+  .s-help-state[data-status="CONSULTATION_SCHEDULED"] { color: var(--color-career-success-ink); background: var(--color-career-success-soft); }
   .s-help-state[data-status="CONTACTED"] { color: var(--color-career-success-ink); background: var(--color-career-success-soft); }
   .s-my-help-list h3 { margin-top: 12px; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
   .s-my-help-memo { margin-top: 8px; color: var(--color-ink-sub); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }

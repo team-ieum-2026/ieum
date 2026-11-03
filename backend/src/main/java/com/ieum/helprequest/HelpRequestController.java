@@ -39,7 +39,7 @@ public class HelpRequestController {
     }
 
     @GetMapping
-    @Operation(summary = "내 도움 요청 조회", description = "기본 OPEN. OPEN·CONTACTED·CLOSED·ALL 중 선택하며 ALL은 전체 요청입니다.")
+    @Operation(summary = "내 도움 요청 조회", description = "기본 OPEN. OPEN·IN_PROGRESS·CONSULTATION_SCHEDULED·CONTACTED·CLOSED·ALL 중 선택하며 ALL은 전체 요청입니다.")
     public ApiResponse<List<HelpRequestListItem>> list(
             @RequestParam("studentId") Long studentId,
             @RequestParam(value = "status", required = false) String status) {
@@ -48,7 +48,7 @@ public class HelpRequestController {
     }
 
     @PostMapping("/{helpRequestId}/close")
-    @Operation(summary = "내 도움 요청 종료", description = "본인의 OPEN 요청만 종료합니다. 이미 종료한 요청은 기존 종료 정보를 반환합니다.")
+    @Operation(summary = "내 도움 요청 종료", description = "본인의 OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED 요청만 종료합니다. CONTACTED는 409. 이미 종료한 요청은 기존 종료 정보를 반환합니다.")
     public ApiResponse<HelpRequestCloseResult> close(
             @PathVariable("helpRequestId") Long helpRequestId,
             @Valid @RequestBody HelpRequestCloseRequest request) {

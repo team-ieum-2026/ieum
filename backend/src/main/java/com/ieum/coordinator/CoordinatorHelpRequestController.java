@@ -6,7 +6,7 @@ import com.ieum.common.BusinessException;
 import com.ieum.common.ErrorCode;
 import com.ieum.common.ErrorResponse;
 import com.ieum.helprequest.HelpRequestNotFoundException;
-import com.ieum.helprequest.HelpRequestResult;
+import com.ieum.helprequest.HelpRequestStatusResult;
 import com.ieum.helprequest.HelpRequestService;
 import com.ieum.helprequest.HelpRequestStatusUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,8 +33,10 @@ public class CoordinatorHelpRequestController {
     }
 
     @PatchMapping("/{helpRequestId}")
-    @Operation(summary = "도움 요청 처리 상태 변경", description = "OPEN 또는 CONTACTED로 변경합니다.")
-    public ApiResponse<HelpRequestResult> updateStatus(
+    @Operation(summary = "도움 요청 처리 상태 변경",
+            description = "OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED · CONTACTED 중 하나로 변경합니다. "
+                    + "CONSULTATION_SCHEDULED면 consultationAt(상담 일시) 필수, 다른 상태에서는 보내지 않습니다. 종료(CLOSED)된 요청은 409.")
+    public ApiResponse<HelpRequestStatusResult> updateStatus(
             @PathVariable("helpRequestId") Long helpRequestId,
             @Valid @RequestBody HelpRequestStatusUpdateRequest request) {
         if (helpRequestId <= 0) throw new BusinessException(ErrorCode.INVALID_REQUEST);

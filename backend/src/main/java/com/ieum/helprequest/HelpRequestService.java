@@ -17,11 +17,19 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 도움 요청과 원 응답은 함께 커밋하고, 상태는 AFTER_COMMIT 이벤트에서 재계산한다. */
+/**
+ * 도움 요청과 원 응답은 함께 커밋하고, 상태는 AFTER_COMMIT 이벤트에서 재계산한다.
+ * 처리 단계: OPEN(접수) → IN_PROGRESS(처리 중) · CONSULTATION_SCHEDULED(상담 예정, 상담 일시 필수) → CONTACTED(연락 완료).
+ * 수료생은 OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED 요청을 직접 종료(CLOSED)할 수 있고, CONTACTED 는 409.
+ */
 @Service
 public class HelpRequestService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
-    private static final Set<String> STATUSES = Set.of("OPEN", "CONTACTED", "CLOSED");
+    private static final Set<String> STATUSES = Set.of("OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED", "CONTACTED", "CLOSED");
+    /** 코디네이터가 바꿀 수 있는 상태 */
+    private static final Set<String> COORDINATOR_STATUSES = Set.of("OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED", "CONTACTED");
+    /** 수료생이 직접 종료할 수 있는 상태 (담당자가 연락을 마치기 전) */
+    private static final Set<String> CLOSABLE = Set.of("OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED");
     private static final Set<String> CLOSE_REASONS = Set.of("EMPLOYED", "NO_LONGER_NEEDED", "OTHER");
     private final HelpRequestMapper mapper;
     private final RecommendationMapper recommendations;
@@ -88,7 +96,8 @@ public class HelpRequestService {
                 .map(row -> new HelpRequestListItem(row.getHelpRequestId(), row.getStudentId(),
                         row.getRecommendationItemId(), row.getHelpType(), row.getStatus(),
                         row.getContactMethod(), row.getMemo(), seoulTime(row.getCreatedAt()),
-                        seoulTime(row.getClosedAt()), row.getCloseReason(), row.getJobTitle()))
+                        seoulTime(row.getClosedAt()), row.getCloseReason(), row.getJobTitle(),
+                        seoulTime(row.getConsultationAt())))
                 .toList();
     }
 
@@ -104,7 +113,7 @@ public class HelpRequestService {
         if (!request.studentId().equals(row.getStudentId())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "본인의 도움 요청만 종료할 수 있어요.");
         }
-        if ("OPEN".equals(row.getStatus())) {
+        if (CLOSABLE.contains(row.getStatus())) {
             row.setStatus("CLOSED");
             row.setClosedAt(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
             row.setCloseReason(request.closeReason());
@@ -120,7 +129,8 @@ public class HelpRequestService {
 
     /**
      * 추천 응답 HELP 취소. 호출자가 추천 항목을 먼저 잠근 같은 트랜잭션에서 부른다.
-     * 접수(OPEN) 요청만 본인 종료로 닫아 이력을 남기고, 연락 완료·종료된 요청은 409로 유지한다.
+     * 연락 완료 전(OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED) 요청만 본인 종료로 닫아 이력을 남기고,
+     * 연락 완료·종료된 요청은 409로 유지한다.
      */
     @Transactional
     public void closeForCancelledResponse(Long studentId, Long recommendationItemId) {
@@ -132,7 +142,7 @@ public class HelpRequestService {
             throw new BusinessException(ErrorCode.INVALID_STATUS,
                     "이미 종료한 도움 요청이에요. 새로고침 후 다시 확인해주세요.");
         }
-        if (!"OPEN".equals(row.getStatus())) {
+        if (!CLOSABLE.contains(row.getStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS,
                     "담당자가 이미 연락한 도움 요청은 직접 취소할 수 없어요. 담당자에게 문의해주세요.");
         }
@@ -163,27 +173,39 @@ public class HelpRequestService {
     }
 
     @Transactional
-    public HelpRequestResult updateStatus(Long helpRequestId, HelpRequestStatusUpdateRequest request) {
-        if (!positive(helpRequestId) || request == null
-                || !("OPEN".equals(request.status()) || "CONTACTED".equals(request.status()))) {
+    public HelpRequestStatusResult updateStatus(Long helpRequestId, HelpRequestStatusUpdateRequest request) {
+        if (!positive(helpRequestId) || request == null || !COORDINATOR_STATUSES.contains(request.status())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+        boolean scheduling = "CONSULTATION_SCHEDULED".equals(request.status());
+        if (scheduling && request.consultationAt() == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "상담 일시를 입력해 주세요.");
+        }
+        if (!scheduling && request.consultationAt() != null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "상담 일시는 '상담 예정'일 때만 입력해요.");
+        }
         var row = requireEditable(helpRequestId);
-        if (!request.status().equals(row.getStatus())) {
-            if (mapper.updateStatus(helpRequestId, request.status()) != 1) {
+        // 상담 일시는 서울 시각 초 단위로 저장한다. 다른 상태로 바꿔도 지난 상담 일시는 이력으로 남긴다
+        LocalDateTime consultationAt = scheduling
+                ? request.consultationAt().atZoneSameInstant(SEOUL).toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)
+                : row.getConsultationAt();
+        if (!request.status().equals(row.getStatus()) || !Objects.equals(consultationAt, row.getConsultationAt())) {
+            if (mapper.updateStatus(helpRequestId, request.status(), consultationAt) != 1) {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR);
             }
             row.setStatus(request.status());
+            row.setConsultationAt(consultationAt);
         }
         // 코디네이터 처리는 수료생 응답 시각과 closed_at을 변경하지 않는다.
         publish(row);
-        return new HelpRequestResult(helpRequestId, row.getStatus());
+        return new HelpRequestStatusResult(helpRequestId, row.getStatus(), seoulTime(row.getConsultationAt()));
     }
 
+    /** 종료(CLOSED)되지 않은 요청만 연락 방법 · 메모 · 처리 상태를 바꿀 수 있다 */
     private HelpRequestData.Row requireEditable(Long helpRequestId) {
         var row = mapper.findForUpdate(helpRequestId);
         if (row == null) throw new HelpRequestNotFoundException();
-        if (!("OPEN".equals(row.getStatus()) || "CONTACTED".equals(row.getStatus()))) {
+        if (!COORDINATOR_STATUSES.contains(row.getStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS);
         }
         return row;

@@ -252,7 +252,7 @@ class HelpRequestDatabaseTest {
         JsonNode data = listed.body().path("data");
         assertEquals(2, data.size());
         assertEquals(secondId, data.get(0).path("helpRequestId").asLong());
-        assertEquals(11, data.get(0).size());
+        assertEquals(12, data.get(0).size());
         assertTrue(data.get(0).get("recommendationItemId").isNull());
         assertTrue(data.get(0).get("jobTitle").isNull());
         assertTrue(data.get(0).get("closedAt").isNull());
@@ -286,6 +286,60 @@ class HelpRequestDatabaseTest {
         assertError(send("POST", "/api/help-requests/" + secondId + "/close",
                 Map.of("studentId", studentId, "closeReason", "OTHER")), 409, "INVALID_STATUS");
         assertEquals(responseAt, lastResponse());
+    }
+
+    @Test
+    void progressStagesKeepConsultationTimeAndStudentCanStillClose() throws Exception {
+        long first = send("POST", "/api/help-requests",
+                Map.of("studentId", studentId, "helpType", "CAREER_COUNSELING")).body().path("data").path("helpRequestId").asLong();
+        LocalDateTime responseAt = lastResponse();
+
+        Reply progress = changeStatus(first, "IN_PROGRESS");
+        assertEquals(200, progress.status());
+        assertEquals(3, progress.body().path("data").size());
+        assertTrue(progress.body().path("data").get("consultationAt").isNull());
+
+        assertError(changeStatus(first, "CONSULTATION_SCHEDULED"), 400, "INVALID_REQUEST");
+        assertError(send("PATCH", "/api/coordinator/help-requests/" + first,
+                Map.of("status", "IN_PROGRESS", "consultationAt", "2026-11-05T14:00:00+09:00")), 400, "INVALID_REQUEST");
+        Reply scheduled = send("PATCH", "/api/coordinator/help-requests/" + first,
+                Map.of("status", "CONSULTATION_SCHEDULED", "consultationAt", "2026-11-05T05:00:00Z"));
+        assertEquals(200, scheduled.status());
+        assertEquals("2026-11-05T14:00:00+09:00", scheduled.body().path("data").path("consultationAt").asText());
+        assertEquals(LocalDateTime.of(2026, 11, 5, 14, 0), jdbc.queryForObject(
+                "SELECT consultation_at FROM help_request WHERE id = ?", LocalDateTime.class, first));
+
+        // 코디네이터 목록 · 수료생 목록 모두 새 상태로 거르고 상담 일시를 준다
+        JsonNode coordinator = send("GET", "/api/coordinator/help-requests?status=CONSULTATION_SCHEDULED", null).body();
+        JsonNode mine = null;
+        for (JsonNode node : coordinator.path("data")) if (node.path("helpRequestId").asLong() == first) mine = node;
+        assertNotNull(mine);
+        assertEquals("2026-11-05T14:00:00+09:00", mine.path("consultationAt").asText());
+        JsonNode own = send("GET", "/api/help-requests?studentId=" + studentId + "&status=CONSULTATION_SCHEDULED", null)
+                .body().path("data");
+        assertEquals(1, own.size());
+        assertEquals("2026-11-05T14:00:00+09:00", own.get(0).path("consultationAt").asText());
+        assertEquals(200, send("GET", "/api/help-requests?studentId=" + studentId + "&status=IN_PROGRESS", null).status());
+
+        // 상담 예정 요청도 수료생이 직접 종료할 수 있고, 상담 일시는 이력으로 남는다
+        Reply closed = send("POST", "/api/help-requests/" + first + "/close",
+                Map.of("studentId", studentId, "closeReason", "NO_LONGER_NEEDED"));
+        assertEquals(200, closed.status());
+        assertEquals("CLOSED", closed.body().path("data").path("status").asText());
+        assertEquals(LocalDateTime.of(2026, 11, 5, 14, 0), jdbc.queryForObject(
+                "SELECT consultation_at FROM help_request WHERE id = ?", LocalDateTime.class, first));
+        assertError(changeStatus(first, "IN_PROGRESS"), 409, "INVALID_STATUS");
+
+        // 연락 완료로 넘어가도 상담 일시는 남고, 그 뒤 수료생 종료는 409
+        long second = send("POST", "/api/help-requests",
+                Map.of("studentId", studentId, "helpType", "OTHER")).body().path("data").path("helpRequestId").asLong();
+        assertEquals(200, send("PATCH", "/api/coordinator/help-requests/" + second,
+                Map.of("status", "CONSULTATION_SCHEDULED", "consultationAt", "2026-11-06T10:00:00+09:00")).status());
+        Reply contacted = changeStatus(second, "CONTACTED");
+        assertEquals("2026-11-06T10:00:00+09:00", contacted.body().path("data").path("consultationAt").asText());
+        assertError(send("POST", "/api/help-requests/" + second + "/close",
+                Map.of("studentId", studentId, "closeReason", "OTHER")), 409, "INVALID_STATUS");
+        assertTrue(lastResponse().isAfter(responseAt) || lastResponse().isEqual(responseAt));
     }
 
     private long student(String name) {

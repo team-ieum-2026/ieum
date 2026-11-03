@@ -25,7 +25,7 @@
     <select id="findForUpdate" resultType="com.ieum.helprequest.HelpRequestData$Row"
             useCache="false" flushCache="true">
         SELECT id AS help_request_id, student_id, recommendation_item_id,
-               help_type, contact_method, memo, status, created_at, closed_at, close_reason
+               help_type, contact_method, memo, status, created_at, closed_at, close_reason, consultation_at
         FROM help_request
         WHERE id = #{helpRequestId}
         FOR UPDATE
@@ -35,7 +35,7 @@
     <select id="findLatestByItemForUpdate" resultType="com.ieum.helprequest.HelpRequestData$Row"
             useCache="false" flushCache="true">
         SELECT id AS help_request_id, student_id, recommendation_item_id,
-               help_type, contact_method, memo, status, created_at, closed_at, close_reason
+               help_type, contact_method, memo, status, created_at, closed_at, close_reason, consultation_at
         FROM help_request
         WHERE recommendation_item_id = #{recommendationItemId}
         ORDER BY id DESC
@@ -46,7 +46,7 @@
     <select id="findByStudent" resultType="com.ieum.helprequest.HelpRequestData$Row">
         SELECT h.id AS help_request_id, h.student_id, h.recommendation_item_id,
                h.help_type, h.contact_method, h.memo, h.status, h.created_at, h.closed_at,
-               h.close_reason, j.title AS job_title
+               h.close_reason, h.consultation_at, j.title AS job_title
         FROM help_request h
         LEFT JOIN recommendation_item ri ON ri.id = h.recommendation_item_id
         LEFT JOIN job_posting j ON j.id = ri.job_posting_id
@@ -64,12 +64,14 @@
     </update>
 
     <update id="updateStatus">
-        UPDATE help_request SET status = #{status} WHERE id = #{helpRequestId}
+        UPDATE help_request
+        SET status = #{status}, consultation_at = #{consultationAt,jdbcType=TIMESTAMP}
+        WHERE id = #{helpRequestId}
     </update>
 
     <update id="close">
         UPDATE help_request
         SET status = 'CLOSED', closed_at = #{closedAt}, close_reason = #{closeReason}
-        WHERE id = #{helpRequestId} AND status = 'OPEN'
+        WHERE id = #{helpRequestId} AND status IN ('OPEN', 'IN_PROGRESS', 'CONSULTATION_SCHEDULED')
     </update>
 </mapper>

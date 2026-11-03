@@ -23,7 +23,8 @@ export type StudentStatus = "EMPLOYED" | "SEEKING" | "NEED_HELP" | "CHECK_REQUIR
 export type SubStatus = "APPLYING" | "WAITING" | "OTHER";
 export type Source = "AI" | "REGISTERED" | "USER";
 export type MilitaryStatus = "SERVED" | "NOT_SERVED" | "EXEMPT" | "NOT_APPLICABLE" | null;
-export type HelpRequestStatus = "OPEN" | "CONTACTED";
+/** 도움 요청 처리 단계 (코디네이터가 바꾸는 값). 처리 중 · 상담 예정은 11/3 추가 */
+export type HelpRequestStatus = "OPEN" | "IN_PROGRESS" | "CONSULTATION_SCHEDULED" | "CONTACTED";
 export type CompanyInfoStatus = "FOUND" | "PARTIAL" | "NOT_FOUND";
 
 // ---- 근거 (docs/API.md 3-2) ----
@@ -128,8 +129,10 @@ export interface ItemResponseCancelResult {
 // ---- M2 → M4 도움 요청 ----
 export type HelpType = "RESUME_COVER_LETTER" | "JOB_APPLICATION" | "INTERVIEW_PREPARATION" | "CAREER_COUNSELING" | "OTHER";
 
-// 코디네이터의 OPEN/CONTACTED 전이 타입은 유지하고 학생 조회 상태만 확장한다.
+// 코디네이터가 바꾸는 처리 단계 + 수료생 본인 종료(CLOSED).
 export type StudentHelpRequestStatus = HelpRequestStatus | "CLOSED";
+/** 연락 완료 전, 수료생이 직접 종료할 수 있는 진행 중 요청 */
+export const ACTIVE_HELP_STATUSES: readonly StudentHelpRequestStatus[] = ["OPEN", "IN_PROGRESS", "CONSULTATION_SCHEDULED"];
 export type StudentHelpRequestFilter = StudentHelpRequestStatus | "ALL";
 export type HelpRequestCloseReason = "EMPLOYED" | "NO_LONGER_NEEDED" | "OTHER";
 
@@ -150,6 +153,8 @@ export interface StudentHelpRequest {
   closedAt: string | null;
   closeReason: HelpRequestCloseReason | null;
   jobTitle: string | null;
+  /** 상담 예정 일시 "2026-11-05T14:00:00+09:00". 없으면 null (이전 응답에는 키가 없을 수 있다) */
+  consultationAt?: string | null;
 }
 
 export interface HelpRequestCloseRequest {

@@ -24,7 +24,8 @@ public interface HelpRequestMapper {
 
     int updateDetails(HelpRequestData.Row row);
 
-    int updateStatus(@Param("helpRequestId") Long helpRequestId, @Param("status") String status);
+    int updateStatus(@Param("helpRequestId") Long helpRequestId, @Param("status") String status,
+                     @Param("consultationAt") java.time.LocalDateTime consultationAt);
 
     int close(HelpRequestData.Row row);
 }

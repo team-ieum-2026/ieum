@@ -32,9 +32,9 @@ public class CoordinatorListController {
 
     @GetMapping("/api/coordinator/help-requests")
     @Operation(summary = "도움 요청 상태별 목록",
-            description = "전체 수료생의 도움 요청을 최근 순으로 돌려준다. 생략하거나 ALL이면 OPEN · CONTACTED · CLOSED 전체.")
+            description = "전체 수료생의 도움 요청을 최근 순으로 돌려준다. 생략하거나 ALL이면 OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED · CONTACTED · CLOSED 전체.")
     public ApiResponse<List<CoordinatorListResponse.HelpRequest>> helpRequests(
-            @Parameter(description = "ALL · OPEN · CONTACTED · CLOSED", example = "CONTACTED")
+            @Parameter(description = "ALL · OPEN · IN_PROGRESS · CONSULTATION_SCHEDULED · CONTACTED · CLOSED", example = "CONTACTED")
             @RequestParam(name = "status", required = false) String status) {
         return ApiResponse.of(service.helpRequests(status));
     }

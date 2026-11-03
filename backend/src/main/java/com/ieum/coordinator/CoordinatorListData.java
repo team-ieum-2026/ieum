@@ -38,5 +38,6 @@ public final class CoordinatorListData {
         private String status;
         private LocalDateTime closedAt;
         private String closeReason;
+        private LocalDateTime consultationAt;
     }
 }
