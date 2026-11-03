@@ -5,7 +5,7 @@
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
 // - 오늘 예정된 상담: 일정 API 연동 전이라 빈 상태 (demoAccount.ts 의 CONSULTATION_API_CONNECTED)
-// - 서류 검토 현황 4단계: 검토 대기만 실제 건수, 나머지 3단계는 건수 API 가 없어 '—' · 미연동 (0건으로 단정하지 않음)
+// - 서류 검토 현황 4단계: 검토 대기는 reviewQueue, 수정 요청 · 승인·전달 대기 · 전달 완료는 상태별 서류 목록 API 로 센다. 칸을 누르면 그 탭으로
 // - 수료생 관리 현황: totalStudents · statusSummary 로 계산
 // 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
 import Link from "next/link";
@@ -17,6 +17,8 @@ import type { CoordTone } from "@/components/coordinator/coordLabels";
 import {
   MANAGE_ORDER,
   contactLabels,
+  docLabels,
+  docTone,
   helpTitle,
   helpTypeLabel,
   knownCount,
@@ -27,8 +29,8 @@ import {
   monthDay,
   pct,
 } from "@/components/coordinator/coordLabels";
-import { getDashboard } from "@/lib/api/coordinatorReview";
-import type { Dashboard } from "@/types/coordinator";
+import { getCoordinatorApplications, getDashboard } from "@/lib/api/coordinatorReview";
+import type { CoordinatorApplicationListItem, Dashboard } from "@/types/coordinator";
 
 /** 오늘 먼저 확인할 일 최대 건수 */
 const TASK_LIMIT = 5;
@@ -161,7 +163,7 @@ export default function DashboardScreen() {
           <Tasks data={data} />
           <div className="grid shrink-0 grid-cols-2 gap-3">
             <TodayConsultations items={consultations} />
-            <DocStatus count={data.reviewQueue.length} />
+            <DocStatus count={data.reviewQueue.length} asOf={data.asOf} />
           </div>
         </div>
         <ManagementCard data={data} />
@@ -408,16 +410,37 @@ function TodayConsultations({ items }: { items: ConsultationSchedule[] }) {
 }
 
 /**
- * 서류 검토 현황 4단계 (목업 .doc-counts). 대시보드 API 는 검토 대기(reviewQueue)만 주므로
- * 나머지 3단계는 건수 API 가 없어 '—' + 미연동으로 표시한다 (0건으로 단정하지 않음). 연동되면 count 를 채운다
+ * 서류 검토 현황 4단계 (목업 .doc-counts). 검토 대기는 대시보드 reviewQueue, 나머지 3단계는 상태별 목록 API(ALL)로 센다.
+ * 목록을 받기 전 · 못 받으면 '—' (0건으로 단정하지 않음). 칸을 누르면 서류 검토 화면의 그 탭이 열린다.
+ * asOf 가 바뀌면(대시보드 새로고침) 다시 센다
  */
-function DocStatus({ count }: { count: number }) {
-  const stages: { label: string; count: number | null; tone: CoordTone }[] = [
-    { label: "검토 대기", count, tone: "orange" },
-    { label: "수정 요청", count: null, tone: "red" },
-    { label: "승인 · 전달 대기", count: null, tone: "blue" },
-    { label: "전달 완료", count: null, tone: "green" },
+function DocStatus({ count, asOf }: { count: number; asOf: string }) {
+  const [list, setList] = useState<CoordinatorApplicationListItem[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let ignore = false;
+    getCoordinatorApplications("ALL")
+      .then((next) => {
+        if (!ignore) {
+          setList(next);
+          setFailed(false);
+        }
+      })
+      .catch(() => {
+        if (!ignore) setFailed(true);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [asOf]);
+  const countOf = (status: CoordinatorApplicationListItem["status"]) => (list ? list.filter((a) => a.status === status).length : null);
+  const stages: { status: CoordinatorApplicationListItem["status"]; count: number | null; tone: CoordTone }[] = [
+    { status: "SUBMITTED", count, tone: docTone.SUBMITTED },
+    { status: "REJECTED", count: countOf("REJECTED"), tone: docTone.REJECTED },
+    { status: "APPROVED", count: countOf("APPROVED"), tone: docTone.APPROVED },
+    { status: "DELIVERED", count: countOf("DELIVERED"), tone: docTone.DELIVERED },
   ];
+  const pendingText = failed ? "조회 실패" : "불러오는 중";
   return (
     <Panel label="서류 검토 현황">
       <div id={REVIEW_QUEUE_ANCHOR} className="flex scroll-mt-20 items-center justify-between gap-3 border-b border-(--coord-line-soft) px-[18px] py-3">
@@ -432,28 +455,22 @@ function DocStatus({ count }: { count: number }) {
             <>
               <b className="text-[22px] leading-[1.2]">{s.count ?? "—"}</b>
               <span className="text-[10.5px] font-semibold tracking-[-0.4px] whitespace-nowrap">
-                {s.label}
-                {s.count === null && <span className="sr-only"> (건수 미연동)</span>}
+                {docLabels[s.status]}
+                {s.count === null && <span className="sr-only"> ({pendingText})</span>}
               </span>
               {s.count === null && (
                 <span aria-hidden="true" className="text-[10px] leading-none opacity-80">
-                  미연동
+                  {pendingText}
                 </span>
               )}
             </>
           );
           const cls = `flex flex-col items-center gap-1 rounded-[9px] px-1 py-2 text-center ${toneClass(s.tone)} ${s.count === null ? "opacity-70" : "hover:brightness-95"}`;
           return (
-            <li key={s.label}>
-              {s.count !== null ? (
-                <Link href="/coordinator/applications" className={cls}>
-                  {box}
-                </Link>
-              ) : (
-                <div className={cls} title="이 단계의 건수를 주는 API 가 아직 없어요">
-                  {box}
-                </div>
-              )}
+            <li key={s.status}>
+              <Link href={`/coordinator/applications?status=${s.status}`} className={cls}>
+                {box}
+              </Link>
             </li>
           );
         })}

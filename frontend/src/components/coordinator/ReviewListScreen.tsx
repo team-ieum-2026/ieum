@@ -1,10 +1,12 @@
 "use client";
 // 주인: FE-B — C4 서류 검토 목록 (11/1 개편 목업 reviewsPage). 목록은 상태별 목록 API(GET /api/coordinator/applications)를 ALL 로 한 번 받아 탭별로 나눈다.
-// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 수정 요청(REJECTED) · 승인·전달 대기(APPROVED) · 전달 완료(DELIVERED). 첫 화면은 검토 대기
+// - 상태 탭: 전체 · 검토 대기(SUBMITTED) · 수정 요청(REJECTED) · 승인·전달 대기(APPROVED) · 전달 완료(DELIVERED).
+//   첫 화면은 ?status= 의 탭 (대시보드 서류 검토 현황에서 이동), 없으면 검토 대기
 // - 근거 점검 · 수료생 수정: 목록에 없어 지금 탭에 보이는 서류만 C4 상세 API 의 verification 을 병렬로 불러 채운다 (한 번 받은 서류는 다시 받지 않음)
 //   근거 점검은 'AI 문장이 원본 자료와 연결됐는지'만 뜻하고, 사실 검증 완료가 아니다
 // - 마감일정: 공고 deadlineOn · untilFilled. 목업 모드는 목록 API JSON 이 없어 대시보드 reviewQueue(검토 대기)만 보인다
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiErrorText, RefreshAction, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDay, monthDayTime } from "@/components/coordinator/coordLabels";
@@ -52,7 +54,10 @@ type Check =
 
 export default function ReviewListScreen() {
   const [items, setItems] = useState<CoordinatorApplicationListItem[] | null>(null);
-  const [tab, setTab] = useState<CoordinatorApplicationFilter>("SUBMITTED");
+  // 고른 탭. 고르기 전에는 주소의 ?status= (대시보드에서 이동), 없거나 틀리면 검토 대기
+  const statusParam = useSearchParams().get("status");
+  const [pickedTab, setTab] = useState<CoordinatorApplicationFilter | null>(null);
+  const tab = pickedTab ?? TABS.find((t) => t.status === statusParam)?.status ?? "SUBMITTED";
   const [checks, setChecks] = useState<Record<number, Check>>({});
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
