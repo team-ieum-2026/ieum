@@ -28,7 +28,7 @@ from common.config import get_settings
 from common.llm import LLMError, generate_json
 from document.llm_models import LlmDraft
 from document.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
-from document.service import assemble, split_long_sentences
+from document.service import assemble, drop_middle_dots, split_long_sentences
 from document.sources import build_sources
 from document.verify import verify
 from schemas.draft import DraftRequest
@@ -107,6 +107,12 @@ def plan_followed(draft: LlmDraft) -> dict | None:
     return {
         # 첫 문장 근거에 계획한 C 가 들어 있는지. 계획 칸이 없거나 기업 정보가 없으면 None
         "openingMatches": (link.company_evidence_id in cover[0].evidence_ids) if link and link.company_evidence_id else None,
+        # 계획에서 C 와 경험의 짝이 있다고 봤는지, 무엇을 견줬는지 (v3.9.2 부터)
+        "connects": getattr(link, "connects", None) if link else None,
+        "comparison": getattr(link, "comparison", None) if link else None,
+        # C 를 근거로 단 문장의 위치 (0 = 첫 문장, -1 = 맺음 문장). v3.10 부터 C 는 둘 중 한 곳
+        "companyAt": [i if i < len(cover) - 2 else i - len(cover) for i, s in enumerate(cover)
+                      if any(e.startswith("C") for e in s.evidence_ids)],
         "closingMatches": closing_j == sorted(plan.closing_job_ids),
         "droppedMentioned": [d for d in plan.dropped_experiences if d.split(" · ")[0].strip() and d.split(" · ")[0].strip() in text],
     }
@@ -128,7 +134,7 @@ def run_one(row, req: DraftRequest, model: str | None, temperature: float) -> di
     over_before = style_counts(draft)["coverOver100"]
     split_started = time.perf_counter()
     raw = draft
-    draft = split_long_sentences(draft, req.application_id)
+    draft = split_long_sentences(drop_middle_dots(draft), req.application_id)
     split_sec = round(time.perf_counter() - split_started, 1)
     verified = verify(draft, req, sources)
     document = assemble(req, sources, verified)

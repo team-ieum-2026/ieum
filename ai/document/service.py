@@ -57,11 +57,26 @@ def _evidence(s: Source) -> Evidence:
     )
 
 
-def _sentences(checked: list[CheckedSentence], prefix: str, start: int = 1) -> list[Sentence]:
+def _sentences(checked: list[CheckedSentence], prefix: str, start: int = 1, paragraph: bool = False) -> list[Sentence]:
+    """paragraph 가 True 면 문단 번호를 남긴다 (자기소개서만)"""
     return [
-        Sentence(sentence_id=f"{prefix}-{i}", text=c.text, source="AI", evidence=[_evidence(s) for s in c.sources])
+        Sentence(sentence_id=f"{prefix}-{i}", text=c.text, source="AI", evidence=[_evidence(s) for s in c.sources],
+                 paragraph=c.paragraph if paragraph else None)
         for i, c in enumerate(checked, start=start)
     ]
+
+
+def tidy_paragraphs(sentences: list[Sentence]) -> list[Sentence]:
+    """문단 번호를 1부터 빈틈없이, 줄어들지 않게 다시 매긴다. 번호가 없는 문장은 앞 문장 문단에 붙인다.
+    LLM 이 번호를 하나도 주지 않으면 그대로 null (FE 는 한 문단으로 보여 준다)"""
+    if all(s.paragraph is None for s in sentences):
+        return sentences
+    out, last, number = [], None, 0
+    for s in sentences:
+        if s.paragraph is not None and (last is None or s.paragraph > last):
+            number, last = number + 1, s.paragraph
+        out.append(s.model_copy(update={"paragraph": max(number, 1)}))
+    return out
 
 
 def company_note(req: DraftRequest, status: CompanyInfoStatus) -> str | None:
@@ -79,15 +94,17 @@ def company_note(req: DraftRequest, status: CompanyInfoStatus) -> str | None:
 
 def _cover_letter(req: DraftRequest, verified: VerifiedDraft) -> CoverLetterSection:
     if verified.cover_letter:
-        return CoverLetterSection(sentences=_sentences(verified.cover_letter, "cl"))
+        return CoverLetterSection(sentences=tidy_paragraphs(_sentences(verified.cover_letter, "cl", paragraph=True)))
     letter = req.student.cover_letter
     if letter is None:
         return CoverLetterSection()
     logger.warning("cover letter all excluded application=%d → original as REGISTERED", req.application_id)
-    return CoverLetterSection(sentences=[
-        Sentence(sentence_id=f"cl-{i}", text=text, source="REGISTERED")
-        for i, text in enumerate(split_chunks(letter.content), start=1)
-    ])
+    # 원문의 빈 줄을 문단 경계로 본다. 빈 줄이 없으면 한 문단
+    chunks = [(n, text) for n, block in enumerate(_BLANK_LINE.split(letter.content), start=1) for text in split_chunks(block)]
+    return CoverLetterSection(sentences=tidy_paragraphs([
+        Sentence(sentence_id=f"cl-{i}", text=text, source="REGISTERED", paragraph=n)
+        for i, (n, text) in enumerate(chunks, start=1)
+    ]))
 
 
 def _projects(registered: ProjectsSection, verified: VerifiedDraft) -> ProjectsSection:
@@ -114,6 +131,22 @@ def assemble(req: DraftRequest, sources: list[Source], verified: VerifiedDraft) 
         excluded_sentence_count=verified.excluded,
         sections=[sections[name] for name in SECTION_ORDER],
     )
+
+
+_BLANK_LINE = re.compile(r"\n\s*\n")
+_MIDDLE_DOT = re.compile(r"\s*·\s*")
+
+
+def drop_middle_dots(draft: LlmDraft) -> LlmDraft:
+    """서류 문장에 남은 가운데점(·)을 쉼표로 바꾼다. 프롬프트로 막지만 원문의 가운데점을 옮겨 오는 경우가 있어 한 번 더 막는다"""
+    def fix(sentences: list[LlmSentence]) -> list[LlmSentence]:
+        return [s.model_copy(update={"text": _MIDDLE_DOT.sub(", ", s.text)}) if "·" in s.text else s for s in sentences]
+
+    projects = [p.model_copy(update={"bullets": fix(p.bullets), "role": p.role and _MIDDLE_DOT.sub(", ", p.role)})
+                for p in draft.projects]
+    return draft.model_copy(update={
+        "skills_summary": fix(draft.skills_summary), "cover_letter": fix(draft.cover_letter), "projects": projects,
+    })
 
 
 _NUMBER = re.compile(r"\d+(?:\.\d+)?")
@@ -153,7 +186,7 @@ def split_long_sentences(draft: LlmDraft, application_id: int) -> LlmDraft:
     new_cover: list[LlmSentence] = []
     for i, s in enumerate(cover):
         parts = parts_by_index.get(i)
-        new_cover.extend([LlmSentence(text=p, evidence_ids=s.evidence_ids) for p in parts] if parts else [s])
+        new_cover.extend([LlmSentence(text=p, evidence_ids=s.evidence_ids, paragraph=s.paragraph) for p in parts] if parts else [s])
     logger.info("split application=%d long=%d split=%d", application_id, len(long_ones), len(parts_by_index))
     return draft.model_copy(update={"cover_letter": new_cover})
 
@@ -166,5 +199,5 @@ def draft_document(req: DraftRequest) -> Document:
         system_instruction=SYSTEM_INSTRUCTION, prompt_version=PROMPT_VERSION,
         model=get_settings().document_llm_model or None,
     )
-    llm_draft = split_long_sentences(llm_draft, req.application_id)
+    llm_draft = split_long_sentences(drop_middle_dots(llm_draft), req.application_id)
     return assemble(req, sources, verify(llm_draft, req, sources))
