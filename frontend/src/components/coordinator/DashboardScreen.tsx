@@ -170,6 +170,7 @@ const KPI_TONE: Record<KpiTone, { icon: string; bar: string }> = {
   blue: { icon: "bg-(--coord-blue-soft) text-(--coord-blue)", bar: "bg-(--coord-blue)" },
   gray: { icon: "bg-(--coord-gray-soft) text-(--coord-gray)", bar: "bg-(--coord-gray)" },
 };
+const KPI_HOVER_CLASS = "hover:-translate-y-px hover:border-(--coord-line-strong) hover:shadow-[0_4px_16px_rgb(18_107_86/0.08)]";
 
 function Kpi({
   label,
@@ -192,7 +193,7 @@ function Kpi({
 }) {
   const look = KPI_TONE[tone];
   const className = `group relative flex flex-col gap-3 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 text-left shadow-(--coord-shadow) transition focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green) ${
-    href ? "hover:-translate-y-px hover:border-(--coord-line-strong) hover:shadow-[0_4px_16px_rgb(18_107_86/0.08)]" : ""
+    href ? KPI_HOVER_CLASS : ""
   }`;
   const body = (
     <>
@@ -450,7 +451,10 @@ function TodayConsultationCard({ asOf }: { asOf: string }) {
   const emptyText = todayItems.length ? "오늘 남은 상담이 없어요." : "오늘 예정된 상담이 없어요.";
 
   return (
-    <section ref={boxRef} aria-label="오늘 상담" className="relative flex min-w-0 flex-col gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 shadow-(--coord-shadow)">
+    <section ref={boxRef} aria-label="오늘 상담" className={"group relative flex min-w-0 flex-col gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 shadow-(--coord-shadow) transition " + KPI_HOVER_CLASS + (showList ? " z-20" : "")}>
+      <Link href={next ? "/coordinator/help-requests?id=" + next.id : "/coordinator/help-requests"} aria-label="오늘 상담 요청 열기" className="absolute inset-0 z-0 overflow-hidden rounded-[10px] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green)">
+        <span aria-hidden="true" className={"pointer-events-none absolute inset-x-0 bottom-0 h-[3px] opacity-0 transition group-hover:opacity-100 " + KPI_TONE.gray.bar} />
+      </Link>
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-[17px] font-bold text-(--coord-muted)">오늘 상담</h2>
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-(--coord-gray-soft) text-(--coord-gray)">
@@ -462,24 +466,24 @@ function TodayConsultationCard({ asOf }: { asOf: string }) {
           {state.status === "loaded" ? <>{items.length}<small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">건</small></> : <span className="text-(--coord-faint)">—</span>}
         </p>
         {state.status === "error" ? (
-          <button type="button" onClick={() => { setState({ status: "loading" }); setAttempt((value) => value + 1); }} className="py-1 text-[13px] font-bold text-(--coord-green) underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-(--coord-green)">
+          <button type="button" onClick={() => { setState({ status: "loading" }); setAttempt((value) => value + 1); }} className="relative z-10 py-1 text-[13px] font-bold text-(--coord-green) underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-(--coord-green)">
             다시 시도
           </button>
         ) : (
-          <button ref={toggleRef} type="button" aria-expanded={showList} aria-controls={listId} disabled={state.status !== "loaded" || items.length === 0} onClick={() => setOpen((value) => !value)} className="inline-flex shrink-0 items-center gap-1 py-1 text-[13px] font-bold text-(--coord-green) hover:underline focus-visible:outline-2 focus-visible:outline-(--coord-green) disabled:cursor-default disabled:text-(--coord-faint) disabled:no-underline">
+          <button ref={toggleRef} type="button" aria-expanded={showList} aria-controls={listId} disabled={state.status !== "loaded" || items.length === 0} onClick={() => setOpen((value) => !value)} className="relative z-10 inline-flex shrink-0 items-center gap-1 py-1 text-[13px] font-bold text-(--coord-green) hover:underline focus-visible:outline-2 focus-visible:outline-(--coord-green) disabled:cursor-default disabled:text-(--coord-faint) disabled:no-underline">
             {showList ? "접기" : "시간 목록 보기"}
             <Icon name="chevron" className={"size-3.5 transition-transform" + (showList ? " rotate-180" : "")} />
           </button>
         )}
       </div>
-      <div className="-mt-1 flex h-[21px] min-w-0 items-center text-[14px] font-semibold text-(--coord-muted)">
+      <div className="-mt-1 flex h-[21px] min-w-0 items-center text-[14px] font-semibold text-(--coord-muted) group-hover:text-(--coord-green)">
         {state.status === "loading" ? <p role="status">상담 일정을 불러오는 중…</p>
           : state.status === "error" ? <p role="alert" className="truncate text-(--coord-red)" title="상담 일정을 불러오지 못했어요.">상담 일정을 불러오지 못했어요.</p>
           : next ? (
-            <Link href={"/coordinator/help-requests?id=" + next.id} title={next.studentName + " " + CONSULTATION_TIME.format(new Date(next.scheduledAt))} className="flex min-w-0 items-center gap-1.5 hover:text-(--coord-green) focus-visible:outline-2 focus-visible:outline-(--coord-green)">
+            <span className="flex min-w-0 items-center gap-1.5">
               <span className="truncate">{next.studentName}</span>
               <time dateTime={next.scheduledAt} className="shrink-0">{CONSULTATION_TIME.format(new Date(next.scheduledAt))}</time>
-            </Link>
+            </span>
           ) : <p className="truncate" title={emptyText}>{emptyText}</p>}
       </div>
       {showList && state.status === "loaded" && (
@@ -490,15 +494,12 @@ function TodayConsultationCard({ asOf }: { asOf: string }) {
           </div>
           <ul className="max-h-[320px] overflow-y-auto">
             {items.map((item) => (
-              <li key={item.id}>
-                <Link href={"/coordinator/help-requests?id=" + item.id} onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-(--coord-line) px-4 py-3 transition hover:bg-(--coord-hover) focus-visible:outline-2 focus-visible:outline-(--coord-green)">
+              <li key={item.id} className="flex items-center gap-3 border-b border-(--coord-line) px-4 py-3 last:border-b-0">
                   <time dateTime={item.scheduledAt} className="shrink-0 text-[14px] font-extrabold text-(--coord-green)">{CONSULTATION_TIME.format(new Date(item.scheduledAt))}</time>
                   <span className="min-w-0 flex-1">
                     <b className="block truncate text-[14px]">{item.studentName}</b>
                     <span className="block truncate text-[12px] text-(--coord-muted)">{item.topic}</span>
                   </span>
-                  <span className="flex shrink-0 items-center gap-1 text-[12px] text-(--coord-muted)">상세 <Icon name="chevron" className="size-3 -rotate-90" /></span>
-                </Link>
               </li>
             ))}
           </ul>
