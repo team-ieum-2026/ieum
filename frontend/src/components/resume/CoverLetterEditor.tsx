@@ -3,17 +3,16 @@
 // 문장 선택 → 근거(EvidencePanel) · 문장 고치기 → PATCH UPDATE_SENTENCE. 응답의 서류 전체로 화면을 바꾼다 (docs/API.md 2-1)
 // M6-1: 본문과 선택 문장의 근거를 웹에서는 나란히, 모바일에서는 위아래로 표시한다.
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import EvidencePanel from "@/components/resume/EvidencePanel";
 import SourceTag from "@/components/resume/SourceTag";
 import SentenceText from "@/components/resume/SentenceText";
-import DocumentHeading from "@/components/resume/DocumentHeading";
-import StudentPageHeading from "@/components/student/StudentPageHeading";
+import StudentIcon from "@/components/student/StudentIcon";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { studentHref } from "@/components/student/navigation";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument } from "@/lib/api/resume";
-import type { ApplicationDetail, ApplicationDocument, BasicSection, CoverLetterSection, Sentence } from "@/types/resume";
+import type { ApplicationDetail, ApplicationDocument, CoverLetterSection, Sentence } from "@/types/resume";
 import type { CompanyInfoStatus } from "@/types/student";
 import { useApplicationBreadcrumb } from "@/components/student/StudentShell";
 
@@ -28,6 +27,7 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showSources, setShowSources] = useState(false);
   const [draft, setDraft] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("SAVED");
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -41,7 +41,15 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
     let ignore = false;
     getApplication(applicationId)
       .then((data) => {
-        if (!ignore) setDetail(data);
+        if (!ignore) {
+          setDetail(data);
+          setSelectedId(null);
+          setSaveState("SAVED");
+          setSaveError(null);
+          const firstSentence = data.document?.sections
+            .find((section): section is CoverLetterSection => section.section === "COVER_LETTER")?.sentences[0];
+          setDraft(firstSentence?.text ?? "");
+        }
       })
       .catch((e: unknown) => {
         if (!ignore) setLoadError(e instanceof ApiError ? e.message : "서류를 불러오지 못했어요.");
@@ -72,7 +80,7 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
     );
   }
 
-  const { status, job, document } = detail;
+  const { status, document } = detail;
   // API 명세상 document 는 항상 오지만, 비어 오면 화면이 멈추지 않도록 막는다
   if (!document || !Array.isArray(document.sections)) {
     return (
@@ -84,12 +92,12 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
     );
   }
 
-  // 제출 뒤 수정 가능 여부는 명세에 없어 DRAFT 일 때만 고칠 수 있게 둔다 (BE-A 확인 필요)
+  // 서버의 저장 규칙에 맞춰 검토 요청 전(DRAFT) 지원서만 수정한다.
   const editable = status === "DRAFT";
-  const selected = selectedId ? findSentence(document, selectedId) : null;
   const sentences =
     document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER")?.sentences ?? [];
-  const studentName = document.sections.find((section): section is BasicSection => section.section === "BASIC")?.fields.name;
+  // 본문은 강조 없이 열고, 오른쪽에서는 첫 문장부터 바로 확인·수정할 수 있게 한다.
+  const selected = (selectedId ? findSentence(document, selectedId) : null) ?? sentences[0] ?? null;
   const sourceCounts = (["AI", "USER", "REGISTERED"] as const).map(source => ({ source, count: sentences.filter(sentence => sentence.source === source).length }));
   const trimmed = draft.trim();
   const canApply = editable && selected !== null && trimmed !== "" && trimmed !== selected.text && saveState !== "SAVING";
@@ -114,7 +122,7 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
   };
 
   const cancel = () => {
-    setSelectedId(null);
+    setDraft(selected?.text ?? "");
     setSaveError(null);
     if (saveState === "ERROR") setSaveState("SAVED");
   };
@@ -146,12 +154,11 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
 
   return (
     <div className="s-cover-page">
-      <StudentPageHeading title="나의 이야기에, 분명한 근거를." description={<span className="s-cover-heading-description"><span>{job.companyName} · 자기소개서</span><SaveStatus state={saveState} /></span>} />
-      <div className="s-cover-notice-row"><CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} /></div>
+      <div className="s-cover-toolbar s-cover-notice-row"><div><CompanyInfoNotice status={document.companyInfoStatus} sentences={sentences} /></div><Link href={backHref} className="s-button" aria-disabled={saveState === "SAVING"} onClick={event => { if (savingRef.current) event.preventDefault(); }}><StudentIcon name="arrow" className="s-cover-back-icon" />전체 검토 화면으로</Link></div>
       <div ref={bodyRef} onKeyDownCapture={() => { keyboardRef.current = true; }} onPointerDownCapture={() => { keyboardRef.current = false; }} className="s-cover-layout">
-        <article className="s-panel s-letter-document">
-          <DocumentHeading title="자기소개서" job={job} name={studentName} />
-          <div className="s-letter-document-meta">{sourceCounts.filter(({ count }) => count > 0).map(({ source, count }) => <SourceTag key={source} source={source} label={`${source === "AI" ? "AI 작성" : source === "USER" ? "직접 작성·수정" : "등록 자료"} ${count}문장`} />)}</div>
+        <article className="s-panel s-letter-document" data-show-sources={showSources}>
+          <header className="s-student-document-heading s-letter-document-heading"><h1>자기소개서</h1><SaveStatus state={saveState} /></header>
+          <div className="s-letter-document-meta"><div className="s-letter-source-counts">{sourceCounts.filter(({ count }) => count > 0).map(({ source, count }) => <SourceTag key={source} source={source} label={`${source === "AI" ? "AI 작성" : source === "USER" ? "직접 작성·수정" : "등록 자료"} ${count}문장`} />)}</div><button type="button" role="switch" aria-checked={showSources} aria-controls="cover-letter-body" onClick={() => setShowSources(value => !value)} className="s-letter-source-toggle"><span>문장 출처 표시</span><span className="s-letter-switch-track" aria-hidden="true"><span /></span></button></div>
           {sentences.length ? <SentenceParagraph sentences={sentences} selectedId={selectedId} onSelect={select} /> : <p className="s-source-note">아직 작성된 문장이 없어요.</p>}
           <p className="s-source-note">AI 작성 문장은 등록 자료와 확인된 기업 정보에 연결된 근거를 살펴볼 수 있어요.</p>
         </article>
@@ -159,7 +166,7 @@ export default function CoverLetterEditor({ applicationId, studentId }: { applic
           {selected ? <>
             <div className="s-letter-selected-summary"><div className="s-letter-selection-tags"><SourceTag source={selected.source} label={selected.source === "USER" ? "직접 작성·수정" : undefined} /><span>{selected.evidence.length ? `근거 ${selected.evidence.length}개 연결` : selected.source === "USER" ? "직접 작성·수정한 내용" : "연결된 근거 없음"}</span></div><blockquote>{selected.text}</blockquote></div>
             <EvidencePanel sentence={selected} bare />
-            {editable && <><label className="flex flex-col gap-2 text-xs font-medium text-ink-sub">문장 고치기<textarea value={draft} onChange={event => setDraft(event.target.value)} disabled={saveState === "SAVING"} rows={7} className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink" /></label><p className="s-letter-note">고친 문장은 ‘직접 작성·수정’으로 표시돼요.</p>{saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={cancel} disabled={saveState === "SAVING"} className="s-button">취소</button><button type="button" onClick={apply} disabled={!canApply} aria-busy={saveState === "SAVING"} className="s-button s-button-primary">{saveState === "SAVING" ? "저장 중…" : "적용"}</button></div></>}
+            <label className="flex flex-col gap-2 text-xs font-medium text-ink-sub">문장 고치기<textarea value={draft} onChange={event => setDraft(event.target.value)} disabled={!editable || saveState === "SAVING"} rows={7} className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink" /></label><p className="s-letter-note">{editable ? "고친 문장은 ‘직접 작성·수정’으로 표시돼요." : "매니저에게 검토를 요청한 서류는 수정할 수 없어요."}</p>{saveError && <p role="alert" className="text-sm text-danger">{saveError}</p>}<div className="flex gap-2"><button type="button" onClick={cancel} disabled={!editable || saveState === "SAVING"} className="s-button">취소</button><button type="button" onClick={apply} disabled={!canApply} aria-busy={saveState === "SAVING"} className="s-button s-button-primary">{saveState === "SAVING" ? "저장 중…" : "적용"}</button></div>
           </> : <EvidencePanel sentence={null} bare />}
         </div>
       </div>
@@ -199,9 +206,9 @@ function CompanyInfoNotice({ status, sentences }: { status: CompanyInfoStatus; s
   );
 }
 
-/** 문장별 출처를 보여주고 선택한 문장을 근거 · 편집 패널에 연결한다. */
+/** 문장을 하나의 본문으로 이어 읽고, 선택한 문장을 근거 · 편집 패널에 연결한다. */
 function SentenceParagraph({ sentences, selectedId, onSelect }: { sentences: Sentence[]; selectedId: string | null; onSelect: (sentence: Sentence) => void }) {
-  return <div className="s-letter-sentences">{sentences.map(sentence => <p key={sentence.sentenceId}><SentenceText sentence={sentence} selected={selectedId === sentence.sentenceId} onSelect={onSelect} presentation="document" /></p>)}</div>;
+  return <div className="s-letter-sentences" id="cover-letter-body"><p>{sentences.map((sentence, index) => <Fragment key={sentence.sentenceId}>{index > 0 && " "}<SentenceText sentence={sentence} selected={selectedId === sentence.sentenceId} onSelect={onSelect} presentation="document" /></Fragment>)}</p></div>;
 }
 
 function Notice({ message, children }: { message: string; children?: React.ReactNode }) {
