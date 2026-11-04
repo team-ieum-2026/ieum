@@ -68,7 +68,7 @@ export default function StudentShell({ children }: { children: ReactNode }) {
             <Link href={studentHref("/student", studentId)} className="s-mobile-brand" aria-label="이음 맞춤 공고"><span className="s-mobile-brand-content"><span className="s-brand-mark" aria-hidden="true"><StudentIcon name="sparkles" /></span><span className="s-brand-label">이음</span></span></Link>
             <nav className="s-header-nav" aria-label="수료생 주 메뉴">{tabs.map(tab => <Link key={tab.href} href={studentHref(tab.href, studentId)} aria-current={current.href === tab.href ? "page" : undefined}>{tab.label}</Link>)}</nav>
           </div>
-          <div className="s-topbar-right"><Link href="/" className="s-text-link s-home-link" aria-label="로그아웃하기"><span className="s-home-label text-black">로그아웃하기</span></Link></div>
+          <div className="s-topbar-right"><Link href="/" className="s-text-link s-home-link" aria-label="로그아웃하기"><span className="s-home-label text-black">로그아웃하기</span><StudentIcon name="logout" className="s-logout-icon" /></Link></div>
         </header>
         <div className="s-contextbar" aria-hidden={showJobBreadcrumb || showApplicationBreadcrumb ? undefined : true}>
           {showJobBreadcrumb && <><Link href={studentHref("/student", studentId)}>맞춤 공고</Link><StudentIcon name="chevron" /><span>공고 상세보기</span></>}

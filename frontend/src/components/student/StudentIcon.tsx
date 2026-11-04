@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 const paths: Record<string, ReactNode> = {
+  logout: <><rect x="1" y="1" width="22" height="22" rx="6" fill="var(--color-surface)" stroke="none" /><path d="M10 8V6h8v12h-8v-2" stroke="currentColor" strokeWidth="1.8" /><path d="m4 12 4-4v2.5h5v3H8V16Z" fill="currentColor" stroke="none" /></>,
   more: <path d="M4 6h16M4 12h16M4 18h16" />,
   sprout: <path d="M12 21v-8M12 15C4 15 3 10 4 6c6 0 9 3 8 9ZM12 12c0-6 3-9 8-9 1 6-2 10-8 10" />,
   cap: <path d="m2 9 10-5 10 5-10 5L2 9Zm4 2v6c4 3 8 3 12 0v-6m4-2v7" />,

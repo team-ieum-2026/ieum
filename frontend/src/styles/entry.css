@@ -3,8 +3,7 @@
 .entry-app {
   min-height: 100dvh;
   .entry-page { display: flex; flex-direction: column; min-height: 100dvh; width: min(1240px, calc(100% - 64px)); margin: auto; }
-  .header { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 88px; }
-  .header::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--color-line); box-shadow: 0 0 0 100vmax var(--color-line); clip-path: inset(0 -100vmax); pointer-events: none; }
+  .header { position: relative; display: flex; align-items: center; justify-content: space-between; align-self: center; width: calc(100vw - 64px); min-height: 88px; }
   .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink); font-size: 28px; font-weight: 800; letter-spacing: -.06em; }
   .brand small { margin-left: 8px; color: var(--color-ink-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
   .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; color: var(--color-primary); }
@@ -12,10 +11,10 @@
   .icon, .s-icon { display: block; width: 22px; height: 22px; flex-shrink: 0; }
   .help-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-ink-sub); font-size: 14px; }
   .entry-layout { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: 72px 0; flex: 1; }
-  .entry-copy { position: relative; top: -10px; width: min(640px, 100%); }
+  .entry-copy { position: relative; top: -10px; width: min(900px, 100%); }
   .entry-service-caption { position: fixed; right: 24px; bottom: max(20px, env(safe-area-inset-bottom)); color: var(--color-ink-muted); font-size: 12px; line-height: 1.6; text-align: right; }
   .hero { text-align: center; }
-  h1 { margin-top: 24px; font-size: calc(clamp(40px, 3.7vw, 52px) + 37px); font-weight: 700; line-height: 1.25; letter-spacing: -.045em; word-break: keep-all; color: var(--color-ink); }
+  h1 { margin-top: 24px; font-size: calc(clamp(40px, 3.7vw, 52px) + 57px); font-weight: 700; line-height: 1.25; letter-spacing: -.045em; word-break: keep-all; color: var(--color-ink); }
   h1 em { color: var(--color-primary); font-style: normal; }
   #entry-heading { --entry-character-duration: 320ms; --entry-character-stagger: 65ms; }
   .entry-heading-character { animation: entry-character-reveal var(--entry-character-duration) ease-out both; animation-delay: calc(120ms + var(--entry-character-index) * var(--entry-character-stagger) + var(--entry-line-delay, 0ms)); }

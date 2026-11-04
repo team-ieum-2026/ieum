@@ -25,6 +25,11 @@
   .s-header-nav a { position: relative; display: flex; align-items: center; min-height: var(--s-header-height); padding-top: 12px; font-size: 16px; font-weight: 600; color: var(--color-ink-sub); white-space: nowrap; }
   .s-header-nav a[aria-current="page"] { color: var(--color-primary); font-weight: 700; }
   .s-header-nav a[aria-current="page"]::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--color-primary); }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .s-header-nav a, .s-topbar .s-home-link { transition: transform 180ms ease; }
+    .s-header-nav a:hover, .s-header-nav a:focus-visible,
+    .s-topbar .s-home-link:hover, .s-topbar .s-home-link:focus-visible { transform: translateY(-2px); }
+  }
   .s-floating-help { position: fixed; right: max(24px, env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.6px; width: 114.4px; min-height: 124.8px; padding: 10.4px; border: 1px solid var(--color-line); border-radius: 31.2px; background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-career-card); cursor: pointer; transition: transform 180ms ease, box-shadow 180ms ease; }
   .s-floating-help:hover { transform: translateY(-4px); box-shadow: var(--shadow-career-dialog); }
   .s-floating-help:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
@@ -59,6 +64,8 @@
   .s-text-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-primary); font-size: 14px; font-weight: 600; }
   .s-text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
   .s-text-link .s-icon { width: 16px; height: 16px; }
+  .s-home-link { gap: 2px; }
+  .s-home-link .s-logout-icon { width: 18px; height: 18px; color: var(--color-ink); }
   .s-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border: 1px solid var(--color-line); border-radius: 8px; background: var(--color-surface); color: var(--color-ink); font-size: 15px; font-weight: 600; transition: background .15s, border-color .15s; }
   .s-button:hover { background: var(--color-page); border-color: var(--color-ink-muted); }
   .s-button-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
@@ -482,7 +489,7 @@
     .s-header-nav, .s-brand-english, .s-contextbar .s-membership { display: none; }
     .s-floating-help { right: max(16px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); width: 93.6px; min-height: 104px; border-radius: 26px; }
     .s-floating-help .s-floating-help-icon { width: 52px; height: 52px; }
-    .s-home-link { font-size: 12px; gap: 4px; }
+    .s-home-link { font-size: 12px; gap: 2px; }
     .s-avatar-small { width: 32px; height: 32px; }
     .s-contextbar { min-height: 48px; width: calc(100% - 40px); font-size: 12px; }
     .s-app-content[data-primary-page="true"] > .s-contextbar { min-height: 36px; }
