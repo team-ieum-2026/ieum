@@ -34,11 +34,11 @@ const EMPTY_TEXT: Record<CoordinatorApplicationFilter, string> = {
   DELIVERED: "전달을 마친 서류가 없어요.",
 };
 
-/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 연결 현황 · 수료생 수정 · 검토 상태 · 상세 검토 */
+/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 검토 요청일 · 마감일정 · 근거 연결 현황 · 수료생 수정 · 검토 상태 · 상세 검토 */
 const COLUMNS: [string, string][] = [
   ["수료생", "w-[11%]"],
   ["지원 공고", "w-[24%]"],
-  ["제출일자", "w-[10%]"],
+  ["검토 요청일", "w-[10%]"],
   ["마감일정", "w-[12%]"],
   ["근거 연결 현황", "w-[15%]"],
   ["수료생 수정", "w-[9%]"],
@@ -161,7 +161,7 @@ export default function ReviewListScreen() {
             {IS_MOCK && <span className="ml-auto text-[13px] text-(--coord-muted)">목업 모드는 검토 대기 서류만 있어요</span>}
           </div>
           <table className="w-full table-fixed border-collapse text-left text-[15px]">
-            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 제출일자, 마감일정, 근거 연결 현황, 수료생 수정, 검토 상태</caption>
+            <caption className="sr-only">서류 목록: 수료생, 지원 공고, 검토 요청일, 마감일정, 근거 연결 현황, 수료생 수정, 검토 상태</caption>
             <thead className="bg-(--coord-head) text-[13.5px] text-(--coord-muted)">
               <tr>
                 {COLUMNS.map(([label, w]) => (

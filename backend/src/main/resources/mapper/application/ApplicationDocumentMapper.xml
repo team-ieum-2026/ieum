@@ -5,7 +5,7 @@
 
     <sql id="detailColumns">
         SELECT a.id AS application_id, a.student_id, a.status,
-               j.id AS job_posting_id, j.company_name, j.title,
+               j.id AS job_posting_id, j.company_name, j.title, j.deadline_on,
                CAST(d.document AS CHAR) AS document
         FROM application a
         JOIN job_posting j ON j.id = a.job_posting_id

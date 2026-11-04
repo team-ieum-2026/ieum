@@ -223,7 +223,7 @@ type Task = { kind: TaskKind; key: string; at: string; name: string; text: strin
 /** 할 일 종류별 표시: 배지 · 시각 이름 · 버튼 (리뉴얼: 서류 검토 파랑 · 도움 요청 빨강, 아바타는 도움 요청만 빨강) */
 const TASK_LOOK: Record<TaskKind, { badge: string; tone: CoordTone; when: string; action: string }> = {
   help: { badge: "도움 요청", tone: "red", when: "접수", action: "요청 확인" },
-  doc: { badge: "서류 검토", tone: "blue", when: "제출", action: "서류 검토" },
+  doc: { badge: "서류 검토", tone: "blue", when: "검토 요청", action: "서류 검토" },
   pass: { badge: "연락 필요", tone: "orange", when: "마지막 패스", action: "연락 기록" },
 };
 
