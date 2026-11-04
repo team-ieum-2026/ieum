@@ -2,19 +2,21 @@
 
 import Link from "next/link";
 import { useId, useState } from "react";
-import type { RecommendationItemSummary, ResponseType } from "@/types/student";
+import type { ApplicationStatus, RecommendationItemSummary, ResponseType } from "@/types/student";
 import CareerImage from "./CareerImage";
 import ResponseCancelButton from "./ResponseCancelButton";
 import StudentIcon from "./StudentIcon";
+import ApplicationStatusBadge from "./ApplicationStatusBadge";
 import { deadlineLabel, studentHref } from "./navigation";
 
 const responseLabels: Record<ResponseType, string> = {
-  NONE: "미응답", APPLY: "지원 서류 준비", HELP: "도움 요청 완료", PASS: "패스",
+  NONE: "미응답", APPLY: "지원함", HELP: "도움 요청 완료", PASS: "패스",
 };
 
-export default function JobCard({ item, studentId, onCancelled }: {
+export default function JobCard({ item, studentId, applicationStatus, onCancelled }: {
   item: RecommendationItemSummary;
   studentId: number;
+  applicationStatus?: ApplicationStatus;
   onCancelled: () => void;
 }) {
   // 펼치기 상태는 터치 화면의 명시적 버튼에만 사용한다. Hover·키보드 확장은 CSS가 맡는다.
@@ -28,7 +30,7 @@ export default function JobCard({ item, studentId, onCancelled }: {
     <div className="s-card-top">
       <div className="s-response-actions">
         <span className="s-recommend-rank"><StudentIcon name="sparkles" /><span style={{ wordSpacing: "1px" }}>AI 추천</span></span>
-        <span className={`s-response-badge s-response-${item.response}`}>{responseLabels[item.response]}</span>
+        {item.response === "APPLY" && applicationStatus ? <ApplicationStatusBadge status={applicationStatus} /> : <span className={`s-response-badge s-response-${item.response}`}>{responseLabels[item.response]}</span>}
         <ResponseCancelButton itemId={item.itemId} studentId={studentId} response={item.response} onCancelled={onCancelled} />
       </div>
       <span className={`s-deadline${item.job.dDay !== null && item.job.dDay <= 7 ? " is-urgent" : ""}`}>

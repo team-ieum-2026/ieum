@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const origin = process.env.IEUM_QA_ORIGIN || 'http://localhost:3000';
 const port = Number(process.env.IEUM_CDP_PORT || 9226);
@@ -12,6 +13,8 @@ const recommendations = await fixture('M1_recommendations_current.json');
 const profileData = await fixture('M8_student_profile.json');
 const applications = await fixture('M7_student_applications.json');
 const detail = await fixture('M2_recommendation_item_detail.json');
+const applicationDetail = await fixture('M6_application_document.json');
+let failApplicationDetail = false;
 const sourceItems = recommendations.data.items.map(item => ({ ...item, response: 'NONE' }));
 let items = structuredClone(sourceItems);
 let refreshRequests = 0;
@@ -19,7 +22,7 @@ let cancelRequests = 0;
 const unexpected = [];
 const exceptions = [];
 const checks = [];
-const directory = new URL('./screenshots/', import.meta.url);
+const directory = process.env.IEUM_QA_OUTPUT ? pathToFileURL(resolve(process.env.IEUM_QA_OUTPUT) + sep) : new URL('./screenshots/', import.meta.url);
 const profile = await mkdtemp(join(tmpdir(), 'ieum-job-card-qa-'));
 const chrome = spawn(process.env.IEUM_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: 'ignore' });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -85,6 +88,11 @@ async function respond({ requestId, request }) {
     body = { data: { ...recommendations.data, items } };
   } else if (path === '/api/students/1/profile') body = profileData;
   else if (path === '/api/students/1/applications') body = applications;
+  else if (/^\/api\/applications\/(7|8)$/.test(path)) {
+    const applicationId = Number(path.split('/').at(-1));
+    if (failApplicationDetail) { status = 503; body = { error: { code: 'QA_UNAVAILABLE', message: '지원서 조회 실패' } }; }
+    else body = { data: { ...applicationDetail.data, applicationId, status: applications.data.applications.find(application => application.applicationId === applicationId).status, job: { ...applicationDetail.data.job, jobPostingId: applicationId === 8 ? 9999 : sourceItems[0].job.jobPostingId } } };
+  }
   else if (/^\/api\/recommendation-items\/\d+$/.test(path)) body = { data: { ...detail.data, itemId: Number(path.split('/').at(-1)) } };
   else if (request.method === 'DELETE' && path.endsWith('/response')) {
     cancelRequests++; status = 503; body = { error: { code: 'QA_UNAVAILABLE', message: '취소 요청을 처리하지 못했어요.' } };
@@ -207,15 +215,50 @@ try {
   items[0].job.dDay = 0; items[1].job.dDay = -1; items[2].job.dDay = null; items[2].job.untilFilled = true;
   items[0].response = 'APPLY'; items[1].response = 'HELP'; items[2].response = 'PASS';
   items[0].job.title = items[0].job.title.repeat(5);
+  applications.data.applications[0].title = items[0].job.title;
   items[0].reasonSummary = items[0].reasonSummary.map(reason => reason.repeat(5));
   await home();
   assert.equal(await evaluate("document.querySelectorAll('.s-job-card .is-urgent').length"), 2);
-  for (const response of ['APPLY', 'HELP', 'PASS']) assert.ok(await evaluate(`!!document.querySelector('.s-response-${response}')`));
+  await until("document.querySelector('.s-job-card .s-status-SUBMITTED') !== null");
+  for (const response of ['HELP', 'PASS']) assert.ok(await evaluate(`!!document.querySelector('.s-response-${response}')`));
   const long = await metrics(); await move(long.cards[0].x + 20, long.cards[0].y + 20); await sleep(300);
   const longOpen = await metrics();
   assert.ok(longOpen.panel.bottom <= longOpen.cards[0].bottom + 1);
   assert.ok(longOpen.image.height > 40);
   pass('Long content, apply/help/pass badges and today/closed/unknown/until-filled deadlines remain accessible');
+
+  const statusLabels = { GENERATING: '서류 생성 중', DRAFT: '지원서류 검토 중', SUBMITTED: '매니저 검토 중', APPROVED: '승인 완료', REJECTED: '보완 필요', DELIVERED: '전달 완료', FAILED: '생성 실패' };
+  items = structuredClone(sourceItems);
+  items[0].response = 'APPLY';
+  applications.data.applications[0].title = sourceItems[0].job.title;
+  for (const [status, label] of Object.entries(statusLabels)) {
+    applications.data.applications[0].status = status;
+    await home();
+    await until(`document.querySelector('.s-job-card .s-status-${status}') !== null`);
+    assert.equal(await evaluate("document.querySelector('.s-job-card .s-status').textContent"), label);
+    assert.equal(await evaluate("document.querySelectorAll('.s-job-card .s-status').length"), 1);
+    if (status === 'SUBMITTED') await snapshot('job-card-application-status');
+  }
+  pass('Applied cards display the actual application state for all seven statuses; other cards remain unchanged');
+
+  applications.data.applications[0].status = 'APPROVED';
+  await until("document.querySelector('.s-job-card .s-status-APPROVED') !== null");
+  pass('Application changes refresh on the open recommendations page without reloading it');
+
+  applications.data.applications[0].status = 'SUBMITTED';
+  applications.data.applications.unshift({ ...applications.data.applications[0], applicationId: 8, status: 'DELIVERED' });
+  await home();
+  await until("document.querySelector('.s-job-card .s-status-SUBMITTED') !== null");
+  assert.equal(await evaluate("document.querySelector('.s-job-card .s-status').textContent"), '매니저 검토 중');
+  applications.data.applications.shift();
+  pass('An application with the same company and title but a different job posting cannot replace the card status');
+
+  failApplicationDetail = true;
+  await home();
+  await until("document.querySelector('.s-activity-card .s-status-SUBMITTED') !== null");
+  assert.equal(await evaluate("document.querySelector('.s-job-card .s-response-APPLY').textContent"), '지원함');
+  failApplicationDetail = false;
+  pass('Unavailable application details retain the applied response without claiming an incorrect preparation status');
 
   await move(1, 1);
   await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });

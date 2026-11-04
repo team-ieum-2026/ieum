@@ -12,6 +12,7 @@ public enum ErrorCode {
     RECOMMENDATION_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "추천 공고를 찾을 수 없어요."),
     ALREADY_RESPONDED(HttpStatus.CONFLICT, "이미 응답한 공고예요."),
     INVALID_STATUS(HttpStatus.CONFLICT, "지금 상태에서는 할 수 없는 작업이에요."),
+    JOB_CLOSED(HttpStatus.CONFLICT, "마감일이 지난 공고라 지원하거나 검토를 요청할 수 없어요."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "일시적인 오류가 생겼어요. 잠시 후 다시 시도해 주세요."),
     AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 서버 응답에 실패했어요. 잠시 후 다시 시도해 주세요.");
 

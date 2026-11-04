@@ -1,24 +1,21 @@
 "use client";
 // 주인: FE-B — C1 오늘의 업무 (FE-B-07, 11/1 개편 목업). 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3).
-// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 연락 필요(callList = 1주 무응답, 추가 확인 필요와 같은 대상)
-//   · 상담 예정(도움 요청 CONSULTATION_SCHEDULED 건수, 상태별 목록 API)
+// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 확인 필요(callList = CHECK_REQUIRED 와 같은 대상)
+//   · 오늘 상담(남은 상담 건수 · 가장 가까운 상담 · 시간 목록 펼치기/접기)
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
-// - 오늘 예정된 상담: 상담 예정 도움 요청 중 상담 일시가 오늘(asOf 날짜)인 것, 시각 순
-// - 서류 검토 현황 4단계: 검토 대기는 reviewQueue, 보완 필요 · 승인 완료 · 전달 완료는 상태별 서류 목록 API 로 센다. 칸을 누르면 그 탭으로
+// - 오늘 상담은 상단 카드에서 확인하며, 하단 상담 · 서류 검토 현황 패널은 표시하지 않는다.
 // - 수료생 관리 현황: totalStudents · statusSummary 로 계산
 // 다른 탭에 갔다가 돌아오면 대시보드 · 사이드바 건수를 다시 조회한다 (그사이 들어온 도움 요청 · 제출 반영)
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { REVIEW_QUEUE_ANCHOR, notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
+import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { apiErrorText, RefreshAction, Badge, Icon, LoadState, PageTitle, Panel, PanelHead, btn, type IconName } from "@/components/coordinator/CoordUi";
-import { CONSULTATION_API_CONNECTED, type ConsultationSchedule } from "@/components/coordinator/demoAccount";
+import type { ConsultationSchedule } from "@/components/coordinator/demoAccount";
 import type { CoordTone } from "@/components/coordinator/coordLabels";
 import {
   MANAGE_ORDER,
   contactLabels,
-  docLabels,
-  docTone,
   helpTitle,
   helpTypeLabel,
   knownCount,
@@ -28,8 +25,8 @@ import {
   monthDay,
   pct,
 } from "@/components/coordinator/coordLabels";
-import { getCoordinatorApplications, getCoordinatorHelpRequests, getDashboard } from "@/lib/api/coordinatorReview";
-import type { CoordinatorApplicationListItem, Dashboard } from "@/types/coordinator";
+import { getCoordinatorHelpRequests, getDashboard } from "@/lib/api/coordinatorReview";
+import type { Dashboard } from "@/types/coordinator";
 
 /** 오늘 먼저 확인할 일 최대 건수 */
 const TASK_LIMIT = 5;
@@ -98,38 +95,6 @@ export default function DashboardScreen() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
-  // 상담 예정 = 도움 요청 중 CONSULTATION_SCHEDULED (상담 일시 순). 대시보드를 새로 받으면(asOf) 다시 받는다. 받기 전 · 실패면 null
-  const asOf = data?.asOf ?? null;
-  const [consultations, setConsultations] = useState<ConsultationSchedule[] | null>(null);
-  useEffect(() => {
-    if (!asOf) return;
-    let ignore = false;
-    getCoordinatorHelpRequests("CONSULTATION_SCHEDULED")
-      .then((list) => {
-        if (ignore) return;
-        setConsultations(
-          list
-            .filter((h) => h.consultationAt)
-            .map((h) => ({
-              id: h.helpRequestId,
-              studentId: h.studentId,
-              studentName: h.studentName,
-              scheduledAt: h.consultationAt as string,
-              topic: helpTypeLabel(h.helpType),
-            }))
-            .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
-        );
-      })
-      .catch(() => {
-        if (!ignore) setConsultations(null);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [asOf]);
-  const today = asOf?.slice(0, 10) ?? "";
-  const todayConsultations = (consultations ?? []).filter((c) => c.scheduledAt.slice(0, 10) === today);
-
   if (!data) {
     return (
       <LoadState
@@ -144,18 +109,12 @@ export default function DashboardScreen() {
   }
 
   return (
-    // 리뉴얼 C1: 제목 → KPI 4개 → 좌(할 일 · 상담 · 서류 현황) 1.55 : 우(수료생 관리 현황) 1. 높이는 내용만큼 (페이지 스크롤 허용)
+    // 제목 → KPI 4개 → 좌(할 일) 1.55 : 우(수료생 관리 현황) 1. 상담 목록은 상단 카드 아래에 겹쳐 펼친다.
     <div>
       <PageTitle
         title="오늘의 업무"
-        action={
-          <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh}>
-            <span className={`${btn.base} ${btn.outline} ${btn.sm} cursor-default hover:border-(--coord-line) hover:bg-(--coord-surface)`}>
-              <Icon name="calendar" className="size-3.5" />
-              {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
-            </span>
-          </RefreshAction>
-        }
+        // 수정사항3: 오른쪽 위 '기준 날짜' 상자 없음 (dev 통합 때 되살아난 것을 다시 뺌)
+        action={<RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />}
       />
       <div className="mb-5 grid grid-cols-4 gap-4">
         <Kpi
@@ -177,33 +136,19 @@ export default function DashboardScreen() {
           tone="green"
         />
         <Kpi
-          label="후속 연락 필요"
+          label="후속 확인 필요"
           value={data.callList.length}
           unit="명"
-          sub="1주 무응답 · 전화 확인"
+          sub="활동 공백 · 상태 확인"
           href="/coordinator/students?status=CHECK_REQUIRED"
           icon="phone"
           tone="blue"
         />
-        {/* 상담 예정 도움 요청 건수. 받기 전 · 실패면 '—' (가짜 건수 없음). 누르면 가장 빠른 상담 요청이 열린다 */}
-        <Kpi
-          label="상담 예정"
-          value={CONSULTATION_API_CONNECTED && consultations ? consultations.length : null}
-          unit="건"
-          sub={consultations ? `오늘 ${todayConsultations.length}건 · 상담 일시 순` : "상담 일정을 불러오는 중"}
-          href={consultations?.[0] ? `/coordinator/help-requests?id=${consultations[0].id}` : "/coordinator/help-requests"}
-          icon="calendar"
-          tone="gray"
-        />
+        <TodayConsultationCard key={data.asOf} asOf={data.asOf} />
       </div>
-      <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] items-start gap-5">
-        <div className="flex min-w-0 flex-col gap-5">
-          <Tasks data={data} />
-          <div className="grid grid-cols-2 gap-4">
-            <TodayConsultations items={todayConsultations} loaded={consultations !== null} />
-            <DocStatus count={data.reviewQueue.length} asOf={data.asOf} />
-          </div>
-        </div>
+      {/* 왼쪽 할 일은 오른쪽 수료생 관리 현황 높이까지 늘어난다 (items-stretch) */}
+      <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] items-stretch gap-5">
+        <Tasks data={data} />
         <ManagementCard data={data} />
       </div>
     </div>
@@ -218,6 +163,7 @@ const KPI_TONE: Record<KpiTone, { icon: string; bar: string }> = {
   blue: { icon: "bg-(--coord-blue-soft) text-(--coord-blue)", bar: "bg-(--coord-blue)" },
   gray: { icon: "bg-(--coord-gray-soft) text-(--coord-gray)", bar: "bg-(--coord-gray)" },
 };
+const KPI_HOVER_CLASS = "hover:-translate-y-px hover:border-(--coord-line-strong) hover:shadow-[0_4px_16px_rgb(18_107_86/0.08)]";
 
 function Kpi({
   label,
@@ -240,7 +186,7 @@ function Kpi({
 }) {
   const look = KPI_TONE[tone];
   const className = `group relative flex flex-col gap-3 overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 text-left shadow-(--coord-shadow) transition focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green) ${
-    href ? "hover:-translate-y-px hover:border-(--coord-line-strong) hover:shadow-[0_4px_16px_rgb(18_107_86/0.08)]" : ""
+    href ? KPI_HOVER_CLASS : ""
   }`;
   const body = (
     <>
@@ -277,7 +223,7 @@ type Task = { kind: TaskKind; key: string; at: string; name: string; text: strin
 /** 할 일 종류별 표시: 배지 · 시각 이름 · 버튼 (리뉴얼: 서류 검토 파랑 · 도움 요청 빨강, 아바타는 도움 요청만 빨강) */
 const TASK_LOOK: Record<TaskKind, { badge: string; tone: CoordTone; when: string; action: string }> = {
   help: { badge: "도움 요청", tone: "red", when: "접수", action: "요청 확인" },
-  doc: { badge: "서류 검토", tone: "blue", when: "제출", action: "서류 검토" },
+  doc: { badge: "서류 검토", tone: "blue", when: "검토 요청", action: "서류 검토" },
   pass: { badge: "연락 필요", tone: "orange", when: "마지막 패스", action: "연락 기록" },
 };
 
@@ -341,7 +287,7 @@ function Tasks({ data }: { data: Dashboard }) {
   const rows = all.slice(0, TASK_LIMIT);
   const [showAll, setShowAll] = useState(false);
   return (
-    <Panel label="오늘 먼저 확인할 일">
+    <Panel label="오늘 먼저 확인할 일" className="flex min-w-0 flex-col">
       <PanelHead
         title={
           <>
@@ -359,7 +305,7 @@ function Tasks({ data }: { data: Dashboard }) {
         </span>
       </PanelHead>
       {rows.length === 0 ? (
-        <p className="p-9 text-center text-[15px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
+        <p className="flex flex-1 items-center justify-center p-9 text-center text-[15px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
       ) : (
         <ul>
           {rows.map((t) => (
@@ -414,132 +360,145 @@ function AllTasksModal({ tasks, onClose }: { tasks: Task[]; onClose: () => void 
   );
 }
 
-/**
- * 오늘 예정된 상담 (목업 .agenda). 도움 요청 중 상담 예정(CONSULTATION_SCHEDULED)이고 상담 일시가 오늘인 것, 시각 순.
- * 시각을 누르면 그 도움 요청, '기록'은 수료생 상담 기록으로 간다
- */
-function TodayConsultations({ items, loaded }: { items: ConsultationSchedule[]; loaded: boolean }) {
-  return (
-    <Panel label="오늘 예정된 상담" className="flex flex-col">
-      <PanelHead title="오늘 예정된 상담">
-        {!CONSULTATION_API_CONNECTED ? <Badge>일정 미연동</Badge> : loaded && <Badge tone="green">오늘 {items.length}건</Badge>}
-      </PanelHead>
-      {items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-5 text-center">
-          <p className="text-[15px] text-(--coord-muted)">{loaded ? "오늘 예정된 상담이 없어요." : "상담 일정을 불러오는 중이에요…"}</p>
-          <p className="text-[13px] text-(--coord-faint)">도움 요청에서 &lsquo;상담 예정&rsquo;으로 일시를 잡으면 여기에 보여요</p>
-        </div>
-      ) : (
-        // 리뉴얼: 상담 한 건 = 회색 상자 (시각 · 이름 · 도움 유형 + 요청 열기 · 기록)
-        <ul className="flex max-h-[260px] flex-col gap-2.5 overflow-y-auto p-5">
-          {items.map((c) => (
-            <li key={c.id} className="rounded-md border border-(--coord-line) bg-(--coord-head) p-3.5">
-              <div className="flex items-center justify-between gap-2">
-                <b className="truncate text-[15px] text-(--coord-green)">
-                  <time dateTime={c.scheduledAt}>{c.scheduledAt.slice(11, 16)}</time> · {c.studentName}
-                </b>
-                {c.topic && (
-                  <Badge tone="blue" small>
-                    {c.topic}
-                  </Badge>
-                )}
-              </div>
-              <div className="mt-2.5 flex justify-end gap-2">
-                <Link href={`/coordinator/students/${c.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-                  기록
-                </Link>
-                <Link href={`/coordinator/help-requests?id=${c.id}`} className={`${btn.base} ${btn.primary} ${btn.sm}`}>
-                  요청 열기
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
+const CONSULTATION_DAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit",
+});
+const CONSULTATION_TIME = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false,
+});
+type ConsultationState =
+  | { status: "loading" | "error" }
+  | { status: "loaded"; items: ConsultationSchedule[] };
 
-/**
- * 서류 검토 현황 4단계 (목업 .doc-counts). 검토 대기는 대시보드 reviewQueue, 나머지 3단계는 상태별 목록 API(ALL)로 센다.
- * 목록을 받기 전 · 못 받으면 '—' (0건으로 단정하지 않음). 칸을 누르면 서류 검토 화면의 그 탭이 열린다.
- * asOf 가 바뀌면(대시보드 새로고침) 다시 센다
- */
-/** 서류 단계 숫자 색 (리뉴얼: 검토 대기 앰버 · 보완 필요 빨강 · 승인 완료 파랑 · 전달 완료 초록) */
-const NUM_COLOR: Record<CoordTone, string> = {
-  orange: "text-(--coord-chart-check)",
-  red: "text-(--coord-red)",
-  blue: "text-(--coord-blue)",
-  green: "text-(--coord-green)",
-  gray: "text-(--coord-muted)",
-};
+/** 오늘 남은 건수와 가장 가까운 상담을 표시한다. 시간이 지난 일정은 건수와 목록에서 자동으로 뺀다. */
+function TodayConsultationCard({ asOf }: { asOf: string }) {
+  const [state, setState] = useState<ConsultationState>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const boxRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
 
-function DocStatus({ count, asOf }: { count: number; asOf: string }) {
-  const [list, setList] = useState<CoordinatorApplicationListItem[] | null>(null);
-  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let ignore = false;
-    getCoordinatorApplications("ALL")
-      .then((next) => {
-        if (!ignore) {
-          setList(next);
-          setFailed(false);
-        }
+    getCoordinatorHelpRequests("CONSULTATION_SCHEDULED")
+      .then((list) => {
+        if (ignore) return;
+        const today = CONSULTATION_DAY.format(new Date(asOf));
+        const items = list
+          .filter((h) => h.status === "CONSULTATION_SCHEDULED" && h.consultationAt && Number.isFinite(Date.parse(h.consultationAt)))
+          .map((h) => ({
+            id: h.helpRequestId,
+            studentId: h.studentId,
+            studentName: h.studentName,
+            scheduledAt: h.consultationAt as string,
+            topic: helpTypeLabel(h.helpType),
+          }))
+          .filter((item) => CONSULTATION_DAY.format(new Date(item.scheduledAt)) === today)
+          .sort((a, b) => Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt));
+        setState({ status: "loaded", items });
       })
       .catch(() => {
-        if (!ignore) setFailed(true);
+        if (!ignore) setState({ status: "error" });
       });
+    return () => { ignore = true; };
+  }, [asOf, attempt]);
+
+  // 상담 시각이 지나면 새로고침 없이 제외하고, 다른 탭에서 돌아온 순간에도 현재 시각을 반영한다.
+  useEffect(() => {
+    const updateNow = () => setNow(Date.now());
+    const timer = setInterval(updateNow, 1000);
+    document.addEventListener("visibilitychange", updateNow);
+    window.addEventListener("focus", updateNow);
     return () => {
-      ignore = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", updateNow);
+      window.removeEventListener("focus", updateNow);
     };
-  }, [asOf]);
-  const countOf = (status: CoordinatorApplicationListItem["status"]) => (list ? list.filter((a) => a.status === status).length : null);
-  const stages: { status: CoordinatorApplicationListItem["status"]; count: number | null; tone: CoordTone }[] = [
-    { status: "SUBMITTED", count, tone: docTone.SUBMITTED },
-    { status: "REJECTED", count: countOf("REJECTED"), tone: docTone.REJECTED },
-    { status: "APPROVED", count: countOf("APPROVED"), tone: docTone.APPROVED },
-    { status: "DELIVERED", count: countOf("DELIVERED"), tone: docTone.DELIVERED },
-  ];
-  const pendingText = failed ? "조회 실패" : "불러오는 중";
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const todayItems = state.status === "loaded" ? state.items : [];
+  const items = todayItems.filter((item) => Date.parse(item.scheduledAt) > now);
+  const next = items[0];
+  const showList = open && items.length > 0;
+  const emptyText = todayItems.length ? "오늘 남은 상담이 없어요." : "오늘 예정된 상담이 없어요.";
+
   return (
-    <Panel label="서류 검토 현황">
-      <div id={REVIEW_QUEUE_ANCHOR} className="scroll-mt-20">
-        <PanelHead title="서류 검토 현황">
-          <Link href="/coordinator/applications" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
-            전체 <Icon name="arrow" className="size-3.5" />
-          </Link>
-        </PanelHead>
+    <section ref={boxRef} aria-label="오늘 상담" className={"group relative flex min-w-0 flex-col gap-3 rounded-[10px] border border-(--coord-line) bg-(--coord-surface) px-5 pt-5 pb-4 shadow-(--coord-shadow) transition " + KPI_HOVER_CLASS + (showList ? " z-20" : "")}>
+      <Link href={next ? "/coordinator/help-requests?id=" + next.id : "/coordinator/help-requests"} aria-label="오늘 상담 요청 열기" className="absolute inset-0 z-0 overflow-hidden rounded-[10px] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-(--coord-green)">
+        <span aria-hidden="true" className={"pointer-events-none absolute inset-x-0 bottom-0 h-[3px] opacity-0 transition group-hover:opacity-100 " + KPI_TONE.gray.bar} />
+      </Link>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-[17px] font-bold text-(--coord-muted)">오늘 상담</h2>
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-(--coord-gray-soft) text-(--coord-gray)">
+          <Icon name="calendar" className="size-[18px]" />
+        </span>
       </div>
-      {/* 리뉴얼 .doc-mini-box: 회색 칸 + 상태색 숫자. 검토 대기 칸만 앰버로 강조 */}
-      <ul className="grid grid-cols-4 gap-2.5 p-5">
-        {stages.map((s) => {
-          const box = (
-            <>
-              <b className={`text-xl leading-[1.3] font-extrabold ${s.count === null ? "text-(--coord-faint)" : NUM_COLOR[s.tone]}`}>{s.count ?? "—"}</b>
-              <span className="mt-0.5 text-xs leading-tight tracking-[-0.3px] break-keep text-(--coord-muted)">
-                {docLabels[s.status]}
-                {s.count === null && <span className="sr-only"> ({pendingText})</span>}
-              </span>
-              {s.count === null && (
-                <span aria-hidden="true" className="text-[11px] leading-none text-(--coord-faint)">
-                  {pendingText}
-                </span>
-              )}
-            </>
-          );
-          const cls = `flex flex-col items-center rounded-[4px] border px-1 py-2.5 text-center transition hover:border-(--coord-line-strong) ${
-            s.status === "SUBMITTED" ? "border-(--coord-orange-line) bg-(--coord-orange-soft)" : "border-(--coord-line) bg-(--coord-head)"
-          }`;
-          return (
-            <li key={s.status}>
-              <Link href={`/coordinator/applications?status=${s.status}`} className={cls}>
-                {box}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
+      <div className="flex items-end justify-between gap-2">
+        <p aria-live="polite" className="text-[40px] leading-none font-black tracking-[-1px]">
+          {state.status === "loaded" ? <>{items.length}<small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">건 남음</small></> : <span className="text-(--coord-faint)">—</span>}
+        </p>
+        {state.status === "error" ? (
+          <button type="button" onClick={() => { setState({ status: "loading" }); setAttempt((value) => value + 1); }} className="relative z-10 py-1 text-[13px] font-bold text-(--coord-green) underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-(--coord-green)">
+            다시 시도
+          </button>
+        ) : (
+          <button ref={toggleRef} type="button" aria-expanded={showList} aria-controls={listId} disabled={state.status !== "loaded" || items.length === 0} onClick={() => setOpen((value) => !value)} className="relative z-10 inline-flex shrink-0 items-center gap-1 py-1 text-[13px] font-bold text-(--coord-green) hover:underline focus-visible:outline-2 focus-visible:outline-(--coord-green) disabled:cursor-default disabled:text-(--coord-faint) disabled:no-underline">
+            {showList ? "접기" : "시간 목록 보기"}
+            <Icon name="chevron" className={"size-3.5 transition-transform" + (showList ? " rotate-180" : "")} />
+          </button>
+        )}
+      </div>
+      <div className="-mt-1 flex h-[21px] min-w-0 items-center text-[14px] font-semibold text-(--coord-muted) group-hover:text-(--coord-green)">
+        {state.status === "loading" ? <p role="status">상담 일정을 불러오는 중…</p>
+          : state.status === "error" ? <p role="alert" className="truncate text-(--coord-red)" title="상담 일정을 불러오지 못했어요.">상담 일정을 불러오지 못했어요.</p>
+          : next ? (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate">{next.studentName}</span>
+              <time dateTime={next.scheduledAt} className="shrink-0">{CONSULTATION_TIME.format(new Date(next.scheduledAt))}</time>
+            </span>
+          ) : <p className="truncate" title={emptyText}>{emptyText}</p>}
+      </div>
+      {showList && state.status === "loaded" && (
+        <section id={listId} aria-label="오늘 상담 시간 목록" className="absolute top-full right-0 z-20 mt-2 w-[360px] overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) text-(--coord-ink) shadow-[0_12px_32px_rgb(0_0_0/0.14)]">
+          <div className="flex items-center justify-between gap-2 border-b border-(--coord-line) px-4 py-3">
+            <h3 className="text-[14px] font-bold">오늘 상담 시간 목록</h3>
+            <Badge tone="green" small>{items.length}건</Badge>
+          </div>
+          <ul className="max-h-[320px] overflow-y-auto">
+            {items.map((item) => (
+              <li key={item.id} className="flex items-center gap-3 border-b border-(--coord-line) px-4 py-3 last:border-b-0">
+                  <time dateTime={item.scheduledAt} className="shrink-0 text-[14px] font-extrabold text-(--coord-green)">{CONSULTATION_TIME.format(new Date(item.scheduledAt))}</time>
+                  <span className="min-w-0 flex-1">
+                    <b className="block truncate text-[14px]">{item.studentName}</b>
+                    <span className="block truncate text-[12px] text-(--coord-muted)">{item.topic}</span>
+                  </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </section>
   );
 }
 
@@ -552,7 +511,8 @@ function ManagementCard({ data }: { data: Dashboard }) {
   const callChips = [...data.callList].sort((a, b) => b.daysSinceResponse - a.daysSinceResponse).slice(0, 2);
   return (
     <Panel label="수료생 관리 현황">
-      <PanelHead title="수료생 관리 현황" sub={<>관리 상태 파악률: <b className="text-(--coord-ink)">{pct(known, total).toFixed(1)}%</b></>}>
+      {/* 제목 아래 '관리 상태 파악률' 줄 없음 (같은 값은 아래 큰 %로 보여 준다). 제목만 조금 크게 · 배지와 세로 가운데 */}
+      <PanelHead title={<span className="text-[19px]">수료생 관리 현황</span>}>
         <Badge tone="green">총 {total}명 관리 중</Badge>
       </PanelHead>
       <div className="p-5">
@@ -604,10 +564,10 @@ function ManagementCard({ data }: { data: Dashboard }) {
         <div className="mt-3.5 rounded-md border border-(--coord-attention-line) bg-(--coord-orange-soft) p-3.5">
           <b className="flex items-center gap-1.5 text-[14.5px] font-extrabold text-(--coord-attention)">
             <Icon name="info" className="size-4" />
-            직접 연락이 필요한 수료생 {check}명 / 전체 {total}명
+            후속 확인이 필요한 수료생 {check}명
           </b>
           <p className="mt-1 text-[13.5px] leading-[1.45] text-(--coord-attention)">
-            1주 넘게 앱 응답이 없어요. 나머지 {known}명은 앱 응답이나 도움 요청으로 상태가 분류돼 있어요.
+            최근 활동 공백 또는 추천 공고 부재 등으로 현재 상태 확인이 필요해요.
           </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {callChips.map((c) => (

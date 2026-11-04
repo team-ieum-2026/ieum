@@ -36,9 +36,10 @@
     </select>
 
     <select id="selectItemOwner" resultType="com.ieum.recommendation.RecommendationRows$ItemOwner">
-        SELECT i.id AS item_id, r.student_id, i.job_posting_id, i.response
+        SELECT i.id AS item_id, r.student_id, i.job_posting_id, i.response, j.deadline_on
         FROM recommendation_item i
         JOIN recommendation r ON r.id = i.recommendation_id
+        JOIN job_posting j ON j.id = i.job_posting_id
         WHERE i.id = #{itemId}
     </select>
 

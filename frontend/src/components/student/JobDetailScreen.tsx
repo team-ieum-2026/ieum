@@ -18,6 +18,18 @@ import ResponseCancelButton from "./ResponseCancelButton";
 import CareerImage from "./CareerImage";
 import HelpRequestComposer from "./HelpRequestComposer";
 
+function formatJobDescription(description: string) {
+  return description
+    .replace(/\r\n?/g, "\n")
+    .replace(/^[ \t]*\[([^\]\n]+)\][ \t]*/gm, (_, label: string) =>
+      `\n\n${label.trim() === "내용" ? "" : `${label.trim()} : `}`)
+    .replace(/^[ \t]*<([^<>\n]+)>[ \t]*/gm, (_, label: string) =>
+      `\n\n${label.trim()} : `)
+    .replace(/^[ \t]*(제출[ \t]*서류)(?=[ \t:：]|\n|$)[ \t]*[:：]?[ \t]*/gm, "\n\n$1 : ")
+    .replace(/\n(?:[ \t]*\n)+/g, "\n\n")
+    .trim();
+}
+
 export default function JobDetailScreen({ itemId, studentId }: { itemId: number; studentId: number }) {
   const router = useRouter();
   const load = useCallback(async () => { const result = await getRecommendationItem(itemId); return { ...result, response: restoreResponse(studentId, itemId, result.response) }; }, [itemId, studentId]);
@@ -68,7 +80,7 @@ export default function JobDetailScreen({ itemId, studentId }: { itemId: number;
     {data && <div className="s-detail-layout"><article className="s-panel s-job-detail"><CareerImage variant={data.rank - 1} jobTitle={data.job.title} /><h2 className="s-detail-title">{data.job.title}</h2>
       <dl className="s-job-facts">{[["근무지", data.job.workAddress || data.job.location], ["고용 형태", data.job.employmentType], ["경력", data.job.career], ["학력", data.job.education], ["급여", data.job.salaryText]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "정보 없음"}</dd></div>)}<div><dt>마감</dt><dd>{data.job.deadlineOn ? `${data.job.deadlineOn} · ${deadlineLabel(data.job.dDay)}` : deadlineLabel(data.job.dDay)}{data.job.untilFilled && <span className="block">채용 시 마감</span>}</dd></div></dl>
       <section className="s-detail-section"><h2>이 공고를 추천한 이유</h2>{data.reasons.map((reason, index) => <div className="s-reason-detail" key={index}><p><StudentIcon name="sparkles" /><span>{reason.text}</span></p>{reason.evidence.map((evidence, i) => <details className="s-evidence-details" key={i}><summary>근거 · {evidence.label || "등록 자료"}</summary><blockquote>{evidence.quote || "근거 원문이 제공되지 않았어요."}</blockquote>{evidence.collectedAt && <small>수집일 · {evidence.collectedAt}</small>}</details>)}</div>)}</section>
-      <section className="s-detail-section"><h2>공고 요약</h2><ul>{data.summary.map(text => <li key={text}>{text}</li>)}</ul>{data.job.description && <details className="s-full-description" open><summary>공고 내용 자세히 보기</summary><p>{data.job.description}</p></details>}</section><p className="s-source-note">데이터 출처 · {data.job.sourceLabel}</p>
+      <section className="s-detail-section"><h2>공고 요약</h2><ul>{data.summary.map(text => <li key={text}>{text}</li>)}</ul>{data.job.description && <details className="s-full-description" open><summary>공고 내용 자세히 보기</summary><p>{formatJobDescription(data.job.description)}</p></details>}</section><p className="s-source-note">데이터 출처 · {data.job.sourceLabel}</p>
     </article><aside className="s-panel s-action-panel"><ActionError message={actionError} />
       {data.response !== "NONE" ? <div className="s-action-stack"><span className={`s-response-badge s-response-${data.response}`}>{responseLabels[data.response]}</span><p className="s-letter-note">이미 응답한 공고예요.</p>{data.response === "APPLY" && <button className="s-button s-button-primary" type="button" disabled={busy} onClick={openApplication}>{busy ? "확인 중…" : "지원 현황 보기"}<StudentIcon name="arrow" /></button>}</div> : <div className="s-action-stack"><div className="s-ai-apply"><button className="s-button s-button-primary" type="button" disabled={busy} onClick={apply}>{busy ? "처리 중…" : "AI로 지원서 초안 만들기"}<StudentIcon name="arrow" /></button></div><Link aria-disabled={busy} tabIndex={busy ? -1 : undefined} className={`s-button${busy ? " pointer-events-none opacity-50" : ""}`} href={studentHref(`/student/jobs/${itemId}/pass`, studentId)}>이 공고는 넘어가기</Link><button className="s-button" type="button" disabled={busy} onClick={() => setHelpOpen(true)}><StudentIcon name="message" />담당자에게 도움 요청</button></div>}
       <ResponseCancelButton itemId={itemId} studentId={studentId} response={data.response} onCancelled={() => { setData({ ...data, response: "NONE" }); reload(); }} />

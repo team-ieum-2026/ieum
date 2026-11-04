@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { getCurrentRecommendations, getStudentApplications, getStudentName, refreshRecommendations, subscribeApplicationChanges } from "@/lib/api/student";
+import { getApplication } from "@/lib/api/resume";
+import type { ApplicationStatus } from "@/types/student";
 import { ApiState, ActionError, StudentScreen } from "./ScreenParts";
 import StudentIcon from "./StudentIcon";
 import JobCard from "./JobCard";
@@ -21,10 +23,26 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
     return { ...result, studentName, items: result.items.map(item => ({ ...item, response: restoreResponse(studentId, item.itemId, item.response) })) };
   }, [studentId]);
   const { data, loading, error, reload, setData } = useApi(load);
-  const loadApplications = useCallback(() => getStudentApplications(studentId), [studentId]);
-  const activity = useApi(loadApplications);
+  const recommendedItems = data?.items;
+  const loadApplications = useCallback(async () => {
+    const result = await getStudentApplications(studentId);
+    const candidates = result.applications
+      .filter(application => recommendedItems?.some(item => item.response === "APPLY" && item.job.companyName === application.companyName && item.job.title === application.title))
+      .sort((left, right) => right.applicationId - left.applicationId);
+    const details = await Promise.allSettled(candidates.map(application => getApplication(application.applicationId)));
+    const statusesByJob: Record<number, ApplicationStatus> = {};
+    for (const detail of details) {
+      if (detail.status !== "fulfilled") continue;
+      const application = detail.value;
+      // 같은 회사·직무명인 다른 공고와 섞이지 않게 실제 공고 번호로 연결한다.
+      if (!statusesByJob[application.job.jobPostingId]) statusesByJob[application.job.jobPostingId] = application.status;
+    }
+    return { ...result, statusesByJob };
+  }, [studentId, recommendedItems]);
+  const activity = useApi(loadApplications, { refreshIntervalMs: process.env.NEXT_PUBLIC_USE_MOCK === "false" ? 5000 : 0 });
   const reloadActivity = activity.reload;
   useEffect(() => subscribeApplicationChanges(() => { reload(); reloadActivity(); }), [reload, reloadActivity]);
+  useEffect(() => { window.addEventListener("focus", reloadActivity); return () => window.removeEventListener("focus", reloadActivity); }, [reloadActivity]);
   const latest = activity.data?.applications.find(application => application.status === "DRAFT") ?? activity.data?.applications[0];
   const [refreshing, setRefreshing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -58,7 +76,7 @@ export default function RecommendationsScreen({ studentId }: { studentId: number
           </div>
         </div>
         <ActionError message={actionError} />
-        {data.items.length ? <div className="s-job-grid" aria-busy={refreshing}>{data.items.map(item => <JobCard key={item.itemId} item={item} studentId={studentId} onCancelled={() => { setData({ ...data, items: data.items.map(current => current.itemId === item.itemId ? { ...current, response: "NONE" } : current) }); reload(); activity.reload(); }} />)}</div> : <div className="s-empty"><StudentIcon name="sparkles" /><h2>지금은 추천할 공고가 없어요.</h2><p>관심 직무나 희망 지역이 바뀌었다면<br />내 프로필에서 수정해주세요.</p><Link className="s-button s-button-primary" href={studentHref("/student/profile", studentId)}>내 프로필 확인</Link></div>}
+        {data.items.length ? <div className="s-job-grid" aria-busy={refreshing}>{data.items.map(item => <JobCard key={item.itemId} item={item} studentId={studentId} applicationStatus={activity.data?.statusesByJob[item.job.jobPostingId]} onCancelled={() => { setData({ ...data, items: data.items.map(current => current.itemId === item.itemId ? { ...current, response: "NONE" } : current) }); reload(); activity.reload(); }} />)}</div> : <div className="s-empty"><StudentIcon name="sparkles" /><h2>지금은 추천할 공고가 없어요.</h2><p>관심 직무나 희망 지역이 바뀌었다면<br />내 프로필에서 수정해주세요.</p><Link className="s-button s-button-primary" href={studentHref("/student/profile", studentId)}>내 프로필 확인</Link></div>}
       </>}
     </section>
     {data && <>

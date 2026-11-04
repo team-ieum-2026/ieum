@@ -24,12 +24,28 @@ function pageName(path: string) {
 
 type Notice = { key: string; at: string; title: string; text: string; href: string };
 
+const READ_NOTICES_KEY = `ieum:coordinator-read-notices:v1:${process.env.NEXT_PUBLIC_USE_MOCK === "false" ? "live" : "mock"}`;
+// 같은 서류가 다시 제출되면 새 알림으로 표시한다.
+const noticeId = (notice: Notice) => `${notice.key}:${notice.at}`;
+
 export default function CoordinatorTopbar() {
   const pathname = usePathname();
   const [notices, setNotices] = useState<Notice[] | null>(null);
   const [open, setOpen] = useState<"bell" | "account" | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const readNoticeIds = useRef(new Set<string>());
   const [refreshKey, setRefreshKey] = useState(0);
+
+  function markNoticeRead(notice: Notice) {
+    readNoticeIds.current.add(noticeId(notice));
+    setNotices((current) => current?.filter((item) => noticeId(item) !== noticeId(notice)) ?? null);
+    setOpen(null);
+    try {
+      localStorage.setItem(READ_NOTICES_KEY, JSON.stringify([...readNoticeIds.current]));
+    } catch {
+      // 저장소를 사용할 수 없어도 현재 화면에서는 읽음 처리를 유지한다.
+    }
+  }
 
   // 도움 요청 · 서류 처리에 성공하면(notifyReviewQueueChanged) 같은 화면에 있어도 다시 조회한다. 실패하면 알림이 오지 않아 숫자도 그대로
   useEffect(() => onReviewQueueChanged(() => setRefreshKey((k) => k + 1)), []);
@@ -40,6 +56,16 @@ export default function CoordinatorTopbar() {
     getDashboard()
       .then((d) => {
         if (ignore) return;
+        try {
+          const saved: unknown = JSON.parse(localStorage.getItem(READ_NOTICES_KEY) ?? "[]");
+          if (Array.isArray(saved)) {
+            saved.forEach((id: unknown) => {
+              if (typeof id === "string") readNoticeIds.current.add(id);
+            });
+          }
+        } catch {
+          // 저장된 값이 손상되었거나 저장소 접근이 차단되어도 알림은 표시한다.
+        }
         const help: Notice[] = d.helpRequests.map((h) => ({
           key: `help-${h.helpRequestId}`,
           at: h.createdAt,
@@ -54,7 +80,9 @@ export default function CoordinatorTopbar() {
           text: r.jobTitle,
           href: `/coordinator/applications/${r.applicationId}`,
         }));
-        setNotices([...help, ...docs].sort((a, b) => b.at.localeCompare(a.at)));
+        setNotices([...help, ...docs]
+          .filter((notice) => !readNoticeIds.current.has(noticeId(notice)))
+          .sort((a, b) => b.at.localeCompare(a.at)));
       })
       .catch(() => {
         if (!ignore) setNotices(null);
@@ -124,7 +152,7 @@ export default function CoordinatorTopbar() {
           <div role="dialog" aria-label="알림" className="absolute top-[46px] right-0 w-[380px] overflow-hidden rounded-[10px] border border-(--coord-line) bg-(--coord-surface) shadow-[0_20px_40px_rgb(0_0_0/0.16)]">
             <div className="border-b border-(--coord-line) px-5 py-3.5">
               <b className="text-[15px]">알림 {count}건</b>
-              <p className="mt-0.5 text-[13px] text-(--coord-muted)">새 도움 요청 · 검토 대기 서류 기준이에요.</p>
+              <p className="mt-0.5 text-[13px] text-(--coord-muted)">아직 확인하지 않은 도움 요청 · 검토 대기 서류예요.</p>
             </div>
             {count === 0 ? (
               <p className="px-5 py-6 text-center text-sm text-(--coord-muted)">새 알림이 없어요.</p>
@@ -132,7 +160,7 @@ export default function CoordinatorTopbar() {
               <ul className="max-h-[400px] overflow-y-auto">
                 {notices?.map((n) => (
                   <li key={n.key}>
-                    <Link href={n.href} onClick={() => setOpen(null)} className="block border-b border-(--coord-line) px-5 py-3 text-[13.5px] hover:bg-(--coord-hover)">
+                    <Link href={n.href} onClick={() => markNoticeRead(n)} className="block border-b border-(--coord-line) px-5 py-3 text-[13.5px] hover:bg-(--coord-hover)">
                       <b className="block">{n.title}</b>
                       <span className="mt-0.5 block truncate text-[13px] text-(--coord-muted)">
                         {n.text} · {monthDayTime(n.at)}

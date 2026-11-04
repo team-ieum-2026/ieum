@@ -122,20 +122,6 @@ export default function CoordinatorSidebar() {
           );
         })}
       </nav>
-      <div className="flex flex-col gap-2 border-t border-(--coord-surface)/10 pt-3.5">
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-[4px] px-2 py-1.5 text-[13px] text-(--coord-side-muted) transition hover:bg-(--coord-surface)/8 hover:text-(--coord-surface) focus-visible:outline-3 focus-visible:outline-(--coord-lime)"
-        >
-          <Icon name="back" className="size-[15px]" />
-          홈으로 돌아가기
-        </Link>
-        <p className="px-2 text-[11px] leading-[1.4] text-(--coord-surface)/40">
-          작은 응답을, 다음 기회로.
-          <br />
-          IEUM COORDINATOR
-        </p>
-      </div>
     </aside>
   );
 }

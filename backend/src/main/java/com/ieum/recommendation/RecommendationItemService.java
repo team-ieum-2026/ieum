@@ -94,6 +94,11 @@ public class RecommendationItemService {
         if (item == null) {
             throw new BusinessException(ErrorCode.RECOMMENDATION_ITEM_NOT_FOUND);
         }
+        // 마감일(한국 날짜)이 지난 공고에는 새 지원서를 만들지 않는다. 마감 당일 · 마감일 없는 공고는 허용
+        if ("APPLY".equals(response) && item.getDeadlineOn() != null
+                && item.getDeadlineOn().isBefore(LocalDate.now(KST))) {
+            throw new BusinessException(ErrorCode.JOB_CLOSED);
+        }
         // 응답이 NONE 일 때만 바뀐다. 두 번 눌러도 지원서가 두 개 생기지 않게 조건부 UPDATE 로 막는다
         if (mapper.updateItemResponse(itemId, response, passReason, passNote) == 0) {
             throw new BusinessException(ErrorCode.ALREADY_RESPONDED);

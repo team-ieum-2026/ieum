@@ -89,7 +89,7 @@ function Body({ data }: { data: Dashboard }) {
     { label: "취업 완료", color: manageChartVar.EMPLOYED, n: emp, noteText: "패스 사유 '이미 취업' 응답 기준" },
     { label: "구직 중", color: manageChartVar.SEEKING, n: seeking, noteText: "기관 추천 지원 중 · 패스 후 대기 · 기타 포함" },
     { label: "휴식", color: manageChartVar.RESTING, n: counts.RESTING, noteText: "수료생이 '휴식'을 선택 · 연락 기록은 유지" },
-    { label: "추가 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, noteText: "1주 넘게 앱 응답 없음 · 전화 확인" },
+    { label: "후속 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, noteText: "활동 공백 · 상태 확인" },
   ];
 
   // 리뉴얼 .gauge-circle-box: 회색 상자 + 큰 숫자 (파악률 초록 · 파악 기준 취업률 파랑 · 전체 기준 회색). 계산식은 그대로
@@ -186,15 +186,15 @@ function Body({ data }: { data: Dashboard }) {
       >
         <b>관리 상태와 집계 기준</b>
         <p className="mt-2">
-          관리 상태는 수료생 앱 응답과 도움 요청으로 서버가 분류해요. 1주 넘게 응답이 없는 수료생은 &lsquo;추가 확인 필요&rsquo;로 따로 세요. &lsquo;구직
+          관리 상태는 수료생 앱 응답과 도움 요청으로 서버가 분류해요. 1주 넘게 응답이 없는 수료생은 &lsquo;후속 확인 필요&rsquo;로 따로 세요. &lsquo;구직
           중&rsquo;은 운영상의 분류이며 미취업을 확정하는 값은 아니에요.
         </p>
         <p className="mt-2">
-          대표 상태 4분류(취업 완료 · 구직 중 · 휴식 · 추가 확인 필요)의 합은 전체 인원과 같아요. 도움 요청은 상태가 아니라 아래 &lsquo;도움 요청
+          대표 상태 4분류(취업 완료 · 구직 중 · 휴식 · 후속 확인 필요)의 합은 전체 인원과 같아요. 도움 요청은 상태가 아니라 아래 &lsquo;도움 요청
           통계&rsquo;에서 건수로 따로 세요.
         </p>
         <p className="mt-2">
-          관리 상태 파악률 = (전체 − 추가 확인 필요) ÷ 전체 · 취업률 = 취업 완료 ÷ (전체 − 추가 확인 필요) · 전체 기준 취업률 = 취업 완료 ÷ 전체.
+          관리 상태 파악률 = (전체 − 후속 확인 필요) ÷ 전체 · 취업률 = 취업 완료 ÷ (전체 − 후속 확인 필요) · 전체 기준 취업률 = 취업 완료 ÷ 전체.
           취업률은 관리 상태 기준이며 공식 취업 성과가 아니에요.
         </p>
       </div>

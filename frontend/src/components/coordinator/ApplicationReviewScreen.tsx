@@ -3,7 +3,7 @@
 // 승인 SUBMITTED → APPROVED, 보완 필요(=반려) { note } → REJECTED, 전달 완료 APPROVED → DELIVERED.
 // REJECTED 는 이번 버전에서 끝 상태다 (수료생 수정 · 재제출 · 승인 불가, 코디네이터가 이음 밖에서 연락).
 // 상태가 맞지 않으면 서버가 409 → 최신 상태를 다시 불러온다.
-// 화면 (11/3 리뉴얼 design-reference documentPage + 1차 피드백): 위(목록으로 · 제목 + 상태 · 5단계 막대) / 왼쪽 '자기소개서 전체'(페이지와 함께 스크롤)
+// 화면 (11/3 리뉴얼 design-reference documentPage + 1차 피드백): 위(목록으로 · 제목 + 상태 · 상태 바) / 왼쪽 '자기소개서 전체'(페이지와 함께 스크롤)
 //       · 오른쪽 '문장 근거 · 출처'(긴 서류를 스크롤해도 화면에 고정). 이력서 9개 항목은 왼쪽 '이력서 항목' 탭.
 // 1차 피드백: 아래 검토 행동 막대를 없애고 버튼만 오른쪽 위로 옮김. '보완 필요로 처리' = 반려 API (예전 '첨삭 제안' · '수정 요청 기록'). 선택한 문장은 왼쪽 · 오른쪽 모두 하늘색 강조.
 // 2차 피드백: 검토 버튼은 두 카드 위 한 줄(오른쪽)로 빼서 두 카드가 같은 선에서 시작 · '이 문서에서 확인할 것' 요약 삭제.
@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import C4DocumentSummary from "@/components/coordinator/C4DocumentSummary";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
-import { Badge, Icon, backLink, btn } from "@/components/coordinator/CoordUi";
+import { Badge, Icon, backLink, btn, toneClass } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, type CoordTone } from "@/components/coordinator/coordLabels";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { toDate } from "@/components/resume/resumeLabels";
@@ -34,7 +34,8 @@ import type { ApplicationStatus, CompanyInfoStatus } from "@/types/student";
 type Action = "APPROVE" | "REJECT" | "DELIVER";
 
 // 버튼 · 확인 창 문구는 실제로 하는 일만 말한다 (기업 전달 · 수료생 연락은 이음 밖에서 한다)
-const ACTION: Record<Action, { button: string; title: string; description: string; confirm: string; done: string }> = {
+// warning: 설명 바로 다음 줄에 빨간 글씨로 보이는 주의 문구 (보완 필요 처리만)
+const ACTION: Record<Action, { button: string; title: string; description: string; warning?: string; confirm: string; done: string }> = {
   APPROVE: {
     button: "검토 승인",
     title: "이 서류를 승인할까요?",
@@ -45,7 +46,8 @@ const ACTION: Record<Action, { button: string; title: string; description: strin
   REJECT: {
     button: "보완 필요로 처리",
     title: "보완 필요 처리",
-    description: "보완이 필요한 내용을 기록해 주세요. 처리 후에는 수료생에게 별도로 연락하여 안내해야 합니다. 현재 시스템에서는 해당 서류의 수정·재제출을 지원하지 않습니다.",
+    description: "보완이 필요한 내용을 기록해 주세요.",
+    warning: "처리 후에는 수료생에게 별도로 연락하여 안내해야 합니다.",
     confirm: "보완 필요로 처리",
     done: "보완 필요로 처리했어요. 수료생에게 별도로 연락해 보완 사항을 안내해 주세요.",
   },
@@ -61,22 +63,12 @@ const ACTION: Record<Action, { button: string; title: string; description: strin
 /** 버튼이 켜지는 상태 (docs/API.md 2-3 상태 전이) */
 const ALLOWED: Record<Action, ApplicationStatus> = { APPROVE: "SUBMITTED", REJECT: "SUBMITTED", DELIVER: "APPROVED" };
 
-/** 진행 단계 (목업): AI 초안 → 수료생 확인 → 코디네이터 검토 → 승인 → 전달 완료 */
-const STEPS = ["AI 초안", "수료생 확인", "매니저 검토", "승인", "전달 완료"];
 /**
- * 상태별 단계: done = 완료(✓)한 단계 수, current = 지금 단계(없으면 null).
- * REJECTED 는 ②로 되돌리지 않고 ③ 코디네이터 검토에서 '보완 필요'로 끝난 것으로 보인다 (④ · ⑤ 미완료).
- * APPROVED 는 ④까지 완료 · ⑤ 미완료, DELIVERED 는 모두 완료
+ * 상단 상태 바 (PM 피드백): C4 목록 상태 탭과 같은 이름 · 순서(목록의 '전체'는 필터라 뺌).
+ * 단계 번호 · 완료 체크 없이 지금 상태만 상태 색(docTone, 제목 옆 배지와 같은 색)으로 강조하고 나머지는 중립.
+ * '보완 필요'는 거쳐 가는 단계가 아니라 검토 결과 중 하나다. GENERATING · DRAFT · FAILED 는 어느 칸도 강조하지 않는다
  */
-const STAGE: Record<ApplicationStatus, { done: number; current: number | null }> = {
-  GENERATING: { done: 0, current: 0 },
-  FAILED: { done: 0, current: 0 },
-  DRAFT: { done: 1, current: 1 },
-  SUBMITTED: { done: 2, current: 2 },
-  REJECTED: { done: 2, current: 2 },
-  APPROVED: { done: 4, current: null },
-  DELIVERED: { done: 5, current: null },
-};
+const REVIEW_STATUSES: ApplicationStatus[] = ["SUBMITTED", "REJECTED", "APPROVED", "DELIVERED"];
 
 const COMPANY_INFO_LABEL: Record<CompanyInfoStatus, string> = {
   FOUND: "기업 정보 확인",
@@ -107,10 +99,35 @@ const STATE_CHECK: Record<SentenceState, string> = {
   user: "수료생이 직접 쓰거나 고친 문장이라 연결된 근거 자료가 없어요. 필요하면 원본 자료와 함께 확인해 주세요.",
   weak: "연결된 근거 자료가 없는 AI 문장이에요. 사실이 아니라는 뜻은 아니니, 원본 자료와 함께 직접 확인해 주세요.",
 };
-/** 평소엔 모든 문장이 투명하고, 선택한 문장만 하늘색 배경 + 1px 연파랑 실선 (근거 확인 필요 등 경고 빨강과 구분) */
-const SELECTED_LOOK = "bg-(--coord-select-bg) outline outline-(--coord-select-line)";
-/** 진행 단계 번호 */
-const CIRCLED = ["①", "②", "③", "④", "⑤"];
+/** 출처 표시 ON 의 선택 안 한 문장 배경: 출처 색의 기본 연한 배경 (AI 연보라 · 수료생 연하늘 · 등록 원문 연회색) */
+const SOURCE_BG: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-soft)",
+  USER: "bg-(--coord-src-user-soft)",
+  REGISTERED: "bg-(--coord-src-other-soft)",
+};
+/** 선택한 문장 배경 (ON · OFF 공통): 같은 출처 색의 더 진한 배경. 테두리 두께(1px)는 그대로, 선택은 배경 농도로 구분 */
+const SELECTED_BG: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-strong)",
+  USER: "bg-(--coord-src-user-strong)",
+  REGISTERED: "bg-(--coord-src-other-strong)",
+};
+/** 출처별 테두리 색 (PM 피드백): AI 작성 보라 · 수료생 작성·수정 파랑 · 그 밖(REGISTERED 등록 원문) 중립 */
+const SOURCE_BORDER: Record<Sentence["source"], string> = {
+  AI: "border-(--coord-src-ai)",
+  USER: "border-(--coord-src-user)",
+  REGISTERED: "border-(--coord-src-other)",
+};
+/** 출처 칩 (문장 수 · 오른쪽 작성 주체): 테두리와 같은 색 */
+const SOURCE_CHIP: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-soft) text-(--coord-src-ai)",
+  USER: "bg-(--coord-src-user-soft) text-(--coord-src-user)",
+  REGISTERED: "bg-(--coord-src-other-soft) text-(--coord-muted)",
+};
+const SOURCE_HOVER: Record<Sentence["source"], string> = {
+  AI: "hover:border-(--coord-src-ai) focus-visible:border-(--coord-src-ai)",
+  USER: "hover:border-(--coord-src-user) focus-visible:border-(--coord-src-user)",
+  REGISTERED: "hover:border-(--coord-src-other) focus-visible:border-(--coord-src-other)",
+};
 
 /** 자기소개서 문장 (없으면 빈 배열) */
 const coverSentences = (document: ApplicationDocument | null): Sentence[] => {
@@ -125,6 +142,8 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"cover" | "resume">("cover");
+  // 출처 표시: 기본 OFF (테두리만 숨김, 문장 선택 · 근거 확인은 그대로)
+  const [showSource, setShowSource] = useState(false);
   const [confirming, setConfirming] = useState<Action | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -188,6 +207,9 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   const selectedIndex = sentences.findIndex((s) => s.sentenceId === selectedId);
   const selected = sentences[selectedIndex] ?? null;
   const toggleSentence = (id: string) => setSelectedId((cur) => (cur === id ? null : id));
+  // 작성 주체별 문장 수 (source 그대로. 근거 연결 집계 counts 와 별개)
+  const bySource = { ai: sentences.filter((s) => s.source === "AI").length, user: sentences.filter((s) => s.source === "USER").length };
+  const otherSource = sentences.length - bySource.ai - bySource.user;
   const counts = { linked: 0, user: 0, weak: 0 };
   sentences.forEach((s) => (counts[sentenceState(s)] += 1));
 
@@ -230,7 +252,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   };
 
   return (
-    // 리뉴얼 documentPage: 목록으로 · 제목 · 5단계 막대 · 검토 버튼 / 왼쪽 자기소개서 전체(페이지와 함께 스크롤) · 오른쪽 문장 근거(화면에 고정)
+    // 리뉴얼 documentPage: 목록으로 · 제목 · 상태 바 · 검토 버튼 / 왼쪽 자기소개서 전체(페이지와 함께 스크롤) · 오른쪽 문장 근거(화면에 고정)
     <div className="flex flex-col">
       {/* 2차 피드백: 배경 · 테두리 없이 아이콘과 글씨만 */}
       <div className="mb-3">
@@ -249,31 +271,25 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         </Link>
       </header>
 
-      {/* 5단계 막대 (리뉴얼 .stepped-progress-bar) */}
-      <ol className="mb-5 flex overflow-hidden rounded-[6px] border border-(--coord-line) bg-(--coord-surface)" aria-label="서류 진행 단계">
-        {STEPS.map((label, i) => {
-          const { done, current } = STAGE[status];
-          const rejectedHere = status === "REJECTED" && i === current;
+      {/* 상태 바: 지금 상태 한 칸만 강조 (리뉴얼 .stepped-progress-bar 자리 재사용) */}
+      <ul className="mb-5 flex overflow-hidden rounded-[6px] border border-(--coord-line) bg-(--coord-surface)" aria-label="서류 검토 상태">
+        {REVIEW_STATUSES.map((s) => {
+          const current = s === status;
           return (
             <li
-              key={label}
-              aria-current={i === current || (current === null && i === done - 1) ? "step" : undefined}
-              className={`flex flex-1 items-center justify-center gap-2 border-r border-(--coord-line) px-3.5 py-3.5 text-center text-[16px] font-bold last:border-r-0 ${
-                rejectedHere
-                  ? "bg-(--coord-red-soft) text-(--coord-red)"
-                  : i === current
-                    ? "bg-(--coord-forest) text-(--coord-surface)"
-                    : i < done
-                      ? "bg-(--coord-tint) text-(--coord-green-ink)"
-                      : "bg-(--coord-head) text-(--coord-muted)"
+              key={s}
+              aria-current={current ? "true" : undefined}
+              className={`flex flex-1 items-center justify-center gap-2 border-r border-(--coord-line) px-3.5 py-3.5 text-center text-[16px] last:border-r-0 ${
+                current ? `${toneClass(docTone[s])} font-extrabold` : "bg-(--coord-head) font-semibold text-(--coord-faint)"
               }`}
             >
-              {i < done && <span aria-label="완료">✓</span>} {CIRCLED[i]} {label}
-              {rejectedHere && <span>· {docLabels.REJECTED}</span>}
+              {current && <span aria-hidden className="size-2 rounded-full bg-current" />}
+              {docLabels[s]}
+              {current && <span className="sr-only">(현재 상태)</span>}
             </li>
           );
         })}
-      </ol>
+      </ul>
       {/* 보완 필요는 다음 단계로 이어지지 않는 끝 상태라 따로 알린다 (자동 연락 없음) */}
       {status === "REJECTED" && (
         <p role="note" className="-mt-2 mb-5 rounded-[6px] border border-(--coord-red-line) bg-(--coord-red-soft) px-4 py-3 text-[14px] font-semibold text-(--coord-red)">
@@ -281,7 +297,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         </p>
       )}
 
-      {/* 1·2차 피드백: 아래 검토 막대 대신 단계 막대 아래 오른쪽에 버튼만 (두 카드가 같은 선에서 시작하도록 카드 위 한 줄에 둔다).
+      {/* 1·2차 피드백: 아래 검토 막대 대신 상태 바 아래 오른쪽에 버튼만 (두 카드가 같은 선에서 시작하도록 카드 위 한 줄에 둔다).
           현재 서버 상태에 맞는 버튼만 보인다 (보완 필요 · 전달 완료 상태는 제목 옆 배지로 확인) */}
       {(status === ALLOWED.APPROVE || status === ALLOWED.DELIVER || doneMessage) && (
         <div className="mb-4 flex items-center justify-end gap-3">
@@ -390,12 +406,41 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                 {sentences.length === 0 ? (
                   <p className="text-[14.5px] text-(--coord-muted)">이 서류에는 자기소개서 문장이 없어요. 이력서 항목 탭에서 나머지 내용을 확인해 주세요.</p>
                 ) : (
-                  // 3차 피드백: 문장마다 줄을 바꾸고 문장 사이를 넉넉하게
-                  <div className="flex flex-col gap-3 text-[15.5px] leading-[1.9] break-keep">
-                    {sentences.map((s, i) => (
-                      <CoverSentence key={s.sentenceId} sentence={s} index={i} selected={i === selectedIndex} onSelect={() => toggleSentence(s.sentenceId)} />
-                    ))}
-                  </div>
+                  <>
+                    {/* 작성 주체별 문장 수(출처 색 칩) 왼쪽 · '문장 출처 표시' 스위치 오른쪽 (좁으면 줄바꿈) */}
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <SourceCount chip={SOURCE_CHIP.AI}>AI 작성 {bySource.ai}문장</SourceCount>
+                        <SourceCount chip={SOURCE_CHIP.USER}>직접 작성·수정 {bySource.user}문장</SourceCount>
+                        {otherSource > 0 && <SourceCount chip={SOURCE_CHIP.REGISTERED}>등록 원문 {otherSource}문장</SourceCount>}
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={showSource}
+                        onClick={() => setShowSource((v) => !v)}
+                        className="inline-flex h-9 items-center gap-2 rounded-[4px] px-1 text-[13px] font-semibold text-(--coord-muted) focus-visible:outline-2 focus-visible:outline-(--coord-green)"
+                      >
+                        문장 출처 표시
+                        <span aria-hidden className={`relative h-5 w-9 rounded-full transition-colors ${showSource ? "bg-(--coord-src-user)" : "bg-(--coord-line-strong)"}`}>
+                          <span className={`absolute top-0.5 size-4 rounded-full bg-(--coord-surface) shadow-sm transition-[left] ${showSource ? "left-[18px]" : "left-0.5"}`} />
+                        </span>
+                      </button>
+                    </div>
+                    {/* PM 피드백: 일반 자기소개서처럼 문장을 이어서 한 문단으로 (BE 에 문단 정보가 없어 임의로 나누지 않음) */}
+                    <p className="max-w-[760px] text-[15.5px] leading-[2] break-keep">
+                      {sentences.map((s, i) => (
+                        <CoverSentence
+                          key={s.sentenceId}
+                          sentence={s}
+                          index={i}
+                          selected={i === selectedIndex}
+                          showSource={showSource}
+                          onSelect={() => toggleSentence(s.sentenceId)}
+                        />
+                      ))}
+                    </p>
+                  </>
                 )}
                 {verification.excludedSentenceCount > 0 && (
                   <p className="mt-5 rounded-[4px] border border-(--coord-line) bg-(--coord-head) px-3.5 py-2.5 text-[13px] text-(--coord-muted)">
@@ -461,6 +506,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
         <ConfirmDialog
           title={ACTION[confirming].title}
           description={ACTION[confirming].description}
+          warning={ACTION[confirming].warning}
           confirmLabel={busy ? "처리 중…" : ACTION[confirming].confirm}
           danger={confirming === "REJECT"}
           busy={busy}
@@ -488,13 +534,27 @@ export default function ApplicationReviewScreen({ applicationId }: { application
 }
 
 /**
- * 자기소개서 한 문장 (3차 피드백): 번호 원 · 상태 색 없이 글만. 문장마다 한 줄씩, 고른 문장만 강조.
+ * 자기소개서 한 문장: 앞 문장에 이어 붙는 글자 단위 span (줄바꿈 · 카드 없음). 문장 안 줄바꿈은 그대로(whitespace-pre-line).
  * <button> 은 줄 단위로 감싸지지 않아(한 덩어리 상자) span 으로 만들고 키보드(Enter · Space)도 받는다.
- * box-decoration-clone 으로 여러 줄로 넘어가도 줄마다 배경 · 테두리가 이어진다. 문장 안 줄바꿈은 그대로(whitespace-pre-line)
+ * 테두리 = 출처(ON 이면 늘, OFF 면 마우스 · 키보드 포커스 때만), 하늘색 배경 = 선택한 문장. box-decoration-clone 으로 여러 줄이어도 줄마다 이어진다.
+ * 테두리 칸은 늘 1px 투명으로 잡아 두어 켜고 꺼도 글이 밀리지 않는다
  */
-function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sentence; index: number; selected: boolean; onSelect: () => void }) {
+function CoverSentence({
+  sentence,
+  index,
+  selected,
+  showSource,
+  onSelect,
+}: {
+  sentence: Sentence;
+  index: number;
+  selected: boolean;
+  showSource: boolean;
+  onSelect: () => void;
+}) {
+  const source = sentence.source in SOURCE_BORDER ? sentence.source : "REGISTERED";
   return (
-    <p>
+    <>
       <span
         role="button"
         tabIndex={0}
@@ -506,29 +566,36 @@ function CoverSentence({ sentence, index, selected, onSelect }: { sentence: Sent
           }
         }}
         aria-pressed={selected}
-        className={`-mx-1 cursor-pointer rounded-[4px] box-decoration-clone px-1 py-0.5 whitespace-pre-line transition-colors focus-visible:outline-3 focus-visible:outline-(--coord-green) ${
-          selected ? SELECTED_LOOK : "hover:bg-(--coord-head)"
-        }`}
+        className={`cursor-pointer rounded-[4px] border box-decoration-clone px-0.5 py-0.5 whitespace-pre-line transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--coord-green) ${
+          showSource || selected ? SOURCE_BORDER[source] : `border-transparent ${SOURCE_HOVER[source]}`
+        } ${selected ? SELECTED_BG[source] : showSource ? SOURCE_BG[source] : ""}`}
       >
         <span className="sr-only">문장 {index + 1}: </span>
         {sentence.text}
-      </span>
-    </p>
+      </span>{" "}
+    </>
   );
+}
+
+/** 출처별 문장 수 칩 (테두리와 같은 출처 색) */
+function SourceCount({ chip, children }: { chip: string; children: React.ReactNode }) {
+  return <span className={`inline-flex items-center rounded-[4px] px-2 py-1 text-[12.5px] font-bold whitespace-nowrap ${chip}`}>{children}</span>;
 }
 
 /** 오른쪽 '문장 근거 · 출처' 본문 (리뉴얼 .quote-box → 01 원본 기록 → 02 근거 확인 안내: 문장 상태별 고정 안내문, AI 검증 결과 아님) */
 function SentenceEvidence({ sentence }: { sentence: Sentence }) {
   const state = sentenceState(sentence);
   const writer = WRITER[sentence.source] ?? (["작성 주체 확인 불가", "gray"] as [string, CoordTone]);
+  const chip = SOURCE_CHIP[sentence.source] ?? SOURCE_CHIP.REGISTERED;
+  // 선택 문장 상자: 왼쪽 '문장 출처 표시' ON 의 선택 안 한 문장과 같은 연한 출처 색 (토글과 관계없이 늘 같음)
+  const source = sentence.source in SOURCE_BORDER ? sentence.source : "REGISTERED";
   return (
     <>
-      {/* 선택한 문장: 왼쪽 선택 문장과 같은 하늘색 강조. 작성 주체 라벨과 근거 검증 상태 라벨은 따로 보인다 */}
-      <div className="rounded-[4px] border border-(--coord-select-line) bg-(--coord-select-bg) px-3.5 py-3 text-[14.5px] leading-[1.55]">
+      {/* 선택한 문장: 출처별 연한 색 상자 (1px 출처 테두리 + 기본 연한 배경). 작성 주체 라벨과 근거 검증 상태 라벨은 따로 보인다 */}
+      <div className={`rounded-[4px] border px-3.5 py-3 text-[14.5px] leading-[1.55] ${SOURCE_BORDER[source]} ${SOURCE_BG[source]}`}>
         <p className="mb-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge tone={writer[1]} small>
-            {writer[0]}
-          </Badge>
+          {/* 작성 주체는 왼쪽 출처 테두리와 같은 색 칩 (근거 연결 상태 배지는 기존 색 그대로) */}
+          <span className={`inline-flex items-center rounded-full px-2 py-[3px] text-xs font-bold whitespace-nowrap ${chip}`}>{writer[0]}</span>
           {state !== "user" && (
             <Badge tone={STATE_BADGE[state][1]} small>
               {STATE_BADGE[state][0]}
@@ -599,6 +666,7 @@ function NoDocument({ status, onReload }: { status: ApplicationStatus; onReload:
 function ConfirmDialog({
   title,
   description,
+  warning,
   confirmLabel,
   danger,
   busy,
@@ -610,6 +678,7 @@ function ConfirmDialog({
 }: {
   title: string;
   description: string;
+  warning?: string;
   confirmLabel: string;
   danger: boolean;
   busy: boolean;
@@ -654,7 +723,10 @@ function ConfirmDialog({
           </button>
         </div>
         <div className="flex max-h-[75vh] flex-col gap-3 overflow-y-auto p-5">
-          <p className="text-[14.5px] leading-[1.6] text-(--coord-muted)">{description}</p>
+          <div className="text-[14.5px] leading-[1.6]">
+            <p className="text-(--coord-muted)">{description}</p>
+            {warning && <p className="font-bold text-(--coord-red)">{warning}</p>}
+          </div>
           {children}
           {error && (
             <p role="alert" className="text-[13.5px] text-(--coord-red)">

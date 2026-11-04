@@ -37,6 +37,8 @@ public interface ApplicationDocumentMapper {
         private Long jobPostingId;
         private String companyName;
         private String title;
+        /** 공고 마감일. null 이면 상시 채용 · 마감일 없음 */
+        private java.time.LocalDate deadlineOn;
         private String document;
     }
 }

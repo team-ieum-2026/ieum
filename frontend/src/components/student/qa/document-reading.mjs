@@ -3,10 +3,11 @@ import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const origin = process.env.IEUM_QA_ORIGIN || 'http://localhost:3000';
 const port = Number(process.env.IEUM_CDP_PORT || 9241);
-const output = new URL('./screenshots/document-reading/', import.meta.url);
+const output = process.env.IEUM_QA_OUTPUT ? pathToFileURL(resolve(process.env.IEUM_QA_OUTPUT) + sep) : new URL('./screenshots/document-reading/', import.meta.url);
 await mkdir(output, { recursive: true });
 const browserProfile = await mkdtemp(join(tmpdir(), 'ieum-document-reading-'));
 const fixture = async name => JSON.parse(await readFile(new URL(`../../../../public/mock/${name}`, import.meta.url), 'utf8'));
@@ -130,15 +131,47 @@ try {
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.s-document-sentence-text')).backgroundColor"), 'rgba(0, 0, 0, 0)');
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.s-document-sentence-text')).outlineStyle"), 'none');
   assert.equal(await evaluate("document.querySelectorAll('.s-letter-sentence').length"), 0);
-  const heading = await evaluate("document.querySelector('.s-student-document-heading').textContent");
-  assert.ok(heading.includes(detail.job.companyName));
-  assert.ok(heading.includes(detail.job.title));
-  assert.ok(heading.includes(detail.document.sections.find(section => section.section === 'BASIC').fields.name));
+  assert.equal(await evaluate("document.querySelector('.s-student-document-heading h1').textContent"), '자기소개서');
+  assert.equal(await evaluate("document.querySelectorAll('.s-cover-page .s-page-heading, .s-student-document-company, .s-student-document-job').length"), 0);
+  assert.equal(await evaluate("document.querySelectorAll('.s-letter-sentences > p').length"), 1);
+  assert.equal(await evaluate("document.querySelector('.s-letter-source-toggle').getAttribute('aria-checked')"), 'false');
+  assert.equal(await evaluate("document.querySelector('.s-cover-toolbar a').getAttribute('href')"), '/student/applications/7?studentId=1');
   assert.match(await evaluate("document.querySelector('.s-document-sentence[data-source=USER] .sr-only').textContent"), /직접 작성·수정/);
-  assert.equal(await evaluate("document.querySelectorAll('.s-document-sentence-dot').length"), 4);
+  assert.equal(await evaluate("document.querySelectorAll('.s-document-sentence-dot').length"), 0);
   assert.equal(await evaluate("document.querySelectorAll('.s-document-sentence-source').length"), 0);
+  const initialSentence = detail.document.sections.find(section => section.section === 'COVER_LETTER').sentences[0];
+  assert.equal(await evaluate("document.querySelector('.s-letter-evidence textarea').value"), initialSentence.text);
+  assert.equal(await evaluate("document.querySelector('.s-letter-selected-summary blockquote').textContent"), initialSentence.text);
+  assert.ok(await evaluate("[...document.querySelectorAll('.s-letter-evidence button')].some(button => button.textContent === '취소')"));
+  assert.equal(await evaluate("document.querySelector('.s-letter-evidence .s-button-primary').disabled"), true);
   await snapshot('cover-initial.png');
-  pass('Unselected document has no sentence boxes, numbers, or automatic highlighting; metadata and source labels are visible');
+  pass('The document has only its title, continuous prose, source counts, and a return link; source highlighting starts off');
+  pass('The first sentence evidence and editor are visible immediately without adding default body highlights');
+
+  await evaluate("document.querySelector('.s-letter-evidence textarea').focus(); document.querySelector('.s-letter-evidence textarea').select()");
+  await cdp('Input.insertText', { text: '취소하면 저장된 문장으로 돌아가야 해요.' });
+  await click('.s-letter-evidence button:not(.s-button-primary)');
+  assert.equal(await evaluate("document.querySelector('.s-letter-evidence textarea').value"), initialSentence.text);
+  assert.equal(patchCount, 0);
+  pass('Cancel restores the original sentence without saving or hiding the editor');
+
+  await click('.s-letter-source-toggle');
+  assert.equal(await evaluate("document.querySelector('.s-letter-source-toggle').getAttribute('aria-checked')"), 'true');
+  assert.ok(await evaluate("[...document.querySelectorAll('.s-document-sentence-text')].every(text => getComputedStyle(text).outlineStyle === 'solid')"));
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-source=AI] .s-document-sentence-text')).outlineColor"), 'rgb(128, 87, 245)');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-source=USER] .s-document-sentence-text')).outlineColor"), 'rgb(49, 130, 246)');
+  await snapshot('cover-sources-on.png');
+  await click('.s-letter-source-toggle');
+  assert.ok(await evaluate("[...document.querySelectorAll('.s-document-sentence-text')].every(text => getComputedStyle(text).outlineStyle === 'none')"));
+  pass('The source switch shows purple AI borders and blue USER borders, then restores plain prose');
+
+  const hoverPoint = await evaluate("(() => {const rect=document.querySelector('[data-source=AI] .s-document-sentence-text').getClientRects()[0];return {x:rect.x+4,y:rect.y+rect.height/2};})()");
+  await cdp('Input.dispatchMouseEvent', { type: 'mouseMoved', ...hoverPoint });
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-source=AI] .s-document-sentence-text')).outlineStyle"), 'solid');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-source=USER] .s-document-sentence-text')).outlineStyle"), 'none');
+  await cdp('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 });
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-source=AI] .s-document-sentence-text')).outlineStyle"), 'none');
+  pass('With the switch off, hovering reveals only the hovered sentence source border');
 
   const firstAI = detail.document.sections.find(section => section.section === 'COVER_LETTER').sentences.find(sentence => sentence.source === 'AI');
   const sentenceSelector = `[data-sentence-id="${firstAI.sentenceId}"]`;
@@ -160,13 +193,26 @@ try {
   await evaluate("document.querySelector('.s-letter-evidence textarea').focus(); document.querySelector('.s-letter-evidence textarea').select()");
   const revised = firstAI.text + ' 직접 고친 문장이에요.';
   await cdp('Input.insertText', { text: revised });
-  await click('.s-letter-evidence .s-button-primary');
+  await evaluate("document.querySelector('.s-letter-evidence .s-button-primary').scrollIntoView({block:'nearest'})");
+  const applyPoint = await evaluate("(() => {const button=document.querySelector('.s-letter-evidence .s-button-primary');const rect=button.getBoundingClientRect();const x=rect.x+rect.width/2,y=rect.y+rect.height/2;return {x,y,unobstructed:button.contains(document.elementFromPoint(x,y))};})()");
+  assert.ok(applyPoint.unobstructed, 'The floating help button must not cover Apply');
+  await cdp('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, x: applyPoint.x, y: applyPoint.y });
+  await cdp('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, x: applyPoint.x, y: applyPoint.y });
   await until(`document.querySelector(${JSON.stringify(sentenceSelector)}).dataset.source === 'USER'`);
   assert.equal(lastPatch.text, revised);
   assert.equal(lastPatch.sentenceId, firstAI.sentenceId);
   assert.equal(await evaluate(`document.querySelector(${JSON.stringify(sentenceSelector)} + ' .s-document-sentence-text').textContent`), revised);
   assert.ok((await evaluate("document.querySelector('.s-letter-evidence').textContent")).includes('직접 작성·수정'));
   pass('Applying edits preserves the API contract and updates source to USER');
+
+  await click('.s-cover-toolbar a');
+  await until("document.querySelector('.s-resume-document-heading') !== null");
+  assert.equal(await evaluate('location.pathname + location.search'), '/student/applications/7?studentId=1');
+  assert.ok((await evaluate("document.querySelector('.s-cover-preview').textContent")).includes(revised));
+  await navigate('/student/applications/7/cover-letter');
+  await until("document.querySelectorAll('.s-document-sentence').length === 4");
+  assert.equal(await evaluate(`document.querySelector(${JSON.stringify(sentenceSelector)} + ' .s-document-sentence-text').textContent`), revised);
+  pass('The return button opens the same application and preserves saved sentence edits');
 
   const nextAI = detail.document.sections.find(section => section.section === 'COVER_LETTER').sentences.find(sentence => sentence.source === 'AI');
   await click(`[data-sentence-id="${nextAI.sentenceId}"]`);
@@ -183,9 +229,11 @@ try {
   detail.status = 'SUBMITTED';
   await navigate('/student/applications/7/cover-letter');
   await click('.s-document-sentence');
-  assert.equal(await evaluate("document.querySelector('.s-letter-evidence textarea')"), null);
+  assert.equal(await evaluate("document.querySelector('.s-letter-evidence textarea').disabled"), true);
+  assert.equal(await evaluate("document.querySelector('.s-letter-evidence .s-button-primary').disabled"), true);
+  assert.ok((await evaluate("document.querySelector('.s-letter-evidence').textContent")).includes('매니저에게 검토를 요청한 서류는 수정할 수 없어요.'));
   assert.equal(await evaluate("document.querySelector('.s-contextbar > span').textContent"), '매니저 검토 중');
-  pass('Submitted documents remain read only while evidence can still be inspected');
+  pass('Submitted documents show the editor with a clear explanation and disabled controls');
 
   detail = structuredClone(original.data);
   const cover = detail.document.sections.find(section => section.section === 'COVER_LETTER');
@@ -218,7 +266,7 @@ try {
   await until("document.querySelectorAll('.student-section-card').length === 9");
   assert.ok(await evaluate("Math.abs(document.querySelector('.s-cover-preview').getBoundingClientRect().top - document.querySelector('.s-resume-layout > .s-action-panel').getBoundingClientRect().top) < 1"), 'Resume document and action panel start on the same line');
   assert.equal(await evaluate("document.querySelectorAll('.s-cover-preview .border-b-2').length"), 0);
-  assert.ok((await evaluate("document.querySelector('.s-resume-document-heading').textContent")).includes(detail.job.companyName));
+  assert.equal(await evaluate("document.querySelector('.s-resume-document-heading').textContent"), '이력서');
   await click('.student-section-card[data-section=SKILLS]');
   await until("document.querySelector('.s-resume-sentence-row') !== null");
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.s-resume-sentence-row')).borderTopWidth"), '0px');
@@ -226,7 +274,7 @@ try {
   pass('Resume keeps all nine section editors; narrative rows and cover preview have no automatic boxes or highlighting');
 
   await cdp('Page.navigate', { url: origin + '/student/applications/7/progress?studentId=1' });
-  await until("document.querySelector('.s-progress-frame') !== null");
+  await until("document.querySelector('.s-progress-frame')?.getBoundingClientRect().width > 0");
   const frame = await evaluate("(() => { const frame=document.querySelector('.s-progress-frame'); const rect=frame.getBoundingClientRect(); return {centerX:rect.left+rect.width/2, centerY:rect.top+rect.height/2, viewportWidth:document.documentElement.clientWidth, viewportHeight:innerHeight, border:getComputedStyle(frame).borderTopWidth, innerBorder:getComputedStyle(frame.querySelector('.s-progress-card')).borderTopWidth, links:document.querySelectorAll('.s-progress .s-back-link').length}; })()");
   assert.ok(Math.abs(frame.centerX - frame.viewportWidth / 2) < 1, JSON.stringify(frame));
   assert.ok(Math.abs(frame.centerY - frame.viewportHeight / 2) < 2, JSON.stringify(frame));
