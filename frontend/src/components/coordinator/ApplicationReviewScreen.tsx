@@ -9,7 +9,7 @@
 // 2차 피드백: 검토 버튼은 두 카드 위 한 줄(오른쪽)로 빼서 두 카드가 같은 선에서 시작 · '이 문서에서 확인할 것' 요약 삭제.
 // 3차 피드백: 제목 줄에 수료생 정보 · 카드 제목 '자기소개서 | 이름 | 공고명' · 문장 번호 원과 상태 색 삭제(처음엔 선택 없음, 다시 누르면 해제)
 //       · 작성 주체(AI / 수료생 작성 · 수정)는 고른 문장의 오른쪽 패널에만, 근거 검증 상태와 따로.
-// 리뉴얼 HTML 의 문장별 '확인 후 유지 · 수정 요청에 포함', 마감일, 소제목 문단은 API 에 없어서 만들지 않는다.
+// 리뉴얼 HTML의 문장별 판단·소제목은 만들지 않고, 문단은 API의 paragraph 번호를 따른다.
 // 목업의 AI 초안 원문 · 수료생 수정 이유 · 문장별 코디네이터 판단 저장도 API 에 없어서 만들지 않는다.
 // document 가 null(GENERATING · FAILED · 본문 없음)이면 서류 · 근거 · 검증 요약 대신 안내를 보이고 승인 · 전달을 끈다.
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { Badge, Icon, backLink, btn, toneClass } from "@/components/coordinator/
 import { docLabels, docTone, type CoordTone } from "@/components/coordinator/coordLabels";
 import { IS_MOCK, MOCK_SAVE_NOTE } from "@/components/coordinator/demoAccount";
 import { toDate } from "@/components/resume/resumeLabels";
+import { groupCoverLetterParagraphs } from "@/components/resume/coverLetterParagraphs";
 import { ApiError } from "@/lib/api/client";
 import {
   approveApplication,
@@ -203,6 +204,7 @@ export default function ApplicationReviewScreen({ applicationId }: { application
   // GENERATING · FAILED 이거나 본문이 없으면 null (docs/API.md 2-2). 형식이 깨진 서류도 빈 서류로 보고 멈추지 않게 (M6 와 같은 방식)
   const document = detail.document && Array.isArray(detail.document.sections) ? detail.document : null;
   const sentences = coverSentences(document);
+  const sentenceIndexes = new Map(sentences.map((sentence, index) => [sentence.sentenceId, index]));
   // 3차 피드백: 처음엔 아무 문장도 고르지 않는다 (-1). 같은 문장을 다시 누르면 선택 해제
   const selectedIndex = sentences.findIndex((s) => s.sentenceId === selectedId);
   const selected = sentences[selectedIndex] ?? null;
@@ -427,19 +429,19 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                         </span>
                       </button>
                     </div>
-                    {/* PM 피드백: 일반 자기소개서처럼 문장을 이어서 한 문단으로 (BE 에 문단 정보가 없어 임의로 나누지 않음) */}
-                    <p className="max-w-[760px] text-[15.5px] leading-[2] break-keep">
-                      {sentences.map((s, i) => (
+                    {/* JSON의 문단 번호와 원래 문장 순서를 그대로 따른다. */}
+                    <div className="coord-cover-paragraphs max-w-[760px] space-y-4 text-[15.5px] leading-[2] break-keep">
+                      {groupCoverLetterParagraphs(sentences).map(paragraph => <p key={paragraph[0].sentenceId}>{paragraph.map(s => (
                         <CoverSentence
                           key={s.sentenceId}
                           sentence={s}
-                          index={i}
-                          selected={i === selectedIndex}
+                          index={sentenceIndexes.get(s.sentenceId) ?? 0}
+                          selected={s.sentenceId === selectedId}
                           showSource={showSource}
                           onSelect={() => toggleSentence(s.sentenceId)}
                         />
-                      ))}
-                    </p>
+                      ))}</p>)}
+                    </div>
                   </>
                 )}
                 {verification.excludedSentenceCount > 0 && (

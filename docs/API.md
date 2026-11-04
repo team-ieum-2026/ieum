@@ -590,21 +590,23 @@ DB의 JSON 컬럼과 API가 같은 형식을 씁니다. 형식 주인은 AI-A이
         { "itemId": "cert-2", "source": "USER", "name": "SQLD", "issuer": "한국데이터산업진흥원", "acquiredOn": "2026-09-01" }
       ] },
     { "section": "SKILLS", "source": "AI",
-      "summary": [ { "sentenceId": "sk-1", "text": "Spring Boot · MySQL로 인증부터 조회 API까지 직접 설계하고 구현", "source": "AI", "evidence": [ { "…": "근거" } ] } ],
+      "summary": [ { "sentenceId": "sk-1", "text": "Spring Boot와 MySQL로 인증부터 조회 API까지 직접 설계하고 구현", "source": "AI", "evidence": [ { "…": "근거" } ], "paragraph": null } ],
       "tags": ["Java", "Spring Boot", "MySQL", "FastAPI", "Gemini API"] },
     { "section": "PROJECTS",
       "items": [
         { "itemId": "prj-11", "title": "모아요 · 스터디 모집 웹서비스", "periodText": "6주", "teamSize": 4, "role": "백엔드",
-          "bullets": [ { "sentenceId": "pj-1", "text": "모집글 CRUD 등 REST API 12개 설계 · 구현", "source": "AI", "evidence": [ { "…": "근거" } ] } ] }
+          "bullets": [ { "sentenceId": "pj-1", "text": "모집글 CRUD 등 REST API 12개 설계 및 구현", "source": "AI", "evidence": [ { "…": "근거" } ], "paragraph": null } ] }
       ] },
     { "section": "PORTFOLIO",
       "items": [ { "itemId": "pf-11", "fileName": "모아요_포트폴리오.pdf", "include": true } ] },
     { "section": "COVER_LETTER",
       "sentences": [
-        { "sentenceId": "cl-1", "text": "온다랩이 말하는 '끝까지 책임지는 개발자'처럼, …", "source": "AI",
+        { "sentenceId": "cl-1", "text": "온다랩이 말하는 '끝까지 책임지는 개발자'처럼, …", "source": "AI", "paragraph": 1,
           "evidence": [ { "refType": "COMPANY_INFO", "refId": 3, "label": "온다랩 채용 페이지 · 인재상", "quote": "끝까지 책임지는 사람", "url": "https://…", "collectedAt": "2026-10-24T08:00:00+09:00" },
                         { "refType": "COVER_LETTER", "refId": 1, "label": "등록 자기소개서 2문단", "quote": "…", "url": null, "collectedAt": null } ] },
-        { "sentenceId": "cl-4", "text": "이 경험을 바탕으로 …", "source": "USER", "evidence": [] }
+        { "sentenceId": "cl-2", "text": "모아요 프로젝트에서 모집글 CRUD 등 REST API 12개를 설계하고 구현했습니다.", "source": "AI", "paragraph": 1,
+          "evidence": [ { "refType": "PROJECT", "refId": 11, "label": "모아요 역할 기록", "quote": "모집글 CRUD 등 REST API 12개 설계 및 구현", "url": null, "collectedAt": null } ] },
+        { "sentenceId": "cl-4", "text": "이 경험을 바탕으로 …", "source": "USER", "evidence": [], "paragraph": 2 }
       ] }
   ]
 }
@@ -612,6 +614,28 @@ DB의 JSON 컬럼과 API가 같은 형식을 씁니다. 형식 주인은 AI-A이
 
 - `source`가 `AI`인 문장은 `evidence`가 1개 이상이어야 합니다. `USER`는 비어 있어도 됩니다.
 - `companyInfoStatus`: `FOUND` · `PARTIAL` · `NOT_FOUND`. `NOT_FOUND`면 화면에 "공고 외 정보 확인 불가"를 표시합니다.
+
+#### 문장별 문단 번호 (`paragraph`, PR #122)
+
+`Sentence`에 `paragraph: number | null`이 추가됩니다. 문단 번호는 별도 문단 배열을 만들지 않고 각 문장에 포함합니다.
+
+| 위치 | `paragraph` 값 | 표시 기준 |
+| --- | --- | --- |
+| `COVER_LETTER.sentences[]` | 1부터 시작하는 정수 또는 `null` | 같은 번호의 연속된 문장은 한 문단, 번호가 바뀌면 새 `<p>` |
+| `SKILLS.summary[]` | `null` | 기술 요약 문장에는 자기소개서 문단 번호를 쓰지 않음 |
+| `PROJECTS.items[].bullets[]` | `null` | 프로젝트 문장에는 자기소개서 문단 번호를 쓰지 않음 |
+
+- AI는 자기소개서 문단 번호를 1부터 연속되게 정리해 반환합니다. FE는 `sentences` 배열 순서와 문장 원문을 유지하고, 같은 문단 안의 문장은 공백으로 이어 표시합니다. 번호로 정렬하거나 문장 수·길이를 기준으로 다시 나누지 않습니다.
+- 예시의 `cl-1`과 `cl-2`는 첫 번째 `<p>`, `cl-4`는 두 번째 `<p>`에 표시합니다. 문단 안에서도 `sentenceId`별 선택·근거 조회·수정은 유지합니다.
+- 이전 저장 서류에는 `paragraph` 키가 없을 수 있습니다. 키가 없거나 `null`인 문장은 앞 문단에 이어 붙이고, 모든 문장에 번호가 없으면 한 문단으로 표시합니다. 문단 번호가 없는 기존 서류에 FE가 임의로 번호를 붙이지 않습니다.
+- 생성 문장을 모두 제외해 등록 자기소개서 원문으로 대체하는 경우에는 원문의 빈 줄을 문단 경계로 사용합니다.
+- BE는 추가 변환이나 DB 스키마 변경 없이 서류 JSON을 그대로 저장·반환합니다. `UPDATE_SENTENCE`로 문장을 고쳐 `source: "USER"`, `evidence: []`가 되어도 기존 `paragraph` 값은 유지합니다.
+- FE 적용 대상은 `ResumeDocument`, `CoverLetterEditor`, `ResumeDraft`, `C4DocumentSummary` 및 매니저 서류 검토 본문(`ApplicationReviewScreen`)입니다. 수료생 자기소개서·근거 보기와 매니저 검토 화면에 같은 문단 구분을 표시합니다.
+
+#### 서류 생성 문구 규칙
+
+- 기업 정보는 수료생 경험과 맞는 연결이 있을 때만 자기소개서 첫 문장에 반영합니다. 연결할 경험이 없으면 기업 정보를 억지로 넣지 않고 경험과 지원 직무를 중심으로 작성합니다.
+- AI가 생성하는 기술 요약·프로젝트 문장·자기소개서 본문에는 가운데점(`·`)을 쓰지 않고 쉼표·자연스러운 연결 표현을 사용합니다. FE는 받은 `text`를 그대로 표시하며 근거 인용문이나 출처 라벨을 임의로 바꾸지 않습니다.
 
 ---
 

@@ -9,6 +9,7 @@ import { SectionCard, SectionCardGroup } from "@/components/resume/SectionCard";
 import SectionDetailSheet, { type DetailSection } from "@/components/resume/SectionDetailSheet";
 import SectionEditSheet, { type ItemChange } from "@/components/resume/SectionEditSheet";
 import SourceTag from "@/components/resume/SourceTag";
+import { groupCoverLetterParagraphs } from "@/components/resume/coverLetterParagraphs";
 import { studentHref } from "@/components/student/navigation";
 import { SECTION_FIELDS, isEditableSection, type EditableItem } from "@/components/resume/sectionFields";
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
@@ -342,12 +343,10 @@ function CoverLetterCard({
         </span>
         {note && <span className="-mt-1 text-[11px] text-ink-muted">{note}</span>}
         {section.sentences.length > 0 ? (
-          // 문장을 일반 본문으로 이어 붙인다. 출처는 위 요약 태그로 구분한다.
-          <span className="line-clamp-3 text-[13px] leading-[1.6] text-ink-sub">
-            {section.sentences.map((s, i) => (
-              <span key={s.sentenceId}>
-                {i > 0 && " "}
-                {s.text}
+          <span className="s-cover-preview-body text-ink-sub">
+            {groupCoverLetterParagraphs(section.sentences).map(paragraph => (
+              <span key={paragraph[0].sentenceId} className="s-cover-preview-paragraph">
+                {paragraph.map(sentence => sentence.text).join(" ")}
               </span>
             ))}
           </span>

@@ -15,6 +15,8 @@ const original = await fixture('M6_application_document.json');
 const profile = await fixture('M8_student_profile.json');
 const recommendations = await fixture('M1_recommendations_current.json');
 const progress = await fixture('M5_application_progress_generating.json');
+const coordinator = await fixture('C4_coordinator_application.json');
+const dashboard = await fixture('C1_coordinator_dashboard.json');
 let detail = structuredClone(original.data);
 let failSave = false;
 let patchCount = 0;
@@ -88,6 +90,8 @@ async function respond({ requestId, request }) {
   else if (path === '/api/applications/7') body = { data: detail };
   else if (path === '/api/applications/7/progress') body = progress;
   else if (path === '/api/students/1/recommendations/current') body = recommendations;
+  else if (path === '/api/coordinator/applications/7') body = { data: { ...coordinator.data, document: detail.document } };
+  else if (path === '/api/coordinator/dashboard') body = dashboard;
   else {
     failures.push(`Unexpected API: ${path}`);
     status = 404;
@@ -236,6 +240,44 @@ try {
   pass('Submitted documents show the editor with a clear explanation and disabled controls');
 
   detail = structuredClone(original.data);
+  const paragraphSentences = detail.document.sections.find(section => section.section === 'COVER_LETTER').sentences;
+  paragraphSentences.forEach((sentence, index) => { sentence.paragraph = [1, 1, 2, 3][index]; });
+  const expectedParagraphs = () => [paragraphSentences.slice(0, 2).map(sentence => sentence.text).join(' '), paragraphSentences[2].text, paragraphSentences[3].text];
+  await navigate('/student/applications/7/cover-letter');
+  await until("document.querySelectorAll('.s-letter-sentences > p').length === 3");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.s-letter-sentences > p')].map(paragraph => [...paragraph.querySelectorAll('.s-document-sentence-text')].map(sentence => sentence.textContent).join(' '))"), expectedParagraphs());
+  await snapshot('cover-paragraphs.png');
+  pass('The evidence page follows JSON paragraph numbers and preserves sentence text and order');
+
+  const paragraphSentence = paragraphSentences[2];
+  await click(`[data-sentence-id="${paragraphSentence.sentenceId}"]`);
+  assert.equal(await evaluate("document.querySelector('.s-letter-selected-summary blockquote').textContent"), paragraphSentence.text);
+  await evaluate("document.querySelector('.s-letter-evidence textarea').focus(); document.querySelector('.s-letter-evidence textarea').select()");
+  const paragraphRevision = paragraphSentence.text + ' 문단을 유지하며 고쳤어요.';
+  await cdp('Input.insertText', { text: paragraphRevision });
+  await click('.s-letter-evidence .s-button-primary');
+  await until(`document.querySelector('[data-sentence-id="${paragraphSentence.sentenceId}"]').dataset.source === 'USER'`);
+  assert.equal(lastPatch.sentenceId, paragraphSentence.sentenceId);
+  assert.equal(paragraphSentence.paragraph, 2);
+  assert.equal(await evaluate("document.querySelectorAll('.s-letter-sentences > p').length"), 3);
+  pass('Selecting and editing a sentence in another paragraph keeps its sentence ID and paragraph boundary');
+
+  await click('.s-cover-toolbar a');
+  await until("document.querySelectorAll('.s-cover-preview-paragraph').length === 3");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.s-cover-preview-paragraph')].map(paragraph => paragraph.textContent)"), expectedParagraphs());
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.s-cover-preview-body')).webkitLineClamp"), 'none');
+  await snapshot('resume-paragraphs.png');
+  pass('The application document shows the same full JSON paragraphs as the evidence page');
+
+  await cdp('Page.navigate', { url: origin + '/coordinator/applications/7' });
+  await until("document.querySelectorAll('.coord-cover-paragraphs > p').length === 3");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.coord-cover-paragraphs > p')].map(paragraph => {const copy=paragraph.cloneNode(true);copy.querySelectorAll('.sr-only').forEach(label=>label.remove());return copy.textContent.trim();})"), expectedParagraphs());
+  await click('.coord-cover-paragraphs > p:nth-child(2) [role=button]');
+  assert.equal(await evaluate("document.querySelector('.coord-cover-paragraphs [aria-pressed=true] .sr-only').textContent"), '문장 3: ');
+  await snapshot('coordinator-paragraphs.png');
+  pass('The manager review uses the same paragraphs and preserves global sentence numbering for evidence selection');
+
+  detail = structuredClone(original.data);
   const cover = detail.document.sections.find(section => section.section === 'COVER_LETTER');
   cover.sentences = Array.from({ length: 40 }, (_, index) => ({ ...structuredClone(cover.sentences[index % 4]), sentenceId: `long-${index}` }));
   await navigate('/student/applications/7/cover-letter');
@@ -284,7 +326,7 @@ try {
   await snapshot('progress-centered.png');
   pass('Generation container is centered in the viewport with one border and no back link');
 
-  assert.equal(patchCount, 2);
+  assert.equal(patchCount, 3);
   assert.deepEqual(failures, []);
   await writeFile(new URL('results.json', output), JSON.stringify({ checks, patchCount, realDatabaseWrites: 0, failures }, null, 2));
   console.log(`${checks.length} browser checks passed. Real database writes: 0.`);
