@@ -111,7 +111,7 @@ export default function CoordinatorTopbar() {
 
   const count = notices?.length ?? 0;
   return (
-    // 리뉴얼 .app-topbar: 56px · 왼쪽 경로 · 오른쪽 알림 벨(원형) + 계정 칩(알약). 글로벌 검색은 이번 범위에서 제외
+    // 리뉴얼 .app-topbar: 56px · 왼쪽 경로 · 오른쪽 알림 벨(원형) + 계정 칩(알약, 11/4 원형 이니셜 아이콘은 뺌). 글로벌 검색은 이번 범위에서 제외
     <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-(--coord-line) bg-(--coord-surface) px-6">
       <p className="flex items-center gap-2 text-[13.5px] text-(--coord-muted)">
         워크스페이스 <span aria-hidden="true" className="opacity-40">/</span>
@@ -123,7 +123,7 @@ export default function CoordinatorTopbar() {
           aria-label={`알림 ${count}건`}
           aria-expanded={open === "bell"}
           onClick={() => setOpen(open === "bell" ? null : "bell")}
-          className="relative grid size-9 place-items-center rounded-full border border-(--coord-line) text-(--coord-muted) transition hover:bg-(--coord-page) hover:text-(--coord-ink) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+          className="relative grid size-9 place-items-center rounded-full border border-(--coord-line) text-(--coord-muted) transition hover:bg-(--coord-page) hover:text-(--coord-ink) focus-visible:outline-3 focus-visible:outline-(--coord-brand)"
         >
           <Icon name="bell" className="size-[18px]" />
           {count > 0 && (
@@ -137,11 +137,8 @@ export default function CoordinatorTopbar() {
           aria-expanded={open === "account"}
           aria-label={`${DEMO_COORDINATOR.name} ${DEMO_COORDINATOR.role} 계정 메뉴`}
           onClick={() => setOpen(open === "account" ? null : "account")}
-          className="flex items-center gap-2 rounded-full border border-(--coord-line) bg-(--coord-surface) py-1 pr-2.5 pl-1.5 text-left transition hover:bg-(--coord-page) focus-visible:outline-3 focus-visible:outline-(--coord-green)"
+          className="flex h-9 items-center gap-1.5 rounded-full border border-(--coord-line) bg-(--coord-surface) px-3 text-left transition hover:bg-(--coord-page) focus-visible:outline-3 focus-visible:outline-(--coord-brand)"
         >
-          <span aria-hidden="true" className="grid size-[26px] place-items-center rounded-full bg-(--coord-green-soft) text-[12.5px] font-extrabold text-(--coord-green)">
-            {DEMO_COORDINATOR.initial}
-          </span>
           <span className="text-[13.5px] font-bold">
             {DEMO_COORDINATOR.name} {DEMO_COORDINATOR.role}
           </span>

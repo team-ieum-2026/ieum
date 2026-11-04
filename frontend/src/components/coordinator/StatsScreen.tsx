@@ -356,7 +356,7 @@ function StatRow({
       ) : (
         <>
           <span className="flex h-2 flex-1 overflow-hidden rounded-[4px] bg-(--coord-line-soft)">
-            <span className="block h-full rounded-[4px] bg-(--coord-green) transition-[width] duration-300" style={{ width: `${pct(n, total)}%` }} />
+            <span className="block h-full rounded-[4px] bg-(--coord-brand-bright) transition-[width] duration-300" style={{ width: `${pct(n, total)}%` }} />
           </span>
           <b className="w-11 shrink-0 text-right">{n}건</b>
         </>

@@ -749,7 +749,7 @@ function ContactLogs({ info, studentId }: { info: StudentInfo | undefined; stude
       <ol className="mt-2.5 flex flex-col gap-3 border-l-2 border-dashed border-(--coord-line) pl-4 text-[13.5px]">
         {recent.map((l) => (
           <li key={l.contactLogId} className="relative">
-            <span aria-hidden="true" className="absolute top-1.5 -left-[22px] size-2.5 rounded-full border-2 border-(--coord-surface) bg-(--coord-blue)" />
+            <span aria-hidden="true" className="absolute top-1.5 -left-[22px] size-2.5 rounded-full border-2 border-(--coord-surface) bg-(--coord-brand-bright)" />
             <span className="block text-xs font-semibold text-(--coord-faint)">
               {monthDayTime(l.createdAt)} · {contactTypeLabels[l.contactType]}
             </span>

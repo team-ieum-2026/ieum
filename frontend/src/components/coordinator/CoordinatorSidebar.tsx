@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/coordinator/CoordUi";
+import StudentIcon from "@/components/student/StudentIcon";
 import { getDashboard } from "@/lib/api/coordinatorReview";
 
 /** C1 의 서류 검토 대기 영역 id */
@@ -70,22 +71,19 @@ export default function CoordinatorSidebar() {
   }, [pathname, refreshKey]);
 
   return (
-    // 리뉴얼 .app-sidebar: 220px · 다크 포레스트 그린 · 활성 메뉴는 민트 바탕
-    <aside className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col border-r border-black/10 bg-(--coord-forest) px-3 py-4 text-(--coord-side-ink)">
+    // 리뉴얼 .app-sidebar: 220px · 딥 그린 바탕(11/4 그린 팔레트 시안) · 활성 메뉴는 메인 그린
+    <aside className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col border-r border-(--coord-side-line) bg-(--coord-side-bg) px-3 py-4 text-(--coord-side-ink)">
       <Link
         href="/coordinator"
-        className="mb-4 flex items-center gap-2.5 rounded-md border-b border-(--coord-surface)/10 px-2 pt-1.5 pb-[18px] focus-visible:outline-3 focus-visible:outline-(--coord-lime)"
+        className="mb-4 flex items-center gap-2 rounded-lg px-2.5 py-2.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-side-focus)"
       >
-        {/* 1차 피드백: '이' 글자 대신 새싹 로고 */}
-        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-(--coord-side-logo) text-(--coord-side-logo-ink)">
-          <Icon name="sprout" className="size-[22px] stroke-[2.1]" />
+        {/* 수료생 화면 로고와 같은 반짝이는 별 + '이음' (아이콘은 StudentIcon 재사용, 크기 · 굵기는 student.css .s-brand-mark · .s-brand-label 과 같게) */}
+        <span aria-hidden="true" className="grid h-9 w-8 shrink-0 place-items-center text-(--coord-side-logo-mark)">
+          <StudentIcon name="sparkles" className="size-[30px] stroke-[2.2]" />
         </span>
         <span className="flex min-w-0 flex-col">
-          <span className="flex items-center gap-1.5 text-[17px] font-extrabold tracking-[-0.3px] text-(--coord-surface)">
-            이음
-            <span className="rounded-[3px] bg-(--coord-surface)/20 px-[5px] py-px text-[11px] font-bold text-(--coord-side-tag)">IEUM</span>
-          </span>
-          <span className="mt-px text-[11px] whitespace-nowrap text-(--coord-side-muted)">청년취업사관학교 사후관리</span>
+          <span className="text-[27px] leading-[1.1] font-extrabold tracking-[-0.06em] text-(--coord-side-logo-ink)">이음</span>
+          <span className="mt-0.5 text-[11px] whitespace-nowrap text-(--coord-side-logo-sub)">청년취업사관학교 사후관리</span>
         </span>
       </Link>
       <p className="px-2 pb-1.5 text-[11px] font-bold tracking-[0.8px] text-(--coord-side-muted)">WORKSPACE</p>
@@ -98,10 +96,10 @@ export default function CoordinatorSidebar() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`group flex items-center gap-[11px] rounded-md px-3 py-2.5 text-[14.5px] leading-[18px] transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-lime) ${
+              className={`group flex items-center gap-[11px] rounded-md px-3 py-2.5 text-[14.5px] leading-[18px] transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-side-focus) ${
                 active
-                  ? "bg-(--coord-lime) font-extrabold text-(--coord-side-active-ink)"
-                  : "font-semibold hover:bg-(--coord-surface)/8 hover:text-(--coord-surface)"
+                  ? "bg-(--coord-side-active) font-extrabold text-(--coord-side-active-ink)"
+                  : "font-semibold hover:bg-(--coord-side-hover) hover:text-(--coord-side-hover-ink)"
               }`}
             >
               <span className={`flex ${active ? "" : "opacity-75 group-hover:opacity-100"}`}>
@@ -111,7 +109,7 @@ export default function CoordinatorSidebar() {
               {count !== null && (
                 <span
                   className={`ml-auto min-w-[22px] rounded-full px-[7px] py-0.5 text-center text-[11px] font-extrabold ${
-                    active ? "bg-(--coord-side-active-ink)/15 text-(--coord-side-active-ink)" : "bg-(--coord-surface)/12 text-(--coord-surface)"
+                    active ? "bg-(--coord-side-active-ink)/15 text-(--coord-side-active-ink)" : "bg-(--coord-side-active) text-(--coord-side-active-ink)"
                   }`}
                 >
                   {count}
