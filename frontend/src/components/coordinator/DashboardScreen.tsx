@@ -1,6 +1,6 @@
 "use client";
 // 주인: FE-B — C1 오늘의 업무 (FE-B-07, 11/1 개편 목업). 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3).
-// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 확인 필요(callList = CHECK_REQUIRED 와 같은 대상)
+// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 확인 필요(callList = CHECK_REQUIRED = 1주 무응답)
 //   · 오늘 상담(남은 상담 건수 · 가장 가까운 상담 · 시간 목록 펼치기/접기)
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
@@ -139,7 +139,7 @@ export default function DashboardScreen() {
           label="후속 확인 필요"
           value={data.callList.length}
           unit="명"
-          sub="활동 공백 · 상태 확인"
+          sub="1주 무응답 · 상태 확인"
           href="/coordinator/students?status=CHECK_REQUIRED"
           icon="phone"
           tone="blue"
@@ -567,7 +567,7 @@ function ManagementCard({ data }: { data: Dashboard }) {
             후속 확인이 필요한 수료생 {check}명
           </b>
           <p className="mt-1 text-[13.5px] leading-[1.45] text-(--coord-attention)">
-            최근 활동 공백 또는 추천 공고 부재 등으로 현재 상태 확인이 필요해요.
+            1주 넘게 앱 응답이 없어 현재 상태 확인이 필요해요.
           </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {callChips.map((c) => (

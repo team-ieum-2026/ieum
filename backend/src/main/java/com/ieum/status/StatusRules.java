@@ -14,6 +14,7 @@ final class StatusRules {
             boolean activeApplication,
             LocalDateTime inactivitySince,
             String latestPassReason,
+            /** 판정에 쓰지 않는다 (추천 0건은 후속 확인 사유가 아님). 호출 호환을 위해 남겨 둔다 */
             boolean latestRecommendationEmpty,
             String intent) {
 
@@ -36,9 +37,7 @@ final class StatusRules {
         if ("RESTING".equals(facts.intent())) {
             return new StatusDecision("RESTING", null, "최근 휴식 의사 확인");
         }
-        if (facts.latestRecommendationEmpty() && !"SEEKING".equals(facts.intent())) {
-            return new StatusDecision("CHECK_REQUIRED", null, "맞는 공고 없음");
-        }
+        // 후속 확인 필요(CHECK_REQUIRED)는 7일 무응답만 뜻한다. 추천 0건(맞는 공고 없음)은 상태를 바꾸지 않는다
         if (!facts.inactivitySince().isAfter(now.minusDays(7))) {
             return new StatusDecision("CHECK_REQUIRED", null, "마지막 응답 또는 수료 후 7일 이상 경과");
         }

@@ -38,13 +38,12 @@ class StatusRulesTest {
     }
 
     @Test
-    void savedEmptyRecommendationRequiresCheckingEvenAfterRecentResponseWithAnApplication() {
+    void savedEmptyRecommendationDoesNotRequireCheckingAfterRecentResponse() {
         var facts = new StatusRules.Facts(false, false, true, RECENT, "OTHER", true);
 
-        StatusDecision decision = StatusRules.decide(facts, NOW);
-
-        assertDecision(decision, "CHECK_REQUIRED", null);
-        assertEquals("맞는 공고 없음", decision.reason());
+        assertDecision(StatusRules.decide(facts, NOW), "SEEKING", "APPLYING");
+        assertDecision(StatusRules.decide(new StatusRules.Facts(false, false, false, RECENT, null, true), NOW),
+                "SEEKING", "WAITING");
     }
 
     @ParameterizedTest
@@ -57,10 +56,10 @@ class StatusRulesTest {
     }
 
     @Test
-    void savedEmptyRecommendationKeepsItsSpecificReasonWhenResponseIsAlsoStale() {
+    void staleResponseWithSavedEmptyRecommendationUsesTheSevenDayReason() {
         var facts = new StatusRules.Facts(false, false, false, NOW.minusDays(30), null, true);
 
-        assertEquals("맞는 공고 없음", StatusRules.decide(facts, NOW).reason());
+        assertEquals("마지막 응답 또는 수료 후 7일 이상 경과", StatusRules.decide(facts, NOW).reason());
     }
 
     @ParameterizedTest
