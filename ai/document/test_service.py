@@ -1,6 +1,8 @@
 # 주인: AI-A
 """서류 조립(service.assemble) 테스트: 섹션 순서, 문장 id, 근거 변환, 제외 개수, 안내 문구, 자기소개서 대체.
 긴 자기소개서 문장 나누기(service.split_long_sentences) 테스트: 호출 여부, 바꿔 넣기, 숫자 확인, 호출 실패.
+가운데점 바꾸기(service.drop_middle_dots) 테스트.
+자기소개서 문단 번호 정리(service.tidy_paragraphs) 테스트.
 
 LLM 은 부르지 않는다. 검증 결과를 직접 만들어 넣는다.
 실행: cd ai && .venv/bin/python -m unittest document.test_service -v
@@ -13,7 +15,8 @@ from unittest.mock import patch
 
 from common.llm import LLMError
 from document.llm_models import LlmDraft, LlmSplit
-from document.service import SECTION_ORDER, assemble, company_note, split_long_sentences
+from document.service import SECTION_ORDER, assemble, company_note, drop_middle_dots, split_long_sentences, tidy_paragraphs
+from schemas.document import Sentence
 from document.sources import build_sources
 from document.verify import verify
 from schemas.draft import DraftRequest
@@ -137,6 +140,51 @@ class SplitLongSentencesTest(unittest.TestCase):
         draft = cover_draft(LONG)
         result, _ = self.split_with(draft, LLMError("서버 오류"))
         self.assertIs(result, draft)
+
+
+class DropMiddleDotsTest(unittest.TestCase):
+    def test_all_sentences_and_role(self):
+        draft = LlmDraft.model_validate({
+            "skillsSummary": [{"text": "면접 기록 저장 · 조회 API 구현", "evidenceIds": ["E1"]}],
+            "projects": [{"itemId": 1, "role": "백엔드·인프라", "bullets": [{"text": "화면·API·배포 담당", "evidenceIds": ["E2"]}]}],
+            "coverLetter": [{"text": "정산 서버와 금액 대사 기능 개발에 기여하겠습니다.", "evidenceIds": ["E3"]}],
+        })
+        result = drop_middle_dots(draft)
+        self.assertEqual(result.skills_summary[0].text, "면접 기록 저장, 조회 API 구현")
+        self.assertEqual(result.projects[0].bullets[0].text, "화면, API, 배포 담당")
+        self.assertEqual(result.projects[0].role, "백엔드, 인프라")
+        self.assertIs(result.cover_letter[0], draft.cover_letter[0])  # 가운데점이 없으면 그대로
+        self.assertEqual(result.skills_summary[0].evidence_ids, ["E1"])
+
+
+class TidyParagraphsTest(unittest.TestCase):
+    def numbers(self, *given):
+        sentences = [Sentence(sentence_id=f"cl-{i}", text="문장", source="AI", paragraph=p) for i, p in enumerate(given)]
+        return [s.paragraph for s in tidy_paragraphs(sentences)]
+
+    def test_renumbers_gaps_and_decreases(self):
+        self.assertEqual(self.numbers(1, 3, 3, 2, 5), [1, 2, 2, 2, 3])
+
+    def test_missing_joins_previous(self):
+        self.assertEqual(self.numbers(None, 1, None, 2), [1, 1, 1, 2])
+
+    def test_all_missing_stays_null(self):
+        self.assertEqual(self.numbers(None, None), [None, None])
+
+    def test_skills_have_no_paragraph(self):
+        draft = {**DRAFT, "skillsSummary": [{**DRAFT["skillsSummary"][0], "paragraph": 2}],
+                 "coverLetter": [{**DRAFT["coverLetter"][0], "paragraph": 2}]}
+        document = build(load_request(), draft)
+        self.assertIsNone(section(document, "SKILLS")["summary"][0]["paragraph"])
+        self.assertEqual(section(document, "COVER_LETTER")["sentences"][0]["paragraph"], 1)
+
+    def test_fallback_uses_blank_lines(self):
+        req = load_request()
+        req = req.model_copy(update={"student": req.student.model_copy(update={
+            "cover_letter": req.student.cover_letter.model_copy(update={"content": "첫 문단입니다.\n\n둘째 문단입니다."})})})
+        draft = {**DRAFT, "coverLetter": [{"text": "근거 없는 문장", "evidenceIds": []}]}
+        sentences = section(build(req, draft), "COVER_LETTER")["sentences"]
+        self.assertEqual([s["paragraph"] for s in sentences], [1, 2])
 
 
 if __name__ == "__main__":

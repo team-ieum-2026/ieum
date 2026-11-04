@@ -10,6 +10,7 @@ from schemas.base import CamelModel
 class LlmSentence(CamelModel):
     text: str
     evidence_ids: list[str] = []  # JSON 키: evidenceIds
+    paragraph: int | None = None  # 자기소개서 문장만. 문단 번호 (1부터)
 
 
 class LlmProject(CamelModel):
@@ -23,7 +24,9 @@ class LlmProject(CamelModel):
 class LlmCompanyLink(CamelModel):
     """회사와의 연결 문장(자기소개서 첫 문장)의 계획"""
 
-    company_evidence_id: str = ""  # 쓸 C 하나
+    comparison: str = ""  # 먼저 C 후보와 수료생 경험을 견줘 가장 가까운 짝을 한 줄로. 판단(connects)보다 앞에 둔다
+    connects: bool = False  # 성질이 비슷한 C 와 경험의 짝이 있는지. false 면 아래 칸을 비우고 자기소개서에 C 를 쓰지 않는다
+    company_evidence_id: str = ""  # 쓸 C 하나 (connects 가 true 일 때만)
     student_evidence_ids: list[str] = []  # 그와 맞는 E
     fit: str = ""  # 첫 문장에 쓸 경험의 구체적인 사실 한 줄. 주어는 수료생
 

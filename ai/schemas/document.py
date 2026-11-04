@@ -23,6 +23,7 @@ class Sentence(CamelModel):
     text: str
     source: Source
     evidence: list[Evidence] = []
+    paragraph: int | None = None  # 자기소개서 문단 번호 (1부터). 기술 요약, 프로젝트 문장은 null
 
 
 class BasicFields(CamelModel):

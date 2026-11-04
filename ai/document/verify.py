@@ -37,6 +37,7 @@ _SPACES = re.compile(r"\s+")
 class CheckedSentence:
     text: str
     sources: list[Source]
+    paragraph: int | None = None  # 자기소개서 문단 번호. 다른 문장은 None
 
 
 @dataclass
@@ -85,7 +86,7 @@ def _check_sentence(
     if not _numbers(s.text) <= _numbers(" ".join(f"{src.label} {src.quote}" for src in sources)):
         reasons["number_mismatch"] += 1
         return None
-    return CheckedSentence(s.text.strip(), sources)
+    return CheckedSentence(s.text.strip(), sources, s.paragraph)
 
 
 def _check_sentences(
