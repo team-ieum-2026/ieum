@@ -14,13 +14,12 @@ import { SECTION_FIELDS, isEditableSection, type EditableItem } from "@/componen
 import { summarizeSection, type CardSection, type SectionSummary } from "@/components/resume/sectionSummary";
 import { ApiError } from "@/lib/api/client";
 import { getApplication, patchDocument, submitApplication } from "@/lib/api/resume";
-import type { ApplicationDetail, BasicSection, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
+import type { ApplicationDetail, CoverLetterSection, DocumentPatchRequest, DocumentSection } from "@/types/resume";
 import type { Source } from "@/types/student";
 import StudentPageHeading from "@/components/student/StudentPageHeading";
 import StudentIcon from "@/components/student/StudentIcon";
 import ApplicationStatusBadge from "@/components/student/ApplicationStatusBadge";
 import { useApplicationBreadcrumb } from "@/components/student/StudentShell";
-import DocumentHeading from "@/components/resume/DocumentHeading";
 
 const DETAIL_SECTIONS: DocumentSection["section"][] = ["BASIC", "MILITARY", "SKILLS", "PROJECTS", "PORTFOLIO"];
 const isDetailSection = (s: DocumentSection): s is DetailSection => DETAIL_SECTIONS.includes(s.section);
@@ -176,7 +175,6 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
   const resumeCards = cards.filter((c) => c.section !== "PORTFOLIO");
   const portfolioCard = cards.find((c) => c.section === "PORTFOLIO");
   const coverLetter = document.sections.find((s): s is CoverLetterSection => s.section === "COVER_LETTER");
-  const studentName = document.sections.find((section): section is BasicSection => section.section === "BASIC")?.fields.name;
 
   return (
     <div className="s-resume-page">
@@ -202,7 +200,7 @@ export default function ResumeDraft({ applicationId, studentId }: { applicationI
 
         {coverLetter && <CoverLetterCard applicationId={applicationId} studentId={studentId} section={coverLetter} />}
 
-        <div className="s-resume-document-heading"><DocumentHeading title="이력서" job={job} name={studentName} /></div>
+        <div className="s-resume-document-heading"><header className="s-student-document-heading"><h2>이력서</h2></header></div>
         {/* 카드 순서 = API sections 순서 (기본정보 → 학력 → 교육 → 경력 → 병역 → 자격증 → 기술 → 경험) */}
         <SectionCardGroup>
           {resumeCards.map((card) => (
