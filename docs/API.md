@@ -44,7 +44,7 @@ HTTP 상태 코드(400, 404, 409, 500)와 함께 보냅니다. `code`는 UPPER_S
 | --- | --- | --- |
 | 400 | 요청 값이 잘못됨 | `INVALID_REQUEST`, `PASS_REASON_REQUIRED` |
 | 404 | 대상이 없음 · 없는 경로 | `STUDENT_NOT_FOUND`, `APPLICATION_NOT_FOUND`, `NOT_FOUND`(없는 경로) |
-| 409 | 지금 상태에서 할 수 없음 | `ALREADY_RESPONDED`, `INVALID_STATUS` |
+| 409 | 지금 상태에서 할 수 없음 | `ALREADY_RESPONDED`, `INVALID_STATUS`, `JOB_CLOSED`(마감일이 지난 공고) |
 | 500 | 서버 오류 · AI 서버 실패 | `INTERNAL_ERROR`, `AI_SERVER_ERROR` |
 
 ### 공통 코드 값
@@ -191,7 +191,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 ```
 
 - `PASS`인데 `passReason`이 없으면 400 `PASS_REASON_REQUIRED`. 목록에 없는 사유, `APPLY` · `PASS` 외의 `response`, 1,000자 넘는 `passNote`는 400 `INVALID_REQUEST`
-- 이미 응답한 항목이면 409 `ALREADY_RESPONDED`. 없는 항목이면 404 `RECOMMENDATION_ITEM_NOT_FOUND`
+- 이미 응답한 항목이면 409 `ALREADY_RESPONDED`. 없는 항목이면 404 `RECOMMENDATION_ITEM_NOT_FOUND` · `APPLY`인데 공고 마감일(한국 날짜)이 오늘보다 앞이면 409 `JOB_CLOSED`(응답 · 지원서는 만들지 않음, 마감 당일 · 마감일 없는 공고는 허용)
 - `APPLY`면 `application`을 `GENERATING`으로 만들고 그 번호를 돌려줍니다. 서류 생성은 BE-A-07이 이어서 합니다.
 - 응답이 생기면 `student.last_response_at` 갱신 + `RecommendationRespondedEvent` 발행. 상태 재계산(BE-B-06)과 서류 생성(BE-A-07)은 이 이벤트를 저장 확정 뒤(`AFTER_COMMIT`) 받아 처리합니다.
 
@@ -308,7 +308,7 @@ P0는 로그인이 없습니다. 수료생 화면은 studentId를 바꿔 가며 
 
 #### `POST /api/applications/{applicationId}/submit` (M6)
 
-화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`. 제출하면 `student.last_response_at`을 갱신하고 `ApplicationSubmittedEvent(studentId, applicationId)`를 발행합니다(BE-B-06 상태 재계산용, `AFTER_COMMIT`으로 받기).
+화면 버튼 문구는 "담당자에게 검토 요청"입니다. 요청 본문 없음. `DRAFT` → `SUBMITTED`, 응답 `{ "data": { "applicationId": 7, "status": "SUBMITTED" } }`. `DRAFT`가 아니면 409 `INVALID_STATUS`. `DRAFT`인데 공고 마감일(한국 날짜)이 오늘보다 앞이면 409 `JOB_CLOSED`(마감 당일 · 마감일 없는 공고는 허용). 제출하면 `student.last_response_at`을 갱신하고 `ApplicationSubmittedEvent(studentId, applicationId)`를 발행합니다(BE-B-06 상태 재계산용, `AFTER_COMMIT`으로 받기).
 
 #### `GET /api/students/{studentId}/applications` (M7)
 

@@ -85,6 +85,8 @@ public final class RecommendationRows {
         private Long studentId;
         private Long jobPostingId;
         private String response;
+        /** 공고 마감일. null 이면 상시 채용 · 마감일 없음 */
+        private LocalDate deadlineOn;
     }
 
     /** 지원 시 만드는 application 한 줄 (status 기본값 GENERATING) */

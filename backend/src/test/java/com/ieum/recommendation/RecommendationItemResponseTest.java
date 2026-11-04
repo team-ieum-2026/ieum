@@ -57,6 +57,40 @@ class RecommendationItemResponseTest {
     }
 
     @Test
+    void applyToClosedJobIs409WithoutSavingAnything() {
+        mapper.selectItemOwner(91L).setDeadlineOn(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(1));
+
+        var e = assertThrows(BusinessException.class,
+                () -> service.respond(91L, new ItemResponseRequest("APPLY", null, null)));
+
+        assertEquals(ErrorCode.JOB_CLOSED, e.getErrorCode());
+        verify(mapper, never()).updateItemResponse(anyLong(), any(), any(), any());
+        verify(mapper, never()).insertApplication(any());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test
+    void applyOnDeadlineDayIsAllowed() {
+        mapper.selectItemOwner(91L).setDeadlineOn(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")));
+        when(mapper.updateItemResponse(91L, "APPLY", null, null)).thenReturn(1);
+
+        ItemResponseResult result = service.respond(91L, new ItemResponseRequest("APPLY", null, null));
+
+        assertEquals("APPLY", result.response());
+        verify(mapper).insertApplication(any());
+    }
+
+    @Test
+    void passToClosedJobIsStillAllowed() {
+        mapper.selectItemOwner(91L).setDeadlineOn(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(3));
+        when(mapper.updateItemResponse(91L, "PASS", "OTHER", null)).thenReturn(1);
+
+        ItemResponseResult result = service.respond(91L, new ItemResponseRequest("PASS", "OTHER", null));
+
+        assertEquals("PASS", result.response());
+    }
+
+    @Test
     void passSavesReasonWithoutApplication() {
         when(mapper.updateItemResponse(91L, "PASS", "OTHER", "경기도 공고도 보고 싶어요")).thenReturn(1);
 

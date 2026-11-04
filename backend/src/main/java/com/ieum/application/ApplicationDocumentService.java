@@ -77,6 +77,10 @@ public class ApplicationDocumentService {
     @Transactional
     public ApplicationDetailResponse.Submitted submit(Long applicationId) {
         ApplicationDocumentMapper.Row row = require(mapper.selectDetail(applicationId));
+        // 마감일(한국 날짜)이 지난 공고는 매니저 검토를 요청하지 않는다. 마감 당일 · 마감일 없는 공고는 허용
+        if ("DRAFT".equals(row.getStatus()) && row.getDeadlineOn() != null && row.getDeadlineOn().isBefore(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")))) {
+            throw new BusinessException(ErrorCode.JOB_CLOSED);
+        }
         if (mapper.submit(applicationId) == 0) {
             throw new BusinessException(ErrorCode.INVALID_STATUS);
         }
