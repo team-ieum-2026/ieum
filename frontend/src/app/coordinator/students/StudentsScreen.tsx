@@ -256,9 +256,10 @@ export default function StudentsScreen() {
           <p className="min-w-0">
             <b className="text-lg font-extrabold">관리 중인 수료생 {summary?.totalStudents ?? ""}</b>
           </p>
-          <div className="flex shrink-0 items-center gap-2.5">
+          {/* 검색 · 관리 상태 · 초기화: 높이 36px(h-9) · 간격 8px(gap-2) · 세로 가운데. 좁으면 다음 줄로 넘어간다 */}
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             <form
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 changeQuery({ q: String(new FormData(event.currentTarget).get("q") ?? "").trim(), page: "1" });
@@ -271,9 +272,9 @@ export default function StudentsScreen() {
                 defaultValue={q}
                 aria-label="수료생 이름 검색"
                 placeholder="수료생 이름 검색"
-                className="w-[200px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px]"
+                className="h-9 w-[200px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-0 text-[14.5px]"
               />
-              <button type="submit" aria-label="검색" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+              <button type="submit" aria-label="검색" className={`${btn.base} ${btn.outline} ${btn.sm} size-9 px-0! py-0!`}>
                 <Icon name="search" className="size-3.5" />
               </button>
             </form>
@@ -281,7 +282,7 @@ export default function StudentsScreen() {
               value={filterValue}
               aria-label="관리 상태"
               onChange={(event) => setFilter(event.target.value)}
-              className="rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px] text-(--coord-ink)"
+              className="h-9 rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-0 text-[14.5px] text-(--coord-ink)"
             >
               {FILTERS.map((f) => (
                 <option key={f.value} value={f.value}>
@@ -292,7 +293,7 @@ export default function StudentsScreen() {
             <button
               type="button"
               onClick={() => changeQuery({ status: undefined, subStatus: undefined, q: undefined, page: "1" })}
-              className={`${btn.base} ${btn.outline} ${btn.sm}`}
+              className={`${btn.base} ${btn.outline} ${btn.sm} h-9 py-0!`}
             >
               초기화
             </button>

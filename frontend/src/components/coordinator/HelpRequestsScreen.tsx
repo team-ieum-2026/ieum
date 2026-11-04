@@ -64,6 +64,26 @@ type ConfirmTarget = "CONTACTED" | "IN_PROGRESS";
 /** 연락 완료 전 진행 중 요청 (접수 · 처리 중 · 상담 예정): 처리 단계를 바꾸거나 연락 완료로 넘길 수 있다 */
 const isActiveHelp = (r: CoordinatorHelpRequest) => ACTIVE_HELP_STATUSES.includes(r.status);
 
+/** 서울 달력 날짜 "YYYY-MM-DD" */
+const seoulDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+/**
+ * 상담 예정 D-day (수정사항4): 서울 달력 날짜 차이로 센다 (시각 무관). 오늘 D-day · 앞으로 D-n · 지남 D+n.
+ * 상담 예정이 아니거나 상담 일시가 없으면 null. 지나도 상태는 바꾸지 않는다 (표시만)
+ */
+const consultationDday = (r: CoordinatorHelpRequest): string | null => {
+  if (r.status !== "CONSULTATION_SCHEDULED" || !r.consultationAt) return null;
+  const at = new Date(r.consultationAt);
+  if (Number.isNaN(at.getTime())) return null;
+  const toDay = (ymd: string) => Date.UTC(Number(ymd.slice(0, 4)), Number(ymd.slice(5, 7)) - 1, Number(ymd.slice(8, 10)));
+  const diff = Math.round((toDay(seoulDate(at)) - toDay(seoulDate(new Date()))) / 86_400_000);
+  return diff === 0 ? "D-day" : diff > 0 ? `D-${diff}` : `D+${-diff}`;
+};
+/** 상태 배지 글자: 상담 예정이면 D-day 를 붙인다 (예: 상담 예정 D-3) */
+const statusText = (r: CoordinatorHelpRequest) => {
+  const dday = consultationDday(r);
+  return dday ? `${helpLabels[r.status]} ${dday}` : helpLabels[r.status];
+};
+
 /** 선택한 요청의 수료생 연락처 · 상담 기록 (C3 상세 API) */
 type StudentInfo = { state: "error" } | { state: "ok"; email: string | null; logs: ContactLog[] };
 
@@ -305,7 +325,7 @@ export default function HelpRequestsScreen() {
                           <span className="truncate text-xs text-(--coord-faint)">{courseName(r.courseLabel)}</span>
                         </span>
                         <Badge tone={helpTone[r.status]} small>
-                          {helpLabels[r.status]}
+                          {statusText(r)}
                         </Badge>
                       </span>
                       <span className="block truncate text-[12.5px] font-bold text-(--coord-green)">
@@ -336,7 +356,7 @@ export default function HelpRequestsScreen() {
             <>
               <div className="flex items-center justify-between gap-3 border-b border-(--coord-line) px-5 py-4">
                 <h2 className="flex items-center gap-2 text-[17px] font-extrabold">
-                  요청 상세 <Badge tone={helpTone[selected.status]}>{helpLabels[selected.status]}</Badge>
+                  요청 상세 <Badge tone={helpTone[selected.status]}>{statusText(selected)}</Badge>
                 </h2>
                 <Link href={`/coordinator/students/${selected.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
                   수료생 프로필 보기

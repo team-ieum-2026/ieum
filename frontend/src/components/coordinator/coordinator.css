@@ -59,6 +59,10 @@
   /* C4 선택한 문장 강조 (하늘색 배경 + 연파랑 실선) */
   --coord-select-bg: #eaf3ff;
   --coord-select-line: #75a9e8;
+  /* C4 자기소개서 '출처 표시' 테두리: AI 작성 보라 · 수료생 작성·수정 파랑 · 등록 원문 등 그 밖 중립 회색 */
+  --coord-src-ai: #8b6fd6;
+  --coord-src-user: #3079d5;
+  --coord-src-other: #9aa8a6;
   --coord-gray: #53636b;
   --coord-gray-soft: #eceff1;
 

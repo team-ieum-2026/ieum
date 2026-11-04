@@ -152,10 +152,9 @@ export default function DashboardScreen() {
         />
         <TodayConsultationCard key={data.asOf} asOf={data.asOf} />
       </div>
-      <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] items-start gap-5">
-        <div className="flex min-w-0 flex-col gap-5">
-          <Tasks data={data} />
-        </div>
+      {/* 왼쪽 할 일은 오른쪽 수료생 관리 현황 높이까지 늘어난다 (items-stretch) */}
+      <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] items-stretch gap-5">
+        <Tasks data={data} />
         <ManagementCard data={data} />
       </div>
     </div>
@@ -294,7 +293,7 @@ function Tasks({ data }: { data: Dashboard }) {
   const rows = all.slice(0, TASK_LIMIT);
   const [showAll, setShowAll] = useState(false);
   return (
-    <Panel label="오늘 먼저 확인할 일">
+    <Panel label="오늘 먼저 확인할 일" className="flex min-w-0 flex-col">
       <PanelHead
         title={
           <>
@@ -312,7 +311,7 @@ function Tasks({ data }: { data: Dashboard }) {
         </span>
       </PanelHead>
       {rows.length === 0 ? (
-        <p className="p-9 text-center text-[15px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
+        <p className="flex flex-1 items-center justify-center p-9 text-center text-[15px] text-(--coord-muted)">지금 확인할 업무가 없어요.</p>
       ) : (
         <ul>
           {rows.map((t) => (
