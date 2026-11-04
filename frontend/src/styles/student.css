@@ -285,7 +285,9 @@
   .s-resume-content > .s-cover-preview { margin-top: 0; }
   .s-cover-preview > span:first-child > b { font-size: 20px; }
   .s-cover-preview > span:nth-child(2), .s-cover-preview > span:last-child { font-size: 13px; }
-  .s-cover-preview > .line-clamp-3 { font-size: 16px; line-height: 1.8; }
+  .s-cover-preview > .s-cover-preview-body { font-size: 16px; line-height: 1.8; }
+  .s-cover-preview-paragraph { display: block; white-space: pre-wrap; }
+  .s-cover-preview-paragraph + .s-cover-preview-paragraph { margin-top: 12px; }
   .s-cover-toolbar { align-items: center; margin-bottom: 12px; }
   .s-cover-toolbar > .s-button { justify-self: end; align-self: end; min-height: 36px; padding: 6px 12px; gap: 6px; font-size: 13px; line-height: 20px; }
   .s-cover-toolbar .s-cover-back-icon { width: 16px; height: 16px; transform: rotate(180deg); }

@@ -7,6 +7,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import EvidencePanel from "@/components/resume/EvidencePanel";
 import SourceTag from "@/components/resume/SourceTag";
 import SentenceText from "@/components/resume/SentenceText";
+import { groupCoverLetterParagraphs } from "@/components/resume/coverLetterParagraphs";
 import StudentIcon from "@/components/student/StudentIcon";
 import SaveStatus, { type SaveState } from "@/components/resume/SaveStatus";
 import { studentHref } from "@/components/student/navigation";
@@ -208,7 +209,7 @@ function CompanyInfoNotice({ status, sentences }: { status: CompanyInfoStatus; s
 
 /** 문장을 하나의 본문으로 이어 읽고, 선택한 문장을 근거 · 편집 패널에 연결한다. */
 function SentenceParagraph({ sentences, selectedId, onSelect }: { sentences: Sentence[]; selectedId: string | null; onSelect: (sentence: Sentence) => void }) {
-  return <div className="s-letter-sentences" id="cover-letter-body"><p>{sentences.map((sentence, index) => <Fragment key={sentence.sentenceId}>{index > 0 && " "}<SentenceText sentence={sentence} selected={selectedId === sentence.sentenceId} onSelect={onSelect} presentation="document" /></Fragment>)}</p></div>;
+  return <div className="s-letter-sentences" id="cover-letter-body">{groupCoverLetterParagraphs(sentences).map(paragraph => <p key={paragraph[0].sentenceId}>{paragraph.map((sentence, index) => <Fragment key={sentence.sentenceId}>{index > 0 && " "}<SentenceText sentence={sentence} selected={selectedId === sentence.sentenceId} onSelect={onSelect} presentation="document" /></Fragment>)}</p>)}</div>;
 }
 
 function Notice({ message, children }: { message: string; children?: React.ReactNode }) {

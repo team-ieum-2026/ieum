@@ -19,6 +19,8 @@ export interface Sentence {
   text: string;
   source: Source;
   evidence: Evidence[];
+  /** 자기소개서 문단 번호(1부터). 이전 서류에는 없거나 null일 수 있다. */
+  paragraph?: number | null;
 }
 
 export interface BasicSection {

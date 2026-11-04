@@ -4,6 +4,7 @@
 // 없는 정보는 만들지 않고 "없음" 계열 문구로만 표시한다.
 import SentenceText from "@/components/resume/SentenceText";
 import SourceTag from "@/components/resume/SourceTag";
+import { groupCoverLetterParagraphs } from "@/components/resume/coverLetterParagraphs";
 import { DEGREE_LABEL, EDUCATION_STATUS_LABEL, MILITARY_LABEL } from "@/components/resume/resumeLabels";
 import type { ApplicationDocument, DocumentSection, Sentence } from "@/types/resume";
 import type { CompanyInfoStatus, Source } from "@/types/student";
@@ -245,15 +246,9 @@ export default function C4DocumentSummary({ document, selectedSentenceId, onSele
           {cover.sentences.length === 0 ? (
             <p className="text-[13px] text-ink-muted">작성된 문장이 없어요</p>
           ) : (
-            // 본문은 15px · 줄 높이 2.3, 문장 사이에 조금 더 띄워 문장 단위로 끊어 읽기 쉽게
-            // 넓은 화면에서 한 줄이 너무 길지 않게 읽기 폭만 제한 (카드 폭은 그대로, 왼쪽 정렬)
-            <p className="mt-1 max-w-[860px] text-[15px] leading-[2.3]">
-              {cover.sentences.map((s, i) => (
-                <span key={s.sentenceId} className={i > 0 ? "ml-1.5" : undefined}>
-                  {sentence(s, markers.get(s.sentenceId))}
-                </span>
-              ))}
-            </p>
+            <div className="mt-1 max-w-[860px] space-y-4 text-[15px] leading-[2.3]">
+              {groupCoverLetterParagraphs(cover.sentences).map(paragraph => <p key={paragraph[0].sentenceId} className="whitespace-pre-wrap">{paragraph.map((s, index) => <span key={s.sentenceId}>{index > 0 && " "}{sentence(s, markers.get(s.sentenceId))}</span>)}</p>)}
+            </div>
           )}
           {/* 범례: 색 견본은 SentenceText 의 AI · USER 강조 스타일과 같은 토큰 */}
           <ul className="flex items-center gap-5 text-[13px] text-ink-sub" aria-label="자기소개서 표시 설명">

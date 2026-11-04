@@ -3,6 +3,7 @@
 // source 가 없는 곳(MILITARY · PORTFOLIO · PROJECTS 항목)에는 태그를 붙이지 않는다.
 import SentenceText from "@/components/resume/SentenceText";
 import SourceTag from "@/components/resume/SourceTag";
+import { groupCoverLetterParagraphs } from "@/components/resume/coverLetterParagraphs";
 import {
   DEGREE_LABEL,
   EDUCATION_STATUS_LABEL,
@@ -205,14 +206,13 @@ function SectionBody({
       );
     case "COVER_LETTER":
       return section.sentences.length > 0 ? (
-        <p className="text-sm leading-[2]">
-          {section.sentences.map((s, i) => (
-            <span key={s.sentenceId}>
-              {i > 0 && " "}
-              {renderSentence(s)}
-            </span>
+        <div className="space-y-4 text-sm leading-[2]">
+          {groupCoverLetterParagraphs(section.sentences).map(paragraph => (
+            <p key={paragraph[0].sentenceId} className="whitespace-pre-wrap">
+              {paragraph.map((sentence, index) => <span key={sentence.sentenceId}>{index > 0 && " "}{renderSentence(sentence)}</span>)}
+            </p>
           ))}
-        </p>
+        </div>
       ) : (
         <EmptyText />
       );
