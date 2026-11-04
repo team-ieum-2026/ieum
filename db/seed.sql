@@ -4,7 +4,8 @@
 -- 수료생 50명: 평가용 20 (id 1~20, 등록 원문 있음 · id 1은 통합 기간에 시연 주인공 자료로 교체) · 명단용 30 (id 21~50, 역량 프로필 + 응답 이력)
 -- 공고: 실제 공고는 BE-A 배치(서울 열린데이터광장)로 받는다. 여기에는
 --   - 501~503: 배치 전 개발용 임시 공고 (source DEV_SEED). 첫 배치 후 BE-A가 is_active = 0 으로 끈다
---   - 601~612: 명단용 수료생의 지난 응답 이력에 필요한 마감 공고 (source DEV_SEED, is_active = 0)
+--   - 601~612: 명단용 수료생의 지난 응답 이력에 필요한 공고 (source DEV_SEED, is_active = 0)
+--     마감일은 그 공고의 추천 · 응답 · 검토 요청 · 전달보다 뒤다. 검토 대기 · 승인 지원서의 공고(602 · 606 · 612)는 아직 마감 전
 -- 평가용 id 1~20 등록 자료: ai/eval/personas/out/eval_students.sql 기준.
 -- student는 희망 직무·지역·병역·기술만 교체. 식별정보·응답 시각·상태·추천 이력은 유지.
 -- 시각은 실행 시점 기준 상대값(N일 전)이라 언제 넣어도 상태 판정 결과가 같다.
@@ -784,29 +785,29 @@ INSERT INTO job_posting (id, source, external_id, company_name, title, job_code,
 [내용] LLM 기반 서비스 기획 보조, 사용자 피드백 정리
 [우대 조건] LLM 서비스 개발 · 사용 경험', DATE_ADD(CURDATE(), INTERVAL 22 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 1 DAY), 1),
  (601, 'DEV_SEED', 'dev-601', '(주)브릿지웍스', '주니어 백엔드 개발자', '133202', '응용 소프트웨어 개발자', '서울 영등포구', '정규직', '신입', '학력무관', '회사 내규', '[직무] 응용 소프트웨어 개발자
-[내용] Java · Spring Boot 기반 사내 시스템 API 개발', DATE_SUB(CURDATE(), INTERVAL 11 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 47 DAY), 0),
+[내용] Java · Spring Boot 기반 사내 시스템 API 개발', DATE_SUB(CURDATE(), INTERVAL 1 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 47 DAY), 0),
  (602, 'DEV_SEED', 'dev-602', '코드너리(주)', '프론트엔드 개발자 (신입)', '133201', '웹 개발자', '서울 강남구', '정규직', '신입', '학력무관', '회사 내규', '[직무] 웹 개발자
-[내용] React · TypeScript로 B2B 관리 화면 개발', DATE_SUB(CURDATE(), INTERVAL 5 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 48 DAY), 0),
+[내용] React · TypeScript로 B2B 관리 화면 개발', DATE_ADD(CURDATE(), INTERVAL 4 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 48 DAY), 0),
  (603, 'DEV_SEED', 'dev-603', '(주)데이터숲', '데이터 엔지니어 인턴', '133300', '데이터 엔지니어', '서울 마포구', '인턴', '신입', '학력무관', '회사 내규', '[직무] 데이터 엔지니어
-[내용] ETL 파이프라인 운영 보조, SQL 리포트 작성', DATE_SUB(CURDATE(), INTERVAL 6 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 40 DAY), 0),
+[내용] ETL 파이프라인 운영 보조, SQL 리포트 작성', DATE_SUB(CURDATE(), INTERVAL 1 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 40 DAY), 0),
  (604, 'DEV_SEED', 'dev-604', '(주)한빛솔루션', '웹 풀스택 개발자', '133201', '웹 개발자', '서울 구로구', '정규직', '관계없음', '학력무관', '회사 내규', '[직무] 웹 개발자
-[내용] Spring Boot · Vue 기반 고객사 웹 구축', DATE_SUB(CURDATE(), INTERVAL 7 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 41 DAY), 0),
+[내용] Spring Boot · Vue 기반 고객사 웹 구축', DATE_SUB(CURDATE(), INTERVAL 2 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 41 DAY), 0),
  (605, 'DEV_SEED', 'dev-605', '에이아이웨이브(주)', 'LLM 서비스 개발 (주니어)', '133202', '응용 소프트웨어 개발자', '서울 성동구', '계약직', '신입', '학력무관', '회사 내규', '[직무] 응용 소프트웨어 개발자
-[내용] LLM API 연동, 프롬프트 · 평가 파이프라인 개발', DATE_SUB(CURDATE(), INTERVAL 8 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 42 DAY), 0),
+[내용] LLM API 연동, 프롬프트 · 평가 파이프라인 개발', DATE_SUB(CURDATE(), INTERVAL 2 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 42 DAY), 0),
  (606, 'DEV_SEED', 'dev-606', '(주)모바일팩토리', '앱 서버 개발자', '133202', '응용 소프트웨어 개발자', '경기 성남시', '정규직', '경력', '학력무관', '회사 내규', '[직무] 응용 소프트웨어 개발자
-[내용] 모바일 앱 백엔드 API, 결제 연동', DATE_SUB(CURDATE(), INTERVAL 9 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 43 DAY), 0),
+[내용] 모바일 앱 백엔드 API, 결제 연동', DATE_ADD(CURDATE(), INTERVAL 9 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 43 DAY), 0),
  (607, 'DEV_SEED', 'dev-607', '(주)스마트물류', '물류 시스템 운영 개발', '133202', '응용 소프트웨어 개발자', '경기 이천시', '정규직', '신입', '학력무관', '회사 내규', '[직무] 응용 소프트웨어 개발자
-[내용] WMS 유지보수, 입출고 API 개발', DATE_SUB(CURDATE(), INTERVAL 10 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 44 DAY), 0),
+[내용] WMS 유지보수, 입출고 API 개발', DATE_SUB(CURDATE(), INTERVAL 2 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 44 DAY), 0),
  (608, 'DEV_SEED', 'dev-608', '그린IT(주)', '사내 정보시스템 운영', '133400', '정보시스템 운영자', '서울 중구', '계약직', '관계없음', '학력무관', '회사 내규', '[직무] 정보시스템 운영자
-[내용] 사내 그룹웨어 · 서버 운영, 장애 대응', DATE_SUB(CURDATE(), INTERVAL 11 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 45 DAY), 0),
+[내용] 사내 그룹웨어 · 서버 운영, 장애 대응', DATE_SUB(CURDATE(), INTERVAL 3 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 45 DAY), 0),
  (609, 'DEV_SEED', 'dev-609', '(주)픽셀랩', '웹 퍼블리셔 · 프론트엔드', '133201', '웹 개발자', '서울 마포구', '정규직', '신입', '학력무관', '회사 내규', '[직무] 웹 개발자
-[내용] 반응형 웹 퍼블리싱, 접근성 개선', DATE_SUB(CURDATE(), INTERVAL 5 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 46 DAY), 0),
+[내용] 반응형 웹 퍼블리싱, 접근성 개선', DATE_SUB(CURDATE(), INTERVAL 2 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 46 DAY), 0),
  (610, 'DEV_SEED', 'dev-610', '(주)클라우드원', '클라우드 엔지니어 (신입)', '133400', '정보시스템 운영자', '서울 강서구', '정규직', '신입', '학력무관', '회사 내규', '[직무] 정보시스템 운영자
-[내용] AWS 인프라 운영, CI/CD 구성', DATE_SUB(CURDATE(), INTERVAL 6 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 47 DAY), 0),
+[내용] AWS 인프라 운영, CI/CD 구성', DATE_SUB(CURDATE(), INTERVAL 3 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 47 DAY), 0),
  (611, 'DEV_SEED', 'dev-611', '(주)에듀테크랩', '교육 플랫폼 백엔드', '133202', '응용 소프트웨어 개발자', '서울 서초구', '정규직', '신입', '학력무관', '회사 내규', '[직무] 응용 소프트웨어 개발자
-[내용] 강의 · 결제 API, 동영상 처리 배치', DATE_SUB(CURDATE(), INTERVAL 7 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 48 DAY), 0),
+[내용] 강의 · 결제 API, 동영상 처리 배치', DATE_SUB(CURDATE(), INTERVAL 4 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 48 DAY), 0),
  (612, 'DEV_SEED', 'dev-612', '(주)헬스노트', 'AI 데이터 분석 보조', '133300', '데이터 분석가', '서울 송파구', '인턴', '신입', '학력무관', '회사 내규', '[직무] 데이터 분석가
-[내용] 건강 데이터 전처리, 분석 리포트 작성', DATE_SUB(CURDATE(), INTERVAL 8 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 40 DAY), 0);
+[내용] 건강 데이터 전처리, 분석 리포트 작성', DATE_ADD(CURDATE(), INTERVAL 6 DAY), 0, DATE_SUB(CURDATE(), INTERVAL 40 DAY), 0);
 
 INSERT INTO recommendation (id, student_id, trigger_type, created_at) VALUES
  (101, 21, 'BATCH', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 9 HOUR), INTERVAL 13 DAY)),
