@@ -1,6 +1,6 @@
 "use client";
 // 주인: FE-B — C1 오늘의 업무 (FE-B-07, 11/1 개편 목업). 데이터는 GET /api/coordinator/dashboard (docs/API.md 2-3).
-// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 연락 필요(callList = 1주 무응답, 추가 확인 필요와 같은 대상)
+// - 지표 4개: 새 도움 요청(helpRequests) · 검토 대기 서류(reviewQueue) · 후속 확인 필요(callList = CHECK_REQUIRED 와 같은 대상)
 //   · 오늘 상담(남은 상담 건수 · 가장 가까운 상담 · 시간 목록 펼치기/접기)
 // - 오늘 먼저 확인할 일: 도움 요청 + 검토 대기 서류 + 연속 패스 연락 대상(passFollowUpList)을 먼저 들어온 순으로 상위 5건 + '전체 보기' 모달.
 //   reviewQueue 에 studentId 가 없어 이름으로 합치지 않고 건별 행
@@ -113,14 +113,8 @@ export default function DashboardScreen() {
     <div>
       <PageTitle
         title="오늘의 업무"
-        action={
-          <RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh}>
-            <span className={`${btn.base} ${btn.outline} ${btn.sm} cursor-default hover:border-(--coord-line) hover:bg-(--coord-surface)`}>
-              <Icon name="calendar" className="size-3.5" />
-              {data.asOf.slice(0, 10).replaceAll("-", ".")} 기준
-            </span>
-          </RefreshAction>
-        }
+        // 수정사항3: 오른쪽 위 '기준 날짜' 상자 없음 (dev 통합 때 되살아난 것을 다시 뺌)
+        action={<RefreshAction busy={refreshing} error={refreshError} onRefresh={refresh} />}
       />
       <div className="mb-5 grid grid-cols-4 gap-4">
         <Kpi
@@ -142,10 +136,10 @@ export default function DashboardScreen() {
           tone="green"
         />
         <Kpi
-          label="후속 연락 필요"
+          label="후속 확인 필요"
           value={data.callList.length}
           unit="명"
-          sub="1주 무응답 · 전화 확인"
+          sub="활동 공백 · 상태 확인"
           href="/coordinator/students?status=CHECK_REQUIRED"
           icon="phone"
           tone="blue"
@@ -462,7 +456,7 @@ function TodayConsultationCard({ asOf }: { asOf: string }) {
       </div>
       <div className="flex items-end justify-between gap-2">
         <p aria-live="polite" className="text-[40px] leading-none font-black tracking-[-1px]">
-          {state.status === "loaded" ? <>{items.length}<small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">건</small></> : <span className="text-(--coord-faint)">—</span>}
+          {state.status === "loaded" ? <>{items.length}<small className="ml-0.5 text-lg font-bold tracking-normal text-(--coord-muted)">건 남음</small></> : <span className="text-(--coord-faint)">—</span>}
         </p>
         {state.status === "error" ? (
           <button type="button" onClick={() => { setState({ status: "loading" }); setAttempt((value) => value + 1); }} className="relative z-10 py-1 text-[13px] font-bold text-(--coord-green) underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-(--coord-green)">
@@ -517,7 +511,8 @@ function ManagementCard({ data }: { data: Dashboard }) {
   const callChips = [...data.callList].sort((a, b) => b.daysSinceResponse - a.daysSinceResponse).slice(0, 2);
   return (
     <Panel label="수료생 관리 현황">
-      <PanelHead title="수료생 관리 현황" sub={<>관리 상태 파악률: <b className="text-(--coord-ink)">{pct(known, total).toFixed(1)}%</b></>}>
+      {/* 제목 아래 '관리 상태 파악률' 줄 없음 (같은 값은 아래 큰 %로 보여 준다). 제목만 조금 크게 · 배지와 세로 가운데 */}
+      <PanelHead title={<span className="text-[19px]">수료생 관리 현황</span>}>
         <Badge tone="green">총 {total}명 관리 중</Badge>
       </PanelHead>
       <div className="p-5">
@@ -569,10 +564,10 @@ function ManagementCard({ data }: { data: Dashboard }) {
         <div className="mt-3.5 rounded-md border border-(--coord-attention-line) bg-(--coord-orange-soft) p-3.5">
           <b className="flex items-center gap-1.5 text-[14.5px] font-extrabold text-(--coord-attention)">
             <Icon name="info" className="size-4" />
-            직접 연락이 필요한 수료생 {check}명 / 전체 {total}명
+            후속 확인이 필요한 수료생 {check}명
           </b>
           <p className="mt-1 text-[13.5px] leading-[1.45] text-(--coord-attention)">
-            1주 넘게 앱 응답이 없어요. 나머지 {known}명은 앱 응답이나 도움 요청으로 상태가 분류돼 있어요.
+            최근 활동 공백 또는 추천 공고 부재 등으로 현재 상태 확인이 필요해요.
           </p>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {callChips.map((c) => (

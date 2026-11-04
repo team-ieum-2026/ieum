@@ -6,12 +6,13 @@
 //   근거 점검은 'AI 문장이 원본 자료와 연결됐는지'만 뜻하고, 사실 검증 완료가 아니다
 // - 마감일정: 공고 deadlineOn · untilFilled. 목업 모드는 목록 API JSON 이 없어 대시보드 reviewQueue(검토 대기)만 보인다
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiErrorText, RefreshAction, Badge, LoadState, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { docLabels, docTone, monthDay, monthDayTime } from "@/components/coordinator/coordLabels";
 import { notifyReviewQueueChanged } from "@/components/coordinator/CoordinatorSidebar";
 import { IS_MOCK } from "@/components/coordinator/demoAccount";
+import { rowLinkClass, rowLinkProps } from "@/components/coordinator/tableRow";
 import { ApiError } from "@/lib/api/client";
 import { getCoordinatorApplication, getCoordinatorApplications } from "@/lib/api/coordinatorReview";
 import type { CoordinatorApplicationFilter, CoordinatorApplicationListItem, Verification } from "@/types/coordinator";
@@ -33,7 +34,7 @@ const EMPTY_TEXT: Record<CoordinatorApplicationFilter, string> = {
   DELIVERED: "전달을 마친 서류가 없어요.",
 };
 
-/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 점검 · 수료생 수정 · 검토 상태 · 상세 검토 */
+/** 리뉴얼 열 (1440px 실측 비율): 수료생 · 지원 공고 · 제출일자 · 마감일정 · 근거 연결 현황 · 수료생 수정 · 검토 상태 · 상세 검토 */
 const COLUMNS: [string, string][] = [
   ["수료생", "w-[11%]"],
   ["지원 공고", "w-[24%]"],
@@ -45,6 +46,7 @@ const COLUMNS: [string, string][] = [
   ["상세 검토", "w-[9%]"],
 ];
 
+
 /** 서류 한 건의 검증 요약 (C4 상세 API) */
 /** mockMissing: 목업 JSON 에 없는 서류 (실제 API 오류와 구분해 '목업 데이터 없음'으로 보여 준다) */
 type Check =
@@ -53,6 +55,7 @@ type Check =
   | { state: "ok"; verification: Verification; hasDocument: boolean };
 
 export default function ReviewListScreen() {
+  const router = useRouter();
   const [items, setItems] = useState<CoordinatorApplicationListItem[] | null>(null);
   // 고른 탭. 고르기 전에는 주소의 ?status= (대시보드에서 이동), 없거나 틀리면 검토 대기
   const statusParam = useSearchParams().get("status");
@@ -149,7 +152,7 @@ export default function ReviewListScreen() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setTab(t.status)}
-                  className={`${btn.base} ${active ? btn.primary : btn.outline} ${btn.sm}`}
+                  className={`${btn.base} ${active ? btn.primary : btn.outline} ${btn.sm} ${btn.ctl}`}
                 >
                   {t.label} {count}
                 </button>
@@ -172,7 +175,7 @@ export default function ReviewListScreen() {
               {visible.map((r) => {
                 const c = checks[r.applicationId] ?? { state: "loading" };
                 return (
-                  <tr key={r.applicationId} className="h-[63px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                  <tr key={r.applicationId} {...rowLinkProps(`/coordinator/applications/${r.applicationId}`, router.push, `${r.studentName} ${r.jobTitle} 서류 상세 보기`)} className={`h-[63px] ${rowLinkClass}`}>
                     <td className="overflow-hidden px-4 py-3">
                       {/* 1차 피드백: 이름 아바타 없음 */}
                       <Link href={`/coordinator/applications/${r.applicationId}`} className="group flex min-w-0 items-center">

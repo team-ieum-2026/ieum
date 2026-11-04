@@ -99,13 +99,29 @@ const STATE_CHECK: Record<SentenceState, string> = {
   user: "수료생이 직접 쓰거나 고친 문장이라 연결된 근거 자료가 없어요. 필요하면 원본 자료와 함께 확인해 주세요.",
   weak: "연결된 근거 자료가 없는 AI 문장이에요. 사실이 아니라는 뜻은 아니니, 원본 자료와 함께 직접 확인해 주세요.",
 };
-/** 평소엔 모든 문장이 투명하고, 선택한 문장만 하늘색 배경 + 1px 연파랑 실선 (근거 확인 필요 등 경고 빨강과 구분) */
-const SELECTED_LOOK = "bg-(--coord-select-bg)";
+/** 출처 표시 ON 의 선택 안 한 문장 배경: 출처 색의 기본 연한 배경 (AI 연보라 · 수료생 연하늘 · 등록 원문 연회색) */
+const SOURCE_BG: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-soft)",
+  USER: "bg-(--coord-src-user-soft)",
+  REGISTERED: "bg-(--coord-src-other-soft)",
+};
+/** 선택한 문장 배경 (ON · OFF 공통): 같은 출처 색의 더 진한 배경. 테두리 두께(1px)는 그대로, 선택은 배경 농도로 구분 */
+const SELECTED_BG: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-strong)",
+  USER: "bg-(--coord-src-user-strong)",
+  REGISTERED: "bg-(--coord-src-other-strong)",
+};
 /** 출처별 테두리 색 (PM 피드백): AI 작성 보라 · 수료생 작성·수정 파랑 · 그 밖(REGISTERED 등록 원문) 중립 */
 const SOURCE_BORDER: Record<Sentence["source"], string> = {
   AI: "border-(--coord-src-ai)",
   USER: "border-(--coord-src-user)",
   REGISTERED: "border-(--coord-src-other)",
+};
+/** 출처 칩 (문장 수 · 오른쪽 작성 주체): 테두리와 같은 색 */
+const SOURCE_CHIP: Record<Sentence["source"], string> = {
+  AI: "bg-(--coord-src-ai-soft) text-(--coord-src-ai)",
+  USER: "bg-(--coord-src-user-soft) text-(--coord-src-user)",
+  REGISTERED: "bg-(--coord-src-other-soft) text-(--coord-muted)",
 };
 const SOURCE_HOVER: Record<Sentence["source"], string> = {
   AI: "hover:border-(--coord-src-ai) focus-visible:border-(--coord-src-ai)",
@@ -391,33 +407,24 @@ export default function ApplicationReviewScreen({ applicationId }: { application
                   <p className="text-[14.5px] text-(--coord-muted)">이 서류에는 자기소개서 문장이 없어요. 이력서 항목 탭에서 나머지 내용을 확인해 주세요.</p>
                 ) : (
                   <>
-                    {/* 작성 주체별 문장 수 + 출처 표시 ON/OFF (좁으면 줄바꿈) */}
-                    <div className="mb-3 flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5 text-[13px] text-(--coord-muted)">
-                      <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                        <SourceCount on={showSource} border="border-(--coord-src-ai)">
-                          AI 작성 <b className="text-(--coord-ink)">{bySource.ai}</b>문장
-                        </SourceCount>
-                        <span aria-hidden>·</span>
-                        <SourceCount on={showSource} border="border-(--coord-src-user)">
-                          직접 작성·수정 <b className="text-(--coord-ink)">{bySource.user}</b>문장
-                        </SourceCount>
-                        {otherSource > 0 && (
-                          <>
-                            <span aria-hidden>·</span>
-                            <SourceCount on={showSource} border="border-(--coord-src-other)">
-                              등록 원문 <b className="text-(--coord-ink)">{otherSource}</b>문장
-                            </SourceCount>
-                          </>
-                        )}
+                    {/* 작성 주체별 문장 수(출처 색 칩) 왼쪽 · '문장 출처 표시' 스위치 오른쪽 (좁으면 줄바꿈) */}
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <SourceCount chip={SOURCE_CHIP.AI}>AI 작성 {bySource.ai}문장</SourceCount>
+                        <SourceCount chip={SOURCE_CHIP.USER}>직접 작성·수정 {bySource.user}문장</SourceCount>
+                        {otherSource > 0 && <SourceCount chip={SOURCE_CHIP.REGISTERED}>등록 원문 {otherSource}문장</SourceCount>}
                       </span>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={showSource}
                         onClick={() => setShowSource((v) => !v)}
-                        className={`${btn.base} ${showSource ? btn.primary : btn.outline} ${btn.sm}`}
+                        className="inline-flex h-9 items-center gap-2 rounded-[4px] px-1 text-[13px] font-semibold text-(--coord-muted) focus-visible:outline-2 focus-visible:outline-(--coord-green)"
                       >
-                        출처 표시 {showSource ? "ON" : "OFF"}
+                        문장 출처 표시
+                        <span aria-hidden className={`relative h-5 w-9 rounded-full transition-colors ${showSource ? "bg-(--coord-src-user)" : "bg-(--coord-line-strong)"}`}>
+                          <span className={`absolute top-0.5 size-4 rounded-full bg-(--coord-surface) shadow-sm transition-[left] ${showSource ? "left-[18px]" : "left-0.5"}`} />
+                        </span>
                       </button>
                     </div>
                     {/* PM 피드백: 일반 자기소개서처럼 문장을 이어서 한 문단으로 (BE 에 문단 정보가 없어 임의로 나누지 않음) */}
@@ -560,8 +567,8 @@ function CoverSentence({
         }}
         aria-pressed={selected}
         className={`cursor-pointer rounded-[4px] border box-decoration-clone px-0.5 py-0.5 whitespace-pre-line transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--coord-green) ${
-          showSource ? SOURCE_BORDER[source] : `border-transparent ${SOURCE_HOVER[source]}`
-        } ${selected ? SELECTED_LOOK : ""}`}
+          showSource || selected ? SOURCE_BORDER[source] : `border-transparent ${SOURCE_HOVER[source]}`
+        } ${selected ? SELECTED_BG[source] : showSource ? SOURCE_BG[source] : ""}`}
       >
         <span className="sr-only">문장 {index + 1}: </span>
         {sentence.text}
@@ -570,28 +577,25 @@ function CoverSentence({
   );
 }
 
-/** 출처별 문장 수 한 칸. 출처 표시 ON 이면 앞에 테두리 견본을 붙인다 */
-function SourceCount({ on, border, children }: { on: boolean; border: string; children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      {on && <span aria-hidden className={`inline-block h-3 w-4 rounded-[3px] border-2 ${border}`} />}
-      <span>{children}</span>
-    </span>
-  );
+/** 출처별 문장 수 칩 (테두리와 같은 출처 색) */
+function SourceCount({ chip, children }: { chip: string; children: React.ReactNode }) {
+  return <span className={`inline-flex items-center rounded-[4px] px-2 py-1 text-[12.5px] font-bold whitespace-nowrap ${chip}`}>{children}</span>;
 }
 
 /** 오른쪽 '문장 근거 · 출처' 본문 (리뉴얼 .quote-box → 01 원본 기록 → 02 근거 확인 안내: 문장 상태별 고정 안내문, AI 검증 결과 아님) */
 function SentenceEvidence({ sentence }: { sentence: Sentence }) {
   const state = sentenceState(sentence);
   const writer = WRITER[sentence.source] ?? (["작성 주체 확인 불가", "gray"] as [string, CoordTone]);
+  const chip = SOURCE_CHIP[sentence.source] ?? SOURCE_CHIP.REGISTERED;
+  // 선택 문장 상자: 왼쪽 '문장 출처 표시' ON 의 선택 안 한 문장과 같은 연한 출처 색 (토글과 관계없이 늘 같음)
+  const source = sentence.source in SOURCE_BORDER ? sentence.source : "REGISTERED";
   return (
     <>
-      {/* 선택한 문장: 왼쪽 선택 문장과 같은 하늘색 강조. 작성 주체 라벨과 근거 검증 상태 라벨은 따로 보인다 */}
-      <div className="rounded-[4px] border border-(--coord-select-line) bg-(--coord-select-bg) px-3.5 py-3 text-[14.5px] leading-[1.55]">
+      {/* 선택한 문장: 출처별 연한 색 상자 (1px 출처 테두리 + 기본 연한 배경). 작성 주체 라벨과 근거 검증 상태 라벨은 따로 보인다 */}
+      <div className={`rounded-[4px] border px-3.5 py-3 text-[14.5px] leading-[1.55] ${SOURCE_BORDER[source]} ${SOURCE_BG[source]}`}>
         <p className="mb-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge tone={writer[1]} small>
-            {writer[0]}
-          </Badge>
+          {/* 작성 주체는 왼쪽 출처 테두리와 같은 색 칩 (근거 연결 상태 배지는 기존 색 그대로) */}
+          <span className={`inline-flex items-center rounded-full px-2 py-[3px] text-xs font-bold whitespace-nowrap ${chip}`}>{writer[0]}</span>
           {state !== "user" && (
             <Badge tone={STATE_BADGE[state][1]} small>
               {STATE_BADGE[state][0]}

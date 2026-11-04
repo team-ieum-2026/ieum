@@ -14,7 +14,7 @@ export const manageLabels: Record<CoordStudentStatus, string> = {
   EMPLOYED: "취업 완료",
   SEEKING: "구직 중",
   RESTING: "휴식",
-  CHECK_REQUIRED: "추가 확인 필요",
+  CHECK_REQUIRED: "후속 확인 필요",
   /** 이전 자료 호환용 (목록에 남아 있으면 이름만 보여 준다) */
   NEED_HELP: "도움 필요",
 };
@@ -122,7 +122,7 @@ export const manageCounts = (s: StatusSummary): Record<CoordStudentStatus, numbe
   NEED_HELP: 0,
 });
 
-/** 관리 상태 파악률 = (전체 − 추가 확인 필요) ÷ 전체. 취업 여부를 직접 확인한 비율이 아니다 */
+/** 관리 상태 파악률 = (전체 − 후속 확인 필요) ÷ 전체. 취업 여부를 직접 확인한 비율이 아니다 */
 export const knownCount = (total: number, s: StatusSummary) => Math.max(0, total - s.CHECK_REQUIRED);
 
 /** "2026-10-24T09:12:00+09:00" → "10.24" · "10.24 09:12" (서버가 +09:00 으로 준다) */

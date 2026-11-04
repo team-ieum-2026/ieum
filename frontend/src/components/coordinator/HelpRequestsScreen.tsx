@@ -78,6 +78,11 @@ const consultationDday = (r: CoordinatorHelpRequest): string | null => {
   const diff = Math.round((toDay(seoulDate(at)) - toDay(seoulDate(new Date()))) / 86_400_000);
   return diff === 0 ? "D-day" : diff > 0 ? `D-${diff}` : `D+${-diff}`;
 };
+/** 상태 배지 색: 상담 예정 당일(D-day) 주황 · 지남(D+n) 빨강 · 그 밖은 상태 색 그대로 (목록 · 상세 같은 규칙) */
+const statusTone = (r: CoordinatorHelpRequest) => {
+  const dday = consultationDday(r);
+  return dday === "D-day" ? "orange" : dday?.startsWith("D+") ? "red" : helpTone[r.status];
+};
 /** 상태 배지 글자: 상담 예정이면 D-day 를 붙인다 (예: 상담 예정 D-3) */
 const statusText = (r: CoordinatorHelpRequest) => {
   const dday = consultationDday(r);
@@ -274,7 +279,7 @@ export default function HelpRequestsScreen() {
                 role="tab"
                 aria-selected={status === tab}
                 onClick={() => pickTab(status)}
-                className={`${btn.base} ${status === tab ? btn.primary : btn.outline} px-2.5! py-1.5! text-[12.5px]!`}
+                className={`${btn.base} ${status === tab ? btn.primary : btn.outline} ${btn.sm} ${btn.ctl}`}
               >
                 {helpLabels[status]}{" "}
                 {/* 목업 목록은 접수만 만들어 다른 상태가 0건처럼 보이므로 목업 모드에서는 '—' (실제 BE 에서는 실제 건수) */}
@@ -324,7 +329,7 @@ export default function HelpRequestsScreen() {
                           <b className="shrink-0 text-[15.5px] font-extrabold">{r.studentName}</b>
                           <span className="truncate text-xs text-(--coord-faint)">{courseName(r.courseLabel)}</span>
                         </span>
-                        <Badge tone={helpTone[r.status]} small>
+                        <Badge tone={statusTone(r)} small>
                           {statusText(r)}
                         </Badge>
                       </span>
@@ -356,7 +361,7 @@ export default function HelpRequestsScreen() {
             <>
               <div className="flex items-center justify-between gap-3 border-b border-(--coord-line) px-5 py-4">
                 <h2 className="flex items-center gap-2 text-[17px] font-extrabold">
-                  요청 상세 <Badge tone={helpTone[selected.status]}>{statusText(selected)}</Badge>
+                  요청 상세 <Badge tone={statusTone(selected)}>{statusText(selected)}</Badge>
                 </h2>
                 <Link href={`/coordinator/students/${selected.studentId}`} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
                   수료생 프로필 보기
@@ -456,7 +461,7 @@ export default function HelpRequestsScreen() {
                         type="button"
                         aria-haspopup="dialog"
                         onClick={() => setLogFor({ studentId: selected.studentId, name: selected.studentName })}
-                        className={`${btn.base} ${btn.outline}`}
+                        className={`${btn.base} ${btn.outline} ${btn.ctl}`}
                       >
                         <Icon name="pencil" className="size-4" /> 상담 기록 쓰기
                       </button>
@@ -469,7 +474,7 @@ export default function HelpRequestsScreen() {
                             setConfirming({ request: selected, target: "IN_PROGRESS" });
                           }}
                           aria-haspopup="dialog"
-                          className={`${btn.base} ${btn.outline}`}
+                          className={`${btn.base} ${btn.outline} ${btn.ctl}`}
                         >
                           <Icon name="back" className="size-4" /> 처리 중으로 되돌리기
                         </button>
@@ -483,7 +488,7 @@ export default function HelpRequestsScreen() {
                           }}
                           aria-haspopup="dialog"
                           aria-label={`${selected.studentName} 도움 요청 연락 완료`}
-                          className={`${btn.base} ${btn.outline} border-(--coord-green)! text-(--coord-green-ink)!`}
+                          className={`${btn.base} ${btn.outline} ${btn.ctl} border-(--coord-green)! text-(--coord-green-ink)!`}
                         >
                           <Icon name="checkCircle" className="size-4" /> 연락 완료
                         </button>
@@ -667,7 +672,7 @@ function ProgressForm({
             disabled={!canSave}
             aria-busy={busy}
             title={unchanged ? "지금 상태와 같아요" : undefined}
-            className={`${btn.base} ${btn.primary} px-7`}
+            className={`${btn.base} ${btn.primary} ${btn.ctl} px-7`}
           >
             {busy ? "저장 중…" : "저장"}
           </button>
