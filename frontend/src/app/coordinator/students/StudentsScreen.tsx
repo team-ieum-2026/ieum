@@ -1,11 +1,11 @@
 "use client";
 // 주인: FE-B — C2 수료생 관리 (11/1 역할 조정으로 FE-B, 11/1 개편 목업 studentTable7).
-// - 상단 요약: 취업 완료 · 구직 중 · 도움 필요 · 추가 확인 필요 (대시보드 statusSummary). 누르면 그 상태로 거른다
+// - 상단 요약: 취업 완료 · 구직 중 · 도움 필요 · 후속 확인 필요 (대시보드 statusSummary). 누르면 그 상태로 거른다
 // - 목록 7열 (GET /api/coordinator/students, 한 페이지 10명): 수료생 / 교육과정 / 현재 상태 / 최근 응답 / 추천 공고 응답 / 도움 요청 / 서류
 //   · 추천 공고 응답 · 서류: 목록 API 에 없어 지금 페이지 10명만 C3 상세 API 를 병렬로 불러 채운다 (실패하면 '조회 실패')
 //   · 도움 요청: 대시보드 API 의 접수(OPEN) 목록을 수료생 번호로 맞춘다 (연락 완료 이력은 목록 API 가 없어 보여 주지 않음)
 //   교육과정은 끝의 ' N기'를 떼어 표시
-// - 필터: 이름 검색(q) · 관리 상태(status · subStatus)만. 지금 검색 조건은 C3 에서 돌아올 때 다시 쓰도록 sessionStorage 에 둔다
+// - 필터: 이름 검색(q). 관리 상태(status · subStatus)는 드롭다운 없이 위 요약 카드 · C1 링크(?status=)로만 건다. 지금 검색 조건은 C3 에서 돌아올 때 다시 쓰도록 sessionStorage 에 둔다
 // - 필터를 바꿔도 열 너비 · 행 높이는 같게 (table-fixed + 고정 행 높이 + 줄임표)
 // - 수료생 등록: 등록 API 가 없어 입력 폼만 있고 저장은 막아 둔다 (가짜 저장 없음)
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { apiErrorText, Badge, CourseLabel, Icon, LoadState, ManageStatus, PageTitle, Panel, btn } from "@/components/coordinator/CoordUi";
 import { downloadCsv, fetchAllStudents, today } from "@/components/coordinator/studentCsv";
+import { rowLinkClass, rowLinkProps } from "@/components/coordinator/tableRow";
 import { ApiError } from "@/lib/api/client";
 import {
   MANAGE_ORDER,
@@ -35,19 +36,6 @@ const PAGE_SIZE = 10;
 
 /** C3 의 '수료생 목록으로'가 검색 조건 · 페이지를 되살릴 때 쓰는 키 */
 export const STUDENTS_QUERY_KEY = "ieum:coord-students-query";
-
-/** 관리 상태 필터 값: "EMPLOYED" · "SEEKING" · "SEEKING:APPLYING" … */
-const FILTERS: { value: string; label: string }[] = [
-  { value: "", label: "전체" },
-  ...MANAGE_ORDER.flatMap((s) =>
-    s === "SEEKING"
-      ? [
-          { value: s, label: manageLabels[s] },
-          ...(Object.keys(subStatusLabels) as SubStatus[]).map((sub) => ({ value: `${s}:${sub}`, label: `　└ ${subStatusLabels[sub]}` })),
-        ]
-      : [{ value: s, label: manageLabels[s] }],
-  ),
-];
 
 /** 리뉴얼 HTML 표의 실측 열 비율 (1440 화면: 195 / 184 / 196 / 114 / 214 / 122 / 122px) */
 const COLUMNS: [string, string][] = [
@@ -177,8 +165,6 @@ export default function StudentsScreen() {
     const [s, sub] = value.split(":");
     changeQuery({ status: s || undefined, subStatus: sub, page: "1" });
   };
-  const filterValue = status ? (subStatus ? `${status}:${subStatus}` : status) : "";
-  const conditionLabel = [FILTERS.find((f) => f.value === filterValue)?.label.replace("　└ ", "") ?? "전체", q && `"${q}"`].filter(Boolean).join(" · ");
   const counts = summary ? manageCounts(summary.statusSummary) : null;
 
   // 접수 중 도움 요청 수: 서버 openHelpRequestCount 우선, 없는 응답은 대시보드 helpRequests 로 센다. 둘 다 없으면 모름(null, CSV 빈칸)
@@ -203,6 +189,13 @@ export default function StudentsScreen() {
   };
   const lastPage = list ? Math.max(1, Math.ceil(list.total / list.size)) : 1;
 
+  // 주소의 페이지가 결과 범위를 넘으면(조건이 바뀌어 인원이 줄었을 때 등) 마지막 페이지로 옮긴다
+  const outOfRange = list !== null && list.total > 0 && page > lastPage;
+  useEffect(() => {
+    if (outOfRange) changeQuery({ page: String(lastPage) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 범위를 벗어났을 때 한 번만 옮긴다
+  }, [outOfRange, lastPage]);
+
   return (
     // 리뉴얼 C2: 제목 → 상태 요약 카드 4개 → 표 카드(머리 · 표 · 페이지 이동). 높이는 내용만큼 (10명이면 페이지가 스크롤)
     <div>
@@ -216,10 +209,10 @@ export default function StudentsScreen() {
               </p>
             )}
             {/* 1차 피드백: C6 에 있던 '전체 명단 CSV'를 옮김. 지금 검색 · 관리 상태 조건의 전체 명단을 받는다 */}
-            <button type="button" disabled={exporting} onClick={exportAll} aria-busy={exporting} className={`${btn.base} ${btn.primary}`}>
-              {exporting ? "받는 중…" : `전체 명단 CSV (${conditionLabel})`}
+            <button type="button" disabled={exporting} onClick={exportAll} aria-busy={exporting} className={`${btn.base} ${btn.primary} ${btn.ctl}`}>
+              {exporting ? "받는 중…" : "전체 명단 내려받기"}
             </button>
-            <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary}`}>
+            <button type="button" onClick={() => setRegistering(true)} className={`${btn.base} ${btn.primary} ${btn.ctl}`}>
               <span aria-hidden="true">＋</span> 새 수료생 등록
             </button>
           </>
@@ -256,9 +249,10 @@ export default function StudentsScreen() {
           <p className="min-w-0">
             <b className="text-lg font-extrabold">관리 중인 수료생 {summary?.totalStudents ?? ""}</b>
           </p>
-          <div className="flex shrink-0 items-center gap-2.5">
+          {/* 검색 · 관리 상태 · 초기화: 높이 36px(h-9) · 간격 8px(gap-2) · 세로 가운데. 좁으면 다음 줄로 넘어간다 */}
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             <form
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 changeQuery({ q: String(new FormData(event.currentTarget).get("q") ?? "").trim(), page: "1" });
@@ -271,28 +265,16 @@ export default function StudentsScreen() {
                 defaultValue={q}
                 aria-label="수료생 이름 검색"
                 placeholder="수료생 이름 검색"
-                className="w-[200px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px]"
+                className="h-9 w-[200px] rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-0 text-[14.5px]"
               />
-              <button type="submit" aria-label="검색" className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+              <button type="submit" aria-label="검색" className={`${btn.base} ${btn.outline} ${btn.sm} ${btn.ctl} w-9 px-0!`}>
                 <Icon name="search" className="size-3.5" />
               </button>
             </form>
-            <select
-              value={filterValue}
-              aria-label="관리 상태"
-              onChange={(event) => setFilter(event.target.value)}
-              className="rounded-[4px] border border-(--coord-line) bg-(--coord-surface) px-3 py-2 text-[14.5px] text-(--coord-ink)"
-            >
-              {FILTERS.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.value ? f.label : "관리 상태 (전체)"}
-                </option>
-              ))}
-            </select>
             <button
               type="button"
               onClick={() => changeQuery({ status: undefined, subStatus: undefined, q: undefined, page: "1" })}
-              className={`${btn.base} ${btn.outline} ${btn.sm}`}
+              className={`${btn.base} ${btn.outline} ${btn.sm} ${btn.ctl}`}
             >
               초기화
             </button>
@@ -335,7 +317,7 @@ export default function StudentsScreen() {
                     const ext = studentExtra(s);
                     const helpCount = ext.openHelpRequestCount ?? help?.length ?? null;
                     return (
-                      <tr key={s.studentId} className="h-[74px] border-b border-(--coord-line) hover:bg-(--coord-hover)">
+                      <tr key={s.studentId} {...rowLinkProps(`/coordinator/students/${s.studentId}`, router.push, `${s.name} 수료생 상세 보기`)} className={`h-[74px] ${rowLinkClass}`}>
                         <td className="overflow-hidden px-4 py-3.5">
                           {/* 리뉴얼 .student-cell: 이름 15.5px + 희망 직무. 1차 피드백: 이름 아바타 없음 */}
                           <Link
@@ -403,14 +385,13 @@ export default function StudentsScreen() {
             <div className="flex items-center justify-between px-5 py-3.5 text-[13.5px] text-(--coord-muted)">
               <span role="status">
                 {list.total}명 중 {list.total ? (page - 1) * list.size + 1 : 0}–{(page - 1) * list.size + list.items.length}명
-                <span className="ml-3 text-(--coord-faint)">도움 요청 열은 접수 중인 요청만 보여 줘요</span>
               </span>
               <div className="flex items-center gap-2 font-bold text-(--coord-ink)">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => changeQuery({ page: String(page - 1) })}
-                  className={`${btn.base} ${btn.outline} ${btn.sm}`}
+                  className={`${btn.base} ${btn.outline} ${btn.sm} ${btn.ctl}`}
                 >
                   이전
                 </button>
@@ -421,7 +402,7 @@ export default function StudentsScreen() {
                   type="button"
                   disabled={page >= lastPage}
                   onClick={() => changeQuery({ page: String(page + 1) })}
-                  className={`${btn.base} ${btn.outline} ${btn.sm}`}
+                  className={`${btn.base} ${btn.outline} ${btn.sm} ${btn.ctl}`}
                 >
                   다음
                 </button>

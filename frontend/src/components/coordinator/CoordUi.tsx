@@ -193,6 +193,8 @@ export const btn = {
   danger: "border-(--coord-red-line) bg-(--coord-red-soft) text-(--coord-red) hover:bg-(--coord-red-line)/40",
   /** base 의 크기와 겹치므로 ! 로 확실히 덮는다 (Tailwind 는 클래스 순서가 아니라 CSS 생성 순서로 이겨서 sm 이 무시될 수 있음) */
   sm: "px-3! py-1.5! text-[13.5px]!",
+  /** 툴바 · 탭 · 페이지 이동 컨트롤 높이 36px 로 맞춤 (sm · 기본과 함께 쓴다) */
+  ctl: "h-9 py-0!",
 } as const;
 
 /** '목록으로' 돌아가기 링크 (2차 피드백: 배경 · 테두리 없이 아이콘과 글씨만, C3 · C4 공용) */
@@ -212,7 +214,7 @@ export function RefreshAction({ busy, error, onRefresh, children }: { busy: bool
         </p>
       )}
       {children}
-      <button type="button" onClick={onRefresh} disabled={busy} aria-busy={busy} className={`${btn.base} ${btn.outline} ${btn.sm}`}>
+      <button type="button" onClick={onRefresh} disabled={busy} aria-busy={busy} className={`${btn.base} ${btn.outline} ${btn.sm} ${btn.ctl}`}>
         <Icon name="refresh" className={`size-3.5 ${busy ? "animate-spin" : ""}`} />
         {busy ? "새로고침 중…" : "목록 새로고침"}
       </button>
