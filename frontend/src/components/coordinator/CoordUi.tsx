@@ -185,11 +185,11 @@ export function LoadState({ error, onRetry, loadingText }: { error: string | nul
 
 /** 버튼 모양 (리뉴얼 .btn: 4px 모서리 · 굵은 글자) */
 export const btn = {
-  base: "inline-flex items-center justify-center gap-[7px] rounded-[4px] border px-4 py-[9px] text-[14.5px] leading-[1.25] font-bold whitespace-nowrap transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-green) disabled:cursor-not-allowed disabled:opacity-50",
+  base: "inline-flex items-center justify-center gap-[7px] rounded-[4px] border px-4 py-[9px] text-[14.5px] leading-[1.25] font-bold whitespace-nowrap transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--coord-brand) disabled:cursor-not-allowed disabled:opacity-50",
   outline:
     "border-(--coord-line) bg-(--coord-surface) text-(--coord-ink) hover:border-(--coord-line-strong) hover:bg-(--coord-page) disabled:hover:border-(--coord-line) disabled:hover:bg-(--coord-surface)",
   primary:
-    "border-(--coord-green) bg-(--coord-green) text-(--coord-surface) hover:border-(--coord-green-hover) hover:bg-(--coord-green-hover) disabled:hover:bg-(--coord-green)",
+    "border-(--coord-brand) bg-(--coord-brand) text-(--coord-surface) hover:border-(--coord-brand-hover) hover:bg-(--coord-brand-hover) disabled:hover:border-(--coord-brand) disabled:hover:bg-(--coord-brand)",
   danger: "border-(--coord-red-line) bg-(--coord-red-soft) text-(--coord-red) hover:bg-(--coord-red-line)/40",
   /** base 의 크기와 겹치므로 ! 로 확실히 덮는다 (Tailwind 는 클래스 순서가 아니라 CSS 생성 순서로 이겨서 sm 이 무시될 수 있음) */
   sm: "px-3! py-1.5! text-[13.5px]!",

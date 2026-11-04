@@ -38,13 +38,28 @@
   --coord-tint: #eff9f4;
   --coord-tint-line: #c8ebd8;
 
-  /* 사이드바 */
-  --coord-side-ink: rgb(255 255 255 / 0.78);
-  --coord-side-muted: rgb(255 255 255 / 0.5);
-  --coord-side-active-ink: #0f3d32;
-  --coord-side-logo: #19584b;
-  --coord-side-logo-ink: #72e5a8;
-  --coord-side-tag: #a2f3c8;
+  /* 브랜드 그린 (11/4 그린 팔레트 시안: #7EC384 · #3F7856 · #45625D · #6AA5A9 · #A3D2D5).
+   * 주요 버튼 · 진행률 막대 · 사이드바 · 로고에만 쓴다. 상태 이름표 · 차트 · 출처 구분 색(--coord-green · --coord-blue 등)은 그대로 둔다 */
+  --coord-brand: #3f7856;
+  --coord-brand-hover: #356a4b;
+  --coord-brand-bright: #7ec384;
+  --coord-brand-soft: #a3d2d5;
+  --coord-brand-ink: #45625d;
+
+  /* 사이드바 (11/4 그린 팔레트 시안: 딥 그린 #3F7856 바탕 · 흰 글자, 선택 메뉴는 메인 그린 #7EC384 + 어두운 녹색 글자) */
+  --coord-side-bg: #3f7856;
+  --coord-side-line: #33664a;
+  --coord-side-hover: #4b8762;
+  --coord-side-hover-ink: #ffffff;
+  --coord-side-active: #7ec384;
+  --coord-side-active-ink: #1d4430;
+  --coord-side-ink: rgb(255 255 255 / 0.92);
+  --coord-side-muted: #cfe6d6;
+  --coord-side-focus: #ffffff;
+  /* 로고 (수료생 화면과 같은 반짝이는 별 · 메인 그린, '이음' 은 흰 글자. 배경 상자 없이 사이드바 바탕에 바로 둔다) */
+  --coord-side-logo-mark: #7ec384;
+  --coord-side-logo-ink: #ffffff;
+  --coord-side-logo-sub: #cfe6d6;
 
   /* 상태 이름표 (앰버 · 빨강 · 파랑 · 회색) */
   --coord-orange: #b45309;
