@@ -79,7 +79,7 @@ class StatusServiceTest {
     }
 
     @Test
-    void latestSavedEmptyRecommendationRequiresCoordinatorCheckWithoutChangingResponseTime() {
+    void latestSavedEmptyRecommendationKeepsSeekingWithoutChangingResponseTime() {
         when(mapper.lockStudent(7L)).thenReturn(student(NOW.minusHours(1)));
         prepareFacts(List.of(), List.of(), List.of(22L));
         when(mapper.findLatestRecommendationId(7L)).thenReturn(42L);
@@ -88,8 +88,7 @@ class StatusServiceTest {
         service.recalculate(7L);
 
         StatusDecision decision = savedDecision();
-        assertDecision(decision, "CHECK_REQUIRED", null);
-        assertEquals("맞는 공고 없음", decision.reason());
+        assertDecision(decision, "SEEKING", "APPLYING");
         verify(mapper, never()).updateLastResponseAt(any(), any());
     }
 
@@ -104,9 +103,7 @@ class StatusServiceTest {
         service.recalculateCommitted(7L);
 
         StatusDecision decision = savedDecision();
-        assertDecision(decision, emptyRecommendation ? "CHECK_REQUIRED" : "SEEKING",
-                emptyRecommendation ? null : "WAITING");
-        if (emptyRecommendation) assertEquals("맞는 공고 없음", decision.reason());
+        assertDecision(decision, "SEEKING", "WAITING");
         verify(mapper).findResponsesUnlocked(7L);
         verify(mapper).findLatestIntentUnlocked(7L);
         verify(mapper).findOpenHelpRequestIdsUnlocked(7L);

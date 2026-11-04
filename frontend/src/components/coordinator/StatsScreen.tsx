@@ -89,7 +89,7 @@ function Body({ data }: { data: Dashboard }) {
     { label: "취업 완료", color: manageChartVar.EMPLOYED, n: emp, noteText: "패스 사유 '이미 취업' 응답 기준" },
     { label: "구직 중", color: manageChartVar.SEEKING, n: seeking, noteText: "기관 추천 지원 중 · 패스 후 대기 · 기타 포함" },
     { label: "휴식", color: manageChartVar.RESTING, n: counts.RESTING, noteText: "수료생이 '휴식'을 선택 · 연락 기록은 유지" },
-    { label: "후속 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, noteText: "활동 공백 · 상태 확인" },
+    { label: "후속 확인 필요", color: manageChartVar.CHECK_REQUIRED, n: s.CHECK_REQUIRED, noteText: "1주 넘게 앱 응답 없음 · 상태 확인" },
   ];
 
   // 리뉴얼 .gauge-circle-box: 회색 상자 + 큰 숫자 (파악률 초록 · 파악 기준 취업률 파랑 · 전체 기준 회색). 계산식은 그대로

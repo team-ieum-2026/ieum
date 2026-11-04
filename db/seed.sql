@@ -5,7 +5,7 @@
 -- 공고: 실제 공고는 BE-A 배치(서울 열린데이터광장)로 받는다. 여기에는
 --   - 501~503: 배치 전 개발용 임시 공고 (source DEV_SEED). 첫 배치 후 BE-A가 is_active = 0 으로 끈다
 --   - 601~612: 명단용 수료생의 지난 응답 이력에 필요한 공고 (source DEV_SEED, is_active = 0)
---     마감일은 그 공고의 추천 · 응답 · 검토 요청 · 전달보다 뒤다. 검토 대기 · 승인 지원서의 공고(602 · 606 · 612)는 아직 마감 전
+--     마감일은 그 공고의 추천 · 응답 · 검토 요청 · 전달보다 뒤다. 검토 대기 · 승인 지원서의 공고(602 · 606 · 612)는 아직 마감 전. 시연 시작 시 검토 대기 서류는 1건(102)
 -- 평가용 id 1~20 등록 자료: ai/eval/personas/out/eval_students.sql 기준.
 -- student는 희망 직무·지역·병역·기술만 교체. 식별정보·응답 시각·상태·추천 이력은 유지.
 -- 시각은 실행 시점 기준 상대값(N일 전)이라 언제 넣어도 상태 판정 결과가 같다.
@@ -944,7 +944,7 @@ INSERT INTO help_request (id, student_id, recommendation_item_id, contact_method
  (104, 12, 1091, 'SMS', NULL, DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 9 HOUR), INTERVAL 1 DAY));
 
 INSERT INTO application (id, student_id, recommendation_item_id, job_posting_id, status, submitted_at, reviewed_at, delivered_at) VALUES
- (101, 23, 1007, 612, 'SUBMITTED', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 12 HOUR), INTERVAL 4 DAY), NULL, NULL),
+ (101, 23, 1007, 612, 'APPROVED', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 12 HOUR), INTERVAL 4 DAY), DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 15 HOUR), INTERVAL 3 DAY), NULL),
  (102, 29, 1025, 606, 'SUBMITTED', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 18 HOUR), INTERVAL 5 DAY), NULL, NULL),
  (103, 37, 1049, 602, 'APPROVED', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 16 HOUR), INTERVAL 3 DAY), DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 15 HOUR), INTERVAL 2 DAY), NULL),
  (104, 44, 1070, 609, 'DELIVERED', DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 13 HOUR), INTERVAL 5 DAY), DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 15 HOUR), INTERVAL 4 DAY), DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 17 HOUR), INTERVAL 4 DAY));

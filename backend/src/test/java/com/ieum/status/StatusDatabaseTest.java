@@ -277,7 +277,7 @@ class StatusDatabaseTest {
     }
 
     @Test
-    void latestSavedEmptyRecommendationRequiresCheckingAndNewNonemptyRecommendationClearsIt() {
+    void latestSavedEmptyRecommendationDoesNotRequireCheckingAfterRecentResponse() {
         rolledBack(tx -> {
             neutralize(STUDENT_ID, now().minusHours(1));
             LocalDateTime responseAt = lastResponse(STUDENT_ID);
@@ -288,9 +288,7 @@ class StatusDatabaseTest {
 
             service.recalculate(STUDENT_ID);
 
-            assertStored(STUDENT_ID, "CHECK_REQUIRED", null);
-            assertEquals("맞는 공고 없음", jdbc.queryForObject(
-                    "SELECT reason FROM student_status WHERE student_id = ?", String.class, STUDENT_ID));
+            assertStored(STUDENT_ID, "SEEKING", "WAITING");
             assertEquals(responseAt, lastResponse(STUDENT_ID));
 
             item(STUDENT_ID, "NONE", null, null);
@@ -629,18 +627,7 @@ class StatusDatabaseTest {
         if ("EMPLOYED".equals(intent) || "RESTING".equals(intent)) {
             return new Expected(intent, null);
         }
-        List<Long> latestItemCounts = jdbc.queryForList("""
-                SELECT COUNT(i.id)
-                FROM recommendation r
-                LEFT JOIN recommendation_item i ON i.recommendation_id = r.id
-                WHERE r.student_id = ?
-                GROUP BY r.id, r.created_at
-                ORDER BY r.created_at DESC, r.id DESC
-                LIMIT 1
-                """, Long.class, studentId);
-        if (!"SEEKING".equals(intent) && !latestItemCounts.isEmpty() && latestItemCounts.get(0) == 0L) {
-            return new Expected("CHECK_REQUIRED", null);
-        }
+        // 추천 0건(맞는 공고 없음)은 판정에 쓰지 않는다. 후속 확인 필요는 7일 무응답만
         LocalDateTime inactivitySince = lastResponse(studentId);
         if (inactivitySince == null) {
             LocalDate completed = jdbc.queryForObject("SELECT completed_on FROM student WHERE id = ?",
