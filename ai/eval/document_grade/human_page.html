@@ -180,6 +180,12 @@ pre { white-space: pre-wrap; word-break: break-word; background: var(--quote); b
 
 <script>
 const DATA = /*DATA*/null;
+if (!DATA) {
+  // 틀 파일을 바로 열었을 때: 데이터가 없으니 안내만 보여 주고 멈춘다
+  document.querySelector("main").innerHTML = `<div class="warnbox">이 파일은 채점 화면의 틀이라 채점 데이터가 없어요.
+    build_human_page 로 만든 <b>human_review.html</b> 을 열어 주세요.</div>`;
+  throw new Error("DATA 없음: human_review.html 을 열어야 한다");
+}
 const STAGES = [
   { title: "1단계: 무작위 30문장", kind: "sentence",
     intro: "무작위로 뽑은 문장이에요. 근거만 보고 2, 1, 0점을 매겨 주세요. 이 점수는 LLM 채점을 검증하는 기준이 돼요. 30문장을 모두 채점하면 다음 단계가 열려요." },

@@ -160,9 +160,16 @@ def main():
                 votes.append(to_result(verdict({x: {i: int(h[f"{x}_{i}"]) for i in ITEMS} for x in "AB"})))
         hv, ok = majority(votes, lambda v: "EQUAL")
         ties["reflection"] += not ok
-        refl.append({"doc": d["docId"], "gpt": gv, "claude": cv, "human": hv, "final": gv if gv == cv else hv})
+        # 참고: 재작성 합계와 원본 합계 (8점 만점). 10건 모두 채점한 두 LLM 기준
+        orig = "B" if side == "A" else "A"
+        totals = {name: [sum(r["reflection"][x][i] for i in ITEMS) for x in (side, orig)]
+                  for name, r in (("gpt", gpt[d["docId"]]), ("claude", claude[d["docId"]]))}
+        refl.append({"doc": d["docId"], "gpt": gv, "claude": cv, "human": hv, "final": gv if gv == cv else hv, "totals": totals})
     refl_final = Counter(r["final"] for r in refl)
     refl_done = [r for r in refl if r["final"] is not None]
+    refl_avg = {name: [round(sum(r["totals"][name][k] for r in refl) / len(refl), 2) for k in (0, 1)] if refl else None
+                for name in ("gpt", "claude")}
+    refl_worse = sum(any(r["totals"][name][0] < r["totals"][name][1] for name in ("gpt", "claude")) for r in refl)
 
     # 기업 정보 조작 (사람 4단계)
     company = [r for r in rows if r["company"]]
@@ -193,7 +200,9 @@ def main():
         "raters": len(raters), "humanTies": dict(ties),
         # 사람끼리 (무작위 30문장, 두 명씩)
         "humanPairs": [
-            {"pair": [a, b], "n": len(common), "kappa": qwk([per_rater[a][i] for i in common], [per_rater[b][i] for i in common])}
+            {"pair": [a, b], "n": len(common), "kappa": qwk([per_rater[a][i] for i in common], [per_rater[b][i] for i in common]),
+             # 거의 모두 2점이면 카파가 낮게 나온다 (카파 역설). 같은 점수 비율을 함께 본다
+             "agreeRate": sum(per_rater[a][i] == per_rater[b][i] for i in common) / len(common) if common else None}
             for a in range(len(raters)) for b in range(a + 1, len(raters))
             for common in [[i for i in key["sample"] if i in per_rater[a] and i in per_rater[b]]]
         ],
@@ -213,7 +222,9 @@ def main():
         "exaggeration": {"k": count[1], "n": len(scored), "ci": wilson(count[1], len(scored))},
         "reflection": {"rewriteWins": refl_final["REWRITE"], "originalWins": refl_final["ORIGINAL"], "equal": refl_final["EQUAL"],
                        "decided": len(refl_done), "compared": len(refl), "pending": len(refl) - len(refl_done),
-                       "excluded": len(docs) - len(refl)},
+                       "excluded": len(docs) - len(refl),
+                       # 참고 지표 (결과를 본 뒤 추가, 목표 없음)
+                       "avgTotals": refl_avg, "rewriteLowerByAnyLlm": refl_worse},
         "companyFabrication": by_status, "kappa": kappa,
         "confusion": {"gptVsClaude": confusion(all_g, all_c),
                       "humanVsGpt": confusion([r["human"] for r in sample], [r["gpt"] for r in sample]),
@@ -237,7 +248,12 @@ def main():
         f"| 공고 반영도 (재작성 우세) | {pct(refl_final['REWRITE'], len(refl_done))} | {ci(refl_final['REWRITE'], len(refl_done))} | 70% 이상 |",
         f"| 기업 정보 조작 | {sum(v['fabricated'] for v in by_status.values())}건 (확인 {sum(v['checked'] for v in by_status.values())}/{len(company)}문장) | - | 0건 |",
         f"| 응답 시간 p95 | {p95}초 (중간값 {report['generation']['secMedian']}초) | - | 60초 이하 |", "",
-        f"반영도: 재작성 우세 {refl_final['REWRITE']}, 원본 우세 {refl_final['ORIGINAL']}, 동등 {refl_final['EQUAL']}. 비교 제외 {len(docs) - len(refl)}건 (원본 자기소개서가 짧음).", "",
+        f"반영도: 재작성 우세 {refl_final['REWRITE']}, 원본 우세 {refl_final['ORIGINAL']}, 동등 {refl_final['EQUAL']}. 비교 제외 {len(docs) - len(refl)}건 (원본 자기소개서가 짧음).",
+        "",
+        "반영도 참고 (결과를 본 뒤 추가한 지표라 목표가 없다. 8점 만점 평균, 재작성 / 원본):",
+        *(f"- {label}: {refl_avg[name][0]} / {refl_avg[name][1]} (차이 {refl_avg[name][0] - refl_avg[name][1]:+.1f})"
+          for name, label in (("gpt", "GPT"), ("claude", "Claude")) if refl_avg[name]),
+        f"- 어느 LLM이든 재작성 점수가 원본보다 낮은 서류: {refl_worse}/{len(refl)}", "",
         "## 기업 정보 상태별", "", "| 상태 | 기업 관련 문장 | 사람 확인 | 조작 | LLM 이 조작으로 표시 |", "| --- | --- | --- | --- | --- |",
         *[f"| {st} | {v['companySentences']} | {v['checked']} | {v['fabricated']} | {v['llmFlagged']} |" for st, v in by_status.items()], "",
         "## 채점 일치도 (이차 가중 카파)", "",
@@ -245,7 +261,7 @@ def main():
         f"- 사람과 GPT, 사람과 Claude (무작위 {kappa['sampleScored']}문장): {fmt_k(kappa['humanGpt'])}, {fmt_k(kappa['humanClaude'])}",
         f"- 사람과 LLM 합의 ({kappa['consensusInSample']}문장, 점수별 {kappa['consensusScoreCounts']}): {fmt_k(kappa['humanConsensus'])}",
         f"- 사람 {len(raters)}명. 사람끼리 (무작위 문장, 두 명씩): "
-        + (", ".join(f"{p['pair'][0] + 1}번과 {p['pair'][1] + 1}번 {fmt_k(p['kappa'])} ({p['n']}문장)" for p in kappa["humanPairs"]) or "-"),
+        + (", ".join(f"{p['pair'][0] + 1}번과 {p['pair'][1] + 1}번 {fmt_k(p['kappa'])}, 같은 점수 비율 {pct(round(p['agreeRate'] * p['n']), p['n']) if p['n'] else '-'} ({p['n']}문장)" for p in kappa["humanPairs"]) or "-"),
         f"- 사람끼리 다수가 없던 항목 (보수적으로 정함): {dict(ties) or '없음'}", "",
         "GPT 와 Claude 점수표 (행 GPT 0, 1, 2점 / 열 Claude 0, 1, 2점): " + json.dumps(report["confusion"]["gptVsClaude"]), "",
         f"서류 생성: 제외 문장 {generated - kept}/{generated}, 응답 시간 최대 {report['generation']['secMax']}초.",
